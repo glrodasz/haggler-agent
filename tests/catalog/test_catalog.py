@@ -5,6 +5,7 @@ from haggler.catalog import (
     load_feasibility,
     load_payment_instruments,
 )
+from haggler.sources.base import match_iap_plan, match_plan
 
 
 def test_catalog_and_curated_files_are_consistent():
@@ -34,3 +35,46 @@ def test_expected_currency_uses_appstore_override():
     ar = cat.country("AR")
     assert ar.expected_currencies("ios_iap") == ["USD"]
     assert ar.expected_currencies("web") == ["ARS"]
+
+
+def test_sources_reflect_the_2026_10_probe():
+    cat = load_catalog()
+    # disneyplus.com/robots.txt disallows us: Disney+ comes from the App Store listing.
+    disney = cat.service("disney_plus")
+    assert [(s.adapter, s.channel, s.params["app_id"]) for s in disney.sources] == [
+        ("appstore_iap", "ios_iap", 1446075923)
+    ]
+    assert "robots.txt" in disney.notes_es
+    # Netflix bills Romania in EUR, on both Netflix sources.
+    for src in cat.service("netflix").sources:
+        assert src.params["currency_overrides"] == {"RO": "EUR"}
+    # Spotify's UK market path.
+    [spotify] = cat.service("spotify").sources
+    assert "{market}" in spotify.params["url"] and spotify.params["path_overrides"] == {"GB": "uk"}
+
+
+def test_localized_plan_names():
+    cat = load_catalog()
+    for service_id in ("apple_one", "apple_music"):
+        svc = cat.service(service_id)
+        assert match_plan(svc, "Personligt") == "individual"  # apple.com/se
+        assert match_plan(svc, "Personlig") == "individual"
+        assert match_plan(svc, "Det personliga abonnemanget") is None
+        assert match_plan(svc, "Familj") == "family"
+    yt = cat.service("youtube_premium")
+    for name in ("YouTube Premium Aile", "Premium Rodzinny", "Premium Családi", "Premium Perhe"):
+        assert match_iap_plan(yt, name) == ["family"], name
+    assert match_iap_plan(yt, "YouTube Premium") == ["individual"]
+    assert match_iap_plan(cat.service("google_one"), "Google AI Premium") == ["ai_pro"]
+    disney = cat.service("disney_plus")
+    for name, plan in [
+        ("Disney+ Standard med reklam", "standard_with_ads"),
+        ("Disney+ Estándar con anuncios", "standard_with_ads"),
+        ("Disney+ Padrão com anúncios", "standard_with_ads"),
+        ("Disney+ Standard mit Werbung", "standard_with_ads"),
+        ("Disney+ Standard z reklamami", "standard_with_ads"),
+        ("Disney+ Standard", "standard"),
+        ("Disney+ Estándar mensual", "standard"),
+        ("Disney+ Premium anual", "premium"),
+    ]:
+        assert match_iap_plan(disney, name) == [plan], name

@@ -226,3 +226,4 @@ web/.astro/
 web/src/data/
 .haggler/
 probe-out/
+.adk/

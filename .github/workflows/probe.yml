@@ -78,6 +78,16 @@ jobs:
 
           uv run --frozen --no-dev haggler probe --targets "$targets" --out probe-out --mode "$MODE"
 
+      # Pushes also check the FX providers (blocked from the dev container, like vendor sites).
+      - name: Probe FX providers
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          uv run --frozen --no-dev haggler probe --targets probe/targets.txt --out probe-fx --mode fx
+          if [ -f probe-fx/summary.md ]; then
+            head -c 200000 probe-fx/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Summary
         if: always()
         run: |

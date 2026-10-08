@@ -83,6 +83,8 @@ export const es = {
     secondary_disagrees: "La fuente secundaria difiere",
     iap_below_web_stale: "App Store por debajo de la web (posible desfase)",
     iap_duplicate: "Compra in-app duplicada",
+    taxes_not_included: "Impuestos no incluidos",
+    quarantine_hold: "Cambio en revisión: se muestra el valor anterior",
   } as Record<string, string>,
 
   categories: {
