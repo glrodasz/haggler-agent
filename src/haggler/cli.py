@@ -8,6 +8,9 @@
 
 Heavy modules (the ADK pipeline, google-cloud-storage, httpx clients) are imported inside the
 commands, so `validate-catalog` or `site-data` work even while the pipeline is broken or absent.
+
+Settings come from environment variables (haggler.config); a `.env` file in the working directory
+is loaded first, without overriding variables that are already set (see .env.example).
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import ValidationError
 
 DEFAULT_RESIDENCE = "SE"
@@ -202,7 +206,22 @@ def cmd_validate_catalog(args: argparse.Namespace) -> int:
     return 0
 
 
+def load_env_file(path: Path | None = None) -> bool:
+    """Load `path` (default: ./.env in the working directory) into os.environ.
+
+    Variables already in the environment win (override=False): CI, the container (its image never
+    contains a .env, see .dockerignore) and `VAR=x haggler ...` keep precedence. `uv run` does not
+    read .env by itself. Returns whether a file was loaded.
+    """
+    path = Path(".env") if path is None else path
+    if not path.is_file():
+        return False
+    load_dotenv(path, override=False)
+    return True
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    load_env_file()
     args_list = list(sys.argv[1:] if argv is None else argv)
     logging.basicConfig(
         level=os.getenv("HAGGLER_LOG_LEVEL", "INFO").upper(),

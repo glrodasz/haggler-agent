@@ -11,7 +11,7 @@ estático para encontrar la combinación más barata *y factible* para quien viv
 
 | Paso | Cómo |
 |---|---|
-| Fuentes | Páginas oficiales direccionables por país (soporte de iCloud+, apple.com/{país}, spotify.com/{país}, ayuda de Netflix, disneyplus.com, catálogo de Microsoft Store) y, para servicios que solo muestran el precio según la IP (YouTube Premium, Google One, HBO Max), el listado de compras in-app del **App Store** de cada país. Dataset secundario de Netflix (tompec, CC BY 4.0) para contrastar. |
+| Fuentes | Páginas oficiales direccionables por país (soporte de iCloud+, apple.com/{país}, spotify.com/{país}, ayuda de Netflix, catálogo de Microsoft Store) y, para servicios que solo muestran el precio según la IP (YouTube Premium, Google One, HBO Max) o cuyo robots.txt no permite el acceso al bot (Disney+), el listado de compras in-app del **App Store** de cada país. Dataset secundario de Netflix (tompec, CC BY 4.0) para contrastar. |
 | Extracción | Parsers determinísticos primero. Un agente LLM (Gemini en Vertex AI) solo actúa como respaldo cuando un parser falla, y únicamente puede citar texto literal de la página; el código verifica que el precio y la evidencia existan. |
 | Normalización | Tipos de cambio BCE + bancos centrales vía Frankfurter (COP=BanRep, ARS=BCRA…), equivalente mensual, IVA incluido sí/no. |
 | Validación | Reglas determinísticas: moneda vs país, rangos plausibles, cambios >30 % en cuarentena hasta confirmarse, orden de planes, arrastre de valores cuando una fuente falla. |
@@ -62,7 +62,7 @@ uv run haggler validate-catalog
 uv run haggler daily --replay tests/workflow/fixtures/replay --store local --no-llm
 
 # Corrida real (necesita acceso a internet; LLM opcional)
-cp .env.example .env   # GOOGLE_API_KEY=... para AI Studio, o Vertex vía ADC
+cp .env.example .env   # descomenta UNA opción: A) GOOGLE_API_KEY (AI Studio) o B) Vertex vía ADC
 uv run haggler daily --store local --services netflix,spotify --countries SE,CO
 
 # Datos del sitio y build
@@ -73,6 +73,11 @@ npm --prefix web ci && npm --prefix web run build
 # UI de desarrollo de ADK
 PYTHONPATH=agents uv run adk web agents
 ```
+
+`haggler` carga el `.env` del directorio de trabajo al arrancar (`uv run` no lo lee por sí solo)
+sin pisar las variables que ya están en el entorno; `adk web agents` carga el `.env` de la raíz
+del repo. En `.env.example` las dos opciones de LLM vienen comentadas: sin ninguna, el respaldo
+LLM queda apagado; con las dos, google-genai ignora `GOOGLE_API_KEY` y llama a Vertex AI.
 
 Despliegue en GCP y GitHub Pages: ver [docs/SETUP.md](docs/SETUP.md).
 

@@ -4,7 +4,8 @@
 # site is built from the data/ already committed: Workload Identity Federation only trusts the
 # default branch, so there is no sync, and nothing is pushed or deployed.
 # A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
-# leaves a warning and the site is rebuilt from the committed data/.
+# leaves a warning and the site is rebuilt from the committed data/. A failed push of data/
+# (e.g. branch protection) leaves a warning and the site is still built from the synced data.
 name: publish
 
 on:
@@ -99,8 +100,23 @@ jobs:
             exit "$status"
           fi
 
-      - name: Commit and push data/
+      # Uploaded before the push, so build publishes the synced data whatever the push does.
+      - name: Upload synced data
         if: steps.sync.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: data
+          path: data
+          retention-days: 1
+          if-no-files-found: error
+
+      # Versioning data/ must not block the site either (e.g. a protected main without a bypass
+      # for this bot, docs/SETUP.md §12): the step fails visibly but the job still succeeds and
+      # build/deploy use the artifact above. data/ in the repository then lags until it is fixed.
+      - name: Commit and push data/
+        id: push
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
         run: |
           git add -A data/
           if git diff --cached --quiet; then
@@ -123,19 +139,11 @@ jobs:
               exit 0
             fi
             echo "push rechazado (intento ${attempt}); rebase y reintento"
-            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || break
           done
-          echo "::error title=publish::No se pudo hacer push de data/"
+          echo "::warning title=push de data/ falló::No se pudo hacer push de data/ a ${GITHUB_REF_NAME} (¿rama protegida sin bypass para github-actions[bot]?). El sitio se publica igualmente con los datos sincronizados; data/ del repositorio queda desactualizado. Ver docs/SETUP.md §11."
+          echo "⚠ No se pudo hacer push de data/; el sitio se publica con los datos sincronizados." >> "$GITHUB_STEP_SUMMARY"
           exit 1
-
-      - name: Upload synced data
-        if: steps.sync.outcome == 'success'
-        uses: actions/upload-artifact@v7
-        with:
-          name: data
-          path: data
-          retention-days: 1
-          if-no-files-found: error
 
   build:
     name: build site

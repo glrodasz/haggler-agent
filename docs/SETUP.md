@@ -338,6 +338,7 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 | `publish`: *warning* "sync falló: … latest/run.json no existe" | el job aún no terminó ninguna corrida en GCS (pasos 5–6). El sitio se publica igual con el `data/` ya versionado |
 | `publish`: *warning* "sync falló" por `run_id` o SHA-256 distintos entre archivos | el job estaba escribiendo `latest/` en ese momento; el sitio se publica con el `data/` anterior; relanzar `publish` más tarde |
 | `publish`: "Aún no hay data/latest/prices.json" | no hay datos versionados en `data/` y no hubo sync: faltan variables (paso 3), se lanzó desde otra rama, o el sync falló (ver el *warning* del job de sync) |
+| `publish`: *warning* "push de data/ falló: No se pudo hacer push de data/" | `main` está protegida (*pull request* obligatorio, *status checks* requeridos…) y la identidad que hace el push no tiene *bypass* (ver §12). El sitio se publica igual con los datos sincronizados (artefacto del job de sync); solo `data/` del repositorio, y con él el historial de `data/changes/`, queda desactualizado hasta que el push vuelva a funcionar |
 | `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con la ruta base `/haggler-agent` y no detecta un dominio propio |
 | `publish`: el deploy a Pages falla | Pages no está habilitado con *Source: GitHub Actions* (paso 4), o se lanzó desde una rama que no es `main` |
 | Los workflows programados dejaron de correr | GitHub desactiva los `schedule` de repos públicos tras 60 días sin actividad; reactivarlos en *Actions* |
@@ -357,4 +358,9 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
   páginas (`raw/`) nunca se publica y se borra a los 90 días. El probe tampoco lo sube como
   artefacto: solo su resumen.
 - Los commits de datos los hace `github-actions[bot]` con el `GITHUB_TOKEN` del run, que solo
-  tiene `contents: write` en el job de sync.
+  tiene `contents: write` en el job de sync. Si la protección de `main` exige *pull requests* o
+  *status checks*, ese push se rechaza: el `GITHUB_TOKEN` no puede añadirse al *bypass* de la
+  protección de rama. Para seguir versionando `data/`, usa un *ruleset* cuyo *bypass* incluya la
+  identidad que hace el push (una GitHub App o una *deploy key* con permiso de escritura, cambiando
+  el `actions/checkout` del job de sync para usarla). Sin eso el workflow avisa con un *warning* y
+  publica el sitio con los datos sincronizados igualmente (§11).

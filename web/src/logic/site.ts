@@ -17,6 +17,7 @@ import type {
   SiteData,
 } from "./types";
 import { DATA_FILES, UNKNOWN_RANK } from "./types";
+import { validateFile } from "./validate";
 
 export interface LabelInfo {
   id: string;
@@ -58,29 +59,17 @@ export interface SiteIndex extends SiteData {
   formatChangeValue(row: ChangeRow, value: ChangeValue): string;
 }
 
-/** Fail loudly with an actionable message instead of rendering an empty site. */
+/**
+ * Fail loudly with an actionable message instead of rendering an empty or broken site: every
+ * file must exist and match the contract in types.ts (field names, JSON types, nullability).
+ */
 export function assertSiteData(raw: Partial<Record<string, unknown>>): SiteData {
   const missing = DATA_FILES.filter((name) => raw[name] === undefined);
   if (missing.length > 0) {
     throw new Error(missing.map((name) => es.errors.missingData(name)).join("\n"));
   }
-  const listFiles = [
-    "services",
-    "countries",
-    "offers",
-    "cheapest",
-    "bundles",
-    "changes",
-    "coverage",
-  ];
-  for (const name of listFiles) {
-    if (!Array.isArray(raw[name]))
-      throw new Error(`web/src/data/${name}.json debe ser una lista JSON.`);
-  }
-  const meta = raw.meta as { residence?: unknown } | null;
-  if (!meta || typeof meta.residence !== "string") {
-    throw new Error("web/src/data/meta.json no tiene el campo 'residence'.");
-  }
+  const problems = DATA_FILES.flatMap((name) => validateFile(name, raw[name]));
+  if (problems.length > 0) throw new Error(es.errors.invalidData(problems));
   return raw as unknown as SiteData;
 }
 

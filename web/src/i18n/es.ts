@@ -443,11 +443,11 @@ export const es = {
     collect: [
       {
         title: "Fuentes oficiales primero",
-        text: "Cada día un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, las webs de Disney+ y Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store. Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.",
+        text: "Cada día un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, la web de Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store. Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.",
       },
       {
         title: "App Store como respaldo",
-        text: "Cuando la web oficial muestra el precio según la IP del visitante (YouTube Premium, Google One, HBO Max), se usa la lista pública de compras dentro de la app del App Store de cada país. Esas filas llevan el canal «App Store» y la marca «puede tener recargo»: suelen ser más caras que la web.",
+        text: "Cuando la web oficial muestra el precio según la IP del visitante (YouTube Premium, Google One, HBO Max) o su robots.txt no permite el acceso a agentes como este (Disney+), se usa la lista pública de compras dentro de la app del App Store de cada país. Esas filas llevan el canal «App Store» y la marca «puede tener recargo»: suelen ser más caras que la web.",
       },
       {
         title: "Lectura determinista; el LLM solo como respaldo",
@@ -550,6 +550,11 @@ export const es = {
   errors: {
     missingData: (file: string) =>
       `Falta web/src/data/${file}.json. Genera los datos con "uv run haggler site-data" o usa los de ejemplo con "npm run sample-data".`,
+    invalidData: (problems: string[]) =>
+      [
+        "Los datos de web/src/data/ no cumplen el contrato de web/src/logic/types.ts (¿cambió src/haggler/publish.py sin actualizar types.ts y validate.ts?):",
+        ...problems.map((p) => `  - ${p}`),
+      ].join("\n"),
   },
 };
 

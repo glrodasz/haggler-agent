@@ -75,7 +75,9 @@ jobs:
 
   # The site-data contract end to end: the Python pipeline writes the JSON the site reads, so a
   # field rename, a type change or a null in publish.py has to fail here, not on the first
-  # real-data build. contract.test.ts also checks compare.ts against cheapest.json on this data.
+  # real-data build. assertSiteData (web/src/logic/validate.ts) checks every record against
+  # types.ts in vitest and in the build; contract.test.ts also checks compare.ts against
+  # cheapest.json on this data.
   contract:
     name: contract (pipeline -> site-data -> site build)
     runs-on: ubuntu-latest

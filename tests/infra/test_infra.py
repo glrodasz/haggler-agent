@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -78,6 +79,82 @@ def test_publish_builds_even_when_sync_fails() -> None:
     # synced follows the step outcome (not its conclusion), so build falls back to data/.
     assert publish["jobs"]["sync"]["outputs"]["synced"] == "${{ steps.sync.outcome == 'success' }}"
     assert "if" not in publish["jobs"]["build"]
+
+
+def test_publish_deploys_the_synced_data_even_if_the_push_fails() -> None:
+    publish = load("publish.yml")
+    names = [s.get("name") for s in steps(publish, "sync")]
+    # The artifact exists before the push runs, whatever the push does.
+    assert names.index("Upload synced data") < names.index("Commit and push data/")
+    upload = step(publish, "sync", "Upload synced data")
+    assert upload["if"] == "steps.sync.outcome == 'success'"
+    push = step(publish, "sync", "Commit and push data/")
+    assert push["continue-on-error"] is True
+    # build downloads the artifact when the sync worked, independently of the push.
+    assert publish["jobs"]["sync"]["outputs"] == {
+        "synced": "${{ steps.sync.outcome == 'success' }}"
+    }
+    assert "if" not in publish["jobs"]["build"]
+    download = step(publish, "build", "Download synced data")
+    assert download["if"] == "needs.sync.outputs.synced == 'true'"
+
+
+def _git(cwd: Path, *args: str, env: dict[str, str]) -> None:
+    subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True)
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_push_rejected_by_branch_protection_is_a_warning(tmp_path: Path) -> None:
+    """Runs the real step script against a remote that rejects like a protected main."""
+    script = step(load("publish.yml"), "sync", "Commit and push data/")["run"]
+    env = {
+        "PATH": os.environ["PATH"],
+        "HOME": str(tmp_path),
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remote), env=env)
+    _git(tmp_path, "init", "-q", "-b", "main", str(work), env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "init", env=env)
+    _git(work, "remote", "add", "origin", str(remote), env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    hook = remote / "hooks" / "pre-receive"
+    hook.write_text("#!/bin/sh\necho 'GH006: Protected branch update failed' >&2\nexit 1\n")
+    hook.chmod(0o755)
+    (work / "data" / "latest").mkdir(parents=True)
+    (work / "data" / "latest" / "run.json").write_text('{"as_of": "2026-10-08"}\n')
+
+    summary = tmp_path / "summary.md"
+    result = subprocess.run(
+        # GitHub's default shell for run steps.
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=work,
+        env={
+            **env,
+            "IS_DEFAULT_BRANCH": "true",
+            "GITHUB_REF_NAME": "main",
+            "GITHUB_STEP_SUMMARY": str(summary),
+        },
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # The step fails (continue-on-error keeps the job green) with a warning, not an error.
+    assert result.returncode != 0
+    assert "::warning title=push de data/ falló::" in result.stdout
+    assert "::error" not in result.stdout
+    assert "docs/SETUP.md" in result.stdout
+    assert "se publica con los datos sincronizados" in summary.read_text()
 
 
 def test_publish_build_can_read_the_pages_site() -> None:

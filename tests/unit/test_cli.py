@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 import types
@@ -11,11 +12,42 @@ from pathlib import Path
 import pytest
 
 from haggler import cli
+from haggler.config import Settings, llm_credentials_available
 from haggler.publish import SITE_FILES
 from haggler.store import LocalStore
 
 REPO = Path(__file__).parents[2]
 PUBLISH_FIXTURES = REPO / "tests" / "publish" / "fixtures"
+REAL_LOAD_ENV_FILE = cli.load_env_file
+# Variables the .env tests may set; each is cleared for the test and restored afterwards.
+DOTENV_VARS = (
+    "HAGGLER_TEST_DOTENV",
+    "HAGGLER_STORE",
+    "HAGGLER_EXTRACT_MODEL",
+    "GOOGLE_API_KEY",
+    "GEMINI_API_KEY",
+    "GOOGLE_GENAI_USE_ENTERPRISE",
+    "GOOGLE_GENAI_USE_VERTEXAI",
+    "GOOGLE_CLOUD_PROJECT",
+    "GOOGLE_CLOUD_LOCATION",
+)
+
+
+@pytest.fixture(autouse=True)
+def _no_dotenv(monkeypatch) -> None:
+    """main() loads ./.env: a developer's own .env must not leak into these tests."""
+    monkeypatch.setattr(cli, "load_env_file", lambda path=None: False)
+
+
+@pytest.fixture
+def real_dotenv(monkeypatch, tmp_path: Path) -> Path:
+    """The real .env loading, in an empty working directory and a clean LLM/store environment."""
+    for name in DOTENV_VARS:
+        monkeypatch.setenv(name, "")  # records the original value, so teardown restores it
+        monkeypatch.delenv(name)
+    monkeypatch.setattr(cli, "load_env_file", REAL_LOAD_ENV_FILE)
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
 
 
 # --------------------------------------------------------------------------- parsing
@@ -78,6 +110,71 @@ def test_site_data_defaults() -> None:
 def test_no_command_prints_help(capsys) -> None:
     assert cli.main([]) == 2
     assert "COMANDO" in capsys.readouterr().err
+
+
+# --------------------------------------------------------------------------- .env
+
+
+def test_main_loads_dotenv_from_the_working_directory(real_dotenv: Path, monkeypatch) -> None:
+    (real_dotenv / ".env").write_text(
+        "GOOGLE_API_KEY=from-dotenv\n"
+        "HAGGLER_STORE=memory          # local | gcs | memory\n"
+        "HAGGLER_TEST_DOTENV=from-file\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HAGGLER_TEST_DOTENV", "from-environment")
+    assert cli.main([]) == 2
+    assert os.environ["GOOGLE_API_KEY"] == "from-dotenv"
+    assert Settings().store == "memory"
+    assert llm_credentials_available()
+    # override=False: what is already in the environment (CI, the container) wins.
+    assert os.environ["HAGGLER_TEST_DOTENV"] == "from-environment"
+
+
+def test_main_without_dotenv_leaves_the_environment_alone(real_dotenv: Path) -> None:
+    assert REAL_LOAD_ENV_FILE() is False
+    assert cli.main([]) == 2
+    assert "GOOGLE_API_KEY" not in os.environ
+    assert Settings().store == "local"
+
+
+def _env_example(directory: Path, uncomment: tuple[str, ...] = ()) -> Path:
+    """.env.example copied as .env, with the `# NAME=...` lines for `uncomment` enabled."""
+    lines = []
+    for line in (REPO / ".env.example").read_text(encoding="utf-8").splitlines():
+        candidate = line.removeprefix("# ")
+        lines.append(candidate if candidate.split("=", 1)[0] in uncomment else line)
+    path = directory / ".env"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def test_env_example_enables_no_llm_backend_until_one_is_chosen(real_dotenv: Path) -> None:
+    assert REAL_LOAD_ENV_FILE(_env_example(real_dotenv))
+    assert os.environ["HAGGLER_STORE"] == "local"  # the inline comment is not part of the value
+    for name in ("GOOGLE_API_KEY", "GOOGLE_GENAI_USE_ENTERPRISE", "GOOGLE_CLOUD_PROJECT"):
+        assert name not in os.environ, name
+    assert not llm_credentials_available()
+
+
+def test_env_example_ai_studio_alternative_does_not_go_to_vertex(real_dotenv: Path) -> None:
+    from google import genai
+
+    REAL_LOAD_ENV_FILE(_env_example(real_dotenv, ("GOOGLE_API_KEY",)))
+    assert os.environ["GOOGLE_API_KEY"] == "your-ai-studio-key"
+    assert "GOOGLE_GENAI_USE_ENTERPRISE" not in os.environ
+    assert "GOOGLE_CLOUD_PROJECT" not in os.environ
+    assert llm_credentials_available()
+    # With the Vertex lines active google-genai would drop the key and call Vertex AI.
+    assert genai.Client().vertexai is False
+
+
+def test_env_example_vertex_alternative(real_dotenv: Path) -> None:
+    vertex = ("GOOGLE_GENAI_USE_ENTERPRISE", "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION")
+    REAL_LOAD_ENV_FILE(_env_example(real_dotenv, vertex))
+    assert [os.environ[name] for name in vertex] == ["1", "your-gcp-project", "global"]
+    assert "GOOGLE_API_KEY" not in os.environ
+    assert llm_credentials_available()
 
 
 # --------------------------------------------------------------------------- daily

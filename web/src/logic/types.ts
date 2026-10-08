@@ -3,7 +3,8 @@
  *
  * These types mirror the Python publish step (src/haggler/publish.py). Every number is a JSON
  * number; money is already rounded to 2 decimals. Keep this file in sync with the contract
- * described in the project plan: pages only ever read these shapes. A data/ dir without any
+ * described in the project plan: pages only ever read these shapes. validate.ts checks the same
+ * shapes at runtime (assertSiteData), so a field changed here must change there too. A data/ dir without any
  * completed run still produces a valid contract (run_id/as_of/fx.as_of null, empty lists); CI
  * builds the site from that too.
  */
