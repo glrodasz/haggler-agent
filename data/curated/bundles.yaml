@@ -1,0 +1,176 @@
+# Promotional bundles. Every row is unverified until an official page is re-fetched with a
+# retrieval date. Savings are computed from the daily price data, never typed here.
+
+bundles:
+  - bundle_id: meli_plus_co_total
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CO
+    name: Meli+ Total
+    tier: total
+    official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+    price: {amount: "24900", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+      - {service_id: paramount_plus, inclusion: discount_pct, value: "30"}
+      - {service_id: vix, inclusion: discount_pct, value: "30"}
+    requirements: {local_id: cedula, local_line: unknown, local_payment: any_card}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: medium, evidence: user_report}
+    evidence:
+      - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: official}
+      - {url: "https://www.enter.co/empresas/meli-asi-funciona-la-nueva-suscripcion-de-mercado-libre-en-colombia-con-planes-desde-9-900-envios-gratis-y-beneficios-en-streaming/", kind: press}
+    status: unverified
+    last_verified: 2026-10-08
+    notes_es: >-
+      Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia
+      con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.
+
+  - bundle_id: meli_plus_co_esencial
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CO
+    name: Meli+ Esencial
+    tier: esencial
+    official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+    price: {amount: "9900", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+    requirements: {local_id: cedula, local_payment: any_card}
+    status: unverified
+    last_verified: 2026-10-08
+    notes_es: Envíos gratis; sin streaming incluido.
+
+  - bundle_id: meli_plus_mx_mega
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: MX
+    name: Meli+ Mega (con anuncios)
+    tier: mega
+    official_url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+    price: {amount: "399", currency: MXN, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+    requirements: {local_id: CURP, local_payment: unknown}
+    feasibility_from:
+      SE: {purchasable_remotely: unknown, usable_abroad: unknown, tos_risk: high, evidence: none}
+    evidence:
+      - {url: "https://expansion.mx/tecnologia/2026/02/24/mercado-libre-meli-mega-netflix-disney-hbo-max-apple-tv", kind: press}
+    status: unverified
+    valid_from: 2026-02-11
+    last_verified: 2026-10-08
+
+  - bundle_id: meli_plus_br_mega
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: BR
+    name: Meli+ Mega
+    tier: mega
+    official_url: https://www.mercadolivre.com.br/assinaturas/melimais
+    price: {amount: "74.90", currency: BRL, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+    requirements: {local_id: CPF, local_payment: unknown}
+    feasibility_from:
+      SE: {purchasable_remotely: "no", usable_abroad: unknown, tos_risk: high, evidence: none}
+    evidence:
+      - {url: "https://tecnoblog.net/noticias/meli-mega-novo-plano-inclui-disney-netflix-hbo-max-e-apple-tv/", kind: press}
+    status: unverified
+    valid_from: 2025-10-07
+    last_verified: 2026-10-08
+
+  - bundle_id: telia_se_obegransad_streaming
+    provider_id: telia_se
+    provider_type: telco_mobile
+    country: SE
+    name: Telia Obegränsad Plus + Netflix, HBO Max y Disney+
+    tier: obegransad_plus_all_streaming
+    official_url: https://www.telia.se/privat/mobilt/abonnemang
+    price:
+      amount: "699"
+      currency: SEK
+      period: month
+      tax_included: true
+      requires_base_plan_id: telia_obegransad_plus
+      marginal_amount: "130"
+    components:
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+    requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
+    evidence:
+      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official}
+    status: unverified
+    last_verified: 2026-10-08
+    notes_es: >-
+      Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres
+      servicios es +130 kr. Fecha de vigencia de la lista de precios sin confirmar.
+
+  - bundle_id: go3_lt_filmai_netflix
+    provider_id: go3
+    provider_type: streaming_joint
+    country: LT
+    name: Go3 Filmai + Netflix
+    tier: filmai_netflix
+    official_url: https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf
+    price: {amount: "17.99", currency: EUR, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, inclusion: included}
+    requirements: {local_line: none, local_payment: unknown}
+    feasibility_from:
+      SE: {purchasable_remotely: unknown, usable_abroad: travel_only, tos_risk: medium, evidence: none}
+    evidence:
+      - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: official}
+    status: unverified
+    valid_from: 2026-09-04
+    last_verified: 2026-10-08
+    notes_es: El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.
+
+  - bundle_id: apple_one_individual_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Individual
+    tier: individual
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: individual}
+    components:
+      - {service_id: apple_music, plan_id: individual, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
+    requirements: {local_payment: any_card}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
+    status: unverified
+    last_verified: 2026-10-08
+
+  - bundle_id: apple_one_family_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Familj
+    tier: family
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: family}
+    components:
+      - {service_id: apple_music, plan_id: family, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
+    requirements: {local_payment: any_card}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
+    status: unverified
+    last_verified: 2026-10-08

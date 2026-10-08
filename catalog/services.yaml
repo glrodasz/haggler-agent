@@ -1,0 +1,248 @@
+# Service catalog. Each source names an adapter in haggler.sources.registry.
+# URL templates accept: {cc} (SE), {cc_lower} (se), {apple_prefix} ("se/" or "" for US),
+# {disney_locale}, {app_id}.
+# plausible_monthly_eur bounds are deliberately wide; they only catch parse errors.
+# iap_patterns are case-insensitive regexes over App Store in-app purchase names; exactly one
+# plan must match, otherwise the item goes to the LLM for mapping.
+
+services:
+  - id: netflix
+    name: Netflix
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.netflix.com
+    default_plan: standard
+    plans:
+      - {id: mobile, label_es: Móvil, label_en: Mobile, rank: 0, plausible_monthly_eur: [0.5, 15],
+         aliases: [mobile]}
+      - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
+         plausible_monthly_eur: [0.8, 15], aliases: [basic with ads]}
+      - {id: basic, label_es: Básico, label_en: Basic, rank: 1, plausible_monthly_eur: [1, 20],
+         aliases: [basic]}
+      - {id: standard_with_ads, label_es: Estándar con anuncios, label_en: Standard with ads, rank: 2,
+         ads: true, plausible_monthly_eur: [1, 20], aliases: [standard with ads]}
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 3, plausible_monthly_eur: [1.5, 30],
+         aliases: [standard]}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 4, plausible_monthly_eur: [2, 40],
+         aliases: [premium]}
+    sources:
+      - adapter: netflix_help
+        params: {url: "https://help.netflix.com/en/node/24926/{cc_lower}"}
+      - adapter: tompec_netflix
+        kind: secondary
+        params:
+          url: https://raw.githubusercontent.com/tompec/netflix-prices/main/data/latest.json
+          license: CC BY 4.0
+          attribution: Netflix prices dataset by Thomas Pecserke (thomas.io), github.com/tompec/netflix-prices
+
+  - id: youtube_premium
+    name: YouTube Premium
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.youtube.com/premium
+    default_plan: individual
+    notes_es: >-
+      La web oficial muestra el precio según la IP del visitante; en v1 se usa el listado de compras
+      in-app del App Store, que suele ser más caro que la web.
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.8, 30],
+         iap_patterns: ['^(?!.*(famil|student|estudiant|[ée]tudiant|öğrenci|studer|\blite\b|\bduo\b|music)).*premium']}
+      - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [1, 35],
+         iap_patterns: ['\bduo\b']}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1.2, 45],
+         iap_patterns: ['famil']}
+      - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.4, 20],
+         iap_patterns: ['student|estudiant|[ée]tudiant|öğrenci|studer']}
+      - {id: lite, label_es: Lite, label_en: Lite, rank: 0, plausible_monthly_eur: [0.4, 15],
+         iap_patterns: ['\blite\b']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 544007664, exclude_patterns: ['music']}
+
+  - id: disney_plus
+    name: Disney+
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.disneyplus.com
+    default_plan: standard
+    plans:
+      - {id: standard_with_ads, label_es: Estándar con anuncios, label_en: Standard with ads, rank: 1, ads: true,
+         plausible_monthly_eur: [0.8, 20], aliases: [standard with ads, basic, med reklam, con anuncios]}
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 2, plausible_monthly_eur: [1.2, 25],
+         aliases: [standard, estándar]}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
+         aliases: [premium]}
+    sources:
+      - adapter: disney_web
+        params: {url: "https://www.disneyplus.com/{disney_locale}"}
+        exclude: [IN, ID, PK, NG, VN]
+
+  - id: hbo_max
+    name: HBO Max
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.hbomax.com
+    default_plan: standard
+    plans:
+      - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
+         plausible_monthly_eur: [0.8, 20],
+         iap_patterns: ['b[aá]sic|with ads|con anuncios|com an[uú]ncios|med reklam']}
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 2, plausible_monthly_eur: [1.2, 25],
+         iap_patterns: ['^(?!.*(ads|anunc|an[uú]nc|reklam|b[aá]sic)).*(standard|est[aá]ndar|padr[aã]o)']}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
+         iap_patterns: ['premium|platin']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 1666653815, exclude_patterns: ['sport', 'deport', 'esporte', 'add-on']}
+        exclude: [CA, IN]
+
+  - id: spotify
+    name: Spotify Premium
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.spotify.com
+    default_plan: individual
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20],
+         aliases: [individual, personal]}
+      - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [0.8, 25], aliases: [duo]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1, 35],
+         aliases: [family, familia, familj, famille, familie, família, aile]}
+      - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
+         aliases: [student, estudiantes, estudante, studenter, öğrenci]}
+    sources:
+      - adapter: spotify_premium
+        params: {url: "https://www.spotify.com/{cc_lower}/premium/"}
+
+  - id: icloud_plus
+    name: iCloud+
+    category: cloud
+    eu_geo_class: eservice_art4_1b
+    homepage: https://www.apple.com/icloud/
+    default_plan: 200gb
+    plans:
+      - {id: 50gb, label_es: 50 GB, label_en: 50 GB, rank: 0, plausible_monthly_eur: [0.2, 4], aliases: [50gb]}
+      - {id: 200gb, label_es: 200 GB, label_en: 200 GB, rank: 1, plausible_monthly_eur: [0.4, 8], aliases: [200gb]}
+      - {id: 2tb, label_es: 2 TB, label_en: 2 TB, rank: 2, plausible_monthly_eur: [1.5, 25], aliases: [2tb]}
+      - {id: 6tb, label_es: 6 TB, label_en: 6 TB, rank: 3, plausible_monthly_eur: [5, 70], aliases: [6tb]}
+      - {id: 12tb, label_es: 12 TB, label_en: 12 TB, rank: 4, plausible_monthly_eur: [10, 140], aliases: [12tb]}
+    sources:
+      - adapter: icloud_support
+        params: {url: https://support.apple.com/en-us/108047}
+
+  - id: google_one
+    name: Google One
+    category: cloud
+    eu_geo_class: eservice_art4_1b
+    homepage: https://one.google.com
+    default_plan: 100gb
+    notes_es: >-
+      La web oficial muestra el precio según la IP; en v1 se usa el listado de compras in-app del App Store.
+    plans:
+      - {id: 100gb, label_es: 100 GB, label_en: 100 GB, rank: 0, plausible_monthly_eur: [0.2, 5],
+         iap_patterns: ['\b100\s*GB\b']}
+      - {id: 200gb, label_es: 200 GB, label_en: 200 GB, rank: 1, plausible_monthly_eur: [0.3, 7],
+         iap_patterns: ['\b200\s*GB\b']}
+      - {id: 2tb, label_es: 2 TB, label_en: 2 TB, rank: 2, plausible_monthly_eur: [1.5, 25],
+         iap_patterns: ['^(?!.*\bai\b).*\b2\s*TB\b']}
+      - {id: ai_plus, label_es: Google AI Plus, label_en: Google AI Plus, rank: 2, plausible_monthly_eur: [1, 20],
+         iap_patterns: ['\bai\s*plus\b']}
+      - {id: ai_pro, label_es: Google AI Pro, label_en: Google AI Pro, rank: 3, plausible_monthly_eur: [3, 45],
+         iap_patterns: ['\bai\s*pro\b|gemini\s*advanced']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 1451784328, exclude_patterns: ['ultra']}
+
+  - id: apple_one
+    name: Apple One
+    category: bundle
+    eu_geo_class: software_unclear
+    homepage: https://www.apple.com/apple-one/
+    default_plan: individual
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [2, 40],
+         aliases: [individual, individuell, individuel, einzelperson]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [3, 50],
+         aliases: [family, familj, familiar, familia, famille, familie, família]}
+      - {id: premier, label_es: Premier, label_en: Premier, rank: 3, plausible_monthly_eur: [5, 70],
+         aliases: [premier]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-one, url: "https://www.apple.com/{apple_prefix}apple-one/"}
+
+  - id: apple_music
+    name: Apple Music
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.apple.com/apple-music/
+    default_plan: individual
+    plans:
+      - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
+         aliases: [student, estudiantes, studenter, étudiants, studierende, öğrenci]}
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20],
+         aliases: [individual, individuell, individuel, einzelperson]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [0.8, 30],
+         aliases: [family, familj, familiar, familia, famille, familie, família]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-music, url: "https://www.apple.com/{apple_prefix}apple-music/"}
+
+  - id: apple_tv
+    name: Apple TV
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.apple.com/apple-tv/
+    default_plan: standard
+    plans:
+      - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 25],
+         aliases: [apple tv]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-tv, url: "https://www.apple.com/{apple_prefix}apple-tv/"}
+
+  - id: microsoft_365
+    name: Microsoft 365
+    category: productivity
+    eu_geo_class: software_unclear
+    homepage: https://www.microsoft.com/microsoft-365
+    default_plan: family
+    plans:
+      - {id: personal, label_es: Personal, label_en: Personal, rank: 0, plausible_monthly_eur: [0.8, 15]}
+      - {id: family, label_es: Familia, label_en: Family, rank: 1, plausible_monthly_eur: [1, 20]}
+    sources:
+      - adapter: ms_displaycatalog
+        params:
+          # Microsoft Store product ids (bigIds); confirm with the probe workflow.
+          big_ids: {personal: CFQ7TTC0K5BF, family: CFQ7TTC0K5DM}
+          url: "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={big_ids}&market={cc}&languages=en-US"
+
+  # ---- Curated-only services (referenced by bundles; no price source yet) ----
+  - id: paramount_plus
+    name: Paramount+
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.paramountplus.com
+    default_plan: standard
+    plans:
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 1, plausible_monthly_eur: [1, 25]}
+
+  - id: vix
+    name: ViX Premium
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://vix.com
+    default_plan: premium
+    plans:
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [0.5, 20]}
+
+  - id: apple_arcade
+    name: Apple Arcade
+    category: gaming
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.apple.com/apple-arcade/
+    default_plan: standard
+    plans:
+      - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 15]}
