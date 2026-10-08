@@ -1,0 +1,224 @@
+# Daily publication: copy the job's latest/ snapshot from GCS into data/ (commit if it changed),
+# generate the site data and deploy the static site to GitHub Pages.
+# Scheduled workflows only run from the default branch. On other branches (manual dispatch) the
+# data is synced and the site is built, but nothing is pushed or deployed.
+name: publish
+
+on:
+  schedule:
+    - cron: "15 5 * * *" # UTC; the Cloud Run Job runs at 04:17 Europe/Stockholm
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: sync data from GCS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # commit data/
+      id-token: write # Workload Identity Federation
+    outputs:
+      synced: ${{ steps.sync.outcome == 'success' }}
+    env:
+      # Scheduled runs always use the default branch, and their github.event has no "repository".
+      IS_DEFAULT_BRANCH: >-
+        ${{ github.event_name == 'schedule' ||
+        github.ref_name == github.event.repository.default_branch }}
+    steps:
+      - name: Check repository variables
+        id: cfg
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_GITHUB_SA: ${{ vars.GCP_GITHUB_SA }}
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+        run: |
+          missing=""
+          for name in GCP_PROJECT_ID GCP_WIF_PROVIDER GCP_GITHUB_SA GCS_BUCKET; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=sync omitido::Faltan variables de repositorio:${missing}. Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+
+      - name: Authenticate to Google Cloud (WIF)
+        if: steps.cfg.outputs.ok == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_GITHUB_SA }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        if: steps.cfg.outputs.ok == 'true'
+        run: uv sync --frozen --no-dev
+
+      - name: haggler sync
+        id: sync
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+        run: uv run --frozen --no-dev haggler sync --from "gs://${GCS_BUCKET}" --data-dir data
+
+      - name: Commit and push data/
+        if: steps.sync.outcome == 'success'
+        run: |
+          git add -A data/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en data/." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git diff --cached --stat | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
+            echo "::notice title=publish::Rama ${GITHUB_REF_NAME} no es la rama por defecto: no se hace commit."
+            exit 0
+          fi
+          as_of="$(python3 -c 'import json; print(json.load(open("data/latest/run.json")).get("as_of") or "")' 2>/dev/null || true)"
+          as_of="${as_of:-$(date -u +%Y-%m-%d)}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "data: precios ${as_of}"
+          # Someone may have pushed meanwhile; data/ is only written by this bot, so a rebase is safe.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            echo "push rechazado (intento ${attempt}); rebase y reintento"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          echo "::error title=publish::No se pudo hacer push de data/"
+          exit 1
+
+      - name: Upload synced data
+        if: steps.sync.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: data
+          path: data
+          retention-days: 1
+          if-no-files-found: error
+
+  build:
+    name: build site
+    needs: sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      has_data: ${{ steps.data.outputs.has_data }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The artifact holds the whole data/ tree, so files removed by the sync stay removed.
+      - name: Drop checked-out data/
+        if: needs.sync.outputs.synced == 'true'
+        run: rm -rf data
+
+      - name: Download synced data
+        if: needs.sync.outputs.synced == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: data
+          path: data
+
+      - name: Check data
+        id: data
+        run: |
+          if [ -s data/latest/prices.json ]; then
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=publish::Aún no hay data/latest/prices.json; no se construye ni publica el sitio."
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.data.outputs.has_data == 'true'
+        with:
+          enable-cache: true
+
+      - name: Site data
+        if: steps.data.outputs.has_data == 'true'
+        run: |
+          uv sync --frozen --no-dev
+          uv run --frozen --no-dev haggler site-data --data-dir data --out web/src/data --residence SE
+
+      - uses: actions/setup-node@v4
+        if: steps.data.outputs.has_data == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Base path/origin of the Pages site ("/haggler-agent", or "" with a custom domain). If Pages
+      # is not enabled yet this fails softly; the deploy step then reports the real problem.
+      - name: Pages configuration
+        id: pages
+        if: steps.data.outputs.has_data == 'true'
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+
+      - name: Build site
+        if: steps.data.outputs.has_data == 'true'
+        working-directory: web
+        env:
+          PAGES_OK: ${{ steps.pages.outcome == 'success' }}
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          PAGES_ORIGIN: ${{ steps.pages.outputs.origin }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          if [ "$PAGES_OK" = "true" ]; then
+            export BASE_PATH="$PAGES_BASE_PATH"
+            export SITE_URL="${PAGES_ORIGIN:-https://${OWNER}.github.io}"
+          else
+            export BASE_PATH="/${REPO_NAME}"
+            export SITE_URL="https://${OWNER}.github.io"
+          fi
+          echo "BASE_PATH='${BASE_PATH}' SITE_URL='${SITE_URL}'"
+          npm ci
+          npm run build
+
+      - name: Upload Pages artifact
+        if: steps.data.outputs.has_data == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    if: >-
+      needs.build.outputs.has_data == 'true' &&
+      (github.event_name == 'schedule' ||
+      github.ref_name == github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

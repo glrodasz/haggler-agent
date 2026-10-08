@@ -1,0 +1,25 @@
+# Targets for "haggler probe" (run by .github/workflows/probe.yml on GitHub runners, which can
+# reach the vendor sites that the dev container cannot).
+#
+# Format: one target per line
+#     <service_id> <CC> [<CC> ...]
+#   service_id  an id from catalog/services.yaml (every source of that service is probed)
+#   CC          ISO 3166-1 alpha-2 code from catalog/countries.yaml, or "*" for all countries
+# Lines starting with "#" and blank lines are ignored. Keep comments on their own lines.
+#
+# Override for a single manual run: Actions > probe > Run workflow > "targets", with targets
+# separated by ";" (e.g. "netflix SE CO; spotify *").
+#
+# Keep the list short: every country is a real request to the vendor (1 request / 3 s per host).
+
+icloud_plus *
+netflix SE CO LT US TR
+spotify SE CO LT US
+disney_plus SE CO US
+apple_one SE CO US
+apple_music SE CO
+apple_tv SE US
+youtube_premium SE CO LT US TR AR
+google_one SE CO US
+hbo_max SE CO US
+microsoft_365 SE CO US

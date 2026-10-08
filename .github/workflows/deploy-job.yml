@@ -1,0 +1,123 @@
+# Builds the job image, pushes it to Artifact Registry and (re)deploys the Cloud Run Job.
+# Needs the repository variables printed by infra/bootstrap.sh (docs/SETUP.md); without them the
+# workflow only emits a notice.
+name: deploy-job
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "catalog/**"
+      - "agents/**"
+      - "data/curated/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/deploy-job.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for Workload Identity Federation
+
+concurrency:
+  group: deploy-job
+  cancel-in-progress: false
+
+env:
+  JOB_NAME: haggler-daily
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
+  JOB_SA: ${{ vars.GCP_JOB_SA }}
+  GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check repository variables
+        id: cfg
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_GITHUB_SA: ${{ vars.GCP_GITHUB_SA }}
+          GCP_JOB_SA: ${{ vars.GCP_JOB_SA }}
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+          AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
+        run: |
+          missing=""
+          for name in GCP_PROJECT_ID GCP_REGION GCP_WIF_PROVIDER GCP_GITHUB_SA GCP_JOB_SA \
+                      GCS_BUCKET AR_REPOSITORY; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=deploy-job omitido::Faltan variables de repositorio:${missing}. Ver docs/SETUP.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+
+      - name: Authenticate to Google Cloud (WIF)
+        if: steps.cfg.outputs.ok == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_GITHUB_SA }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.cfg.outputs.ok == 'true'
+
+      - name: Build and push image
+        if: steps.cfg.outputs.ok == 'true'
+        id: image
+        run: |
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/haggler"
+          docker build --pull \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "${image}:${GITHUB_SHA}" --tag "${image}:latest" .
+          docker push "${image}:${GITHUB_SHA}"
+          docker push "${image}:latest"
+          echo "ref=${image}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Cloud Run Job
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          IMAGE: ${{ steps.image.outputs.ref }}
+          # Optional repository variable. --set-env-vars replaces every variable on each deploy,
+          # so settings changed by hand with "gcloud run jobs update" would not survive.
+          EXTRACT_MODEL: ${{ vars.HAGGLER_EXTRACT_MODEL }}
+        run: |
+          env_vars="HAGGLER_STORE=gcs,HAGGLER_GCS_BUCKET=${GCS_BUCKET},GOOGLE_GENAI_USE_ENTERPRISE=1"
+          env_vars="${env_vars},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global"
+          if [ -n "${EXTRACT_MODEL}" ]; then
+            env_vars="${env_vars},HAGGLER_EXTRACT_MODEL=${EXTRACT_MODEL}"
+          fi
+          gcloud run jobs deploy "${JOB_NAME}" \
+            --image "${IMAGE}" \
+            --region "${REGION}" \
+            --service-account "${JOB_SA}" \
+            --cpu 1 \
+            --memory 1Gi \
+            --task-timeout 45m \
+            --max-retries 1 \
+            --set-env-vars "${env_vars}" \
+            --labels "managed-by=github-actions,commit=${GITHUB_SHA::12}" \
+            --quiet
+          {
+            echo "### Cloud Run Job desplegado"
+            echo ""
+            echo "- Job: \`${JOB_NAME}\` (${REGION})"
+            echo "- Imagen: \`${IMAGE}\`"
+            echo "- Ejecutar ahora: \`gcloud run jobs execute ${JOB_NAME} --region ${REGION} --wait\`"
+          } >> "$GITHUB_STEP_SUMMARY"
