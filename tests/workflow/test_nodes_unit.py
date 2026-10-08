@@ -281,10 +281,29 @@ def test_price_extractor_definition() -> None:
     agent = build_price_extractor(ScriptedLlm())
     assert agent.name == "price_extractor" and agent.output_schema is LlmExtraction
     assert agent.tools == [] and callable(agent.instruction)
-    assert agent.generate_content_config.temperature == 0
     assert agent.retry_config.max_attempts == 2
     assert instruction(None) == INSTRUCTION  # type: ignore[arg-type]
     assert "{" not in INSTRUCTION and "}" not in INSTRUCTION
+
+
+@pytest.mark.parametrize(
+    ("model", "level"),
+    [
+        ("gemini-3.1-flash-lite", "LOW"),
+        ("projects/p/locations/global/publishers/google/models/gemini-3-pro", "LOW"),
+        ("gemini-2.5-flash", None),
+        ("scripted-fake", None),
+    ],
+)
+def test_price_extractor_model_settings(model: str, level: str | None) -> None:
+    """Gemini 3: model-default temperature, low thinking, room for thoughts plus the JSON."""
+    config = build_price_extractor(model).generate_content_config
+    assert config.temperature is None
+    assert config.max_output_tokens == 4096
+    if level is None:
+        assert config.thinking_config is None
+    else:
+        assert config.thinking_config.thinking_level.value == level
 
 
 def test_build_model_needs_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -296,9 +315,47 @@ def test_build_model_needs_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     model = deps_mod.build_model(Settings(extract_model="gemini-test"))
     assert model is not None and model.model == "gemini-test"
     assert model.retry_options.attempts == 4
-    assert model.retry_options.http_status_codes == [429, 500, 503]
+    # genai's default retryable set: gateway timeouts (408/502/504) are retried too.
+    assert model.retry_options.http_status_codes == [408, 429, 500, 502, 503, 504]
+    # A per-request HTTP timeout on the client (genai's default is none at all).
+    http = model.client_kwargs["http_options"]
+    assert http.timeout == 60_000 and http.retry_options == model.retry_options
+    assert model.api_client._api_client._http_options.timeout == 60_000
+    assert deps_mod.build_model(Settings(max_llm_calls=0)) is None
     monkeypatch.setenv("HAGGLER_LLM", "off")
     assert deps_mod.build_model(Settings()) is None
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "1"}, True),
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "TRUE"}, True),
+        ({"GOOGLE_GENAI_USE_VERTEXAI": "true"}, True),
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "yes"}, False),  # genai reads "yes" as false
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "on"}, False),
+        # ENTERPRISE wins whenever it is set, even empty (genai then uses the Developer API).
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "", "GOOGLE_GENAI_USE_VERTEXAI": "1"}, False),
+        ({"GOOGLE_GENAI_USE_ENTERPRISE": "0", "GOOGLE_GENAI_USE_VERTEXAI": "1"}, False),
+        ({"GEMINI_API_KEY": "k", "GOOGLE_GENAI_USE_ENTERPRISE": "0"}, True),
+        ({}, False),
+    ],
+)
+def test_llm_credentials_follow_google_genai(
+    monkeypatch: pytest.MonkeyPatch, env: dict[str, str], expected: bool
+) -> None:
+    from haggler.config import llm_credentials_available
+
+    for var in (
+        "GOOGLE_API_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_GENAI_USE_ENTERPRISE",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    for var, value in env.items():
+        monkeypatch.setenv(var, value)
+    assert llm_credentials_available() is expected
 
 
 async def test_default_deps_are_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -311,3 +368,184 @@ async def test_default_deps_are_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(ValueError, match="HAGGLER_GCS_BUCKET"):
         d.store.read_bytes("latest/run.json")  # created on first use only
     await d.aclose()
+
+
+# ----------------------------------------------------------------------------- shared helpers
+
+
+def test_text_helpers_come_from_haggler_text() -> None:
+    from haggler import text
+
+    assert nodes.contains_normalized is text.contains_normalized
+    assert nodes.text_hash is text.text_hash
+    assert nodes.price_windows is text.price_windows
+    assert nodes.html_to_lines is text.html_to_lines
+    html = "<html><body><main><h1>Plans</h1><p>Standard 169 kr</p></main></body></html>"
+    assert nodes.page_text_lines(html) == text.html_to_lines(html)
+
+
+def _pinned_catalog(catalog: Catalog) -> Catalog:
+    """Netflix RO billed in EUR by the help-center source only (currency_overrides)."""
+    svc = catalog.service("netflix")
+    sources = []
+    for s in svc.sources:
+        params = {k: v for k, v in s.params.items() if k != "currency_overrides"}
+        if s.adapter == "netflix_help":
+            params["currency_overrides"] = {"RO": "EUR"}
+        sources.append(s.model_copy(update={"params": params}))
+    return Catalog(
+        services=[svc.model_copy(update={"sources": sources})],
+        countries=[catalog.country("RO"), catalog.country("SE")],
+    )
+
+
+def test_expected_currencies_honour_source_currency_overrides(catalog: Catalog) -> None:
+    cat = _pinned_catalog(catalog)
+    assert nodes.expected_currencies(cat, "netflix", "RO", "web", "netflix_help") == ["RON", "EUR"]
+    assert nodes.expected_currencies(cat, "netflix", "RO", "web", "tompec_netflix") == ["RON"]
+    assert nodes.expected_currencies(cat, "netflix", "SE", "web", "netflix_help") == ["SEK"]
+    assert nodes.expected_currencies(cat, "netflix", "RO", "web") == ["RON"]
+
+
+def _plan_task(
+    task_id: str, services: list[str], countries: list[str], *, channel: str = "web"
+) -> Task:
+    return Task(
+        task_id=task_id,
+        adapter_id="netflix_help",
+        service_ids=services,
+        countries=countries,
+        channel=channel,  # type: ignore[arg-type]
+        kind="official",
+        url="https://x",
+        host="x",
+    )
+
+
+def test_llm_jobs_use_the_pinned_currencies(catalog: Catalog) -> None:
+    from haggler.sources.base import ParseResult
+
+    cat = _pinned_catalog(catalog)
+    plan = nodes.make_llm_jobs(
+        _plan_task("netflix_help:netflix:RO", ["netflix"], ["RO"]),
+        ParseResult(status="no_prices"),
+        ["Standard 10,99 €", "Premium 13,99 €"],
+        [],
+        cat,
+        "https://x",
+    )
+    assert [j.expected_currencies for j in plan.jobs] == [["RON", "EUR"]]
+
+
+def test_unmapped_iap_request_replaces_the_generic_fallback(catalog: Catalog) -> None:
+    from haggler.sources.base import LlmRequest, ParseResult
+
+    task = _plan_task("appstore_iap:multi:US", ["youtube_premium", "google_one"], ["US"])
+    task = task.model_copy(update={"channel": "ios_iap", "adapter_id": "appstore_iap"})
+    pr = ParseResult(
+        status="partial",
+        llm_requests=[LlmRequest("youtube_premium", "US", "unmapped_iap", "Super Chat $4.99")],
+    )
+    lines = ["Super Chat $4.99", "Google One 100 GB $1.99"]
+    plan = nodes.make_llm_jobs(task, pr, lines, [], catalog, "https://x")
+    assert [(j.service_id, j.reason) for j in plan.jobs] == [("youtube_premium", "unmapped_iap")]
+    # An answered pair is not asked again (and still covers its pair).
+    again = nodes.make_llm_jobs(
+        task, pr, lines, [], catalog, "https://x", answered={("youtube_premium", "US")}
+    )
+    assert again.jobs == [] and not again.truncated
+
+
+def test_capped_jobs_go_to_the_least_recently_checked_pairs(
+    catalog: Catalog, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from haggler.sources.base import ParseResult
+
+    monkeypatch.setattr(nodes, "MAX_JOBS_PER_TASK", 2)
+    countries = ["SE", "NO", "DK", "FI"]
+    lines = [f"{catalog.country(cc).name_en} ({catalog.country(cc).currency})" for cc in countries]
+    lines = [ln for name in lines for ln in (name, "200 GB: 39 kr")]
+    task = _plan_task("icloud_support:icloud_plus:ALL", ["icloud_plus"], countries)
+    task = task.model_copy(update={"adapter_id": "icloud_support"})
+    pr = ParseResult(status="no_prices")
+    first = nodes.make_llm_jobs(task, pr, lines, [], catalog, "https://x")
+    assert [j.country for j in first.jobs] == ["SE", "NO"] and first.truncated
+    assert any("2 pair(s) left for a later run" in n for n in first.notes)
+    checked = {
+        ("icloud_plus", "SE"): date(2026, 10, 1),
+        ("icloud_plus", "NO"): date(2026, 10, 3),
+        ("icloud_plus", "DK"): date(2026, 10, 2),
+    }
+    later = nodes.make_llm_jobs(task, pr, lines, [], catalog, "https://x", last_checked=checked)
+    assert [j.country for j in later.jobs] == ["FI", "SE"]  # never checked, then the oldest
+    done = nodes.make_llm_jobs(
+        task,
+        pr,
+        lines,
+        [],
+        catalog,
+        "https://x",
+        answered={("icloud_plus", cc) for cc in ("SE", "NO", "DK")},
+    )
+    assert [j.country for j in done.jobs] == ["FI"] and not done.truncated
+
+
+def test_second_opinion_ids_are_scoped_by_service_too(catalog: Catalog) -> None:
+    from haggler.models.observations import ObservationDraft
+    from haggler.pipeline.deps import Deps
+
+    deps = Deps(
+        settings=Settings(),
+        catalog=catalog,
+        fetcher=None,  # type: ignore[arg-type]
+        store=None,  # type: ignore[arg-type]
+        fx=None,  # type: ignore[arg-type]
+        model=None,
+    )
+    task = _plan_task("bundle:multi:SE", ["netflix", "spotify"], ["SE"])
+    now = datetime(2026, 10, 8, tzinfo=UTC)
+    rows = [
+        nodes.to_observation(
+            ObservationDraft(
+                service_id=sid,
+                plan_id=plan,
+                plan_label_raw=plan,
+                country="SE",
+                currency="SEK",
+                amount=Decimal(amount),
+                billing_period="month",
+            ),
+            task,
+            catalog,
+            source_url="https://x",
+            observed_at=now,
+            content_hash="h",
+            extraction="parser",
+            confidence=0.9,
+        )
+        for sid, plan, amount in (("netflix", "premium", "299"), ("spotify", "individual", "149"))
+    ]
+    result = TaskResult(
+        task_id=task.task_id,
+        adapter_id=task.adapter_id,
+        status="ok",
+        service_ids=task.service_ids,
+        countries=task.countries,
+        observations=rows,
+        raw_ref="raw/page.html.gz",
+    )
+    quarantined = [r.model_copy(update={"status": "quarantined"}) for r in rows]
+    from haggler import validate as rules
+
+    carry = nodes.Carry(tasks=[result], outcome=rules.ValidationOutcome(observations=quarantined))
+    deps.buffer.raw_cache["raw/page.html.gz"] = "<p>Premium 299 kr</p><p>Individual 149 kr</p>"
+    jobs = [job for job, _ in nodes.build_second_opinions(deps, carry)]
+    assert [j.service_id for j in jobs] == ["netflix", "spotify"]
+    assert len({j.job_id for j in jobs}) == 2
+
+
+def test_unique_run_ids() -> None:
+    jobs = [_job("x"), _job("x"), _job("x")]
+    for j, job_id in zip(jobs, ["a", "a", "a_2"], strict=True):
+        j.job_id = job_id
+    assert nodes.unique_run_ids("extract", jobs) == ["extract_a", "extract_a_2", "extract_a_2_2"]

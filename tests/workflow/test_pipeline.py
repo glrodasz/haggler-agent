@@ -23,7 +23,7 @@ from haggler.models.catalog import Catalog
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
 from haggler.models.run import CoverageRow, PipelineState, RunReport, Snapshot, TaskResult
-from haggler.pipeline.nodes import LATEST_FILES, LLM_CHECKED_KEY
+from haggler.pipeline.nodes import LATEST_FILES, LEGACY_LLM_CHECKED_KEY
 from haggler.store import read_json
 
 DAY1 = date(2026, 10, 8)
@@ -285,39 +285,62 @@ async def test_post_checks_reject_llm_prices_not_on_the_page(cat: Catalog) -> No
 # ----------------------------------------------------------------------------- (4) reuse
 
 
-async def test_second_run_with_unchanged_pages_makes_no_llm_calls(cat: Catalog) -> None:
+async def test_unchanged_pages_reuse_llm_answers_but_new_keys_need_a_fresh_one(
+    cat: Catalog,
+) -> None:
     clock = W.Clock(DAY1)
     llm = ScriptedLlm(responder=happy_responder)
     deps = W.make_deps(cat, FixtureFetcher(W.routes()), model=llm, clock=clock)
     first = await W.run(deps)
     calls_first = len(llm.requests)
     assert calls_first == 3 and first.llm.calls == 3
+    spotify_us = [f"spotify:{plan}:US:web:month" for plan in ("duo", "family", "individual")]
+    queue = read_json(deps.store, "latest/review_queue.json")
+    assert [e["obs_key"] for e in queue] == spotify_us  # llm_new_key
 
+    # Day 2, same pages: Netflix and YouTube US reuse their answers; the quarantined Spotify US
+    # keys are not released by a copy of yesterday's answer: exactly one confirming call.
     clock.day = date(2026, 10, 9)
     second = await W.run(deps)
-    assert len(llm.requests) == calls_first
-    assert second.llm.calls == 0 and second.llm.jobs == 0
-    assert second.llm.reused == 3  # netflix US, spotify US, youtube US (nothing usable, kept)
+    assert jobs_requested(llm)[calls_first:] == [("spotify", "US", "parser_failed")]
+    assert second.llm.calls == 1 and second.llm.jobs == 1
+    assert second.llm.reused == 2  # netflix US, youtube US (nothing usable, kept)
     rows = prices(deps.store)
     us = rows["netflix:standard:US:web:month"]
     assert us.extraction == "llm" and us.first_seen == DAY1 and us.last_changed == DAY1
+    confirmed = rows["spotify:individual:US:web:month"]
+    assert (str(confirmed.amount), confirmed.status, confirmed.extraction) == (
+        "11.99",
+        "accepted",
+        "llm",
+    )
+    assert read_json(deps.store, "latest/review_queue.json") == []
     snap = Snapshot.model_validate(
         read_json(deps.store, f"{run_dir(deps.store, second)}/snapshot.json")
     )
-    reused = [o for o in snap.observations if o.reused]
-    assert {o.obs_key for o in reused} >= {"netflix:standard:US:web:month"}
+    reused = {o.obs_key for o in snap.observations if o.reused}
+    assert "netflix:standard:US:web:month" in reused
+    assert not reused & set(spotify_us)
     state = PipelineState.model_validate(read_json(deps.store, "latest/state.json"))
     yt = state.tasks["appstore_iap:youtube_premium:US"]
-    assert yt.llm_obs == [{LLM_CHECKED_KEY: yt.text_hash}]
+    assert yt.llm_checked_hash == yt.text_hash and yt.llm_obs == []
+    assert yt.llm_pairs["youtube_premium:US"].text_hash == yt.text_hash
+    assert not any(LEGACY_LLM_CHECKED_KEY in d for t in state.tasks.values() for d in t.llm_obs)
+
+    # Day 3: everything is confirmed and unchanged, no LLM call at all.
+    clock.day = date(2026, 10, 10)
+    third = await W.run(deps)
+    assert len(llm.requests) == calls_first + 1
+    assert third.llm.calls == 0 and third.llm.jobs == 0 and third.llm.reused == 3
 
     # A changed page goes back to the LLM.
     deps.fetcher.routes[W.NETFLIX.format(cc="us")] = W.page("netflix_us_prose.html").replace(
         "Netflix offers", "Netflix proudly offers"
     )
-    clock.day = date(2026, 10, 10)
-    third = await W.run(deps)
-    assert jobs_requested(llm)[calls_first:] == [("netflix", "US", "parser_failed")]
-    assert third.llm.reused == 2
+    clock.day = date(2026, 10, 11)
+    fourth = await W.run(deps)
+    assert jobs_requested(llm)[calls_first + 1 :] == [("netflix", "US", "parser_failed")]
+    assert fourth.llm.reused == 2
 
 
 # ----------------------------------------------------------------------------- (5) quarantine

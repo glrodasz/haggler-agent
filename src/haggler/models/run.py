@@ -198,12 +198,28 @@ class KeyState(BaseModel):
     pending_since: date | None = None
 
 
+class LlmPairCheck(BaseModel):
+    """When the LLM last answered one (service, country) pair of a task, and for which text."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text_hash: str
+    on: date
+
+
 class TaskState(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     text_hash: str | None = None
-    # LLM-extracted observations (PriceObservation dumps) reused while text_hash is unchanged.
+    # LLM-extracted observations (PriceObservation dumps) of the pairs the LLM answered for
+    # text_hash (never quarantined rows): reused while text_hash is unchanged.
     llm_obs: list[dict[str, Any]] = Field(default_factory=list)
+    # text_hash once the LLM has answered every (service, country) pair the page needed (it
+    # replaces the "_llm_checked_hash" marker older files keep inside llm_obs).
+    llm_checked_hash: str | None = None
+    # "service_id:CC" -> last LLM answer for that pair. Answers for today's text are not asked
+    # again; a capped multi-country task asks the least recently checked pairs first.
+    llm_pairs: dict[str, LlmPairCheck] = Field(default_factory=dict)
     last_status: TaskStatus | None = None
     failing_since: date | None = None
 

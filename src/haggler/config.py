@@ -50,7 +50,14 @@ class Settings:
         default_factory=lambda: _env_int("HAGGLER_MAX_ADJUDICATIONS", 15)
     )
     llm_concurrency: int = field(default_factory=lambda: _env_int("HAGGLER_LLM_CONCURRENCY", 4))
+    # Model requests per run, enforced by the pipeline itself (so adk web/run honour it too);
+    # 0 or less turns the LLM off.
     max_llm_calls: int = field(default_factory=lambda: _env_int("HAGGLER_MAX_LLM_CALLS", 150))
+    # Wall-clock cap per LLM job (agent retries and HTTP retries included); a hung model call
+    # becomes a job error instead of blocking the run.
+    llm_job_timeout_s: float = field(
+        default_factory=lambda: _env_float("HAGGLER_LLM_JOB_TIMEOUT_S", 120.0)
+    )
 
     # Fetching etiquette
     user_agent: str = field(
@@ -75,7 +82,12 @@ class Settings:
 
 
 def llm_credentials_available() -> bool:
+    """An API key, or Vertex AI mode read exactly like google-genai reads it:
+    GOOGLE_GENAI_USE_ENTERPRISE wins whenever it is set (even empty), else the legacy
+    GOOGLE_GENAI_USE_VERTEXAI; only "1" and "true" (any case) switch it on."""
     if os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"):
         return True
-    enterprise = os.getenv("GOOGLE_GENAI_USE_ENTERPRISE") or os.getenv("GOOGLE_GENAI_USE_VERTEXAI")
-    return bool(enterprise and enterprise.lower() in {"1", "true", "yes"})
+    value = os.environ.get("GOOGLE_GENAI_USE_ENTERPRISE")
+    if value is None:
+        value = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI")
+    return value is not None and value.lower() in {"1", "true"}

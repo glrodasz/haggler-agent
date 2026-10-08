@@ -24,12 +24,17 @@ from haggler.fx.service import FxService
 from haggler.models.catalog import Catalog
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
-from haggler.models.run import LlmStats, PipelineState, Task
+from haggler.models.run import LlmJob, LlmStats, PipelineState, Task
 from haggler.store import Store, store_from_settings
 
 log = logging.getLogger(__name__)
 
 FX_TIMEOUT = httpx.Timeout(connect=10.0, read=20.0, write=20.0, pool=20.0)
+# Per HTTP attempt to the model (genai's default is no timeout at all); the pipeline also caps
+# each whole job (Settings.llm_job_timeout_s).
+LLM_HTTP_TIMEOUT_MS = 60_000
+# genai's own default set: replacing it with a shorter list would stop retrying 408/502/504.
+LLM_RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504]
 
 
 @dataclass
@@ -44,10 +49,21 @@ class RunBuffer:
     previous_coverage: list[dict[str, Any]] = field(default_factory=list)
     llm_log: list[dict[str, Any]] = field(default_factory=list)
     llm_stats: LlmStats = field(default_factory=LlmStats)
+    # Model requests sent this run (one per attempt, failed ones included): the call budget.
     model_calls: int = 0
     raw_cache: dict[str, str] = field(default_factory=dict)
-    # Tasks whose page text the LLM has answered for (see nodes.LLM_CHECKED_KEY).
+    # Run whose data this buffer holds (set by plan_tasks).
+    run_id: str | None = None
+    # task_id -> its LLM jobs with their page text; node outputs carry the jobs without it.
+    llm_jobs: dict[str, list[LlmJob]] = field(default_factory=dict)
+    # task_id -> (service_id, country) pairs the LLM answered today (TaskState.llm_pairs).
+    llm_answered: dict[str, set[tuple[str, str]]] = field(default_factory=dict)
+    # Tasks with no LLM work left for today's page text (TaskState.llm_checked_hash).
     llm_checked: set[str] = field(default_factory=set)
+    # Tasks whose jobs were capped per task: some pairs wait for a later run.
+    llm_truncated: set[str] = field(default_factory=set)
+    # Agent run id -> finish reason of its last model answer (explains empty answers).
+    finish_reasons: dict[str, str | None] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
 
 
@@ -170,17 +186,26 @@ class LazyFxService:
 
 
 def build_model(settings: Settings) -> BaseLlm | None:
-    """Gemini with HTTP-level retries, or None when the LLM is off or has no credentials."""
-    if not settings.llm_enabled or not llm_credentials_available():
+    """Gemini with HTTP-level retries and a per-request timeout, or None when the LLM is off, has
+    no call budget (HAGGLER_MAX_LLM_CALLS <= 0) or has no credentials."""
+    if not settings.llm_enabled or settings.max_llm_calls <= 0:
+        return None
+    if not llm_credentials_available():
         return None
     from google.adk.models import Gemini
     from google.genai import types
 
+    retry = types.HttpRetryOptions(
+        attempts=4, initial_delay=2, http_status_codes=list(LLM_RETRY_STATUS_CODES)
+    )
     return Gemini(
         model=settings.extract_model,
-        retry_options=types.HttpRetryOptions(
-            attempts=4, initial_delay=2, http_status_codes=[429, 500, 503]
-        ),
+        retry_options=retry,
+        # ADK builds the client's HttpOptions from retry_options only; client_kwargs replaces
+        # them, so the retries are repeated here next to the timeout.
+        client_kwargs={
+            "http_options": types.HttpOptions(timeout=LLM_HTTP_TIMEOUT_MS, retry_options=retry)
+        },
     )
 
 

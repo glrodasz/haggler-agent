@@ -11,10 +11,12 @@ Data flow rules:
   * Raw HTML never travels through node outputs or session state (ADK copies both into the
     session event log): it goes to the Store under raw/... and TaskResult.raw_ref keeps the key.
   * ctx.state only holds the small run metadata ctx.state["run"].
-  * Bulky per-run data that no node needs as input (previous published files, the LLM log) lives
-    in Deps.buffer, reset by plan_tasks.
+  * Bulky per-run data that no node needs as input (previous published files, the LLM log, the
+    page texts of the LLM jobs) lives in Deps.buffer, reset by plan_tasks.
   * Nothing escapes a parallel item except TransientFetchError on a non-final attempt: ADK's
-    parallel_worker is fail-fast, so every other failure becomes a TaskResult record.
+    parallel_worker is fail-fast, so every other failure becomes a TaskResult record. Likewise
+    every LLM job failure (timeout, empty answer, budget, bug) becomes a JobOutcome error.
+  * CPU-heavy page work (rendering, adapter.parse, job planning) runs in worker threads.
 """
 
 from __future__ import annotations
@@ -28,7 +30,7 @@ import logging
 import re
 import time
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -56,6 +58,7 @@ from haggler.models.run import (
     LlmExtraction,
     LlmItem,
     LlmJob,
+    LlmPairCheck,
     LlmPlanHint,
     PipelineState,
     RunReport,
@@ -74,48 +77,8 @@ from haggler.pipeline.agents import build_price_extractor
 from haggler.pipeline.deps import Deps, RunBuffer
 from haggler.sources.base import ParseResult
 from haggler.sources.registry import get_adapter
-from haggler.sources.spotify import page_lines
 from haggler.store import Store, dumps, dumps_lines, read_json, read_text_gz, write_text_gz
-
-try:
-    from haggler.text import contains_normalized, price_windows, text_hash
-except ImportError:  # haggler.text imports the selectolax backend that 1.0 removed: same logic here
-    from haggler.money import find_prices
-
-    _WS = re.compile(r"[ \t\xa0   ​]+")
-
-    def _normalize(text: str) -> str:
-        import unicodedata
-
-        text = unicodedata.normalize("NFKC", text).casefold()
-        text = re.sub(r"[‐-―−]", "-", text)
-        text = text.replace("’", "'")
-        return _WS.sub(" ", re.sub(r"\s+", " ", text)).strip()
-
-    def contains_normalized(haystack: str, needle: str) -> bool:
-        return _normalize(needle) in _normalize(haystack)
-
-    def text_hash(text: str) -> str:
-        return hashlib.sha256(_normalize(text).encode()).hexdigest()[:16]
-
-    def price_windows(
-        lines: list[str], expected: list[str], *, context: int = 2, max_chars: int = 8000
-    ) -> str:
-        keep: set[int] = set()
-        for i, line in enumerate(lines):
-            if find_prices(line, expected):
-                keep.update(range(max(0, i - context), min(len(lines), i + context + 1)))
-        if not keep:
-            return "\n".join(lines)[:max_chars]
-        chunks: list[str] = []
-        prev = -2
-        for i in sorted(keep):
-            if i != prev + 1:
-                chunks.append("…")
-            chunks.append(lines[i])
-            prev = i
-        return "\n".join(chunks)[:max_chars]
-
+from haggler.text import contains_normalized, html_to_lines, price_windows, text_hash
 
 log = logging.getLogger(__name__)
 
@@ -128,14 +91,15 @@ FLAG_IAP_MARKUP = "iap_maybe_marked_up"
 FLAG_SECOND_OPINION = rules.FLAG_SECOND_OPINION_AGREES
 CONFIDENCE: dict[str, float] = {"official": 0.9, "secondary": 0.6, "llm": 0.7}
 FAILING_STATUSES = frozenset({"failed", "blocked", "robots_disallowed", "wrong_country"})
-# A multi-country page (iCloud+) yields at most this many parser_failed jobs per run.
+# A multi-country page (iCloud+) yields at most this many parser_failed jobs per run; the next
+# runs ask the remaining countries (least recently checked first).
 MAX_JOBS_PER_TASK = 5
 MAX_NOTES = 20
 FOCUS_AFTER = 14
-# Entry appended to TaskState.llm_obs once the LLM has answered for a page text, so an unchanged
-# page whose LLM answer held no usable price (e.g. an unmappable "Super Chat" IAP) is not sent
-# again every day. It is not a PriceObservation dump; readers skip it.
-LLM_CHECKED_KEY = "_llm_checked_hash"
+# Marker entry older state.json files keep inside TaskState.llm_obs (now llm_checked_hash).
+LEGACY_LLM_CHECKED_KEY = "_llm_checked_hash"
+# Finish reasons of an empty answer worth one more try (a SAFETY or RECITATION block repeats).
+RETRY_EMPTY_REASONS = frozenset({None, "STOP", "FINISH_REASON_UNSPECIFIED"})
 LATEST_FILES = ("prices.json", "fx.json", "coverage.json", "review_queue.json", "state.json")
 
 _PARSE_TO_TASK: dict[str, str] = {
@@ -226,14 +190,27 @@ def source_kind(cat: Catalog, service_id: str, adapter_id: str, channel: str) ->
     return "official"
 
 
-def expected_currencies(cat: Catalog, service_id: str, cc: str, channel: str) -> list[str]:
+def expected_currencies(
+    cat: Catalog, service_id: str, cc: str, channel: str, adapter_id: str | None = None
+) -> list[str]:
+    """The currencies validate accepts for a row: the country's, the storefront currency for
+    Apple-billed services, and params.currency_overrides[cc] (a code or a list) of the catalog
+    sources of `adapter_id` on that channel."""
     country = _country(cat, cc)
     if country is None:
         return []
     allowed = list(country.expected_currencies(channel))  # type: ignore[arg-type]
-    extra = country.appstore_currency
-    if service_id in APPLE_BILLED and extra and extra not in allowed:
-        allowed.append(extra)
+    extra = [country.appstore_currency] if service_id in APPLE_BILLED else []
+    svc = _service(cat, service_id) if adapter_id else None
+    for src in svc.sources if svc else []:
+        if src.adapter != adapter_id or src.channel != channel:
+            continue
+        pinned = (src.params.get("currency_overrides") or {}).get(cc)
+        if pinned:
+            extra.extend([pinned] if isinstance(pinned, str) else [str(c) for c in pinned])
+    for currency in extra:
+        if currency and currency not in allowed:
+            allowed.append(currency)
     return allowed
 
 
@@ -259,11 +236,29 @@ def plan_hints(svc: ServiceDef) -> list[LlmPlanHint]:
 
 
 def page_text_lines(text: str) -> list[str]:
-    """Visible lines of a page, rendered like the adapters do (short "129 kr" lines kept)."""
+    """Visible lines of a page (haggler.text.html_to_lines: short "129 kr" lines kept)."""
     try:
-        return page_lines(text)
+        return html_to_lines(text)
     except Exception:  # malformed markup must not kill the task
         return [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+
+def render_page(text: str, *, is_json: bool) -> tuple[list[str], str]:
+    """(visible lines, text hash) of a fetched body; CPU-bound, so callers run it in a thread."""
+    if is_json:
+        return [], text_hash(text)
+    lines = page_text_lines(text)
+    return lines, text_hash("\n".join(lines))
+
+
+def pair_key(service_id: str, cc: str) -> str:
+    """TaskState.llm_pairs key of a (service, country) pair."""
+    return f"{service_id}:{cc}"
+
+
+def split_pair_key(key: str) -> tuple[str, str]:
+    service_id, _, cc = key.rpartition(":")
+    return service_id, cc
 
 
 def focus_text(lines: list[str], country: CountryDef, expected: list[str], *, multi: bool) -> str:
@@ -517,17 +512,26 @@ def to_observation(
 
 
 def reuse_llm_observations(
-    task: Task, existing: set[str], observed_at: datetime, content_hash: str
+    task: Task,
+    existing: set[str],
+    observed_at: datetime,
+    content_hash: str,
+    *,
+    pairs: Collection[tuple[str, str]],
 ) -> list[PriceObservation]:
+    """Previous LLM rows of the (service, country) pairs in `pairs` (those the LLM answered for
+    this very page text), re-emitted for today; keys the parser already has are skipped."""
     out: list[PriceObservation] = []
     for dump in task.prev_llm_obs:
-        if LLM_CHECKED_KEY in dump:
+        if LEGACY_LLM_CHECKED_KEY in dump:
             continue
         try:
             obs = PriceObservation.model_validate(dump)
         except pydantic.ValidationError:
             continue
         if obs.obs_key in existing or obs.country not in task.countries:
+            continue
+        if (obs.service_id, obs.country) not in pairs:
             continue
         existing.add(obs.obs_key)
         out.append(
@@ -545,6 +549,16 @@ def reuse_llm_observations(
     return out
 
 
+@dataclass
+class JobPlan:
+    """LLM jobs planned for one task."""
+
+    jobs: list[LlmJob] = field(default_factory=list)
+    # MAX_JOBS_PER_TASK left pairs for a later run: the task is not fully checked today.
+    truncated: bool = False
+    notes: list[str] = field(default_factory=list)
+
+
 def make_llm_jobs(
     task: Task,
     pr: ParseResult,
@@ -552,45 +566,69 @@ def make_llm_jobs(
     observations: list[PriceObservation],
     cat: Catalog,
     source_url: str,
-) -> list[LlmJob]:
-    """unmapped_iap jobs from the adapter, plus parser_failed jobs for (service, country) pairs
-    whose default plan the parser did not find. Secondary datasets never go to the LLM."""
-    if task.kind == "secondary":
-        return []
-    jobs: list[LlmJob] = []
-    covered: set[tuple[str, str]] = set()
-    scoped = len(task.countries) > 1 or len(task.service_ids) > 1
+    *,
+    answered: Collection[tuple[str, str]] = frozenset(),
+    last_checked: Mapping[tuple[str, str], date] | None = None,
+) -> JobPlan:
+    """The adapter's own LLM requests, plus parser_failed jobs for (service, country) pairs whose
+    default plan the parser did not find. Pure (no I/O), so it can run in a worker thread.
 
-    def add(svc: ServiceDef, cc: str, reason: str, text: str, priority: int) -> None:
+    * `answered` pairs (the LLM already answered them for this page text) get no job.
+    * An unmapped_iap request means the adapter read the page and hands over only the lines it
+      could not map: no generic job asks about the same page again.
+    * A multi-country page gets at most MAX_JOBS_PER_TASK generic jobs per run, the pairs with
+      the oldest `last_checked` date (never checked first), so the cap rotates over the
+      countries across runs instead of starving the same ones.
+    * Secondary datasets never go to the LLM.
+    """
+    plan = JobPlan()
+    if task.kind == "secondary":
+        return plan
+    scoped = len(task.countries) > 1 or len(task.service_ids) > 1
+    checked_on = last_checked or {}
+
+    def add(svc: ServiceDef, cc: str, reason: str, text: str, priority: int) -> bool:
         if not text.strip():
-            return
-        jobs.append(
-            LlmJob(
+            return False
+        try:
+            job = LlmJob(
                 job_id=job_id_for(task.task_id, reason, svc.id, cc, scoped=scoped),
                 task_id=task.task_id,
                 reason=reason,  # type: ignore[arg-type]
                 service_id=svc.id,
                 country=cc,
-                expected_currencies=expected_currencies(cat, svc.id, cc, task.channel),
+                expected_currencies=expected_currencies(
+                    cat, svc.id, cc, task.channel, task.adapter_id
+                ),
                 plans=plan_hints(svc),
                 channel=task.channel,
                 source_url=source_url,
                 page_text=text[:12000],
                 priority=priority,
             )
-        )
+        except pydantic.ValidationError as exc:  # e.g. an adapter request with a bad reason
+            plan.notes.append(f"llm job {svc.id}/{cc} ({reason}) not created: {str(exc)[:200]}")
+            return False
+        plan.jobs.append(job)
+        return True
 
+    covered: set[tuple[str, str]] = set(answered)
     for req in pr.llm_requests:
         svc = _service(cat, req.service_id)
         if svc is None or req.country not in task.countries or _country(cat, req.country) is None:
             continue
-        add(svc, req.country, req.reason, req.page_text, 3 if req.reason == "parser_failed" else 1)
-        covered.add((req.service_id, req.country))
+        pair = (req.service_id, req.country)
+        if pair not in answered:
+            priority = 3 if req.reason == "parser_failed" else 1
+            add(svc, req.country, req.reason, req.page_text, priority)
+        covered.add(pair)
 
+    if any(req.reason == "unmapped_iap" for req in pr.llm_requests):
+        return plan
     if pr.status not in ("no_prices", "partial") or not lines:
-        return jobs
+        return plan
     multi = len(task.countries) > 1
-    pending = 0
+    candidates: list[tuple[ServiceDef, CountryDef]] = []
     for sid in task.service_ids:
         svc = _service(cat, sid)
         if svc is None:
@@ -601,16 +639,24 @@ def make_llm_jobs(
                 continue
             if has_default_plan(observations, svc, cc):
                 continue
-            if multi and pending >= MAX_JOBS_PER_TASK:
-                return jobs
-            text = focus_text(
-                lines, country, expected_currencies(cat, sid, cc, task.channel), multi=multi
+            candidates.append((svc, country))
+    if multi:  # stable sort: ties keep the catalog order
+        candidates.sort(key=lambda c: checked_on.get((c[0].id, c[1].cc), date.min))
+    added = 0
+    for n, (svc, country) in enumerate(candidates):
+        if multi and added >= MAX_JOBS_PER_TASK:
+            plan.truncated = True
+            plan.notes.append(
+                f"llm: {len(candidates) - n} pair(s) left for a later run "
+                f"(at most {MAX_JOBS_PER_TASK} jobs per task and run)"
             )
-            priority = 1 if multi else (3 if pr.status == "no_prices" else 2)
-            before = len(jobs)
-            add(svc, cc, "parser_failed", text, priority)
-            pending += len(jobs) - before
-    return jobs
+            break
+        expected = expected_currencies(cat, svc.id, country.cc, task.channel, task.adapter_id)
+        text = focus_text(lines, country, expected, multi=multi)
+        priority = 1 if multi else (3 if pr.status == "no_prices" else 2)
+        if add(svc, country.cc, "parser_failed", text, priority):
+            added += 1
+    return plan
 
 
 async def process_task(
@@ -619,7 +665,6 @@ async def process_task(
     """Fetch, store raw, parse one task. Raises only TransientFetchError, and only while another
     attempt is left (the node's RetryConfig retries it)."""
     started = time.monotonic()
-    cat = deps.catalog
     base: dict[str, Any] = {
         "task_id": task.task_id,
         "adapter_id": task.adapter_id,
@@ -683,28 +728,88 @@ async def process_task(
             raw_ref = None
             notes.append(f"raw page not stored: {type(exc).__name__}: {exc}")
 
-    lines = [] if is_json else page_text_lines(resp.text)
-    hash_ = text_hash(resp.text if is_json else "\n".join(lines))
+    try:
+        parsed = await parse_fetched(deps, task, resp, is_json=is_json)
+        result = done(
+            status=parsed.status,
+            http_status=resp.status_code,
+            final_url=resp.final_url,
+            observations=parsed.observations,
+            # Node outputs carry the jobs without their page text (it stays in Deps.buffer).
+            llm_jobs=[j.model_copy(update={"page_text": ""}) for j in parsed.jobs],
+            text_hash=parsed.text_hash,
+            raw_ref=raw_ref,
+            error=parsed.error,
+            notes=[*notes, *parsed.notes],
+        )
+    except Exception as exc:  # an internal bug fails this task only, never the whole run
+        log.warning("task %s: internal error after fetch", task.task_id, exc_info=True)
+        return done(
+            status="failed",
+            http_status=resp.status_code,
+            final_url=resp.final_url,
+            raw_ref=raw_ref,
+            error=f"internal: {type(exc).__name__}: {str(exc)[:300]}",
+            notes=notes,
+        )
+    buf = deps.buffer
+    buf.llm_jobs[task.task_id] = parsed.jobs
+    if parsed.checked:
+        buf.llm_checked.add(task.task_id)
+    if parsed.truncated:
+        buf.llm_truncated.add(task.task_id)
+    if parsed.reused:
+        buf.llm_stats.reused += 1
+    return result
+
+
+@dataclass
+class ParsedPage:
+    """What parse_fetched makes of one fetched page (process_task turns it into a TaskResult)."""
+
+    status: str
+    text_hash: str
+    observations: list[PriceObservation] = field(default_factory=list)
+    jobs: list[LlmJob] = field(default_factory=list)
+    error: str | None = None
+    notes: list[str] = field(default_factory=list)
+    # No LLM work left for this page text / jobs capped per task / earlier LLM work reused.
+    checked: bool = False
+    truncated: bool = False
+    reused: bool = False
+
+
+async def parse_fetched(deps: Deps, task: Task, resp: RawResponse, *, is_json: bool) -> ParsedPage:
+    """Render, parse and plan the LLM work of one fetched page. The CPU-heavy steps (rendering,
+    adapter.parse, job planning) run in worker threads so they do not freeze the event loop
+    (the other fetches, rate-limit timers and timeouts). Has no side effects on Deps.buffer."""
+    cat = deps.catalog
+    lines, hash_ = await asyncio.to_thread(render_page, resp.text, is_json=is_json)
     observed_at = resp.fetched_at or deps.now()
     source_url = resp.final_url or task.url
 
     try:
-        pr = get_adapter(task.adapter_id).parse(task, resp, cat)
+        adapter = get_adapter(task.adapter_id)
+        pr: Any = await asyncio.to_thread(adapter.parse, task, resp, cat)  # pure by contract
+        if not isinstance(pr, ParseResult):
+            raise TypeError(f"parse() returned {type(pr).__name__}, not a ParseResult")
     except Exception as exc:  # a parser crash is a parser failure: the LLM fallback applies
         pr = ParseResult(status="no_prices", notes=[f"parser crashed: {type(exc).__name__}: {exc}"])
-    notes = [*notes, *pr.notes]
-    status = _PARSE_TO_TASK.get(pr.status, "failed")
-    error = "no_prices" if pr.status == "no_prices" else None
+    page = ParsedPage(
+        status=_PARSE_TO_TASK.get(pr.status, "failed"),
+        text_hash=hash_,
+        error="no_prices" if pr.status == "no_prices" else None,
+        notes=list(pr.notes),
+    )
 
-    observations: list[PriceObservation] = []
     drafts = pr.observations
     if drafts and pr.status in ("wrong_country", "blocked", "not_available"):
-        notes.append(f"dropped {len(drafts)} draft(s): page status {pr.status}")
+        page.notes.append(f"dropped {len(drafts)} draft(s): page status {pr.status}")
         drafts = []
     confidence = CONFIDENCE.get(task.kind, 0.6)
     for d in drafts:
         try:
-            observations.append(
+            page.observations.append(
                 to_observation(
                     d,
                     task,
@@ -716,34 +821,76 @@ async def process_task(
                     confidence=confidence,
                 )
             )
-        except (pydantic.ValidationError, InvalidOperation, KeyError) as exc:
-            notes.append(f"bad draft {d.plan_id}/{d.country}: {type(exc).__name__}")
+        except Exception as exc:  # one bad draft must not cost the task its other prices
+            page.notes.append(
+                f"bad draft {getattr(d, 'plan_id', '?')}/{getattr(d, 'country', '?')}: "
+                f"{type(exc).__name__}"
+            )
 
-    jobs: list[LlmJob] = []
     if pr.status in ("no_prices", "partial") or pr.llm_requests:
-        if task.prev_text_hash == hash_ and task.prev_llm_obs:
-            existing = {o.obs_key for o in observations}
-            reused = reuse_llm_observations(task, existing, observed_at, hash_)
-            observations.extend(reused)
-            deps.buffer.llm_checked.add(task.task_id)
-            deps.buffer.llm_stats.reused += 1
-            notes.append(f"llm: page unchanged, reused {len(reused)} observation(s)")
-        else:
-            jobs = make_llm_jobs(task, pr, lines, observations, cat, source_url)
+        await plan_llm_work(deps, task, pr, lines, page, observed_at, source_url)
 
-    result = done(
-        status=status,
-        http_status=resp.status_code,
-        final_url=resp.final_url,
-        observations=observations,
-        llm_jobs=jobs,
-        text_hash=hash_,
-        raw_ref=raw_ref,
-        error=error,
-        notes=notes,
+    result = TaskResult(
+        task_id=task.task_id,
+        adapter_id=task.adapter_id,
+        status=page.status,  # type: ignore[arg-type]
+        service_ids=task.service_ids,
+        countries=task.countries,
+        channel=task.channel,
+        observations=page.observations,
+        error=page.error,
     )
-    result.status = coverage_status(result, cat)  # type: ignore[assignment]
-    return result
+    page.status = coverage_status(result, cat)
+    return page
+
+
+async def plan_llm_work(
+    deps: Deps,
+    task: Task,
+    pr: ParseResult,
+    lines: list[str],
+    page: ParsedPage,
+    observed_at: datetime,
+    source_url: str,
+) -> None:
+    """Reuse what the LLM answered for this very page text (TaskState.llm_pairs), and plan jobs
+    for the pairs still unanswered. Jobs are planned even on a fully checked page, so a parser
+    that newly loses a plan on an unchanged page still gets the fallback."""
+    prev = deps.buffer.previous_state.tasks.get(task.task_id)
+    same_page = prev is not None and task.prev_text_hash == page.text_hash
+    answered: set[tuple[str, str]] = set()
+    last_checked: dict[tuple[str, str], date] = {}
+    if prev is not None:
+        for key, check in prev.llm_pairs.items():
+            pair = split_pair_key(key)
+            last_checked[pair] = check.on
+            if same_page and check.text_hash == page.text_hash:
+                answered.add(pair)
+    reused: list[PriceObservation] = []
+    if answered:
+        existing = {o.obs_key for o in page.observations}
+        reused = reuse_llm_observations(task, existing, observed_at, page.text_hash, pairs=answered)
+        page.observations.extend(reused)
+    plan = await asyncio.to_thread(
+        make_llm_jobs,
+        task,
+        pr,
+        lines,
+        page.observations,
+        deps.catalog,
+        source_url,
+        answered=answered,
+        last_checked=last_checked,
+    )
+    page.jobs, page.truncated = plan.jobs, plan.truncated
+    page.notes.extend(plan.notes)
+    page.checked = not plan.jobs and not plan.truncated
+    was_checked = same_page and prev is not None and prev.llm_checked_hash == page.text_hash
+    page.reused = bool(reused) or (was_checked and page.checked)
+    if answered:
+        page.notes.append(
+            f"llm: page unchanged, reused {len(reused)} observation(s), {len(plan.jobs)} new job(s)"
+        )
 
 
 # ============================================================================ LLM
@@ -817,43 +964,101 @@ def post_check(job: LlmJob, extraction: LlmExtraction) -> tuple[list, list]:
     return accepted, rejected
 
 
+class LlmBudgetExceededError(LlmCallsLimitExceededError):
+    """Settings.max_llm_calls reached: raised by the pipeline's own before_model_callback, so
+    the budget holds under `adk web`/`adk run` too (their RunConfig knows nothing of it)."""
+
+
+def agent_run_id(callback_context: Any) -> str:
+    """The run id ctx.run_node gave the agent (its node path ends in "price_extractor@<id>")."""
+    path = str(getattr(callback_context, "node_path", "") or "")
+    return path.rsplit("/", 1)[-1].partition("@")[2]
+
+
+def unique_run_ids(stage: str, jobs: list[LlmJob]) -> list[str]:
+    """One ADK run id per job, unique within the node: ADK answers a repeated run id with the
+    first run's cached output."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for job in jobs:
+        base = run_id = f"{stage}_{job.job_id}"
+        n = 1
+        while run_id in seen:
+            n += 1
+            run_id = f"{base}_{n}"
+        seen.add(run_id)
+        out.append(run_id)
+    return out
+
+
 async def run_llm_jobs(
     deps: Deps, ctx: Context, agent: Agent, jobs: list[LlmJob], *, stage: str
 ) -> list[JobOutcome]:
-    """One agent run per job, at most settings.llm_concurrency at a time. Each failure (malformed
-    output after the agent's retry, model errors, max_llm_calls) stays inside its JobOutcome."""
+    """One agent run per job, at most settings.llm_concurrency at a time, each capped at
+    settings.llm_job_timeout_s. Every failure (malformed output after the agent's retry, model
+    errors, timeouts, empty answers, the call budget, bugs in the post-checks) stays inside its
+    JobOutcome."""
     sem = asyncio.Semaphore(max(1, deps.settings.llm_concurrency))
+    timeout = deps.settings.llm_job_timeout_s
+    reasons = deps.buffer.finish_reasons
 
-    async def one(job: LlmJob) -> JobOutcome:
-        outcome = JobOutcome(job=job, stage=stage)
+    async def call(job: LlmJob, run_id: str) -> Any:
         payload = json.dumps(
             job.model_dump(mode="json", exclude={"compare_to"}), ensure_ascii=False
         )
+        return await asyncio.wait_for(
+            ctx.run_node(agent, node_input=payload, run_id=run_id), timeout=timeout
+        )
+
+    async def one(job: LlmJob, run_id: str) -> JobOutcome:
+        outcome = JobOutcome(job=job, stage=stage)
+        if not job.page_text.strip():
+            outcome.error = "no page text for this job (the run buffer was reset)"
+            return outcome
         async with sem:
             try:
-                out = await ctx.run_node(agent, node_input=payload, run_id=f"{stage}_{job.job_id}")
+                out = await call(job, run_id)
+                if out is None and reasons.get(run_id) in RETRY_EMPTY_REASONS:
+                    # An empty answer skips ADK's schema validation, so the agent's own retry
+                    # never fires: ask once more, under a new run id.
+                    run_id = f"{run_id}_retry"
+                    out = await call(job, run_id)
+            except TimeoutError:
+                outcome.error = f"timeout after {timeout:g}s"
+                return outcome
             except Exception as exc:
                 cause = root_cause(exc) if isinstance(exc, DynamicNodeFailError) else exc
                 if isinstance(cause, LlmCallsLimitExceededError):
+                    if not isinstance(cause, LlmBudgetExceededError):
+                        # ADK's own RunConfig limit refused a call before_model already counted.
+                        deps.buffer.model_calls = max(0, deps.buffer.model_calls - 1)
                     outcome.skipped = "max_llm_calls"
                 else:
                     outcome.error = f"{type(cause).__name__}: {str(cause)[:300]}"
                 return outcome
-        if isinstance(out, LlmExtraction):
-            out = out.model_dump(mode="json")
-        if not isinstance(out, dict):
-            outcome.error = f"unexpected agent output type {type(out).__name__}"
-            return outcome
-        outcome.output = out
         try:
-            extraction = LlmExtraction.model_validate(out)
-        except pydantic.ValidationError as exc:
-            outcome.error = f"ValidationError: {str(exc)[:300]}"
-            return outcome
-        outcome.accepted, outcome.rejected = post_check(job, extraction)
+            if out is None:
+                outcome.error = f"empty answer (finish_reason={reasons.get(run_id) or 'none'})"
+                return outcome
+            if isinstance(out, LlmExtraction):
+                out = out.model_dump(mode="json")
+            if not isinstance(out, dict):
+                outcome.error = f"unexpected agent output type {type(out).__name__}"
+                return outcome
+            outcome.output = out
+            try:
+                extraction = LlmExtraction.model_validate(out)
+            except pydantic.ValidationError as exc:
+                outcome.error = f"ValidationError: {str(exc)[:300]}"
+                return outcome
+            outcome.accepted, outcome.rejected = post_check(job, extraction)
+        except Exception as exc:  # a post-check bug fails this job only
+            outcome.accepted, outcome.rejected = [], []
+            outcome.error = f"internal: {type(exc).__name__}: {str(exc)[:300]}"
         return outcome
 
-    return list(await asyncio.gather(*(one(j) for j in jobs)))
+    run_ids = unique_run_ids(stage, jobs)
+    return list(await asyncio.gather(*(one(j, r) for j, r in zip(jobs, run_ids, strict=True))))
 
 
 def apply_llm_items(
@@ -1025,16 +1230,15 @@ def build_second_opinions(deps: Deps, carry: Carry) -> list[tuple[LlmJob, TaskRe
         svc, country = _service(cat, sid), _country(cat, cc)
         if html is None or svc is None or country is None:
             continue
-        expected = expected_currencies(cat, sid, cc, r.channel)
+        expected = expected_currencies(cat, sid, cc, r.channel, r.adapter_id)
         text = focus_text(page_text_lines(html), country, expected, multi=len(r.countries) > 1)
         if not text.strip():
             continue
+        scoped = len(r.countries) > 1 or len(r.service_ids) > 1
         jobs.append(
             (
                 LlmJob(
-                    job_id=job_id_for(
-                        task_id, "second_opinion", sid, cc, scoped=len(r.countries) > 1
-                    ),
+                    job_id=job_id_for(task_id, "second_opinion", sid, cc, scoped=scoped),
                     task_id=task_id,
                     reason="second_opinion",
                     service_id=sid,
@@ -1171,6 +1375,58 @@ def coverage_rows(deps: Deps, results: list[TaskResult], run_date: date) -> list
     return [rows[k] for k in sorted(rows)]
 
 
+def llm_task_state(
+    buf: RunBuffer,
+    r: TaskResult,
+    hash_: str,
+    old: TaskState | None,
+    held: set[tuple[str, str]],
+    *,
+    run_date: date,
+    countries_filtered: bool,
+) -> dict[str, Any]:
+    """TaskState LLM fields for a task fetched today (its page text hash is `hash_`).
+
+    llm_obs keeps the whole answer of every pair answered for this very text: today's fresh
+    answers, and the stored rows of earlier answers while the text is unchanged (also on days the
+    parser covered them, so a later parser failure on the same page can still reuse them).
+
+    A pair whose LLM row ended quarantined (`held`: (obs_key, adapter_id)) is neither stored for
+    reuse nor counted as answered: only a fresh answer (or the parser, or a secondary source) may
+    confirm it, never a copy of the same answer."""
+    rows = [o for o in r.observations if o.extraction == "llm"]
+    redo = {(o.service_id, o.country) for o in rows if (o.obs_key, o.adapter_id) in held}
+    fresh = buf.llm_answered.get(r.task_id, set()) - redo
+    pairs = dict(old.llm_pairs) if old else {}
+    for sid, cc in redo:
+        pairs.pop(pair_key(sid, cc), None)
+    for sid, cc in sorted(fresh):
+        pairs[pair_key(sid, cc)] = LlmPairCheck(text_hash=hash_, on=run_date)
+    valid = {split_pair_key(k) for k, check in pairs.items() if check.text_hash == hash_}
+    llm_obs = [
+        o.model_dump(mode="json")
+        for o in rows
+        if not o.reused and (o.service_id, o.country) in fresh
+    ]
+    if old is not None and old.text_hash == hash_:
+        llm_obs += [
+            d
+            for d in old.llm_obs
+            if LEGACY_LLM_CHECKED_KEY not in d
+            and (pair := (d.get("service_id"), d.get("country"))) in valid
+            and pair not in fresh
+        ]
+    checked = r.task_id in buf.llm_checked and not redo
+    if countries_filtered:  # a narrowed multi-country task says nothing about the other pairs
+        checked = checked and old is not None and old.llm_checked_hash == hash_
+    return {
+        "text_hash": hash_,
+        "llm_obs": llm_obs,
+        "llm_checked_hash": hash_ if checked else None,
+        "llm_pairs": dict(sorted(pairs.items())),
+    }
+
+
 def next_state(
     deps: Deps,
     results: list[TaskResult],
@@ -1178,22 +1434,33 @@ def next_state(
     run: dict[str, Any],
     run_date: date,
 ) -> PipelineState:
-    prev = deps.buffer.previous_state
+    buf = deps.buffer
+    prev = buf.previous_state
     tasks: dict[str, TaskState] = {} if not run.get("filtered") else dict(prev.tasks)
+    held = {
+        (o.obs_key, o.adapter_id)
+        for o in outcome.observations
+        if o.status == "quarantined" and o.extraction == "llm"
+    }
     for r in results:
         old = prev.tasks.get(r.task_id)
         if r.text_hash is not None:
-            text_hash_ = r.text_hash
-            llm_obs = [o.model_dump(mode="json") for o in r.observations if o.extraction == "llm"]
-            if r.task_id in deps.buffer.llm_checked:
-                llm_obs.append({LLM_CHECKED_KEY: r.text_hash})
-        else:  # not fetched today: keep what lets a later unchanged page reuse the LLM result
-            text_hash_ = old.text_hash if old else None
-            llm_obs = list(old.llm_obs) if old else []
+            llm = llm_task_state(
+                buf,
+                r,
+                r.text_hash,
+                old,
+                held,
+                run_date=run_date,
+                countries_filtered=bool(run.get("countries_filtered")),
+            )
+        elif old is not None:  # not fetched today: keep what lets a later unchanged page reuse
+            llm = old.model_dump(include={"text_hash", "llm_obs", "llm_checked_hash", "llm_pairs"})
+        else:
+            llm = {}
         failing = r.status in FAILING_STATUSES
         tasks[r.task_id] = TaskState(
-            text_hash=text_hash_,
-            llm_obs=llm_obs,
+            **llm,
             last_status=r.status,
             failing_since=((old.failing_since if old else None) or run_date) if failing else None,
         )
@@ -1219,13 +1486,29 @@ def report_summary(report: RunReport) -> dict[str, Any]:
 def build_workflow(deps: Deps) -> Workflow:
     settings = deps.settings
 
-    def _count_model_call(callback_context: Any, llm_response: Any) -> None:
-        deps.buffer.model_calls += 1
+    def _before_model(callback_context: Any, llm_request: Any) -> None:
+        """Runs once per model attempt, before ADK sends it: the call budget and its count."""
+        buf = deps.buffer
+        if buf.model_calls >= settings.max_llm_calls:
+            raise LlmBudgetExceededError(
+                f"HAGGLER_MAX_LLM_CALLS={settings.max_llm_calls} model calls reached"
+            )
+        buf.model_calls += 1
         return None
 
+    def _after_model(callback_context: Any, llm_response: Any) -> None:
+        reason = getattr(llm_response, "finish_reason", None)
+        deps.buffer.finish_reasons[agent_run_id(callback_context)] = (
+            getattr(reason, "name", str(reason)) if reason is not None else None
+        )
+        return None
+
+    # HAGGLER_MAX_LLM_CALLS <= 0 means no LLM at all (ADK would read a 0 limit as unlimited).
     extractor = (
-        build_price_extractor(deps.model, after_model_callback=_count_model_call)
-        if deps.model is not None
+        build_price_extractor(
+            deps.model, before_model_callback=_before_model, after_model_callback=_after_model
+        )
+        if deps.model is not None and settings.max_llm_calls > 0
         else None
     )
 
@@ -1236,12 +1519,14 @@ def build_workflow(deps: Deps) -> Workflow:
         started = deps.now()
         run_date = filters.date or started.date()
         run_id = make_run_id(run_date, started, filters)
+        buf.run_id = run_id
         ctx.state["run"] = {
             "run_id": run_id,
             "run_date": run_date.isoformat(),
             "started_at": started.isoformat(),
             "dry_run": filters.dry_run,
             "filtered": filters.filtered,
+            "countries_filtered": bool(filters.countries),
         }
         load_previous(deps.store, buf)
         tasks = plan_all(deps, filters, buf.errors)
@@ -1279,17 +1564,20 @@ def build_workflow(deps: Deps) -> Workflow:
     async def llm_extract(node_input: Any, ctx: Context, run: dict[str, Any]) -> dict[str, Any]:
         """LLM fallback for pages the parsers could not (fully) read; capped and prioritised."""
         carry = Carry.load(node_input)
-        stats = deps.buffer.llm_stats
-        indexed = [(i, job) for i, r in enumerate(carry.tasks) for job in r.llm_jobs]
+        buf = deps.buffer
+        stats = buf.llm_stats
+        # The page texts stayed in the run buffer (node outputs carry the jobs without them).
+        stashed = buf.llm_jobs if buf.run_id == run["run_id"] else {}
+        indexed: list[tuple[int, LlmJob]] = []
+        for i, r in enumerate(carry.tasks):
+            full = stashed.get(r.task_id, [])
+            if [j.job_id for j in full] != [j.job_id for j in r.llm_jobs]:
+                full = r.llm_jobs  # no page text: run_llm_jobs records an error, no model call
+            indexed.extend((i, job) for job in full)
         stats.jobs += len(indexed)
         if extractor is None:
             stats.skipped_budget += len(indexed)
         elif indexed:
-            seen: Counter[str] = Counter()
-            for _, job in indexed:  # run ids must be unique within the node
-                seen[job.job_id] += 1
-                if seen[job.job_id] > 1:
-                    job.job_id = f"{job.job_id}_{seen[job.job_id]}"
             indexed.sort(key=lambda x: (-x[1].priority, x[1].job_id))
             cap = max(0, settings.max_llm_jobs)
             selected, skipped = indexed[:cap], indexed[cap:]
@@ -1297,37 +1585,41 @@ def build_workflow(deps: Deps) -> Workflow:
             outcomes = await run_llm_jobs(
                 deps, ctx, extractor, [j for _, j in selected], stage="extract"
             )
-            unanswered = {
-                carry.tasks[i].task_id
-                for (i, _), o in zip(selected, outcomes, strict=True)
-                if o.error or o.skipped
-            } | {carry.tasks[i].task_id for i, _ in skipped}
-            deps.buffer.llm_checked.update(
-                carry.tasks[i].task_id
-                for i, _ in selected
-                if carry.tasks[i].task_id not in unanswered
-            )
+            unanswered = {carry.tasks[i].task_id for i, _ in skipped}
             for (i, _), outcome in zip(selected, outcomes, strict=True):
                 result = carry.tasks[i]
+                if not (outcome.skipped or outcome.error):
+                    try:
+                        kind = source_kind(
+                            deps.catalog, result.service_ids[0], result.adapter_id, result.channel
+                        )
+                        added = apply_llm_items(deps, result, outcome, kind)
+                        result.status = coverage_status(result, deps.catalog)  # type: ignore[assignment]
+                    except Exception as exc:  # a bug here fails this job, not the run
+                        outcome.error = f"internal: {type(exc).__name__}: {str(exc)[:300]}"
+                    else:
+                        stats.accepted_items += added
+                        stats.rejected_items += len(outcome.rejected)
+                        page_status = (outcome.output or {}).get("page_status")
+                        result.notes.append(
+                            f"llm: page_status={page_status} accepted={added} "
+                            f"rejected={len(outcome.rejected)}"
+                        )
+                        pair = (outcome.job.service_id, outcome.job.country)
+                        buf.llm_answered.setdefault(result.task_id, set()).add(pair)
                 if outcome.skipped:
                     stats.skipped_budget += 1
+                    unanswered.add(result.task_id)
                 elif outcome.error:
                     stats.errors += 1
+                    unanswered.add(result.task_id)
                     result.notes.append(f"llm error: {outcome.error[:200]}")
-                else:
-                    kind = source_kind(
-                        deps.catalog, result.service_ids[0], result.adapter_id, result.channel
-                    )
-                    added = apply_llm_items(deps, result, outcome, kind)
-                    stats.accepted_items += added
-                    stats.rejected_items += len(outcome.rejected)
-                    page_status = (outcome.output or {}).get("page_status")
-                    result.notes.append(
-                        f"llm: page_status={page_status} accepted={added} "
-                        f"rejected={len(outcome.rejected)}"
-                    )
-                    result.status = coverage_status(result, deps.catalog)  # type: ignore[assignment]
-                deps.buffer.llm_log.append(outcome.log_line())
+                buf.llm_log.append(outcome.log_line())
+            # Fully checked: every job of the task answered and none left for a later run.
+            pending = unanswered | buf.llm_truncated
+            buf.llm_checked.update(
+                carry.tasks[i].task_id for i, _ in selected if carry.tasks[i].task_id not in pending
+            )
         for r in carry.tasks:  # the page text is in llm.jsonl; keep later node outputs small
             for job in r.llm_jobs:
                 job.page_text = ""

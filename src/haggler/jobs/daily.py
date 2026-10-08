@@ -1,8 +1,14 @@
 """Daily batch entry point (Cloud Run Job): `haggler daily [...]` or `python -m haggler.jobs.daily`.
 
 Runs the ADK Workflow once with an in-memory session (the job's disk is ephemeral; everything
-durable goes to the Store) and prints one JSON summary line on stdout. Exit code 1 when the run
-produced no report or fewer than half of the tasks succeeded (not for --dry-run).
+durable goes to the Store) and prints one JSON summary line on stdout.
+
+Exit code 0 once the run persisted latest/* and latest/run.json, even when fewer than half of the
+tasks succeeded (that is logged as a WARNING and flagged in the summary): the Cloud Run Job runs
+with --max-retries 1, and re-running a persisted crawl would only fetch every vendor page again
+and count as "the next run" for quarantine releases and carry-forward counters. Exit code 1 only
+when the run crashed or produced no report (a --dry-run, which persists nothing by design, exits
+0 with a report).
 """
 
 from __future__ import annotations
@@ -33,7 +39,34 @@ from haggler.pipeline.deps import Deps, build_default_deps
 log = logging.getLogger(__name__)
 
 USER_ID = "daily-job"
+# Below this share of ok/partial/not_available tasks the run is reported as degraded.
 MIN_SUCCESS_RATIO = 0.5
+ADK_NODE_RUNNER_LOGGER = "google_adk.google.adk.workflow._node_runner"
+ADK_NODE_FAILURE_MESSAGE = "Node execution failed with exception"
+
+
+class HandledNodeErrors(logging.Filter):
+    """ADK logs every exception raised inside a node at ERROR with a traceback, before deciding
+    to retry it, even the ones the pipeline handles (a TransientFetchError retry, a failed LLM
+    job). Those are recorded in the run report, so they are logged as WARNING with the exception
+    in one line; a real crash still reaches main(), which logs it with its traceback."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno >= logging.ERROR and record.getMessage() == ADK_NODE_FAILURE_MESSAGE:
+            exc = record.exc_info[1] if record.exc_info else None
+            if exc is not None:
+                record.msg = f"{ADK_NODE_FAILURE_MESSAGE}: {type(exc).__name__}: {exc}"[:500]
+                record.args = None
+            record.levelno, record.levelname = logging.WARNING, "WARNING"
+            record.exc_info, record.exc_text = None, None
+        return True
+
+
+def quiet_handled_node_errors() -> None:
+    """Install HandledNodeErrors on ADK's node runner logger (idempotent)."""
+    logger = logging.getLogger(ADK_NODE_RUNNER_LOGGER)
+    if not any(isinstance(f, HandledNodeErrors) for f in logger.filters):
+        logger.addFilter(HandledNodeErrors())
 
 
 @dataclass
@@ -101,7 +134,12 @@ async def run_daily(options: DailyOptions, deps: Deps | None = None) -> RunRepor
                 user_id=USER_ID,
                 session_id=f"daily-{run_date.isoformat()}",
                 new_message=message,
-                run_config=RunConfig(max_llm_calls=deps.settings.max_llm_calls),
+                # The pipeline enforces HAGGLER_MAX_LLM_CALLS itself (nodes.build_workflow), so
+                # adk web/run honour it too; this is the same cap as ADK's own guard. A value <= 0
+                # turns the LLM off, which ADK would read as "unlimited": keep ADK's default.
+                run_config=RunConfig(max_llm_calls=deps.settings.max_llm_calls)
+                if deps.settings.max_llm_calls > 0
+                else RunConfig(),
             ):
                 if ev.error_code:
                     path = ev.node_info.path if ev.node_info else "?"
@@ -119,14 +157,26 @@ async def run_daily(options: DailyOptions, deps: Deps | None = None) -> RunRepor
     return RunReport.model_validate(final)
 
 
+def persisted(report: RunReport) -> bool:
+    """True once persist wrote latest/run.json (its last write; outputs lists what it wrote)."""
+    return not report.dry_run and "latest/run.json" in report.outputs
+
+
+def degraded(report: RunReport) -> bool:
+    return report.success_ratio < MIN_SUCCESS_RATIO
+
+
 def summary(report: RunReport) -> dict[str, Any]:
     return {
         "ok": True,
         "run_id": report.run_id,
         "run_date": report.run_date.isoformat(),
         "dry_run": report.dry_run,
+        "persisted": persisted(report),
         "tasks_total": report.tasks_total,
         "success_ratio": round(report.success_ratio, 4),
+        "low_success_ratio": degraded(report),
+        "min_success_ratio": MIN_SUCCESS_RATIO,
         "tasks_by_status": report.tasks_by_status,
         "obs_by_status": report.obs_by_status,
         "llm": report.llm.model_dump(mode="json"),
@@ -167,11 +217,13 @@ def options_from_args(ns: argparse.Namespace) -> DailyOptions:
 
 
 def exit_code(report: RunReport | None, *, dry_run: bool) -> int:
+    """0 when the run did what it had to (persisted, or a dry run that reported); 1 otherwise,
+    so Cloud Run's retry only repeats runs that persisted nothing. See the module docstring."""
     if report is None:
         return 1
     if dry_run:
         return 0
-    return 0 if report.success_ratio >= MIN_SUCCESS_RATIO else 1
+    return 0 if persisted(report) else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -181,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
         logging.basicConfig(
             level=logging.INFO, stream=sys.stderr, format="%(levelname)s %(name)s: %(message)s"
         )
+    quiet_handled_node_errors()
     try:
         report = asyncio.run(run_daily(options))
     except Exception as exc:
@@ -190,6 +243,14 @@ def main(argv: list[str] | None = None) -> int:
     if report is None:
         print(json.dumps({"ok": False, "error": "the workflow produced no report"}), flush=True)
         return 1
+    if degraded(report):
+        log.warning(
+            "run %s: low success ratio %.2f (< %.2f) — %s",
+            report.run_id,
+            report.success_ratio,
+            MIN_SUCCESS_RATIO,
+            json.dumps(report.tasks_by_status, sort_keys=True),
+        )
     print(json.dumps(summary(report), ensure_ascii=False), flush=True)
     return exit_code(report, dry_run=options.dry_run)
 

@@ -2,6 +2,10 @@
 
 `app` and `root_agent` are built at import time from the environment, so this module must stay
 offline-safe: build_default_deps creates no HTTP, GCS or model client until a run needs one.
+
+Budgets live in the workflow itself, not in a RunConfig (adk web/run build their own): the
+agent's before_model_callback enforces HAGGLER_MAX_LLM_CALLS (<= 0 = no LLM at all), and each LLM
+job is capped at HAGGLER_LLM_JOB_TIMEOUT_S.
 """
 
 from __future__ import annotations

@@ -160,22 +160,28 @@ def test_daily_main_dry_run_writes_nothing(
     assert not (tmp_path / "store").exists()
 
 
-def test_daily_main_fails_when_most_tasks_fail(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+def test_daily_main_low_success_ratio_is_a_warning_not_a_retry(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
+    """Once latest/* and run.json are written the job exits 0, whatever the success ratio:
+    Cloud Run's --max-retries 1 would otherwise crawl every vendor again the same night."""
     _clean_env(monkeypatch, tmp_path)
     code = daily.main(
         ["--replay", str(W.REPLAY_DIR), "--store", "memory", "--no-llm", "--services", "spotify"]
     )
     summary = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
-    # spotify SE ok + spotify CO blocked = 50% -> still OK; netflix filtered out.
+    # spotify SE ok + spotify CO blocked = 50%; netflix filtered out.
     assert summary["tasks_total"] == 2 and code == 0
+    assert summary["low_success_ratio"] is False
     code = daily.main(
         [
             "--replay",
             str(W.REPLAY_DIR),
             "--store",
-            "memory",
+            "local",
             "--no-llm",
             "--services",
             "spotify",
@@ -185,7 +191,32 @@ def test_daily_main_fails_when_most_tasks_fail(
     )
     summary = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert summary["tasks_by_status"] == {"blocked": 1}
-    assert code == 1
+    assert (summary["success_ratio"], summary["low_success_ratio"]) == (0.0, True)
+    assert summary["persisted"] is True and code == 0
+    assert (tmp_path / "store" / "latest" / "run.json").is_file()
+    warnings = [r for r in caplog.records if r.name == "haggler.jobs.daily"]
+    assert [r.levelname for r in warnings] == ["WARNING"]
+    assert "low success ratio 0.00" in warnings[0].getMessage()
+
+
+def test_daily_main_exits_1_when_nothing_was_persisted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch, tmp_path)
+
+    async def crash(options, deps=None):
+        raise RuntimeError("store unreachable")
+
+    monkeypatch.setattr(daily, "run_daily", crash)
+    assert daily.main(["--store", "memory", "--no-llm"]) == 1
+    out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert out == {"ok": False, "error": "RuntimeError: store unreachable"}
+
+    async def no_report(options, deps=None):
+        return None
+
+    monkeypatch.setattr(daily, "run_daily", no_report)
+    assert daily.main(["--store", "memory", "--no-llm"]) == 1
 
 
 def test_exit_code_rules() -> None:
@@ -199,13 +230,51 @@ def test_exit_code_rules() -> None:
         started_at=datetime(2026, 10, 8, tzinfo=UTC),
         tasks_total=4,
         tasks_by_status={"ok": 1, "failed": 3},
+        outputs=["latest/prices.json", "latest/run.json"],
     )
     assert daily.exit_code(None, dry_run=False) == 1
     assert daily.exit_code(None, dry_run=True) == 1
-    assert daily.exit_code(report, dry_run=False) == 1
+    assert daily.exit_code(report, dry_run=False) == 0  # persisted: low ratio is only a warning
     assert daily.exit_code(report, dry_run=True) == 0
+    assert daily.degraded(report) and daily.summary(report)["low_success_ratio"] is True
     report.tasks_by_status = {"ok": 1, "partial": 1, "failed": 2}
-    assert daily.exit_code(report, dry_run=False) == 0
+    assert daily.exit_code(report, dry_run=False) == 0 and not daily.degraded(report)
+    report.outputs = []  # a report, but persist wrote nothing
+    assert daily.exit_code(report, dry_run=False) == 1
+
+
+def test_daily_main_logs_handled_node_errors_as_warnings(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """ADK logs every exception a node raises at ERROR with a traceback, even a retried
+    TransientFetchError the pipeline handles; Cloud Logging would flag healthy runs."""
+    import dataclasses
+    import logging
+
+    _clean_env(monkeypatch, tmp_path)
+    root = tmp_path / "replay"
+    root.mkdir()
+    write_index(root, {"https://www.spotify.com/se/premium/": {"error": "transient"}})
+    (root / "fx.json").write_bytes((W.REPLAY_DIR / "fx.json").read_bytes())
+    real = daily.build_default_deps
+    monkeypatch.setattr(
+        daily,
+        "build_default_deps",
+        lambda settings=None: dataclasses.replace(real(settings), fetch_retry_delay=0.01),
+    )
+    caplog.set_level(logging.INFO)
+    daily.main(["--replay", str(root), "--store", "memory", "--no-llm"])
+    summary = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert summary["tasks_by_status"] == {"failed": 1}
+    adk = [r for r in caplog.records if r.name == "google_adk.google.adk.workflow._node_runner"]
+    failures = [r for r in adk if r.getMessage().startswith("Node execution failed")]
+    assert len(failures) == 2  # attempts 1 and 2 raise; the last attempt is a failed record
+    assert all(r.levelname == "WARNING" and r.exc_info is None for r in failures)
+    assert "TransientFetchError" in failures[0].getMessage()
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
 
 
 def test_cli_flags_parse() -> None:

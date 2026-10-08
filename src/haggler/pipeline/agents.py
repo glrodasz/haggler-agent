@@ -20,6 +20,8 @@ from google.genai import types
 from haggler.models.run import LlmExtraction
 
 AGENT_NAME = "price_extractor"
+# Thinking tokens count toward the limit on Gemini 3; the JSON answer itself stays well below 2k.
+MAX_OUTPUT_TOKENS = 4096
 
 INSTRUCTION = """\
 You read the text of ONE official web page (or an App Store in-app purchase list) for one
@@ -62,20 +64,41 @@ def instruction(ctx: ReadonlyContext) -> str:
     return INSTRUCTION
 
 
+def model_name(model: str | BaseLlm) -> str:
+    """Bare model id ("gemini-3.1-flash-lite") of a model string, resource path or BaseLlm."""
+    name = model if isinstance(model, str) else str(getattr(model, "model", "") or "")
+    return name.rsplit("/", 1)[-1]
+
+
+def generate_content_config(model: str | BaseLlm) -> types.GenerateContentConfig:
+    """Gemini 3 settings: the model's default temperature (Google advises against lowering it for
+    Gemini 3), low thinking for a quoting task, and room for thoughts plus the JSON answer (a
+    truncated answer fails schema validation and costs a retry)."""
+    thinking = None
+    if model_name(model).startswith("gemini-3"):
+        thinking = types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW)
+    return types.GenerateContentConfig(
+        max_output_tokens=MAX_OUTPUT_TOKENS, thinking_config=thinking
+    )
+
+
 def build_price_extractor(
     model: str | BaseLlm,
     *,
+    before_model_callback: Callable[..., Any] | None = None,
     after_model_callback: Callable[..., Any] | None = None,
     validation_attempts: int = 2,
 ) -> Agent:
-    """`after_model_callback` lets the pipeline count real model calls (retries included)."""
+    """The callbacks let the pipeline enforce its call budget and count every model request
+    (`before_model_callback`, once per attempt) and read each answer's finish reason
+    (`after_model_callback`)."""
     return Agent(
         name=AGENT_NAME,
         model=model,
         description="Quotes subscription prices printed on one official page.",
         instruction=instruction,
         output_schema=LlmExtraction,
-        generate_content_config=types.GenerateContentConfig(temperature=0, max_output_tokens=2048),
+        generate_content_config=generate_content_config(model),
         # A malformed JSON answer raises pydantic.ValidationError: ask once more, then give up
         # (the caller records the job as an error).
         retry_config=RetryConfig(
@@ -84,5 +107,6 @@ def build_price_extractor(
             max_delay=2,
             exceptions=[pydantic.ValidationError],
         ),
+        before_model_callback=before_model_callback,
         after_model_callback=after_model_callback,
     )
