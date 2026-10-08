@@ -2,9 +2,11 @@
 paired with nearby prices.
 
 Every price found in a line gets a role and a billing period:
-  * period: the first explicit marker between the price and the next price ("109 kr/mån eller
-    1 090 kr/år" -> 109 month, 1090 year); a lone price may also take one stated before it
-    ("Monthly: 129 kr"); None when nothing is stated.
+  * period: a label right before the price ("Monthly: $10.99 · Annual: $109" -> 10.99 month,
+    109 year), else the first explicit marker between the price and the next price or its label
+    ("109 kr/mån eller 1 090 kr/år" -> 109 month, 1090 year); a lone price may also take one
+    stated before it ("Monthly 129 kr"); None when nothing is stated. A short next line lends
+    its marker ("<div>/år</div>") unless it holds a price or a label of its own.
   * role:
       - "savings": the amount saved, not a price ("Spara 124 kr/mån", "Save over $8/mo.");
       - "compare": a struck-through or comparison price ("Inte 339 kr/mån", "Not $29.95",
@@ -48,7 +50,7 @@ _YEAR = re.compile(
     rf"(/\s*(yr|year|año|ano|år|an|jahr|anno|yıl|rok|év|jaar|v|vuosi|metus|metai|gadā|gads"
     rf"|aasta)(?![^\W\d_])"
     rf"|\b{_PER}\s+{_YEAR_WORD}\b|al\s+año|om\s+året|i\s+året|par\s+an|per\s+annum"
-    rf"|annual|yearly|anual|årlig|yıllık|rocznie|vuodessa)",
+    rf"|annual|yearly|anual|årlig|årsvis|yıllık|rocznie|vuodessa)",
     re.IGNORECASE,
 )
 _QUARTER = re.compile(
@@ -86,6 +88,41 @@ def detect_period(text: str) -> BillingPeriod | None:
 def price_period(tail: str) -> BillingPeriod | None:
     """Billing period stated right after a price (pass only the text up to the next price)."""
     return period_marker(tail)
+
+
+# A period label written before its price ("Monthly: $10.99 · Annual: $109", "Yıllık: ₺399").
+_LABEL = (
+    r"(?<![^\W\d_])(?:monthly|mensual|mensal|månadsvis|aylık|miesięcznie|annual(?:ly)?|yearly"
+    r"|anual|årlig|årsvis|yıllık|rocznie|quarterly|trimestral)\s*:"
+)
+_LABEL_END = re.compile(_LABEL + r"\s*$", re.IGNORECASE)
+_LABEL_ANY = re.compile(_LABEL, re.IGNORECASE)
+
+
+def label_period(before: str) -> BillingPeriod | None:
+    """Period of a label that ends `before`, the text since the previous price ("Annual: ")."""
+    m = _LABEL_END.search(before[-40:])
+    return period_marker(m.group()) if m else None
+
+
+def price_tail(text: str, end: int, nxt: int, limit: int) -> str:
+    """The text after a price that may state its period: from `end` up to the next price at
+    `nxt`, without that price's own label ("$10.99 · Annual: $109" -> " · "), at most `limit`
+    characters."""
+    tail = text[end:nxt]
+    if m := _LABEL_END.search(tail):
+        tail = tail[: m.start()]
+    return tail[:limit]
+
+
+def lends_period(next_text: str, expected: list[str]) -> bool:
+    """A short next line may hold the period split off a price by markup ("<div>/år</div>"), but
+    not one with a price or a label of its own ("Monthly: $10.99", "Annual:")."""
+    return (
+        0 < len(next_text) <= 20
+        and not _LABEL_ANY.search(next_text)
+        and not find_prices(next_text, expected)
+    )
 
 
 # ---- introductory offers -------------------------------------------------------------------
@@ -210,19 +247,21 @@ def classify_prices(
     prev_end = 0
     for k, m in enumerate(found):
         nxt = found[k + 1].start if k + 1 < len(found) else len(text)
-        tail = text[m.end : min(nxt, m.end + 40)]
-        if not tail.strip() and k + 1 == len(found) and next_text and len(next_text) <= 20:
-            tail = next_text
-        period = period_marker(tail)
-        if period is None and len(found) == 1:
-            period = period_marker(text[: m.start])  # "Monthly: 129 kr", "Årsvis: 1 290 kr"
         before, after = text[prev_end : m.start], text[m.end : nxt]
+        tail = price_tail(text, m.end, nxt, 40)
+        if not tail.strip() and k + 1 == len(found) and lends_period(next_text, expected):
+            tail = next_text
+        period = label_period(before) or period_marker(tail)
+        if period is None and len(found) == 1:
+            period = period_marker(text[: m.start])  # "Monthly 129 kr", "Årsvis 1 290 kr"
         role: PriceRole
         if is_savings(before, after):
             role = "savings"
         elif is_comparison(before, after):
             role = "compare"
-        elif is_intro(before, after, words=intro_words):
+        elif is_intro(before, after, words=intro_words) or is_intro(text[: m.start], ""):
+            # The second check sees an offer ("3 months for") in the whole line, in case an
+            # earlier match took its count; offer words stay limited to `before`.
             role = "intro"
         else:
             role = "regular"

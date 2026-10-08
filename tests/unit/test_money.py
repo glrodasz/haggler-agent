@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal
 
 import pytest
@@ -96,3 +97,82 @@ def test_parse_number_rejects_garbage(token):
 
 def test_parse_bare_amount():
     assert parse_bare_amount("129,00") == Decimal("129.00")
+
+
+# prices/F4: ISO codes only count in upper case, so English words are not currencies.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Try 1 month free", ["TRY"]),
+        ("Try 3 months of Premium", ["USD"]),
+        ("Ron 5 years ago", ["RON"]),
+        ("pen 2 refills", ["PEN"]),
+        ("cad 3 drawings", ["CAD"]),
+    ],
+)
+def test_lowercase_iso_code_words_are_not_markers(text, expected):
+    assert find_prices(text, expected) == []
+
+
+def test_try_before_a_count_is_not_a_price():
+    found = find_prices("Try 3 months for $2.99/mo.", ["USD"])
+    assert [(m.amount, m.currency) for m in found] == [(Decimal("2.99"), "USD")]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected", "amount", "currency"),
+    [
+        ("₺39,99 TRY", ["TRY"], "39.99", "TRY"),
+        ("TRY 39,99", ["TRY"], "39.99", "TRY"),
+        ("39,99 TL", ["TRY"], "39.99", "TRY"),
+        ("39,99 tl", ["TRY"], "39.99", "TRY"),
+        ("PEN 24.90", ["PEN"], "24.90", "PEN"),
+        ("29 kr", ["SEK"], "29", "SEK"),
+        ("29 KR", ["SEK"], "29", "SEK"),
+        ("39,99 ZŁ", ["PLN"], "39.99", "PLN"),
+        ("49,99 LEI", ["RON"], "49.99", "RON"),
+        ("5,99 eur", ["EUR"], "5.99", "EUR"),
+    ],
+)
+def test_uppercase_codes_and_case_insensitive_words_still_parse(text, expected, amount, currency):
+    money = parse_money(text, expected)
+    assert money is not None, text
+    assert (money.amount, money.currency) == (Decimal(amount), currency)
+
+
+# prices/F5: long digit runs without a marker must not take quadratic time.
+@pytest.mark.parametrize(
+    "text",
+    ["1" * 6000, "111." * 1500, "123 456 " * 750, "9," * 3000],
+    ids=["digits", "dot-groups", "space-groups", "comma-decimals"],
+)
+def test_long_digit_runs_are_fast(text):
+    start = time.perf_counter()
+    assert find_prices(text, ["SEK"]) == []
+    assert time.perf_counter() - start < 0.5
+
+
+# prices/F6: Arabic-Indic / Persian digits and the Arabic decimal and thousands separators.
+@pytest.mark.parametrize(
+    ("text", "amount"),
+    [
+        ("٤٩٫٩٩ ج.م.", "49.99"),
+        ("١٬٢٩٩ ج.م.", "1299"),
+        ("EGP ٤٩٫٩٩", "49.99"),
+        ("٤٩٫٩٩ EGP", "49.99"),
+        ("٤٩ ج.م", "49"),
+        ("۴۹٫۹۹ EGP", "49.99"),
+        ("49.99 ج.م.", "49.99"),
+    ],
+)
+def test_arabic_digits_and_separators(text, amount):
+    (money,) = find_prices(text, ["EGP"])
+    assert (money.amount, money.currency) == (Decimal(amount), "EGP")
+    # Offsets and raw text still point into the original string.
+    assert text[money.start : money.end] == money.raw
+
+
+def test_arabic_digits_in_bare_amounts():
+    assert parse_number("٤٩٫٩٩") == Decimal("49.99")
+    assert parse_number("١٬٢٩٩") == Decimal("1299")
+    assert parse_bare_amount("السعر ١٬٢٩٩٫٥٠") == Decimal("1299.50")

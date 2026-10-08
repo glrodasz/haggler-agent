@@ -111,8 +111,25 @@ ZERO_DECIMAL = {"CLP", "COP", "VND", "IDR", "JPY", "KRW", "ISK", "HUF", "PKR", "
 _SPACES = "\u00a0\u202f\u2009\u2007 "
 # A digit run, then thousands groups (any separator, exactly 3 digits not followed by another
 # digit), then an optional decimal part. Spaces only ever act as thousands separators, so a
-# footnote digit after a price ("$59.99 4") is not glued onto it.
-_NUM = rf"\d+(?:[.,'’{_SPACES}]\d{{3}}(?!\d))*(?:[.,]\d+)?"
+# footnote digit after a price ("$59.99 4") is not glued onto it. The number starts where a digit
+# run starts and is atomic: a long run without a marker fails once instead of being retried
+# from every digit with every shorter length (quadratic time on a few thousand digits).
+_NUM = rf"(?<!\d)(?>\d+(?:[.,'’{_SPACES}]\d{{3}}(?!\d))*(?:[.,]\d+)?)"
+
+# Arabic-Indic and Persian digits and the Arabic decimal/thousands separators ("٤٩٫٩٩ ج.م.",
+# "١٬٢٩٩") as ASCII. One character for one, so match offsets stay valid in the original text.
+_DIGIT_TABLE = str.maketrans(
+    {
+        **{chr(0x0660 + i): str(i) for i in range(10)},
+        **{chr(0x06F0 + i): str(i) for i in range(10)},
+        "\u066b": ".",
+        "\u066c": ",",
+    }
+)
+
+
+def _ascii_digits(text: str) -> str:
+    return text.translate(_DIGIT_TABLE)
 
 
 def _marker_regex() -> re.Pattern[str]:
@@ -120,6 +137,10 @@ def _marker_regex() -> re.Pattern[str]:
     alts = []
     for t in tokens:
         esc = re.escape(t)
+        if t not in _MARKERS:
+            # Bare ISO codes only count in upper case: "Try 3 months" is not 3 TRY, nor
+            # "pen"/"cad"/"Ron" a currency. Words and symbols ("kr", "zł", "eur") stay caseless.
+            esc = rf"(?-i:{re.escape(t.upper())})"
         # Alphabetic markers must not be glued to other letters ("rs" inside "hours").
         if t[0].isalpha():
             esc = r"(?<![^\W\d_])" + esc
@@ -147,7 +168,7 @@ class Money:
 
 def parse_number(token: str) -> Decimal | None:
     """Parse a numeric token using the separator rules in the module docstring."""
-    t = token.strip()
+    t = _ascii_digits(token).strip()
     for sp in (*_SPACES, "'", "’"):
         t = t.replace(sp, "")
     if not t or not re.fullmatch(r"[\d.,]+", t) or not t[0].isdigit() or not t[-1].isdigit():
@@ -193,7 +214,7 @@ def find_prices(text: str, expected: list[str] | None = None) -> list[Money]:
     """All prices in `text` that carry a currency marker."""
     expected = expected or []
     out: list[Money] = []
-    for m in _PRICE_RE.finditer(text):
+    for m in _PRICE_RE.finditer(_ascii_digits(text)):
         marker = m.group("pre") or m.group("post")
         num = m.group("num1") or m.group("num2")
         if marker.lower() in {"r", "rs", "rs.", "le", "tl", "ft", "lei"} and not any(
@@ -204,7 +225,8 @@ def find_prices(text: str, expected: list[str] | None = None) -> list[Money]:
         amount = parse_number(num)
         if amount is None:
             continue
-        out.append(Money(amount, _resolve(marker, expected), m.group(0), m.start(), m.end()))
+        raw = text[m.start() : m.end()]
+        out.append(Money(amount, _resolve(marker, expected), raw, m.start(), m.end()))
     return out
 
 
@@ -222,5 +244,5 @@ def parse_money(text: str, expected: list[str] | None = None) -> Money | None:
 
 def parse_bare_amount(text: str) -> Decimal | None:
     """Parse a price string that has no currency marker (e.g. JSON field "129,00")."""
-    m = re.search(_NUM, text)
+    m = re.search(_NUM, _ascii_digits(text))
     return parse_number(m.group(0)) if m else None

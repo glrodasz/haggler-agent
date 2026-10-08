@@ -40,7 +40,15 @@ from haggler.sources.base import (
     market_segment,
     match_plan,
 )
-from haggler.sources.heuristics import PlanPrice, is_intro, plan_price_pairs, price_period
+from haggler.sources.heuristics import (
+    PlanPrice,
+    is_intro,
+    label_period,
+    lends_period,
+    plan_price_pairs,
+    price_period,
+    price_tail,
+)
 from haggler.text import html_to_lines, page_title
 from haggler.text import node_lines as node_lines  # re-exported for older callers
 
@@ -221,21 +229,25 @@ def currency_ok(amount: Decimal, currency: str | None, expected: list[str]) -> b
 def clean_price_lines(lines: list[str], expected: list[str]) -> list[str]:
     """Blank out prices that must never be taken as the regular monthly price.
 
-    Zero, intro and yearly prices are removed (with their "/år" marker) so plan_price_pairs only
-    sees regular monthly or unmarked prices, whatever order the page lists them in.
+    Zero, intro and yearly prices are removed (with their "/år" marker; a yearly price may also
+    be labelled before it, "Annual: ₹1,189") so plan_price_pairs only sees regular monthly or
+    unmarked prices, whatever order the page lists them in.
     """
     out: list[str] = []
     for i, line in enumerate(lines):
         found = find_prices(line, expected)
+        next_line = lines[i + 1] if i + 1 < len(lines) else ""
         cuts: list[tuple[int, int]] = []
+        prev_end = 0
         for k, m in enumerate(found):
             nxt = found[k + 1].start if k + 1 < len(found) else len(line)
-            tail = line[m.end : min(nxt, m.end + 30)]
-            if not tail.strip() and i + 1 < len(lines) and len(lines[i + 1]) <= 20:
-                tail = lines[i + 1]  # "<span>1 090 kr</span><div>/år</div>"
+            before, prev_end = line[prev_end : m.start], m.end
+            tail = price_tail(line, m.end, nxt, 30)
+            if not tail.strip() and lends_period(next_line, expected):
+                tail = next_line  # "<span>1 090 kr</span><div>/år</div>"
             if m.amount <= 0 or is_intro(line[: m.start], line[m.end :]):
                 cuts.append((m.start, m.end))
-            elif price_period(tail) in ("year", "quarter"):
+            elif (label_period(before) or price_period(tail)) in ("year", "quarter"):
                 tok = _PERIOD_TOKEN.match(line[m.end : nxt])
                 cuts.append((m.start, m.end + (tok.end() if tok else 0)))
         for start, end in reversed(cuts):
@@ -278,14 +290,16 @@ def header_runs(
 def monthly_price(text: str, expected: list[str], next_text: str = "") -> Money | None:
     """First regular monthly-or-unmarked price in a line or table cell."""
     found = find_prices(text, expected)
+    prev_end = 0
     for k, m in enumerate(found):
+        before, prev_end = text[prev_end : m.start], m.end
         if m.amount <= 0 or is_intro(text[: m.start], text[m.end :]):
             continue
         nxt = found[k + 1].start if k + 1 < len(found) else len(text)
-        tail = text[m.end : min(nxt, m.end + 30)]
-        if not tail.strip() and len(next_text) <= 20:
+        tail = price_tail(text, m.end, nxt, 30)
+        if not tail.strip() and lends_period(next_text, expected):
             tail = next_text  # "<span>1 090 kr</span><span>/år</span>" rendered on two lines
-        if price_period(tail) in ("year", "quarter"):
+        if (label_period(before) or price_period(tail)) in ("year", "quarter"):
             continue
         return m
     return None

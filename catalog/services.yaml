@@ -51,13 +51,13 @@ services:
       in-app del App Store, que suele ser más caro que la web.
     plans:
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.8, 30],
-         iap_patterns: ['^(?!.*(famil|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe|student|studenc|estudiant|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên|\blite\b|\bduo\b|music)).*premium']}
+         iap_patterns: ['^(?!.*(fam[ií]l|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe|student|studenc|estudiant|estudant|universit|studierend|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên|\blite\b|\bduo\b|music)).*premium']}
       - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [1, 35],
          iap_patterns: ['\bduo\b']}
       - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1.2, 45],
-         iap_patterns: ['famil|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe']}
+         iap_patterns: ['fam[ií]l|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe']}
       - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.4, 20],
-         iap_patterns: ['student|studenc|estudiant|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên']}
+         iap_patterns: ['student|studenc|estudiant|estudant|universit|studierend|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên']}
       - {id: lite, label_es: Lite, label_en: Lite, rank: 0, plausible_monthly_eur: [0.4, 15],
          iap_patterns: ['\blite\b']}
     sources:
@@ -84,10 +84,10 @@ services:
                    mainoksilla, mit werbung, z reklamami, s reklamami, s reklamou, reklámokkal, hirdetésekkel,
                    cu reclame, met reclame, met advertenties, com anúncios, com anuncios, con publicidad,
                    su reklamomis, ar reklāmām, reklaamidega, standart reklamlı, avec pub, avec publicités],
-         iap_patterns: ['with ads|with adverts|\bads\b|reklam|rekl[aá]m|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|advertenties|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic']}
+         iap_patterns: ['with ads|with adverts|\bads\b|rekla+m|rekl[aáā]m|\bpub\b|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|advertenties|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic']}
       - {id: standard, label_es: Estándar, label_en: Standard, rank: 2, plausible_monthly_eur: [1.2, 25],
          aliases: [standard, estándar, standaard, standart, padrão, estandar],
-         iap_patterns: ['^(?!.*(\bads\b|advert|reklam|rekl[aá]m|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic)).*(standard|est[aá]ndar|padr[aã]o|standaard|standart)']}
+         iap_patterns: ['^(?!.*(\bads\b|advert|rekla+m|rekl[aáā]m|\bpub\b|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic)).*(standard|est[aá]ndar|padr[aã]o|standaard|standart)']}
       - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
          aliases: [premium], iap_patterns: ['premium']}
     sources:

@@ -11,6 +11,7 @@ from haggler.sources.spotify import (
     is_intro,
     json_documents,
     json_plan_hits,
+    monthly_price,
     page_lines,
     pick_hits,
 )
@@ -298,3 +299,38 @@ def test_json_plan_hits_shapes(catalog):
         "student": Decimal("65"),
     }
     assert foreign == []
+
+
+# prices/F3: label-first cards ("Monthly: ₹119", "Annual: ₹1,189") in either order.
+@pytest.mark.parametrize(
+    "prices",
+    [
+        ["Annual: ₹1,189", "Monthly: ₹119"],
+        ["Monthly: ₹119", "Annual: ₹1,189"],
+        ["Monthly: ₹119 · Annual: ₹1,189"],
+        ["Annual: ₹1,189 · Monthly: ₹119"],
+    ],
+)
+def test_label_first_monthly_and_annual_prices(catalog, prices):
+    html = _cards(("Individual", prices), ("Family", ["₹179/month"]))
+    assert _prices(_parse(catalog, "IN", html)) == {
+        "individual": (Decimal("119"), "INR"),
+        "family": (Decimal("179"), "INR"),
+    }
+
+
+def test_clean_price_lines_keeps_a_labelled_monthly_price():
+    lines = ["Individual", "Monthly: ₹119", "Annual: ₹1,189", "Cancel anytime"]
+    cleaned = clean_price_lines(lines, ["INR"])
+    assert cleaned[1] == "Monthly: ₹119"
+    assert "1,189" not in cleaned[2]
+    one_line = clean_price_lines(["Monthly: ₹119 · Annual: ₹1,189"], ["INR"])
+    assert "₹119" in one_line[0] and "1,189" not in one_line[0]
+
+
+def test_monthly_price_ignores_the_next_lines_label():
+    money = monthly_price("Monthly: ₹119", ["INR"], "Annual: ₹1,189")
+    assert money is not None and money.amount == Decimal("119")
+    money = monthly_price("Annual: ₹1,189 · Monthly: ₹119", ["INR"])
+    assert money is not None and money.amount == Decimal("119")
+    assert monthly_price("₹1,189", ["INR"], "/year") is None

@@ -23,7 +23,10 @@ a known item.
 The listing carries no billing period. Several names mapping to one plan usually mean monthly
 vs annual: explicit words in the name win ("Annual", "12 meses", "årsabonnemang"); otherwise a
 price 8-12.5x another one of the same plan is annual, and any other duplicate keeps the lowest
-price as monthly with the iap_duplicate flag.
+price as monthly with the iap_duplicate flag. That holds for one name listed twice ("YouTube
+Premium" at $18.99 and $15.99). Different names at different prices that land on one plan's
+period only by default are more likely a variant the patterns do not know ("YouTube Premium
+Estudante" read as Individual), so those items go to the LLM instead of publishing the lowest.
 """
 
 from __future__ import annotations
@@ -696,7 +699,10 @@ class AppStoreIapAdapter(PerCountryAdapter):
         observations: list[ObservationDraft] = []
         for plan in svc.plans:
             if plan.id in by_plan:
-                observations += self._plan_drafts(task, plan.id, by_plan[plan.id], notes)
+                drafts, deferred = self._plan_drafts(task, plan.id, by_plan[plan.id], notes)
+                observations += drafts
+                unmapped += deferred
+        published = {o.plan_id for o in observations}
 
         llm_requests: list[LlmRequest] = []
         if unmapped:
@@ -708,7 +714,7 @@ class AppStoreIapAdapter(PerCountryAdapter):
                     page_text="\n".join(f"{it.name} — {it.price_text}" for it in unmapped),
                 )
             )
-        if svc.default_plan in by_plan:
+        if svc.default_plan in published:
             status = "ok"
         elif observations or unmapped:
             status = "partial"
@@ -719,7 +725,7 @@ class AppStoreIapAdapter(PerCountryAdapter):
         return ParseResult(
             observations=observations,
             status=status,
-            missing_plans=[p.id for p in svc.plans if p.id not in by_plan],
+            missing_plans=[p.id for p in svc.plans if p.id not in published],
             unmapped=unmapped,
             llm_requests=llm_requests,
             notes=notes,
@@ -727,7 +733,8 @@ class AppStoreIapAdapter(PerCountryAdapter):
 
     def _plan_drafts(
         self, task: Task, plan_id: str, items: list[IapItem], notes: list[str]
-    ) -> list[ObservationDraft]:
+    ) -> tuple[list[ObservationDraft], list[IapItem]]:
+        """Drafts per billing period, and the items left for the LLM to map (module docstring)."""
         stated = [(it, name_period(it.name)) for it in items]
         known = [(it.amount, p) for it, p in stated if p and it.amount is not None]
         unknown = [it for it, p in stated if p is None]
@@ -735,17 +742,36 @@ class AppStoreIapAdapter(PerCountryAdapter):
         for it, p in stated:
             if p:
                 groups.setdefault(p, []).append(it)
+        defaulted: set[int] = set()  # id() of items whose period nothing stated or implied
         inferred = infer_periods([it.amount or Decimal(0) for it in unknown], known)
         for it, (period, reason) in zip(unknown, inferred, strict=True):
             groups.setdefault(period, []).append(it)
-            if reason != "default":
+            if reason == "default":
+                defaulted.add(id(it))
+            else:
                 notes.append(f"{plan_id}: {it.price_text} read as {period} ({reason})")
 
+        deferred: list[IapItem] = []
         out: list[ObservationDraft] = []
         for period in ("month", "quarter", "year"):
             group = groups.get(period)
             if not group:
                 continue
+            guessed = [it for it in group if id(it) in defaulted]
+            if (
+                guessed
+                and len({it.amount for it in group}) > 1
+                and len({_name_key(it.name) for it in group}) > 1
+            ):
+                deferred += guessed
+                names = "; ".join(f"{it.name} {it.price_text}" for it in group)
+                notes.append(
+                    f"{plan_id}: different names at different {period} prices ({names}); "
+                    f"{len(guessed)} item(s) without a stated period sent to the LLM"
+                )
+                group = [it for it in group if id(it) not in defaulted]
+                if not group:
+                    continue
             chosen = min(group, key=lambda it: it.amount or Decimal(0))
             flags = [FLAG_MARKUP]
             distinct = sorted({it.amount for it in group if it.amount is not None})
@@ -767,4 +793,4 @@ class AppStoreIapAdapter(PerCountryAdapter):
                     flags=flags,
                 )
             )
-        return out
+        return out, deferred

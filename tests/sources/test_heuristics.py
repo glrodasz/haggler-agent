@@ -213,3 +213,66 @@ def test_market_segment():
     assert market_segment({"path_overrides": {"GB": "/UK/"}}, "GB") == "uk"
     assert market_segment({"path_overrides": {"GB": "uk"}}, "SE") == "se"
     assert market_segment({"path_overrides": None}, "SE") == "se"
+
+
+# prices/F3: label-first layouts ("Monthly: X · Annual: Y", or one label per line).
+@pytest.mark.parametrize(
+    ("text", "expected", "periods"),
+    [
+        ("Monthly: $10.99 · Annual: $109", ["USD"], [("10.99", "month"), ("109", "year")]),
+        ("Annual: $109 · Monthly: $10.99", ["USD"], [("109", "year"), ("10.99", "month")]),
+        ("Aylık: ₺39,99 · Yıllık: ₺399", ["TRY"], [("39.99", "month"), ("399", "year")]),
+        ("Månadsvis: 129 kr, Årsvis: 1 290 kr", ["SEK"], [("129", "month"), ("1290", "year")]),
+        ("Årsvis: 1 290 kr", ["SEK"], [("1290", "year")]),
+        # Price-first suffix markers are unchanged.
+        ("$10.99/mo. · Annual: $109", ["USD"], [("10.99", "month"), ("109", "year")]),
+        ("Annual plan: $9.99/mo. billed yearly", ["USD"], [("9.99", "month")]),
+    ],
+)
+def test_label_first_periods(text, expected, periods):
+    assert [(a, p) for a, p, _ in _roles(text, expected)] == periods
+
+
+def test_next_line_with_its_own_price_does_not_lend_its_period():
+    assert _roles("Annual: $109", ["USD"], next_text="Monthly: $10.99")[0][1] == "year"
+    assert _roles("Monthly: $10.99", ["USD"], next_text="Annual: $109")[0][1] == "month"
+    assert _roles("$10.99", ["USD"], next_text="Annual: $109")[0][1] is None
+    # A label line ("Annual:" above its own price) belongs to the next price, not this one.
+    assert _roles("$10.99", ["USD"], next_text="Annual:")[0][1] is None
+    assert _roles("1 090 kr", ["SEK"], next_text="/år")[0][1] == "year"
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        ["Individual", "Monthly: $10.99 · Annual: $109"],
+        ["Individual", "Annual: $109", "Monthly: $10.99"],
+        ["Individual", "Monthly: $10.99", "Annual: $109"],
+        ["Individual", "$10.99", "Annual:", "$109"],  # the label line is not borrowed
+    ],
+)
+def test_plan_price_pairs_label_first(apple_music, lines):
+    assert _pairs(apple_music, lines, ["USD"]) == {"individual": (Decimal("10.99"), "month")}
+
+
+# prices/F4: "Try" is not a TRY price, so "Try 3 months for $2.99/mo." stays an intro offer.
+def test_try_n_months_is_an_intro_offer():
+    assert _roles("Try 3 months for $2.99/mo.", ["USD"]) == [("2.99", "month", "intro")]
+    assert _roles("Try 1 month free, then $12.99/mo.", ["TRY", "USD"]) == [
+        ("12.99", "month", "regular")
+    ]
+
+
+def test_intro_count_swallowed_by_an_earlier_price_still_counts():
+    # "Le 3" reads as an EGP amount on an Egyptian page; the offer "3 mois pour" is still
+    # seen in the whole line before the next price.
+    roles = _roles("Le 3 mois pour 49 E£, puis 99 E£ par mois", ["EGP"])
+    assert roles[-2:] == [("49", None, "intro"), ("99", "month", "regular")]
+    # The offer-word rule stays limited to the text since the previous price.
+    roles = _roles("Special offer $2.99 for 3 months, $12.99/mo. after", ["USD"], intro_words=True)
+    assert roles == [("2.99", None, "intro"), ("12.99", "month", "regular")]
+
+
+def test_suffix_marker_followed_by_a_colon_is_still_the_prices_own():
+    assert _roles("$10.99 per month: cancel anytime", ["USD"]) == [("10.99", "month", "regular")]
+    assert _roles("€99 yearly: best value", ["EUR"]) == [("99", "year", "regular")]

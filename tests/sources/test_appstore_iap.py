@@ -19,6 +19,7 @@ from haggler.sources.appstore_iap import (
     name_period,
     text_lines,
 )
+from haggler.sources.base import match_iap_plan
 from haggler.sources.registry import get_adapter
 
 FIX = Path(__file__).parent / "fixtures" / "appstore_iap"
@@ -476,3 +477,182 @@ def test_disney_plus_plan_and_bundle_exclusions(catalog):
     result = _parse(catalog, "disney_plus", "SE", html)
     assert _prices(result)[("standard", "month")] == (Decimal("109.00"), "SEK")
     assert any("exclude_patterns" in n for n in result.notes)
+
+
+# ---------------------------------------------------------------- localized plan names
+
+
+def _iap_page(rows: list[tuple[str, str]]) -> str:
+    dl = "".join(f"<dt>{name}</dt><dd>{price}</dd>" for name, price in rows)
+    return f"<html><body><section><h2>In-App Purchases</h2><dl>{dl}</dl></section></body></html>"
+
+
+def _periods(result):
+    return {(o.plan_id, o.billing_period): o.amount for o in result.observations}
+
+
+@pytest.mark.parametrize(
+    ("cc", "rows", "expected"),
+    [
+        # prices/F1: Portuguese and German student / family names are not Individual.
+        (
+            "BR",
+            [
+                ("YouTube Premium", "R$ 26,90"),
+                ("YouTube Premium Estudante", "R$ 14,90"),
+                ("YouTube Premium Família", "R$ 47,90"),
+                ("YouTube Premium Universitário", "R$ 14,90"),
+            ],
+            {
+                ("individual", "month"): Decimal("26.90"),
+                ("student", "month"): Decimal("14.90"),
+                ("family", "month"): Decimal("47.90"),
+            },
+        ),
+        (
+            "PT",
+            [("YouTube Premium", "12,99 €"), ("YouTube Premium – Estudantes", "6,99 €")],
+            {("individual", "month"): Decimal("12.99"), ("student", "month"): Decimal("6.99")},
+        ),
+        (
+            "DE",
+            [("YouTube Premium", "15,99 €"), ("YouTube Premium für Studierende", "8,99 €")],
+            {("individual", "month"): Decimal("15.99"), ("student", "month"): Decimal("8.99")},
+        ),
+    ],
+)
+def test_youtube_localized_student_and_family_names(catalog, cc, rows, expected):
+    result = _parse(catalog, "youtube_premium", cc, _iap_page(rows))
+    assert result.status == "ok"
+    assert _periods(result) == expected
+    assert not result.unmapped and not result.llm_requests
+
+
+@pytest.mark.parametrize(
+    ("name", "plan"),
+    [
+        ("YouTube Premium Estudante", "student"),
+        ("YouTube Premium – Estudantes", "student"),
+        ("YouTube Premium für Studierende", "student"),
+        ("YouTube Premium Universitário", "student"),
+        ("YouTube Premium Família", "family"),
+        ("YOUTUBE PREMIUM FAMÍLIA", "family"),
+        # Unchanged names from the captured pages.
+        ("YouTube Premium (Family)", "family"),
+        ("YouTube Premium – familj", "family"),
+        ("YouTube Premium (Öğrenci)", "student"),
+        ("YouTube Premium – student", "student"),
+        ("YouTube Premium Student", "student"),
+        ("Premium Lite", "lite"),
+        ("YouTube Premium", "individual"),
+    ],
+)
+def test_youtube_iap_patterns(catalog, name, plan):
+    assert match_iap_plan(catalog.service("youtube_premium"), name) == [plan]
+
+
+@pytest.mark.parametrize(
+    ("name", "plan"),
+    [
+        # prices/F2: Estonian, Latvian and French ad-tier names.
+        ("Disney+ Standard reklaamidega", "standard_with_ads"),
+        ("Disney+ Standarts ar reklāmām", "standard_with_ads"),
+        ("Disney+ Standard avec pub", "standard_with_ads"),
+        # Unchanged.
+        ("Disney+ Standard su reklamomis", "standard_with_ads"),
+        ("Disney+ Standard med reklam", "standard_with_ads"),
+        ("Disney+ Basic Monthly", "standard_with_ads"),
+        ("Disney+ Standarts", "standard"),
+        ("Disney+ Standard", "standard"),
+        ("Disney+ Estándar mensual", "standard"),
+        ("Disney+ Premium", "premium"),
+    ],
+)
+def test_disney_iap_patterns(catalog, name, plan):
+    assert match_iap_plan(catalog.service("disney_plus"), name) == [plan]
+
+
+@pytest.mark.parametrize(
+    ("cc", "rows"),
+    [
+        (
+            "EE",
+            [
+                ("Disney+ Standard reklaamidega", "5,99 €"),
+                ("Disney+ Standard", "9,99 €"),
+                ("Disney+ Premium", "13,99 €"),
+            ],
+        ),
+        (
+            "LV",
+            [
+                ("Disney+ Standarts ar reklāmām", "5,99 €"),
+                ("Disney+ Standarts", "9,99 €"),
+                ("Disney+ Premium", "13,99 €"),
+            ],
+        ),
+    ],
+)
+def test_disney_baltic_ad_tier_is_not_standard(catalog, cc, rows):
+    result = _parse(catalog, "disney_plus", cc, _iap_page(rows))
+    assert result.status == "ok"
+    assert _periods(result) == {
+        ("standard_with_ads", "month"): Decimal("5.99"),
+        ("standard", "month"): Decimal("9.99"),
+        ("premium", "month"): Decimal("13.99"),
+    }
+    assert result.missing_plans == []
+
+
+def test_disney_us_listing(catalog):
+    # Shape of the live US listing: "Basic" is the ads tier; the annual Premium is 10x monthly.
+    rows = [
+        ("Disney+ Basic Monthly", "$12.49"),
+        ("Disney+ Premium", "$21.49"),
+        ("Disney+ Premium", "$214.99"),
+        ("Disney Bundle Duo Basic", "$12.99"),
+    ]
+    result = _parse(catalog, "disney_plus", "US", _iap_page(rows))
+    assert _periods(result) == {
+        ("standard_with_ads", "month"): Decimal("12.49"),
+        ("premium", "month"): Decimal("21.49"),
+        ("premium", "year"): Decimal("214.99"),
+    }
+    assert not result.unmapped and not result.llm_requests
+
+
+# prices/F1 (defensive): an unknown variant name must not win the plan by being cheapest.
+def test_different_names_at_different_prices_go_to_the_llm(catalog):
+    rows = [("YouTube Premium", "11,99 €"), ("YouTube Premium tudengitele", "6,99 €")]
+    result = _parse(catalog, "youtube_premium", "EE", _iap_page(rows))
+    assert result.observations == []
+    assert result.status == "partial"
+    assert result.missing_plans == ["individual", "duo", "family", "student", "lite"]
+    assert [i.name for i in result.unmapped] == [n for n, _ in rows]
+    (req,) = result.llm_requests
+    assert req.reason == "unmapped_iap"
+    assert req.page_text == "YouTube Premium — 11,99 €\nYouTube Premium tudengitele — 6,99 €"
+    assert any("sent to the LLM" in n for n in result.notes)
+
+
+def test_variant_next_to_a_stated_period_goes_to_the_llm_alone(catalog):
+    rows = [
+        ("YouTube Premium (1 month)", "11,99 €"),
+        ("YouTube Premium (12 months)", "119,99 €"),
+        ("YouTube Premium tudengitele", "6,99 €"),
+    ]
+    result = _parse(catalog, "youtube_premium", "EE", _iap_page(rows))
+    assert _periods(result) == {
+        ("individual", "month"): Decimal("11.99"),
+        ("individual", "year"): Decimal("119.99"),
+    }
+    assert [i.name for i in result.unmapped] == ["YouTube Premium tudengitele"]
+    assert result.status == "ok"
+
+
+def test_one_name_listed_twice_still_keeps_the_lowest(catalog):
+    rows = [("YouTube Premium", "11,99 €"), ("YouTube Premium", "13,99 €")]
+    result = _parse(catalog, "youtube_premium", "EE", _iap_page(rows))
+    assert _periods(result) == {("individual", "month"): Decimal("11.99")}
+    assert FLAG_DUPLICATE in result.observations[0].flags
+    assert not result.unmapped and not result.llm_requests

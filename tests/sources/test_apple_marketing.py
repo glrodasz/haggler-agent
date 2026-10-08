@@ -451,3 +451,24 @@ def test_apple_tv_skips_savings_and_comparison_prices(run):
     )
     result = run("apple_tv", "SE", html)
     assert _prices(result) == {"standard": (Decimal("99"), "SEK")}
+
+
+def test_label_first_monthly_and_yearly_prices(run):
+    # prices/F3: "Aylık: X · Yıllık: Y" is X per month, not the yearly Y.
+    html = _page(
+        "<h3>Öğrenci</h3><p>Aylık: ₺19,99</p><h3>Bireysel</h3><p>Aylık: ₺39,99 · Yıllık: ₺399</p>",
+        lang="tr-TR",
+    )
+    result = run("apple_music", "TR", html)
+    got = {o.plan_id: (o.amount, o.billing_period) for o in result.observations}
+    assert got["individual"] == (Decimal("39.99"), "month")
+
+
+def test_try_n_months_hero_is_an_intro_offer(run):
+    # prices/F4: "Try 3" is not a TRY price, so the hero offer stays an intro price.
+    html = _page(
+        "<h1>Apple TV</h1><p>Try 3 months for $2.99/mo.</p><p>Try 3 months for $2.99/mo.</p>"
+        "<p>$12.99/mo. after offer period.</p>"
+    )
+    result = run("apple_tv", "US", html)
+    assert _prices(result) == {"standard": (Decimal("12.99"), "USD")}
