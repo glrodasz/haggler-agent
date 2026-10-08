@@ -1,4 +1,5 @@
 """TEMPORARY: print real-page snippets to the CI log so adapters can be tuned offline."""
+# ruff: noqa: E501
 
 import asyncio
 import json
