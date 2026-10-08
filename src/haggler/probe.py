@@ -10,10 +10,16 @@ Modes:
   adapters  plan the tasks of every source of the targeted services, fetch them with HttpFetcher
             (robots.txt, identifiable UA, per-host rate limit), parse, summarise;
   fx        build the FX table with DefaultFxService and print source/as_of/stale per currency;
-  full      run the daily job (haggler.jobs.daily) against a LocalStore in <out>/store, with the
-            LLM only when credentials exist, and print its RunReport.
+  full      run the daily job (haggler.jobs.daily) against a LocalStore in <out>/raw/store, once
+            per distinct country set of the targets, with the LLM only when credentials exist,
+            and print the RunReports.
 
 Targets file: one target per non-comment line, "service_id CC [CC ...]" ("*" = all countries).
+
+Output: everything that quotes vendor pages (raw pages, the full-mode store) goes under
+<out>/raw/ and is for local debugging only. <out>/summary.{json,md} quote at most
+PAGE_TEXT_BUDGET characters of page text per task (title, unmapped items, price lines) and are
+the only files meant to be published (CI artifact, job summary).
 """
 
 from __future__ import annotations
@@ -59,6 +65,9 @@ TASK_TIMEOUT_S = 90.0
 TRANSIENT_ATTEMPTS = 2
 MAX_SNIPPETS = 8
 SNIPPET_CHARS = 160
+# Verbatim page text a summary row may quote, in total, and how much of it the title may take.
+PAGE_TEXT_BUDGET = 300
+TITLE_CHARS = 100
 # Statuses without a details section below the table (every other status gets one).
 QUIET_STATUSES = frozenset({"ok", "not_configured"})
 
@@ -359,7 +368,35 @@ async def probe_task(
         row["notes"].append(traceback.format_exc(limit=4).strip()[-1500:])
     else:
         _apply_result(row, result)
+    _limit_page_text(row)
     return row
+
+
+def _limit_page_text(row: dict[str, Any]) -> None:
+    """Cap the page text a row quotes at PAGE_TEXT_BUDGET characters, spent in order on the
+    title (at most TITLE_CHARS), the unmapped items and the price lines: summaries get
+    published, vendor pages never do (the full page stays in <out>/raw/)."""
+    left = PAGE_TEXT_BUDGET
+
+    def take(text: str, cap: int = PAGE_TEXT_BUDGET) -> str:
+        nonlocal left
+        kept = text[: max(0, min(left, cap))]
+        left -= len(kept)
+        return kept
+
+    row["page_title"] = take(row["page_title"], TITLE_CHARS)
+    unmapped = []
+    for item in row["unmapped"]:
+        if left <= 0:
+            break
+        unmapped.append({"name": take(item["name"]), "price_text": take(item["price_text"])})
+    row["unmapped"] = unmapped
+    snippets = []
+    for line in row["price_snippets"]:
+        if left <= 0:
+            break
+        snippets.append(take(line))
+    row["price_snippets"] = snippets
 
 
 def _fetch_failure(exc: Exception) -> dict[str, Any]:
@@ -635,6 +672,53 @@ def _read_json(path: Path) -> Any | None:
         return None
 
 
+def country_sets(targets: list[ProbeTarget]) -> list[tuple[list[str], list[str] | None]]:
+    """(services, countries) per distinct country set of the merged targets (None = all
+    countries), in first-seen order. The daily job filters by services x countries, so one run
+    per set covers exactly the targeted pairs: a "*" target never lifts another one's filter."""
+    groups: dict[frozenset[str] | None, list[str]] = {}
+    for service_id, wanted in merge_targets(targets).items():
+        groups.setdefault(None if wanted is None else frozenset(wanted), []).append(service_id)
+    return [(services, None if key is None else sorted(key)) for key, services in groups.items()]
+
+
+def _daily_run(
+    daily: Any, services: list[str], countries: list[str] | None, *, llm: bool, store_dir: Path
+) -> dict[str, Any]:
+    """One daily job run for these services x countries (None = all countries)."""
+    report: Any = None
+    exit_code: int | None = None
+    latest_before = _read_json(store_dir / "latest" / "run.json")
+    options = _daily_options(
+        daily,
+        {
+            "services": services,
+            "countries": countries or [],
+            "no_llm": not llm,
+            "store": "local",
+        },
+    )
+    run_daily = getattr(daily, "run_daily", None)
+    if options is not None and run_daily is not None:
+        result = run_daily(options)
+        report = asyncio.run(result) if inspect.isawaitable(result) else result
+        if report is None:
+            exit_code = 1  # the workflow produced no report
+    else:
+        argv = ["--store", "local", "--services", ",".join(services)]
+        if countries:
+            argv += ["--countries", ",".join(countries)]
+        if not llm:
+            argv.append("--no-llm")
+        exit_code = int(daily.main(argv) or 0)
+    # Only a run this call made: an earlier run's report must not be attributed to this one.
+    if report is None and _read_json(store_dir / "latest" / "run.json") != latest_before:
+        report = _report_from_store(store_dir)
+    if hasattr(report, "model_dump"):
+        report = report.model_dump(mode="json")
+    return {"services": services, "countries": countries, "exit_code": exit_code, "report": report}
+
+
 def probe_full(
     targets: list[ProbeTarget],
     out_dir: Path,
@@ -642,79 +726,52 @@ def probe_full(
     *,
     today: date,
 ) -> tuple[dict[str, Any], str]:
-    """Run the daily job for the targeted services/countries into <out>/store.
-
-    The job filters by services x countries, so it covers the cross product of all targets.
-    """
-    merged = merge_targets(targets)
-    services = list(merged)
-    countries: list[str] | None = None
-    if all(v is not None for v in merged.values()):
-        countries = sorted(set().union(*(v for v in merged.values() if v is not None)))
-    store_dir = out_dir / "store"
+    """Run the daily job for the targeted services/countries into <out>/raw/store, once per
+    distinct country set (see country_sets); later runs see the earlier ones as published."""
+    sets = country_sets(targets)
+    services = list(merge_targets(targets))
+    # The store holds raw pages and snapshots with evidence: never part of the summary.
+    store_dir = out_dir / "raw" / "store"
     llm = settings.llm_enabled and llm_credentials_available()
 
     daily = importlib.import_module("haggler.jobs.daily")
-    report: Any = None
-    exit_code: int | None = None
-    # The job builds its own Settings/Store from the environment: point it at <out>/store.
+    runs: list[dict[str, Any]] = []
+    # The job builds its own Settings/Store from the environment: point it at the store.
     with _env(HAGGLER_STORE="local", HAGGLER_LOCAL_DIR=str(store_dir), HAGGLER_LLM=str(int(llm))):
-        options = _daily_options(
-            daily,
-            {
-                "services": services,
-                "countries": countries or [],
-                "no_llm": not llm,
-                "store": "local",
-            },
-        )
-        run_daily = getattr(daily, "run_daily", None)
-        if options is not None and run_daily is not None:
-            result = run_daily(options)
-            report = asyncio.run(result) if inspect.isawaitable(result) else result
-            if report is None:
-                exit_code = 1  # the workflow produced no report
-        else:
-            argv = ["--store", "local", "--services", ",".join(services)]
-            if countries:
-                argv += ["--countries", ",".join(countries)]
-            if not llm:
-                argv.append("--no-llm")
-            exit_code = int(daily.main(argv) or 0)
-    if report is None:
-        report = _report_from_store(store_dir)
-    if hasattr(report, "model_dump"):
-        report = report.model_dump(mode="json")
+        for group, countries in sets:
+            runs.append(_daily_run(daily, group, countries, llm=llm, store_dir=store_dir))
     summary = {
         "mode": "full",
         "llm": llm,
         "services": services,
-        "countries": countries,
         "store": str(store_dir),
-        "exit_code": exit_code,
-        "report": report,
+        "runs": runs,
     }
     lines = [
         f"# Probe completo ({today.isoformat()})",
         "",
         f"- Servicios: {', '.join(services)}",
-        f"- Países: {', '.join(countries) if countries else 'todos'}",
         f"- LLM: {'sí' if llm else 'no'}",
         f"- Store: {store_dir}",
+        f"- Corridas del job: {len(runs)} (una por conjunto de países)",
     ]
-    if exit_code is not None:
-        lines.append(f"- Código de salida del job: {exit_code}")
-    if isinstance(report, dict):
+    for n, run in enumerate(runs, 1):
+        report = run["report"]
+        where = ", ".join(run["countries"]) if run["countries"] else "todos los países"
+        lines += ["", f"## Corrida {n}/{len(runs)}: {', '.join(run['services'])} ({where})", ""]
+        if run["exit_code"] is not None:
+            lines.append(f"- Código de salida del job: {run['exit_code']}")
+        if isinstance(report, dict):
+            lines += [
+                f"- Tareas: {report.get('tasks_total')} {report.get('tasks_by_status')}",
+                f"- Observaciones: {report.get('obs_by_status')}",
+            ]
         lines += [
-            f"- Tareas: {report.get('tasks_total')} {report.get('tasks_by_status')}",
-            f"- Observaciones: {report.get('obs_by_status')}",
+            "",
+            "```json",
+            json.dumps(report, indent=2, ensure_ascii=False, default=str),
+            "```",
         ]
-    lines += [
-        "",
-        "```json",
-        json.dumps(report, indent=2, ensure_ascii=False, default=str),
-        "```",
-    ]
     return summary, "\n".join(lines) + "\n"
 
 

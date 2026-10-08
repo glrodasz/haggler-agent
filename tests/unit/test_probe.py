@@ -20,6 +20,7 @@ from haggler.models.fx import FxRate, FxTable
 from haggler.models.run import RunReport
 from haggler.probe import (
     _daily_options,
+    _limit_page_text,
     json_script_ids,
     merge_targets,
     page_lines,
@@ -297,6 +298,44 @@ def test_parse_details_for_a_page_without_prices(tmp_path: Path, catalog) -> Non
     assert "129 kr/mån" in md
 
 
+def page_text_chars(row: dict) -> int:
+    unmapped = sum(len(u["name"]) + len(u["price_text"]) for u in row["unmapped"])
+    return len(row["page_title"]) + sum(len(s) for s in row["price_snippets"]) + unmapped
+
+
+def test_summary_quotes_at_most_300_chars_of_page_text_per_task(tmp_path: Path, catalog) -> None:
+    targets = write_targets(tmp_path, "spotify SE\n")
+    lines = "".join(f"<p>{i} kr {'lorem ipsum ' * 15}</p>" for i in range(1, 20))
+    page = f"<html><head><title>{'Title ' * 100}</title></head><body>{lines}</body></html>"
+    fetcher = SequenceFetcher({SPOTIFY_SE: [html_response(SPOTIFY_SE, page)]})
+    out = io.StringIO()
+    run_probe(targets, tmp_path / "o", "adapters", fetcher=fetcher, catalog=catalog, out=out)
+    (row,) = json.loads((tmp_path / "o" / "summary.json").read_text())["tasks"]
+    assert row["page_title"].startswith("Title Title")
+    assert row["price_snippets"]
+    assert page_text_chars(row) <= 300
+    assert "lorem ipsum " * 15 not in out.getvalue()
+    assert "Title " * 30 not in out.getvalue()
+    # The full page is kept for local debugging, under <out>/raw/ only.
+    assert (tmp_path / "o" / row["raw_file"]).read_text(encoding="utf-8") == page
+    assert row["raw_file"].startswith("raw/")
+
+
+def test_page_text_budget_covers_unmapped_items() -> None:
+    row = {
+        "page_title": "T" * 50,
+        "unmapped": [{"name": "N" * 100, "price_text": "P" * 40}] * 3,
+        "price_snippets": ["S" * 160] * 8,
+    }
+    _limit_page_text(row)
+    assert page_text_chars(row) == 300
+    assert row["page_title"] == "T" * 50
+    assert row["unmapped"][:2] == [{"name": "N" * 100, "price_text": "P" * 40}] * 1 + [
+        {"name": "N" * 100, "price_text": "P" * 10}
+    ]
+    assert row["price_snippets"] == []
+
+
 def test_transient_errors_are_retried_once(tmp_path: Path, catalog) -> None:
     targets = write_targets(tmp_path, "netflix SE\n")
     flaky = TransientFetchError("HTTP 503", status=503, url=NETFLIX_SE)
@@ -485,24 +524,28 @@ def test_full_mode_calls_run_daily(
 
     fake_daily(monkeypatch, DailyOptions=FakeDailyOptions, run_daily=run_daily)
     monkeypatch.setenv("HAGGLER_LOCAL_DIR", "/somewhere/else")
-    targets = write_targets(tmp_path, "netflix SE CO\nspotify LT\n")
+    # Targets with the same country set share one run.
+    targets = write_targets(tmp_path, "netflix SE CO\nspotify CO\nspotify SE\n")
     out = io.StringIO()
     code = run_probe(
         targets, tmp_path / "o", "full", catalog=catalog, today=date(2026, 10, 8), out=out
     )
     assert code == 0
     assert seen["options"] == FakeDailyOptions(
-        services=["netflix", "spotify"], countries=["CO", "LT", "SE"], no_llm=True, store="local"
+        services=["netflix", "spotify"], countries=["CO", "SE"], no_llm=True, store="local"
     )
-    assert seen["local_dir"] == str(tmp_path / "o" / "store")
+    # The store quotes vendor pages (raw pages, snapshots): it lives under <out>/raw/.
+    assert seen["local_dir"] == str(tmp_path / "o" / "raw" / "store")
     assert (seen["store"], seen["llm"]) == ("local", "0")  # no credentials in the environment
     import os
 
     assert os.environ["HAGGLER_LOCAL_DIR"] == "/somewhere/else"  # environment restored
     summary = json.loads((tmp_path / "o" / "summary.json").read_text())
-    assert summary["report"]["run_id"] == "probe-run"
+    (run,) = summary["runs"]
+    assert run["report"]["run_id"] == "probe-run"
+    assert (run["services"], run["countries"]) == (["netflix", "spotify"], ["CO", "SE"])
     assert summary["llm"] is False
-    assert summary["exit_code"] is None
+    assert run["exit_code"] is None
     assert '"run_id": "probe-run"' in out.getvalue()
     assert "- LLM: no" in out.getvalue()
 
@@ -538,10 +581,77 @@ def test_full_mode_falls_back_to_main(
     assert code == 0
     assert calls == [["--store", "local", "--services", "netflix", "--no-llm"]]
     summary = json.loads((tmp_path / "o" / "summary.json").read_text())
-    assert summary["report"] == {"run_id": "r1", "tasks_total": 2}
-    assert summary["exit_code"] == 1
-    assert summary["countries"] is None
+    (run,) = summary["runs"]
+    assert run["report"] == {"run_id": "r1", "tasks_total": 2}
+    assert run["exit_code"] == 1
+    assert run["countries"] is None
     assert "Código de salida del job: 1" in out.getvalue()
+
+
+def test_full_mode_runs_once_per_country_set(
+    tmp_path: Path, catalog, monkeypatch, no_llm_credentials
+) -> None:
+    """A "*" target must not lift the country filter of the other targets."""
+    seen: list = []
+
+    async def run_daily(options, deps=None):
+        seen.append(options)
+        return RunReport(
+            run_id=f"run-{len(seen)}", run_date=date(2026, 10, 8), started_at=NOW, tasks_total=1
+        )
+
+    fake_daily(monkeypatch, DailyOptions=FakeDailyOptions, run_daily=run_daily)
+    targets = write_targets(
+        tmp_path, "icloud_plus *\nnetflix SE CO\nspotify CO SE\napple_music LT\nnetflix SE\n"
+    )
+    out = io.StringIO()
+    code = run_probe(targets, tmp_path / "o", "full", catalog=catalog, out=out)
+    assert code == 0
+    assert [(o.services, o.countries) for o in seen] == [
+        (["icloud_plus"], []),
+        (["netflix", "spotify"], ["CO", "SE"]),
+        (["apple_music"], ["LT"]),
+    ]
+    summary = json.loads((tmp_path / "o" / "summary.json").read_text())
+    assert [(r["services"], r["countries"], r["report"]["run_id"]) for r in summary["runs"]] == [
+        (["icloud_plus"], None, "run-1"),
+        (["netflix", "spotify"], ["CO", "SE"], "run-2"),
+        (["apple_music"], ["LT"], "run-3"),
+    ]
+    assert summary["services"] == ["icloud_plus", "netflix", "spotify", "apple_music"]
+    md = out.getvalue()
+    assert "## Corrida 1/3: icloud_plus (todos los países)" in md
+    assert "## Corrida 2/3: netflix, spotify (CO, SE)" in md
+
+
+def test_full_mode_main_fallback_runs_once_per_country_set(
+    tmp_path: Path, catalog, monkeypatch, no_llm_credentials
+) -> None:
+    import os
+
+    calls: list[list[str]] = []
+
+    def main(argv):
+        calls.append(list(argv))
+        run_id = f"r{len(calls)}"
+        root = Path(os.environ["HAGGLER_LOCAL_DIR"])
+        (root / "latest").mkdir(parents=True, exist_ok=True)
+        (root / "latest" / "run.json").write_text(json.dumps({"run_id": run_id, "as_of": "d"}))
+        report_dir = root / "runs" / "d" / run_id
+        report_dir.mkdir(parents=True)
+        (report_dir / "report.json").write_text(json.dumps({"run_id": run_id}))
+        return 0
+
+    fake_daily(monkeypatch, main=main)
+    targets = write_targets(tmp_path, "netflix *\nspotify SE CO\n")
+    code = run_probe(targets, tmp_path / "o", "full", catalog=catalog, out=io.StringIO())
+    assert code == 0
+    assert calls == [
+        ["--store", "local", "--services", "netflix", "--no-llm"],
+        ["--store", "local", "--services", "spotify", "--countries", "CO,SE", "--no-llm"],
+    ]
+    summary = json.loads((tmp_path / "o" / "summary.json").read_text())
+    assert [r["report"]["run_id"] for r in summary["runs"]] == ["r1", "r2"]
 
 
 def test_full_mode_failure_exits_1(

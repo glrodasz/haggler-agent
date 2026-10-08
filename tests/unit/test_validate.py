@@ -10,6 +10,7 @@ from decimal import Decimal
 import pytest
 
 from haggler.config import Settings
+from haggler.models.catalog import Catalog
 from haggler.models.fx import FxRate, FxTable
 from haggler.models.observations import ObservationDraft, PriceObservation, PublishedPrice
 from haggler.models.run import KeyState, PipelineState, TaskResult
@@ -218,6 +219,45 @@ def test_argentina_app_store_bills_in_usd(catalog):
     assert check([usd], catalog).observations[0].status == "accepted"
     rejected = check([ars], catalog).observations[0]
     assert (rejected.status, rejected.flags) == ("rejected", ["currency_mismatch"])
+
+
+def with_currency_overrides(catalog, adapter: str, overrides: dict) -> Catalog:
+    """Copy of the catalog whose `adapter` sources pin params.currency_overrides."""
+    services = []
+    for svc in catalog.services:
+        sources = [
+            src.model_copy(update={"params": {**src.params, "currency_overrides": overrides}})
+            if src.adapter == adapter
+            else src
+            for src in svc.sources
+        ]
+        services.append(svc.model_copy(update={"sources": sources}))
+    return catalog.model_copy(update={"services": services})
+
+
+def test_source_currency_overrides_are_allowed(catalog):
+    # tompec lists Romania in EUR; the source pins it with params.currency_overrides.
+    pinned = with_currency_overrides(catalog, "tompec_netflix", {"RO": "EUR"})
+    eur = obs("netflix", "standard", "RO", "10.99", "EUR", kind="secondary")
+    out = check([eur], catalog)
+    assert (out.observations[0].status, rules(out)) == (
+        "rejected",
+        [("netflix:standard:RO:web:month", "currency_mismatch")],
+    )
+    out = check([eur], pinned)
+    assert (out.observations[0].status, out.observations[0].flags) == ("accepted", [])
+    assert [p.currency for p in publishable(out)] == ["EUR"]
+    # The pin adds a currency; the country's own one stays valid.
+    ron = obs("netflix", "standard", "RO", "55", "RON", kind="secondary")
+    assert check([ron], pinned).observations[0].status == "accepted"
+    # It belongs to that source and that country only.
+    official = obs("netflix", "standard", "RO", "10.99", "EUR")
+    assert check([official], pinned).observations[0].status == "rejected"
+    se = obs("netflix", "standard", "SE", "15.99", "EUR", kind="secondary")
+    assert check([se], pinned).observations[0].status == "rejected"
+    # A list of currencies works too (the adapters accept both forms).
+    listed = with_currency_overrides(catalog, "netflix_help", {"RO": ["EUR"]})
+    assert check([official], listed).observations[0].status == "accepted"
 
 
 @pytest.mark.parametrize(
@@ -577,6 +617,155 @@ def test_duplicate_official_rows_prefer_the_parser(catalog):
     )
     (row,) = out.observations
     assert (row.extraction, row.amount) == ("parser", Decimal("169"))
+
+
+def _official_down(catalog, runs: int, secondary: str | None, *, official_status="blocked"):
+    """Netflix SE standard published by netflix_help at 169; then `runs` runs where the official
+    task has `official_status` and tompec (secondary) says `secondary`."""
+    previous = published(obs("netflix", "standard", "SE", "169", "SEK"))
+    state = PipelineState()
+    history = []
+    for _ in range(runs):
+        current = []
+        if secondary is not None:
+            current.append(obs("netflix", "standard", "SE", secondary, "SEK", kind="secondary"))
+        tasks = [
+            task("netflix_help", "netflix", ["SE"], status=official_status),
+            task("tompec_netflix", "netflix", ["CO", "SE"]),
+        ]
+        out = check(current, catalog, previous=previous, state=state, tasks=tasks)
+        history.append(out)
+        previous = publish(out, previous, D1)
+        state = PipelineState(keys=out.key_state)
+    return history, previous
+
+
+def test_secondary_does_not_replace_an_official_row_while_its_task_fails(catalog):
+    (out,), pub = _official_down(catalog, 1, "149")
+    (row,) = out.observations  # the secondary row is held back, not output
+    assert (row.status, row.source_kind, row.adapter_id, row.amount) == (
+        "carried_forward",
+        "official",
+        "netflix_help",
+        Decimal("169"),
+    )
+    assert row.flags == ["secondary_disagrees"]
+    assert out.key_state[SE_STD] == KeyState(missing_runs=1)
+    assert rules(out) == [(SE_STD, "secondary_disagrees")]
+    assert out.anomalies[0].previous == "149 SEK/month"
+    assert out.review_queue == []
+    assert [(p.amount, p.source_kind) for p in publishable(out)] == [(Decimal("169"), "official")]
+    assert pub[SE_STD].last_changed == D0  # no false "changed" entry
+
+    # An agreeing secondary row adds no flag.
+    (out,), _ = _official_down(catalog, 1, "169")
+    assert [(r.status, r.flags) for r in out.observations] == [("carried_forward", [])]
+
+
+def test_secondary_takes_over_once_the_official_row_ages_out(catalog):
+    history, pub = _official_down(catalog, 8, "149")
+    for n, out in enumerate(history[:7], start=1):
+        (row,) = out.observations
+        assert (row.status, row.source_kind, row.amount) == (
+            "carried_forward",
+            "official",
+            Decimal("169"),
+        )
+        assert out.key_state[SE_STD] == KeyState(missing_runs=n)
+    (row,) = history[7].observations
+    assert (row.status, row.source_kind, row.adapter_id, row.amount) == (
+        "accepted",
+        "secondary",
+        "tompec_netflix",
+        Decimal("149"),
+    )
+    assert history[7].key_state[SE_STD] == KeyState()
+    assert (pub[SE_STD].source_kind, pub[SE_STD].amount) == ("secondary", Decimal("149"))
+
+
+def test_plan_gone_from_the_official_page_is_not_kept_alive_by_the_secondary(catalog):
+    history, _ = _official_down(catalog, 4, "149", official_status="ok")
+    for n, out in enumerate(history[:3], start=1):
+        assert [(r.status, r.source_kind) for r in out.observations] == [
+            ("carried_forward", "official")
+        ]
+        assert out.key_state[SE_STD] == KeyState(absent_ok_runs=n)
+    assert [(r.status, r.source_kind) for r in history[3].observations] == [
+        ("accepted", "secondary")
+    ]
+
+
+def test_secondary_fallback_with_a_big_change_is_quarantined_then_released(catalog):
+    history, pub = _official_down(catalog, 9, "99")  # -41% vs the official 169
+    fallback = history[7]
+    (row,) = fallback.observations
+    assert (row.status, row.source_kind, row.flags) == ("quarantined", "secondary", ["big_change"])
+    # The counters of the aged-out official row survive the quarantine: no second carry cycle.
+    assert fallback.key_state[SE_STD] == KeyState(
+        missing_runs=8, pending_value="99|SEK|month", pending_since=D1
+    )
+    (held,) = publishable(fallback)
+    assert (held.amount, held.source_kind, held.flags) == (
+        Decimal("169"),
+        "official",
+        ["secondary_disagrees", "quarantine_hold"],
+    )
+    (row,) = history[8].observations
+    assert (row.status, row.source_kind, row.amount) == ("accepted", "secondary", Decimal("99"))
+    assert (pub[SE_STD].source_kind, pub[SE_STD].amount) == ("secondary", Decimal("99"))
+
+
+def test_rejected_official_row_keeps_the_previous_official_value(catalog):
+    previous = published(obs("netflix", "standard", "SE", "169", "SEK"))
+    out = check(
+        [
+            obs("netflix", "standard", "SE", "16900", "SEK"),  # implausible
+            obs("netflix", "standard", "SE", "149", "SEK", kind="secondary"),
+        ],
+        catalog,
+        previous=previous,
+    )
+    assert [(r.status, r.source_kind, r.amount) for r in out.observations] == [
+        ("carried_forward", "official", Decimal("169")),
+        ("rejected", "official", Decimal("16900")),
+    ]
+    assert out.observations[0].flags == ["secondary_disagrees"]
+    assert out.key_state[SE_STD] == KeyState(missing_runs=1)
+    assert sorted(rules(out)) == [(SE_STD, "implausible"), (SE_STD, "secondary_disagrees")]
+    assert [(p.amount, p.source_kind) for p in publishable(out)] == [(Decimal("169"), "official")]
+
+
+def test_secondary_only_run_leaves_official_rows_untouched(catalog):
+    """A run filtered to the secondary adapter (--adapters tompec_netflix) never attempted the
+    official page: the official row and its state stay as they were."""
+    previous = published(obs("netflix", "standard", "SE", "169", "SEK"))
+    state = PipelineState(keys={SE_STD: KeyState(missing_runs=2)})
+    out = check(
+        [obs("netflix", "standard", "SE", "149", "SEK", kind="secondary")],
+        catalog,
+        previous=previous,
+        state=state,
+        tasks=[task("tompec_netflix", "netflix", ["CO", "SE"])],
+    )
+    (row,) = out.observations
+    assert (row.status, row.source_kind, row.amount) == ("accepted", "official", Decimal("169"))
+    assert row.flags == ["secondary_disagrees"]
+    assert out.key_state[SE_STD] == KeyState(missing_runs=2)
+
+
+def test_secondary_published_key_keeps_using_the_secondary(catalog):
+    previous = published(obs("netflix", "standard", "SE", "149", "SEK", kind="secondary"))
+    out = check(
+        [obs("netflix", "standard", "SE", "155", "SEK", kind="secondary")],
+        catalog,
+        previous=previous,
+        tasks=[
+            task("netflix_help", "netflix", ["SE"], status="blocked"),
+            task("tompec_netflix", "netflix", ["CO", "SE"]),
+        ],
+    )
+    (row,) = out.observations
+    assert (row.status, row.source_kind, row.amount) == ("accepted", "secondary", Decimal("155"))
 
 
 # ------------------------------------------------------------------------- carry forward

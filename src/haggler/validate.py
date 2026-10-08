@@ -4,7 +4,8 @@ Rules (thresholds from Settings):
   REJECT (status=rejected, kept only in the snapshot):
     * currency not in CountryDef.expected_currencies(channel) — plus the country's
       appstore_currency when the draft carries flag "apple_billing" (Apple's own services are
-      billed in the storefront currency)                                 -> flag currency_mismatch
+      billed in the storefront currency), plus params.currency_overrides[country] of the catalog
+      source (same service, adapter and channel) that produced the row  -> flag currency_mismatch
     * monthly EUR outside PlanDef.plausible_monthly_eur (needs FX)       -> flag implausible
     * amount <= 0                                                        -> flag non_positive
     * unknown service/plan id                                            -> flag unknown_plan
@@ -20,8 +21,12 @@ Rules (thresholds from Settings):
     * the observation carries flag "second_opinion_agrees" (set by the adjudicate node).
   FLAGS only:
     * secondary_disagrees: official and secondary (source_kind) rows for the same key differ >2%
-  SECONDARY rows: when an accepted official row exists for the key, the secondary row is only
-    used for the comparison above and dropped from the output; otherwise it is the output row.
+  SECONDARY rows: when an official row exists for the key, the secondary row is only used for
+    the comparison above and dropped from the output. Without a usable official row today:
+    * key last published by an official source -> the official row is carried forward (counters
+      below) and the secondary row is compared with it, then dropped; the secondary row becomes
+      the output row only on the run where the official row would be dropped (aged out);
+    * otherwise (never published, or published from the secondary) it is the output row.
   CARRY FORWARD (status=carried_forward, copied from previous published row):
     * key published before, absent today, and its task did not succeed -> missing_runs += 1;
       dropped once missing_runs > 7
@@ -37,9 +42,10 @@ Details the rules above leave open (decided here, covered by tests/unit/test_val
     "second_opinion_agrees" (same previous/state/tasks). The output drops secondary rows, so
     pass today's original rows again when secondary sources are involved.
   * One live row per key: the best official row that passed the reject rules (parser before llm,
-    then higher confidence), else the best secondary row. A quarantined official row still wins
-    over the secondary row, so a quarantine is never bypassed by a stale secondary value. Rows
-    that lose the selection are dropped; rejected rows always stay in the snapshot.
+    then higher confidence), else the best secondary row (subject to the SECONDARY rule above).
+    A quarantined official row still wins over the secondary row, so a quarantine is never
+    bypassed by a stale secondary value. Rows that lose the selection are dropped; rejected rows
+    always stay in the snapshot.
   * Rows are compared in the same currency only (big_change, tier_order, secondary checks).
   * tier_order quarantines only the rows of a violating pair whose value is new or differs from
     the published one: an order that was already published (and so confirmed) is not re-flagged
@@ -48,15 +54,20 @@ Details the rules above leave open (decided here, covered by tests/unit/test_val
     A quarantined row stores pending_value "amount|currency|period" + pending_since in KeyState;
     pending_value survives runs where the key is absent, so two sightings around a failed fetch
     still confirm a value.
-  * A key whose rows were all rejected today counts as missing (as if its task had failed).
+  * A key whose rows were all rejected today counts as missing (as if its task had failed); so
+    does an official row carried behind a secondary row when today's official rows were rejected.
   * "Its task" = the TaskResults whose service_ids/countries/channel cover the key, restricted to
     the adapter of the previous published row when one of them is from that adapter (so a
-    secondary dataset that lacks the plan does not count as the official page succeeding).
+    secondary dataset that lacks the plan does not count as the official page succeeding). For
+    an official row carried behind a secondary row, only official-source tasks count: a run
+    without them (e.g. --adapters tompec_netflix) leaves the row and its state untouched.
     Success = status in ok|partial|not_available (any of those tasks).
   * Keys no task covers today (a run filtered with --services/--countries/--adapters) are
     re-emitted unchanged with their published status and keep their KeyState. Keys whose
     service/plan/country left the catalog, or that no source covers any more, are dropped.
-  * Counters reset only when the key is observed again (accepted or quarantined).
+  * Counters reset only when the key is observed again (accepted or quarantined), except for a
+    quarantined secondary row that replaced an aged-out official row: it keeps the counters, so
+    the official row is not carried through a second full cycle while the quarantine waits.
   * key_state holds an entry for every key still tracked (defaults included), so the pipeline
     can replace or merge PipelineState.keys with it.
   * Outputs are sorted by obs_key (observations, review_queue, anomalies).
@@ -71,7 +82,7 @@ from datetime import UTC, date, datetime, time
 from decimal import Decimal, InvalidOperation
 
 from haggler.config import Settings
-from haggler.models.catalog import Catalog, Channel, CountryDef, ServiceDef
+from haggler.models.catalog import Catalog, Channel, CountryDef, ServiceDef, SourceKind
 from haggler.models.fx import FxTable
 from haggler.models.observations import ObsStatus, PriceObservation, PublishedPrice
 from haggler.models.run import Anomaly, KeyState, PipelineState, TaskResult
@@ -169,12 +180,34 @@ def _pct_change(new: Decimal, old: Decimal) -> Decimal:
     return abs(new - old) / old * 100
 
 
-def _allowed_currencies(country: CountryDef, channel: Channel, flags: Iterable[str]) -> list[str]:
+def _allowed_currencies(
+    country: CountryDef, channel: Channel, flags: Iterable[str], pinned: Iterable[str] = ()
+) -> list[str]:
     allowed = list(country.expected_currencies(channel))
-    extra = country.appstore_currency
-    if FLAG_APPLE_BILLING in flags and extra and extra not in allowed:
-        allowed.append(extra)
+    extra = [country.appstore_currency] if FLAG_APPLE_BILLING in flags else []
+    for currency in (*extra, *pinned):
+        if currency and currency not in allowed:
+            allowed.append(currency)
     return allowed
+
+
+def _pinned_currencies(svc: ServiceDef | None, obs: PriceObservation) -> list[str]:
+    """params.currency_overrides[country] (a code or a list) of the sources behind the row."""
+    out: list[str] = []
+    for src in svc.sources if svc else []:
+        if src.adapter != obs.adapter_id or src.channel != obs.channel:
+            continue
+        pinned = (src.params.get("currency_overrides") or {}).get(obs.country)
+        if pinned:
+            out.extend([pinned] if isinstance(pinned, str) else [str(c) for c in pinned])
+    return out
+
+
+def _source_kind(svc: ServiceDef | None, adapter_id: str, channel: str) -> SourceKind:
+    for src in svc.sources if svc else []:
+        if src.adapter == adapter_id and src.channel == channel:
+            return src.kind
+    return "official"
 
 
 def _with_flags(flags: list[str], extra: Iterable[str]) -> list[str]:
@@ -276,7 +309,7 @@ def _check_row(
     if obs.amount <= 0:
         reasons.append((FLAG_NON_POSITIVE, f"amount {obs.amount}"))
     if country is not None:
-        allowed = _allowed_currencies(country, obs.channel, obs.flags)
+        allowed = _allowed_currencies(country, obs.channel, obs.flags, _pinned_currencies(svc, obs))
         if obs.currency not in allowed:
             reasons.append((FLAG_CURRENCY_MISMATCH, f"{obs.currency} not in {'/'.join(allowed)}"))
 
@@ -359,6 +392,35 @@ def _covering_tasks(
     return covering
 
 
+def _absent_state(
+    old: KeyState, tasks: list[TaskResult], *, failed: bool = False
+) -> KeyState | None:
+    """Counters after a run without a live row for a tracked key (`tasks` = its covering tasks);
+    None when no task of this run covers it (the key is left as it was)."""
+    if not failed:
+        if not tasks:
+            return None
+        failed = not any(t.status in SUCCESS_STATUSES for t in tasks)
+    return old.model_copy(
+        update={"missing_runs": old.missing_runs + 1}
+        if failed
+        else {"absent_ok_runs": old.absent_ok_runs + 1}
+    )
+
+
+def _aged_out(state: KeyState) -> bool:
+    return state.missing_runs > MAX_MISSING_RUNS or state.absent_ok_runs > MAX_ABSENT_OK_RUNS
+
+
+def _carried_flags(prev: PublishedPrice, secondary_disagrees: bool | None) -> list[str]:
+    """Flags of a carried row; secondary_disagrees follows today's comparison when there is one."""
+    flags = list(prev.flags)
+    if secondary_disagrees is None:
+        return flags
+    flags = [f for f in flags if f != FLAG_SECONDARY_DISAGREES]
+    return _with_flags(flags, [FLAG_SECONDARY_DISAGREES]) if secondary_disagrees else flags
+
+
 def _still_configured(
     services: dict[str, ServiceDef],
     countries: dict[str, CountryDef],
@@ -420,13 +482,55 @@ def validate(
     # 2. One live row per key; secondary rows are compared, then dropped.
     live: dict[str, PriceObservation] = {}
     secondary_agrees: set[str] = set()
+    # Keys whose published official row is carried forward behind today's secondary row:
+    # key -> its next KeyState (None = no official task this run), and today's comparison.
+    held: dict[str, KeyState | None] = {}
+    held_disagrees: dict[str, bool] = {}
+    # Secondary rows that replace an aged-out official row: key -> the official row's counters.
+    fallback: dict[str, KeyState] = {}
     for key, rows in rows_by_key.items():
         output.extend(r for r in rows if r.status == "rejected")
         official = [r for r in rows if r.status != "rejected" and r.source_kind == "official"]
         secondary = [r for r in rows if r.status != "rejected" and r.source_kind == "secondary"]
         if not official:
-            if secondary:
-                live[key] = _pick(secondary)
+            if not secondary:
+                continue
+            sec = _pick(secondary)
+            prev = previous.get(key)
+            if prev is not None and prev.source_kind == "official":
+                svc = services.get(prev.service_id)
+                tasks = [
+                    t
+                    for t in _covering_tasks(
+                        task_results, prev.service_id, prev.country, prev.channel, prev.adapter_id
+                    )
+                    if _source_kind(svc, t.adapter_id, t.channel) == "official"
+                ]
+                rejected_official = any(r.source_kind == "official" for r in rows)
+                old = state.keys.get(key) or KeyState()
+                nxt = _absent_state(old, tasks, failed=rejected_official)
+                if nxt is not None and _aged_out(nxt):
+                    fallback[key] = nxt
+                else:
+                    held[key] = nxt
+                    if sec.currency == prev.currency and prev.amount > 0:
+                        diff = _pct_change(sec.amount, prev.amount)
+                        held_disagrees[key] = diff > SECONDARY_TOLERANCE_PCT
+                        if held_disagrees[key]:
+                            anomalies.append(
+                                Anomaly(
+                                    obs_key=key,
+                                    rule=FLAG_SECONDARY_DISAGREES,
+                                    detail=(
+                                        f"{sec.adapter_id} says {sec.amount} ({diff:.1f}% off); "
+                                        f"official {prev.adapter_id} value carried forward"
+                                    ),
+                                    previous=_fmt(sec.amount, sec.currency, sec.billing_period),
+                                    current=_fmt(prev.amount, prev.currency, prev.billing_period),
+                                )
+                            )
+                    continue
+            live[key] = sec
             continue
         row = _pick(official)
         live[key] = row
@@ -499,9 +603,11 @@ def validate(
         rules = [rule for rule, _ in found]
         row.status = "quarantined"
         row.flags = _with_flags(row.flags, rules)
-        key_state[key] = KeyState(
-            pending_value=_value_token(row.amount, row.currency, row.billing_period),
-            pending_since=run_date,
+        key_state[key] = (fallback.get(key) or KeyState()).model_copy(
+            update={
+                "pending_value": _value_token(row.amount, row.currency, row.billing_period),
+                "pending_since": run_date,
+            }
         )
         review_queue.append(
             {
@@ -526,38 +632,35 @@ def validate(
         )
         if parts is None or not _still_configured(services, countries, *parts[:4]):
             continue  # left the catalog: drop row and state
-        if key in rows_by_key:
-            failed = True  # observed, but every row was rejected
+        if key in held:
+            new = held[key]  # official row carried behind today's secondary row (step 2)
+        elif key in rows_by_key:
+            new = _absent_state(old, [], failed=True)  # observed, but every row was rejected
         else:
             tasks = _covering_tasks(
                 task_results, parts[0], parts[2], parts[3], prev.adapter_id if prev else None
             )
-            if not tasks:
-                # Not attempted by this run: keep everything as it was.
-                if key in state.keys:
-                    key_state[key] = old.model_copy()
-                if prev is not None:
-                    status: ObsStatus = (
-                        prev.status
-                        if prev.status in ("accepted", "carried_forward")
-                        else "carried_forward"
+            new = _absent_state(old, tasks)
+        if new is None:
+            # Not attempted by this run: keep everything as it was.
+            if key in state.keys:
+                key_state[key] = old.model_copy()
+            if prev is not None:
+                status: ObsStatus = (
+                    prev.status
+                    if prev.status in ("accepted", "carried_forward")
+                    else "carried_forward"
+                )
+                output.append(
+                    _from_published(
+                        prev,
+                        status=status,
+                        flags=_carried_flags(prev, held_disagrees.get(key)),
+                        monthly_eur=fx.to_eur(prev.monthly_equiv, prev.currency),
                     )
-                    output.append(
-                        _from_published(
-                            prev,
-                            status=status,
-                            flags=list(prev.flags),
-                            monthly_eur=fx.to_eur(prev.monthly_equiv, prev.currency),
-                        )
-                    )
-                continue
-            failed = not any(t.status in SUCCESS_STATUSES for t in tasks)
-        new = old.model_copy(
-            update={"missing_runs": old.missing_runs + 1}
-            if failed
-            else {"absent_ok_runs": old.absent_ok_runs + 1}
-        )
-        if new.missing_runs > MAX_MISSING_RUNS or new.absent_ok_runs > MAX_ABSENT_OK_RUNS:
+                )
+            continue
+        if _aged_out(new):
             continue  # dropped
         key_state[key] = new
         if prev is not None:
@@ -565,7 +668,7 @@ def validate(
                 _from_published(
                     prev,
                     status="carried_forward",
-                    flags=list(prev.flags),
+                    flags=_carried_flags(prev, held_disagrees.get(key)),
                     monthly_eur=fx.to_eur(prev.monthly_equiv, prev.currency),
                 )
             )
