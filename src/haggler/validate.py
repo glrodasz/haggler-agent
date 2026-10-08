@@ -61,10 +61,17 @@ Details the rules above leave open (decided here, covered by tests/unit/test_val
     secondary dataset that lacks the plan does not count as the official page succeeding). For
     an official row carried behind a secondary row, only official-source tasks count: a run
     without them (e.g. --adapters tompec_netflix) leaves the row and its state untouched.
-    Success = status in ok|partial|not_available (any of those tasks).
+    Success = status in ok|partial|not_available (any of those tasks), judged per (service,
+    country) pair (pair_status()): TaskResult.pair_status wins, and on a task whose parser read
+    nothing (error "no_prices", upgraded only by LLM rows) a pair without any row today was not
+    read at all, so it counts as failed (capped, skipped or errored LLM jobs are no evidence
+    that the plan left the page).
   * Keys no task covers today (a run filtered with --services/--countries/--adapters) are
     re-emitted unchanged with their published status and keep their KeyState. Keys whose
     service/plan/country left the catalog, or that no source covers any more, are dropped.
+  * A run on the date a key was last counted (a retry, a re-execution) leaves its counters as
+    they are. That date is KeyState.counted_on when a filtered run left the key as it was, else
+    PipelineState.as_of: a filtered run earlier that day does not hide the day from other keys.
   * Counters reset only when the key is observed again (accepted or quarantined), except for a
     quarantined secondary row that replaced an aged-out official row: it keeps the counters, so
     the official row is not carried through a second full cycle while the quarantine waits.
@@ -85,7 +92,7 @@ from haggler.config import Settings
 from haggler.models.catalog import Catalog, Channel, CountryDef, ServiceDef, SourceKind
 from haggler.models.fx import FxTable
 from haggler.models.observations import ObsStatus, PriceObservation, PublishedPrice
-from haggler.models.run import Anomaly, KeyState, PipelineState, TaskResult
+from haggler.models.run import Anomaly, KeyState, PipelineState, TaskResult, pair_key
 
 # Flags (also the Anomaly.rule names).
 FLAG_UNKNOWN_PLAN = "unknown_plan"
@@ -373,6 +380,23 @@ def _tier_violations(
     return dict(found)
 
 
+def pair_status(task: TaskResult, service_id: str, country: str) -> str:
+    """Status of one (service, country) pair of a task: TaskResult.pair_status when set. A task
+    whose parser read nothing (error "no_prices") succeeds only through the LLM rows of the pairs
+    the LLM answered (coverage_status upgrades it), so a pair without any row was not read today
+    and counts as failed."""
+    override = task.pair_status.get(pair_key(service_id, country))
+    if override:
+        return override
+    if (
+        task.status in SUCCESS_STATUSES
+        and task.error == "no_prices"
+        and not any(o.service_id == service_id and o.country == country for o in task.observations)
+    ):
+        return "failed"
+    return task.status
+
+
 def _covering_tasks(
     task_results: list[TaskResult],
     service_id: str,
@@ -380,16 +404,25 @@ def _covering_tasks(
     channel: str,
     adapter_id: str | None,
 ) -> list[TaskResult]:
-    covering = [
-        t
-        for t in task_results
-        if service_id in t.service_ids and country in t.countries and t.channel == channel
-    ]
+    """The tasks that cover a key, each with the status of the key's pair (pair_status)."""
+    covering: list[TaskResult] = []
+    for t in task_results:
+        if service_id not in t.service_ids or country not in t.countries or t.channel != channel:
+            continue
+        status = pair_status(t, service_id, country)
+        covering.append(t if status == t.status else t.model_copy(update={"status": status}))
     if adapter_id:
         same = [t for t in covering if t.adapter_id == adapter_id]
         if same:
             return same
     return covering
+
+
+def _counted_today(key: str, state: PipelineState, run_date: date) -> bool:
+    """The key's counters already include `run_date`: KeyState.counted_on (set on keys a filtered
+    run left as they were), else the date of the run that wrote the state."""
+    old = state.keys.get(key)
+    return old is not None and (old.counted_on or state.as_of) == run_date
 
 
 def _absent_state(
@@ -399,19 +432,21 @@ def _absent_state(
     None when no task of this run covers it (the key is left as it was).
 
     A same-day re-run (Cloud Run retry, manual re-execution) already counted today, so the
-    counters stay as they are: retries must not age keys out faster.
+    counters stay as they are: retries must not age keys out faster. `same_day` is per key
+    (_counted_today). Either way the key now counts as counted by this run (counted_on=None).
     """
     if not failed:
         if not tasks:
             return None
         failed = not any(t.status in SUCCESS_STATUSES for t in tasks)
     if same_day:
-        return old
-    return old.model_copy(
-        update={"missing_runs": old.missing_runs + 1}
+        return old.model_copy(update={"counted_on": None})
+    counter = (
+        {"missing_runs": old.missing_runs + 1}
         if failed
         else {"absent_ok_runs": old.absent_ok_runs + 1}
     )
+    return old.model_copy(update={**counter, "counted_on": None})
 
 
 def _aged_out(state: KeyState) -> bool:
@@ -459,8 +494,6 @@ def validate(
     services = {s.id: s for s in catalog.services}
     countries = {c.cc: c for c in catalog.countries}
     threshold = Decimal(str(settings.quarantine_change_pct))
-    # The stored state was written by an earlier run on this same date (retry / re-execution).
-    same_day = state.as_of == run_date
     anomalies: list[Anomaly] = []
     output: list[PriceObservation] = []
 
@@ -516,7 +549,12 @@ def validate(
                 ]
                 rejected_official = any(r.source_kind == "official" for r in rows)
                 old = state.keys.get(key) or KeyState()
-                nxt = _absent_state(old, tasks, failed=rejected_official, same_day=same_day)
+                nxt = _absent_state(
+                    old,
+                    tasks,
+                    failed=rejected_official,
+                    same_day=_counted_today(key, state, run_date),
+                )
                 if nxt is not None and _aged_out(nxt):
                     fallback[key] = nxt
                 else:
@@ -645,6 +683,7 @@ def validate(
         )
         if parts is None or not _still_configured(services, countries, *parts[:4]):
             continue  # left the catalog: drop row and state
+        same_day = _counted_today(key, state, run_date)
         if key in held:
             new = held[key]  # official row carried behind today's secondary row (step 2)
         elif key in rows_by_key:
@@ -657,9 +696,13 @@ def validate(
             )
             new = _absent_state(old, tasks, same_day=same_day)
         if new is None:
-            # Not attempted by this run: keep everything as it was.
+            # Not attempted by this run: keep everything as it was, including when it was last
+            # counted (this run's date becomes the state's as_of).
             if key in state.keys:
-                key_state[key] = old.model_copy()
+                counted = old.counted_on or state.as_of
+                key_state[key] = old.model_copy(
+                    update={"counted_on": None if counted == run_date else counted}
+                )
             if prev is not None:
                 status: ObsStatus = (
                     prev.status

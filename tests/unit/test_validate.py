@@ -971,6 +971,63 @@ def test_state_only_keys_age_out(catalog):
     assert out.key_state[key].absent_ok_runs == 1
 
 
+ICLOUD_SE = "icloud_plus:200gb:SE:web:month"
+ICLOUD_SE_2TB = "icloud_plus:2tb:SE:web:month"
+ICLOUD_CO = "icloud_plus:200gb:CO:web:month"
+
+
+def _icloud(cc: str, plan: str, amount: str, currency: str, **kw) -> PriceObservation:
+    return obs("icloud_plus", plan, cc, amount, currency, flags=("apple_billing",), **kw)
+
+
+def _icloud_previous() -> dict[str, PublishedPrice]:
+    return published(
+        _icloud("SE", "200gb", "39", "SEK"),
+        _icloud("SE", "2tb", "129", "SEK"),
+        _icloud("CO", "200gb", "11900", "COP"),
+    )
+
+
+def test_pairs_nobody_read_on_a_failed_parse_age_as_missing(catalog):
+    """The parser read nothing (error no_prices); the LLM answered SE only (capped, skipped or
+    errored jobs). The task counts as partial, but CO was not read today: its keys age as
+    missing, not as a plan gone from a good page. SE was read: its absent plan is absent."""
+    se = _icloud("SE", "200gb", "39", "SEK", extraction="llm")
+    tasks = [
+        task("icloud_support", "icloud_plus", ["SE", "CO"], status="partial").model_copy(
+            update={"error": "no_prices", "observations": [se]}
+        )
+    ]
+    out = check([se], catalog, previous=_icloud_previous(), tasks=tasks)
+    assert out.key_state[ICLOUD_CO] == KeyState(missing_runs=1)
+    assert out.key_state[ICLOUD_SE_2TB] == KeyState(absent_ok_runs=1)
+    assert live(out)[ICLOUD_CO].status == "carried_forward"
+
+    # A page the parser did read: a country it did not find is absent from a good page.
+    parsed = _icloud("SE", "200gb", "39", "SEK")
+    tasks = [
+        task("icloud_support", "icloud_plus", ["SE", "CO"], status="partial").model_copy(
+            update={"observations": [parsed]}
+        )
+    ]
+    out = check([parsed], catalog, previous=_icloud_previous(), tasks=tasks)
+    assert out.key_state[ICLOUD_CO] == KeyState(absent_ok_runs=1)
+
+
+def test_a_pair_status_overrides_the_task_status(catalog):
+    """An LLM answer said CO's part of the page is for another country: CO counts as that
+    failure even though the task (SE read fine) succeeded."""
+    se = _icloud("SE", "200gb", "39", "SEK")
+    tasks = [
+        task("icloud_support", "icloud_plus", ["SE", "CO"]).model_copy(
+            update={"observations": [se], "pair_status": {"icloud_plus:CO": "wrong_country"}}
+        )
+    ]
+    out = check([se], catalog, previous=_icloud_previous(), tasks=tasks)
+    assert out.key_state[ICLOUD_CO] == KeyState(missing_runs=1)
+    assert out.key_state[ICLOUD_SE_2TB] == KeyState(absent_ok_runs=1)
+
+
 # --------------------------------------------------------------------------- determinism
 
 
@@ -1080,6 +1137,39 @@ def test_same_day_rerun_neither_confirms_quarantine_nor_ages_keys(catalog):
         run_date=D2,
     )
     assert later.key_state[SE_STD].missing_runs == missing + 1
+
+
+def test_a_filtered_run_does_not_suppress_counting_for_keys_it_did_not_cover(catalog):
+    """D2: a --services spotify run, then the scheduled full run on the same date. The filtered
+    run wrote state.as_of=D2 but left the Netflix key as D1 counted it: the full run must still
+    count D2 for Netflix, and must not count D2 a second time for Spotify."""
+    spotify = "spotify:individual:SE:web:month"
+    previous = published(
+        obs("netflix", "standard", "SE", "169", "SEK"),
+        obs("spotify", "individual", "SE", "139", "SEK"),
+    )
+    netflix_down = task("netflix_help", "netflix", ["SE"], status="blocked")
+    spotify_down = task("spotify_premium", "spotify", ["SE"], status="failed")
+    both = [netflix_down, spotify_down]
+    d1 = check([], catalog, previous=previous, tasks=both, run_date=D1)
+    assert (d1.key_state[SE_STD].missing_runs, d1.key_state[spotify].missing_runs) == (1, 1)
+
+    state = PipelineState(keys=d1.key_state, as_of=D1)
+    filtered = check([], catalog, previous=previous, state=state, tasks=[spotify_down], run_date=D2)
+    assert filtered.key_state[SE_STD].missing_runs == 1
+    assert filtered.key_state[spotify].missing_runs == 2
+
+    state = PipelineState(keys=filtered.key_state, as_of=D2)
+    full = check([], catalog, previous=previous, state=state, tasks=both, run_date=D2)
+    assert full.key_state[SE_STD].missing_runs == 2
+    assert full.key_state[spotify].missing_runs == 2
+    # A retry of the full run on the same date counts nothing again.
+    state = PipelineState(keys=full.key_state, as_of=D2)
+    retry = check([], catalog, previous=previous, state=state, tasks=both, run_date=D2)
+    assert retry.key_state == full.key_state
+
+    nxt = check([], catalog, previous=previous, state=state, tasks=both, run_date=D3)
+    assert (nxt.key_state[SE_STD].missing_runs, nxt.key_state[spotify].missing_runs) == (3, 3)
 
 
 def test_success_ratio_ignores_structural_statuses():

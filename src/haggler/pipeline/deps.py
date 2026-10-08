@@ -23,7 +23,7 @@ from haggler.fetch import Fetcher, RawResponse
 from haggler.fx.service import FxService
 from haggler.models.catalog import Catalog
 from haggler.models.fx import FxTable
-from haggler.models.observations import PublishedPrice
+from haggler.models.observations import PriceObservation, PublishedPrice
 from haggler.models.run import LlmJob, LlmStats, PipelineState, Task
 from haggler.store import Store, store_from_settings
 
@@ -58,6 +58,9 @@ class RunBuffer:
     llm_jobs: dict[str, list[LlmJob]] = field(default_factory=dict)
     # task_id -> (service_id, country) pairs the LLM answered today (TaskState.llm_pairs).
     llm_answered: dict[str, set[tuple[str, str]]] = field(default_factory=dict)
+    # task_id -> LLM rows of today's answers whose keys the parser also had: never live rows,
+    # but stored with the answer (TaskState.llm_obs) for reuse on the same page text.
+    llm_dupes: dict[str, list[PriceObservation]] = field(default_factory=dict)
     # Tasks with no LLM work left for today's page text (TaskState.llm_checked_hash).
     llm_checked: set[str] = field(default_factory=set)
     # Tasks whose jobs were capped per task: some pairs wait for a later run.

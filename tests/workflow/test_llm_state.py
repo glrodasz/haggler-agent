@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from typing import Any
 
@@ -17,7 +18,7 @@ import wf_support as W
 from conftest import FixtureFetcher, ScriptedLlm
 from haggler.models.catalog import Catalog
 from haggler.models.observations import PublishedPrice
-from haggler.models.run import PipelineState
+from haggler.models.run import PipelineState, TaskResult
 from haggler.pipeline import nodes
 from haggler.sources.base import ParseResult
 from haggler.store import read_json
@@ -221,3 +222,246 @@ async def test_stored_answers_survive_a_day_the_parser_covered_them(
     rows = prices(store)
     assert {rows[f"icloud_plus:200gb:{cc}:web:month"].extraction for cc in ICLOUD_200GB} == {"llm"}
     assert {rows[f"icloud_plus:200gb:{cc}:web:month"].status for cc in ICLOUD_200GB} == {"accepted"}
+
+
+ROTATION = {
+    "BR": ("Brazil", "BRL"),
+    "CA": ("Canada", "CAD"),
+    "CL": ("Chile", "CLP"),
+    "CO": ("Colombia", "COP"),
+    "MX": ("Mexico", "MXN"),
+    "PE": ("Peru", "PEN"),
+}
+
+
+def rotation_answer(text: str) -> dict[str, Any]:
+    """The 200 GB price of the job's country, read from its focused page text."""
+    job = W.job_of(text)
+    name, currency = ROTATION[job["country"]]
+    lines = job["page_text"].splitlines()
+    start = next(i for i, ln in enumerate(lines) if ln.startswith(name))
+    line = next(ln for ln in lines[start:] if ln.replace(" ", "").startswith("200GB:"))
+    return W.extraction([W.item("200gb", "200GB", line.split(":", 1)[1].strip(), currency, line)])
+
+
+async def test_countries_left_for_a_later_run_are_carried_like_a_failed_fetch(
+    catalog: Catalog, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The iCloud parser breaks on a changed page and the LLM answers one country per run
+    (MAX_JOBS_PER_TASK=1). The task counts as partial, but the countries nobody read today are
+    not "absent from a good page": they stay published until the rotation reaches them and
+    never come back as llm_new_key quarantines."""
+    from decimal import Decimal
+
+    from haggler.fx.service import StaticFxService
+    from haggler.models.fx import FxRate, FxTable
+
+    cat = Catalog(
+        services=[catalog.service("icloud_plus")],
+        countries=[catalog.country(cc) for cc in ROTATION],
+        fx_pins={},
+    )
+    day0 = date(2026, 10, 1)
+    rates = {"BRL": "6.2", "CAD": "1.5", "CLP": "1000", "COP": "4700", "MXN": "20", "PEN": "4.0"}
+    fx = StaticFxService(
+        FxTable(
+            as_of=day0,
+            rates={
+                c: FxRate(currency=c, per_eur=Decimal(v), source="ecb", as_of=day0)
+                for c, v in rates.items()
+            },
+        )
+    )
+    clock = W.Clock(day0)
+    page = W.source("icloud_support", "108047_en_us.html")
+    fetcher = FixtureFetcher({W.ICLOUD: page})
+    store = W.RecordingStore()
+
+    def deps(model: Any = None) -> Any:
+        d = W.make_deps(cat, fetcher, store=store, clock=clock, model=model)
+        d.fx = fx
+        return d
+
+    await W.run(deps())
+    keys = {f"icloud_plus:200gb:{cc}:web:month" for cc in ROTATION}
+    assert keys <= set(prices(store))
+
+    monkeypatch.setattr(nodes, "MAX_JOBS_PER_TASK", 1)
+    break_parser(monkeypatch, "icloud_support")
+    fetcher.routes[W.ICLOUD] = page.replace("Learn about iCloud+ plans", "Learn all about iCloud+")
+    llm = ScriptedLlm(responder=rotation_answer)
+    for day in range(2, 12):
+        clock.day = date(2026, 10, day)
+        seen = len(llm.requests)
+        await W.run(deps(llm))
+        rows = prices(store)
+        assert keys <= set(rows), day
+        assert read_json(store, "latest/review_queue.json") == [], day
+        if day <= 7:
+            (cc,) = asked(llm, seen)
+            cov = {r["country"]: r["status"] for r in read_json(store, "latest/coverage.json")}
+            # Read so far: ok; not read yet: failed (not "not available" in that country).
+            assert cov[cc] == "ok" and set(cov.values()) <= {"ok", "failed"}, day
+            assert list(cov.values()).count("failed") == 7 - day, day
+    assert len(llm.requests) == len(ROTATION)
+    assert {rows[k].status for k in keys} == {"accepted"}
+    assert {rows[k].extraction for k in keys} == {"llm"}
+
+
+SPOTIFY_SE = "spotify_premium:spotify:SE"
+SPOTIFY_SE_KEYS = [f"spotify:{p}:SE:web:month" for p in ("individual", "duo", "family", "student")]
+
+
+def spotify_parser(monkeypatch: pytest.MonkeyPatch, mode: dict[str, str]) -> None:
+    """mode["v"]: "real", "partial" (misses the default plan) or "none" (no_prices)."""
+    real = nodes.get_adapter
+
+    class Switchable:
+        id = "spotify_premium"
+
+        def plan(self, svc, src, catalog):
+            return real(self.id).plan(svc, src, catalog)
+
+        def parse(self, task, resp, catalog):
+            pr = real(self.id).parse(task, resp, catalog)
+            if mode["v"] == "partial":
+                rows = [o for o in pr.observations if o.plan_id != "individual"]
+                return ParseResult(status="partial", observations=rows, notes=["individual?"])
+            if mode["v"] == "none":
+                return ParseResult(status="no_prices", notes=["selectors broken"])
+            return pr
+
+    monkeypatch.setattr(
+        nodes, "get_adapter", lambda a: Switchable() if a == "spotify_premium" else real(a)
+    )
+
+
+def spotify_se_answer(text: str) -> dict[str, Any]:
+    lines = W.job_of(text)["page_text"].splitlines()
+    items = []
+    prices_se = (
+        ("individual", "129 kr"),
+        ("duo", "169 kr"),
+        ("family", "209 kr"),
+        ("student", "65 kr"),
+    )
+    for plan, price in prices_se:
+        line = next((ln for ln in lines if f"{price}/månad" in ln), None)
+        if line:
+            items.append(W.item(plan, plan, price, "SEK", line))
+    return W.extraction(items)
+
+
+async def test_llm_answers_the_parser_also_had_are_stored_for_reuse(
+    cat: Catalog, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Day 2: the parser misses only the default plan; the LLM answers all four plans. Days 3+:
+    same page text, the parser reads nothing. The stored answer must still hold the three plans
+    the parser had on day 2, so they are reused instead of aging out."""
+    clock = W.Clock(date(2026, 10, 1))
+    fetcher = FixtureFetcher(W.routes())
+    store = W.RecordingStore()
+    opts = {"services": ["spotify"], "countries": ["SE"]}
+    mode = {"v": "real"}
+    spotify_parser(monkeypatch, mode)
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock), **opts)
+    assert set(SPOTIFY_SE_KEYS) <= set(prices(store))
+
+    llm = ScriptedLlm(responder=spotify_se_answer)
+    mode["v"] = "partial"
+    clock.day = date(2026, 10, 2)
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock, model=llm), **opts)
+    assert len(llm.requests) == 1
+    stored = [d["obs_key"] for d in state(store).tasks[SPOTIFY_SE].llm_obs]
+    assert sorted(stored) == sorted(SPOTIFY_SE_KEYS)
+    assert prices(store)["spotify:duo:SE:web:month"].extraction == "parser"
+
+    mode["v"] = "none"
+    for day in range(3, 9):
+        clock.day = date(2026, 10, day)
+        report = await W.run(W.make_deps(cat, fetcher, store=store, clock=clock, model=llm), **opts)
+        assert report.tasks_by_status == {"ok": 1}, day
+        rows = prices(store)
+        assert {rows[k].status for k in SPOTIFY_SE_KEYS} == {"accepted"}, day
+        assert {rows[k].extraction for k in SPOTIFY_SE_KEYS} == {"llm"}, day
+    assert len(llm.requests) == 1  # never asked again for the same page text
+
+
+async def test_items_of_a_wrong_country_answer_are_never_used(cat: Catalog) -> None:
+    """The model says the Netflix US page is another country's but still lists USD items: the
+    items are rejected and the task is wrong_country. Nothing reaches prices.json, neither on a
+    run that reuses the answer for the same text nor when the same answer comes again."""
+    clock = W.Clock(DAY1)
+    fetcher = FixtureFetcher(W.routes())
+    store = W.RecordingStore()
+    opts = {"services": ["netflix"], "countries": ["US"], "adapters": ["netflix_help"]}
+    llm = ScriptedLlm(
+        responder=lambda text: W.extraction(W.NETFLIX_US_ITEMS, status="wrong_country")
+    )
+    page = W.page("netflix_us_prose.html")
+    changed = page.replace("Netflix offers", "Netflix proudly offers")
+    for day, page_text, asked_today in ((8, page, True), (9, page, False), (10, changed, True)):
+        clock.day = date(2026, 10, day)
+        fetcher.routes[W.NETFLIX.format(cc="us")] = page_text
+        seen = len(llm.requests)
+        report = await W.run(W.make_deps(cat, fetcher, store=store, clock=clock, model=llm), **opts)
+        assert len(llm.requests) - seen == int(asked_today), day
+        assert report.tasks_by_status == {"wrong_country": 1}, day
+        assert report.obs_by_status == {}, day
+        assert not any(":US:" in k for k in prices(store)), day
+        assert read_json(store, "latest/review_queue.json") == [], day
+        (cov,) = read_json(store, "latest/coverage.json")
+        assert (cov["status"], cov["failing_since"]) == ("wrong_country", "2026-10-08"), day
+        check = state(store).tasks["netflix_help:netflix:US"].llm_pairs["netflix:US"]
+        assert check.page_status == "wrong_country", day
+        log = store.read_bytes(f"runs/{report.run_date}/{report.run_id}/llm.jsonl").decode()
+        entries = [json.loads(line) for line in log.splitlines()]
+        assert len(entries) == int(asked_today), day
+        for entry in entries:
+            assert entry["accepted"] == []
+            assert {r["reason"] for r in entry["rejected"]} == {"page_status_wrong_country"}
+            assert report.llm.accepted_items == 0 and report.llm.rejected_items == 3
+
+
+async def test_a_wrong_country_answer_fails_only_its_pair_of_a_multi_country_page(
+    cat: Catalog, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock = W.Clock(DAY1)
+    fetcher = FixtureFetcher(W.routes())
+    store = W.RecordingStore()
+    opts = {"services": ["icloud_plus"]}
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock), **opts)
+
+    break_parser(monkeypatch, "icloud_support")
+
+    def responder(text: str) -> Any:
+        job = W.job_of(text)
+        answer = icloud_answer(job)
+        if job["country"] == "CO":
+            answer["page_status"] = "wrong_country"
+        return answer
+
+    llm = ScriptedLlm(responder=responder)
+    clock.day = date(2026, 10, 9)
+    report = await W.run(W.make_deps(cat, fetcher, store=store, clock=clock, model=llm), **opts)
+    assert report.tasks_by_status == {"partial": 1}
+    assert report.llm.accepted_items == 2 and report.llm.rejected_items == 1
+    data = store.read_bytes(f"runs/{report.run_date}/{report.run_id}/tasks.jsonl").decode()
+    (result,) = [TaskResult.model_validate_json(line) for line in data.splitlines()]
+    assert result.pair_status == {"icloud_plus:CO": "wrong_country"}
+    cov = {r["country"]: r["status"] for r in read_json(store, "latest/coverage.json")}
+    assert cov == {"CO": "wrong_country", "SE": "ok", "US": "ok"}
+    rows = prices(store)
+    co = rows["icloud_plus:200gb:CO:web:month"]
+    assert (co.status, co.extraction) == ("carried_forward", "parser")
+    assert state(store).keys["icloud_plus:200gb:CO:web:month"].missing_runs == 1
+    assert rows["icloud_plus:200gb:SE:web:month"].extraction == "llm"
+
+    # Same text the next day: every answer is reused, CO still counts as wrong_country.
+    clock.day = date(2026, 10, 10)
+    seen = len(llm.requests)
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock, model=llm), **opts)
+    assert len(llm.requests) == seen
+    cov = {r["country"]: r["status"] for r in read_json(store, "latest/coverage.json")}
+    assert cov == {"CO": "wrong_country", "SE": "ok", "US": "ok"}
+    assert state(store).keys["icloud_plus:200gb:CO:web:month"].missing_runs == 2

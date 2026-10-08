@@ -25,6 +25,11 @@ STRUCTURAL_STATUSES = ("not_configured", "robots_disallowed")
 LlmReason = Literal["parser_failed", "unmapped_iap", "second_opinion"]
 
 
+def pair_key(service_id: str, cc: str) -> str:
+    """Key of a (service, country) pair of a task (TaskState.llm_pairs, TaskResult.pair_status)."""
+    return f"{service_id}:{cc}"
+
+
 class Task(BaseModel):
     """One fetch: a URL that yields prices for one or more (service, country) pairs."""
 
@@ -88,6 +93,9 @@ class TaskResult(BaseModel):
     text_hash: str | None = None
     raw_ref: str | None = None
     error: str | None = None
+    # pair_key -> status of a pair that differs from the task's: an LLM answer said that part of
+    # the page shows another country or a bot wall (only for pairs without parser rows).
+    pair_status: dict[str, TaskStatus] = Field(default_factory=dict)
     notes: list[str] = Field(default_factory=list)
     attempts: int = 1
     ms: int = 0
@@ -202,6 +210,10 @@ class KeyState(BaseModel):
     # Quarantined new value awaiting confirmation, as "amount|currency|period".
     pending_value: str | None = None
     pending_since: date | None = None
+    # Date of the run that last counted this key, when it is older than PipelineState.as_of: a
+    # filtered run that did not cover the key left it as it was. None = counted by the run that
+    # wrote the state. A run on the date the key was last counted does not count it again.
+    counted_on: date | None = None
 
 
 class LlmPairCheck(BaseModel):
@@ -211,6 +223,9 @@ class LlmPairCheck(BaseModel):
 
     text_hash: str
     on: date
+    # The answer's page_status when it made the pair fail (wrong_country, blocked): re-applied
+    # (TaskResult.pair_status) on the runs that reuse the answer for the same text.
+    page_status: TaskStatus | None = None
 
 
 class TaskState(BaseModel):

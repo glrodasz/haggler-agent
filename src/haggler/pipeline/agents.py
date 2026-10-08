@@ -46,9 +46,10 @@ Rules:
 5. currency: the ISO-4217 code of the printed price. billing_period: "month", "quarter" or
    "year", as printed. Prefer the regular recurring price over introductory, trial or discounted
    prices; skip a price that is only valid for a limited introductory period.
-6. page_status: "wrong_country" if the page is for another country or shows prices in a currency
-   that is not in expected_currencies; "blocked" for a bot check, captcha or access-denied page;
-   "no_prices" if no subscription price is printed; otherwise "ok".
+6. page_status: "wrong_country" if the page is for another country or none of its prices is in
+   expected_currencies; "blocked" for a bot check, captcha or access-denied page; "no_prices" if
+   no subscription price is printed; otherwise "ok" (also when other countries' prices are
+   printed next to this country's). Every item of an answer that is not "ok" is discarded.
 7. reason "unmapped_iap": page_text is a list of in-app purchase lines ("name - price"). Map each
    line to a plan_id (or "other"); price_text is the price part of the line and
    evidence_snippet the whole line.

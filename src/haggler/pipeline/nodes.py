@@ -66,6 +66,8 @@ from haggler.models.run import (
     Task,
     TaskResult,
     TaskState,
+    TaskStatus,
+    pair_key,
 )
 from haggler.money import Money, parse_money
 from haggler.pipeline._adk_compat import (
@@ -100,6 +102,8 @@ FOCUS_AFTER = 14
 LEGACY_LLM_CHECKED_KEY = "_llm_checked_hash"
 # Finish reasons of an empty answer worth one more try (a SAFETY or RECITATION block repeats).
 RETRY_EMPTY_REASONS = frozenset({None, "STOP", "FINISH_REASON_UNSPECIFIED"})
+# LLM page_status answers that make the job's (service, country) pair count as that failure.
+PAIR_FAILURE_PAGE_STATUSES = frozenset({"wrong_country", "blocked"})
 LATEST_FILES = ("prices.json", "fx.json", "coverage.json", "review_queue.json", "state.json")
 
 _PARSE_TO_TASK: dict[str, str] = {
@@ -249,11 +253,6 @@ def render_page(text: str, *, is_json: bool) -> tuple[list[str], str]:
         return [], text_hash(text)
     lines = page_text_lines(text)
     return lines, text_hash("\n".join(lines))
-
-
-def pair_key(service_id: str, cc: str) -> str:
-    """TaskState.llm_pairs key of a (service, country) pair."""
-    return f"{service_id}:{cc}"
 
 
 def split_pair_key(key: str) -> tuple[str, str]:
@@ -745,6 +744,7 @@ async def process_task(
             text_hash=parsed.text_hash,
             raw_ref=raw_ref,
             error=parsed.error,
+            pair_status=parsed.pair_status,
             notes=[*notes, *parsed.notes],
         )
     except Exception as exc:  # an internal bug fails this task only, never the whole run
@@ -782,6 +782,9 @@ class ParsedPage:
     checked: bool = False
     truncated: bool = False
     reused: bool = False
+    # Pairs an LLM answer reused for this text says fail (page_status wrong_country / blocked).
+    failed_pairs: dict[tuple[str, str], TaskStatus] = field(default_factory=dict)
+    pair_status: dict[str, TaskStatus] = field(default_factory=dict)
 
 
 async def parse_fetched(deps: Deps, task: Task, resp: RawResponse, *, is_json: bool) -> ParsedPage:
@@ -845,7 +848,10 @@ async def parse_fetched(deps: Deps, task: Task, resp: RawResponse, *, is_json: b
         observations=page.observations,
         error=page.error,
     )
-    page.status = coverage_status(result, cat)
+    result.status = coverage_status(result, cat)  # type: ignore[assignment]
+    for (sid, cc), status in page.failed_pairs.items():
+        mark_pair_failure(result, sid, cc, status)
+    page.status, page.pair_status = result.status, result.pair_status
     return page
 
 
@@ -871,6 +877,8 @@ async def plan_llm_work(
             last_checked[pair] = check.on
             if same_page and check.text_hash == page.text_hash:
                 answered.add(pair)
+                if check.page_status:
+                    page.failed_pairs[pair] = check.page_status
     reused: list[PriceObservation] = []
     if answered:
         existing = {o.obs_key for o in page.observations}
@@ -1057,6 +1065,15 @@ async def run_llm_jobs(
                 outcome.error = f"ValidationError: {str(exc)[:300]}"
                 return outcome
             outcome.accepted, outcome.rejected = post_check(job, extraction)
+            if extraction.page_status != "ok" and outcome.accepted:
+                # By the model's own account the page shows no prices, another country or a bot
+                # wall: its items are never used (the pair still counts as answered).
+                reason = f"page_status_{extraction.page_status}"
+                outcome.rejected += [
+                    {"item": item.model_dump(mode="json"), "reason": reason}
+                    for item, _ in outcome.accepted
+                ]
+                outcome.accepted = []
         except Exception as exc:  # a post-check bug fails this job only
             outcome.accepted, outcome.rejected = [], []
             outcome.error = f"internal: {type(exc).__name__}: {str(exc)[:300]}"
@@ -1070,9 +1087,12 @@ def apply_llm_items(
     deps: Deps, result: TaskResult, outcome: JobOutcome, task_kind: SourceKind
 ) -> int:
     """Turn accepted items into observations of the job's task. Keys the parser already has are
-    logged as duplicates (the parser row wins in validate anyway)."""
+    logged as duplicates (the parser row wins in validate anyway) and kept in
+    RunBuffer.llm_dupes: they belong to the stored answer (TaskState.llm_obs), which a later run
+    of the same page text reuses for the plans its parser no longer reads."""
     job = outcome.job
     existing = {o.obs_key for o in result.observations}
+    parser_keys = {o.obs_key for o in result.observations if o.extraction == "parser"}
     added = 0
     task = Task(
         task_id=result.task_id,
@@ -1117,6 +1137,8 @@ def apply_llm_items(
             outcome.duplicates.append(
                 {"item": item.model_dump(mode="json"), "obs_key": obs.obs_key}
             )
+            if obs.obs_key in parser_keys:
+                deps.buffer.llm_dupes.setdefault(result.task_id, []).append(obs)
             continue
         existing.add(obs.obs_key)
         result.observations.append(obs)
@@ -1124,6 +1146,22 @@ def apply_llm_items(
         added += 1
     outcome.accepted = kept
     return added
+
+
+def mark_pair_failure(result: TaskResult, service_id: str, cc: str, status: TaskStatus) -> None:
+    """An LLM answer (today's, or a reused one for the same text) said the page, or its part for
+    this pair, shows another country or a bot wall, and run_llm_jobs dropped its items: the pair
+    counts as that failure (TaskResult.pair_status), and so does a task that covers this pair
+    only. A pair the parser read rows for keeps the parser's verdict."""
+    if any(
+        o.extraction == "parser" and o.service_id == service_id and o.country == cc
+        for o in result.observations
+    ):
+        return
+    result.pair_status[pair_key(service_id, cc)] = status
+    single = result.service_ids == [service_id] and result.countries == [cc]
+    if single and result.status in ("ok", "partial", "failed"):
+        result.status = status
 
 
 # ============================================================================ validate helpers
@@ -1320,11 +1358,13 @@ def to_published(
 
 
 def _per_country_status(r: TaskResult, svc: ServiceDef | None, cc: str) -> str:
-    if r.status not in ("ok", "partial") or svc is None:
-        return r.status
+    # The pair's own status first (an LLM page_status, or a pair nobody read today).
+    status = rules.pair_status(r, svc.id, cc) if svc is not None else r.status
+    if status not in ("ok", "partial") or svc is None:
+        return status
     obs = [o for o in r.observations if o.service_id == svc.id and o.country == cc]
     if not obs:
-        return "not_available" if len(r.countries) > 1 else r.status
+        return "not_available" if len(r.countries) > 1 else status
     return "ok" if any(o.plan_id == svc.default_plan for o in obs) else "partial"
 
 
@@ -1398,7 +1438,10 @@ def llm_task_state(
 
     A pair whose LLM row ended quarantined (`held`: (obs_key, adapter_id)) is neither stored for
     reuse nor counted as answered: only a fresh answer (or the parser, or a secondary source) may
-    confirm it, never a copy of the same answer."""
+    confirm it, never a copy of the same answer.
+
+    A fresh answer is stored whole: with the items whose keys the parser also had today
+    (RunBuffer.llm_dupes), so a parser that loses them later on the same text still gets them."""
     rows = [o for o in r.observations if o.extraction == "llm"]
     redo = {(o.service_id, o.country) for o in rows if (o.obs_key, o.adapter_id) in held}
     fresh = buf.llm_answered.get(r.task_id, set()) - redo
@@ -1406,13 +1449,17 @@ def llm_task_state(
     for sid, cc in redo:
         pairs.pop(pair_key(sid, cc), None)
     for sid, cc in sorted(fresh):
-        pairs[pair_key(sid, cc)] = LlmPairCheck(text_hash=hash_, on=run_date)
+        pairs[pair_key(sid, cc)] = LlmPairCheck(
+            text_hash=hash_, on=run_date, page_status=r.pair_status.get(pair_key(sid, cc))
+        )
     valid = {split_pair_key(k) for k, check in pairs.items() if check.text_hash == hash_}
-    llm_obs = [
-        o.model_dump(mode="json")
-        for o in rows
-        if not o.reused and (o.service_id, o.country) in fresh
-    ]
+    llm_obs: list[dict[str, Any]] = []
+    stored: set[str] = set()
+    for o in [*rows, *buf.llm_dupes.get(r.task_id, [])]:
+        if o.reused or (o.service_id, o.country) not in fresh or o.obs_key in stored:
+            continue
+        stored.add(o.obs_key)
+        llm_obs.append(o.model_dump(mode="json"))
     if old is not None and old.text_hash == hash_:
         llm_obs += [
             d
@@ -1612,6 +1659,8 @@ def build_workflow(deps: Deps) -> Workflow:
                         )
                         pair = (outcome.job.service_id, outcome.job.country)
                         buf.llm_answered.setdefault(result.task_id, set()).add(pair)
+                        if page_status in PAIR_FAILURE_PAGE_STATUSES:
+                            mark_pair_failure(result, *pair, page_status)
                 if outcome.skipped:
                     stats.skipped_budget += 1
                     unanswered.add(result.task_id)

@@ -502,6 +502,39 @@ async def test_failing_since_is_kept_across_runs(cat: Catalog) -> None:
     assert state.tasks["spotify_premium:spotify:SE"].failing_since == DAY1
 
 
+async def test_a_filtered_run_first_does_not_hide_that_days_outage(cat: Catalog) -> None:
+    """Netflix SE is down from day 2. On day 2 a manual --services spotify run comes before the
+    scheduled full run: the full run must still count day 2 for the Netflix keys."""
+    from haggler.fetch.errors import FetchError
+
+    key = "netflix:standard:SE:web:month"
+    clock = W.Clock(DAY1)
+    fetcher = FixtureFetcher(W.routes())
+    store = W.RecordingStore()
+
+    def missing_runs() -> int:
+        return (
+            PipelineState.model_validate(read_json(store, "latest/state.json"))
+            .keys[key]
+            .missing_runs
+        )
+
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock))
+    assert missing_runs() == 0
+    fetcher.routes[W.NETFLIX.format(cc="se")] = FetchError("HTTP 500", status=500, url="x")
+    clock.day = date(2026, 10, 9)
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock), services=["spotify"])
+    assert missing_runs() == 0  # not covered by that run
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock))
+    assert missing_runs() == 1
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock))
+    assert missing_runs() == 1  # a same-day retry counts nothing again
+    clock.day = date(2026, 10, 10)
+    await W.run(W.make_deps(cat, fetcher, store=store, clock=clock))
+    assert missing_runs() == 2
+    assert prices(store)[key].status == "carried_forward"
+
+
 # ----------------------------------------------------------------------------- (7) dry run
 
 
