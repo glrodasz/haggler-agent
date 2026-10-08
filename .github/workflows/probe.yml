@@ -1,6 +1,8 @@
 # Fetches the real vendor pages from a GitHub runner (the dev container cannot reach them) and
-# reports, per target, what the adapters extracted. Read the job summary or the probe-out
+# reports, per target, what the adapters extracted. Read the job summary or the probe-summary
 # artifact to tune parsers. Failing targets never fail the job: only a crash of the CLI does.
+# Never authenticates to GCP. The fetched pages (probe-out/raw/) stay on the runner: only the
+# summary, which quotes short snippets at most, is uploaded (raw HTML is never republished).
 name: probe
 
 on:
@@ -43,9 +45,9 @@ jobs:
       MODE: ${{ inputs.mode || 'adapters' }}
       TARGETS_OVERRIDE: ${{ inputs.targets || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
@@ -87,11 +89,14 @@ jobs:
             echo "::warning title=probe::probe-out/summary.md no fue generado (¿falló el CLI?)"
           fi
 
-      - name: Upload probe-out
+      # Not the whole probe-out/: raw/ holds the vendors' full pages (and the store in mode=full).
+      - name: Upload probe summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: probe-out-${{ env.MODE }}
-          path: probe-out
+          name: probe-summary-${{ env.MODE }}
+          path: |
+            probe-out/summary.md
+            probe-out/summary.json
           retention-days: 3
           if-no-files-found: warn

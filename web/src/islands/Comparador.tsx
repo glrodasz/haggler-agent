@@ -50,7 +50,8 @@ export interface ComparadorProps {
   riskOptions: ComparadorLabel[];
   countryNames: Record<string, string>;
   rates: Record<string, number>;
-  fxAsOf: string;
+  /** Null before the first FX table is published. */
+  fxAsOf: string | null;
   residence: string;
   residenceName: string;
   residenceCurrency: string;
@@ -317,6 +318,7 @@ export default function Comparador(props: ComparadorProps) {
                               isHome={r.home?.obs_key === r.best.obs_key}
                               countryName={props.countryNames[r.best.country] ?? r.best.country}
                               label={props.labels[r.best.label]}
+                              residenceName={props.residenceName}
                             />
                           ) : (
                             <span class="muted">{t.noOffer}</span>
@@ -399,6 +401,7 @@ function OfferCell(props: {
   isHome: boolean;
   countryName: string;
   label: ComparadorLabel | undefined;
+  residenceName: string;
 }) {
   const { offer, label } = props;
   return (
@@ -417,7 +420,7 @@ function OfferCell(props: {
           {label?.name ?? offer.label}
         </span>
         {offer.eu_badge && (
-          <span class="badge badge-eu" title={es.euBadgeTitle}>
+          <span class="badge badge-eu" title={es.euBadgeTitle(props.residenceName)}>
             {es.euBadge}
           </span>
         )}

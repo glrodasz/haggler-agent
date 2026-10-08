@@ -20,6 +20,8 @@ REGION="${REGION:-europe-north2}"
 # Cloud Scheduler is not offered in every region; it only needs to call the Run API.
 SCHEDULER_REGION="${SCHEDULER_REGION:-europe-north1}"
 GITHUB_REPO="${GITHUB_REPO:-glrodasz/haggler-agent}"
+# Only workflows running on this branch (deploy-job, publish) may impersonate haggler-github.
+GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 BUCKET="${BUCKET:-${PROJECT_ID}-haggler-data}"
 BUCKET_LOCATION="${BUCKET_LOCATION:-${REGION}}"
 AR_REPO="${AR_REPO:-haggler}"
@@ -130,6 +132,7 @@ PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(proje
 [[ -n "${PROJECT_NUMBER}" ]] || die "could not resolve the project number of ${PROJECT_ID}"
 info "account=${ACCOUNT} project=${PROJECT_ID} (#${PROJECT_NUMBER})"
 info "region=${REGION} scheduler_region=${SCHEDULER_REGION} bucket=gs://${BUCKET}"
+info "job=${JOB} github=${GITHUB_REPO}@${GITHUB_BRANCH}"
 # Best effort: the call itself needs the Cloud Billing API, so only a definite "False" stops us.
 BILLING="$(gcloud billing projects describe "${PROJECT_ID}" --format='value(billingEnabled)' \
   2>/dev/null || true)"
@@ -241,7 +244,9 @@ fi
 
 WIF_MAPPING="google.subject=assertion.sub,attribute.repository=assertion.repository"
 WIF_MAPPING+=",attribute.ref=assertion.ref"
-WIF_CONDITION="assertion.repository=='${GITHUB_REPO}'"
+# Repository AND branch: a workflow pushed to any other branch (claude/**, a same-repo PR) gets no
+# token, so it cannot deploy an image that runs as haggler-job. The probe never uses GCP.
+WIF_CONDITION="assertion.repository=='${GITHUB_REPO}' && assertion.ref=='refs/heads/${GITHUB_BRANCH}'"
 PROVIDER_STATE="$(gcloud iam workload-identity-pools providers describe "${WIF_PROVIDER}" \
   --workload-identity-pool="${WIF_POOL}" --location=global --format='value(state)' \
   2>/dev/null || true)"
@@ -259,7 +264,7 @@ else
       --workload-identity-pool="${WIF_POOL}" --location=global --format=none
     info "undeleted OIDC provider"
   fi
-  # Re-apply mapping and condition so the trust stays pinned to ${GITHUB_REPO}.
+  # Re-apply mapping and condition so the trust stays pinned to ${GITHUB_REPO}@${GITHUB_BRANCH}.
   gcloud iam workload-identity-pools providers update-oidc "${WIF_PROVIDER}" \
     --workload-identity-pool="${WIF_POOL}" --location=global \
     --attribute-mapping="${WIF_MAPPING}" \
@@ -325,6 +330,7 @@ cat <<EOF
   GCP_JOB_SA       = ${JOB_SA}
   GCS_BUCKET       = ${BUCKET}
   AR_REPOSITORY    = ${AR_REPO}
+  GCP_JOB_NAME     = ${JOB}    (optional while it is haggler-daily)
 
 Or with the GitHub CLI:
 
@@ -335,7 +341,8 @@ Or with the GitHub CLI:
   gh variable set GCP_JOB_SA       --repo ${GITHUB_REPO} --body '${JOB_SA}'
   gh variable set GCS_BUCKET       --repo ${GITHUB_REPO} --body '${BUCKET}'
   gh variable set AR_REPOSITORY    --repo ${GITHUB_REPO} --body '${AR_REPO}'
+  gh variable set GCP_JOB_NAME     --repo ${GITHUB_REPO} --body '${JOB}'
 
-Next: run the "deploy-job" workflow (or merge to main), then
+Next: run the "deploy-job" workflow from ${GITHUB_BRANCH} (or merge to it), then
   gcloud run jobs execute ${JOB} --region ${REGION} --wait
 EOF

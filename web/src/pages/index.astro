@@ -62,7 +62,7 @@ const offersJson = inlineJson(packOffers(offers));
 
 <Base current="home">
   <h1>{t.title}</h1>
-  <p class="lead">{t.lead}</p>
+  <p class="lead">{t.lead(site.residenceName)}</p>
 
   <noscript>
     <p class="callout warning">

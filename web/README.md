@@ -9,7 +9,7 @@ están en `src/i18n/es.ts`.
 | Ruta | Contenido |
 |---|---|
 | `/` | Comparador (única isla interactiva): servicios, plan, riesgo máximo aceptado, moneda, ahorro neto de comisión de cambio |
-| `/servicios/[id]/` | Precios por país y plan, factibilidad desde Suecia y paquetes que incluyen el servicio |
+| `/servicios/[id]/` | Precios por país y plan, factibilidad desde el país de residencia (`meta.residence`) y paquetes que incluyen el servicio |
 | `/paises/[cc]/` | Todas las ofertas de un país |
 | `/cambios/` | Cambios de precio de los últimos 90 días |
 | `/metodologia/` | Fuentes, ejes de riesgo, supuestos arriesgados, cobertura, atribuciones y aviso legal |
@@ -17,7 +17,10 @@ están en `src/i18n/es.ts`.
 ## Datos
 
 Las páginas leen los JSON del contrato de datos desde `src/data/` (generado, ignorado por git).
-Los tipos del contrato están en `src/logic/types.ts`.
+Los tipos del contrato están en `src/logic/types.ts`. El país de residencia sale de los datos
+(`meta.residence` + `countries.json`, opción `--residence` de `site-data`), nunca del texto.
+Un `data/` sin ninguna corrida (clon nuevo) también genera un contrato válido (`run_id`, `as_of`
+y `fx.as_of` en `null`, listas vacías) y el sitio se construye igual.
 
 ```bash
 # Datos reales (desde la raíz del repositorio)
@@ -48,7 +51,11 @@ Variables de entorno para el build: `SITE_URL` (por defecto `https://glrodasz.gi
 ## Lógica
 
 - `src/logic/compare.ts` replica `src/haggler/compare.py`: coste mensual en EUR + comisión de
-  cambio si la moneda no es la de residencia, la más barata con nivel de riesgo ≤ k y las
-  ofertas «sin evaluar» nunca se eligen. Un test compara el resultado con `cheapest.json`.
+  cambio si la moneda no es la de residencia, redondeado a céntimos (diferencias de menos de un
+  céntimo son empates), la más barata con nivel de riesgo ≤ k y las ofertas «sin evaluar» nunca
+  se eligen. `src/logic/contract.test.ts` comprueba que reproduce `cheapest.json` (filas, orden,
+  elecciones, costes y ahorros) sobre `src/data-sample/` y sobre `src/data/` si existe; en CI, el
+  job `contract` lo corre con la salida de `haggler site-data` generada desde los fixtures de
+  replay. El `cheapest.json` de ejemplo está calculado con `compare.py`.
 - `src/logic/format.ts`: formato es-ES con `Intl` (moneda, porcentajes, fechas en UTC).
 - Sin CDNs, fuentes externas, analítica ni cookies.

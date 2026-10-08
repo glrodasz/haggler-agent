@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
@@ -50,9 +50,9 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -72,3 +72,70 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The site-data contract end to end: the Python pipeline writes the JSON the site reads, so a
+  # field rename, a type change or a null in publish.py has to fail here, not on the first
+  # real-data build. contract.test.ts also checks compare.ts against cheapest.json on this data.
+  contract:
+    name: contract (pipeline -> site-data -> site build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      HAGGLER_LLM: "off"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen --no-dev
+          npm ci --prefix web
+
+      # Offline: pages and FX come from the replay fixtures, the store is a local directory.
+      - name: Daily run on the replay fixtures
+        env:
+          HAGGLER_LOCAL_DIR: ${{ runner.temp }}/store
+        run: >-
+          uv run --frozen --no-dev haggler daily
+          --replay tests/workflow/fixtures/replay --store local --no-llm
+
+      - name: Sync the run into a data/ directory
+        run: >-
+          uv run --frozen --no-dev haggler sync
+          --from-dir "$RUNNER_TEMP/store" --data-dir "$RUNNER_TEMP/data"
+
+      - name: Site data from the synced run
+        run: >-
+          uv run --frozen --no-dev haggler site-data
+          --data-dir "$RUNNER_TEMP/data" --out web/src/data
+
+      - name: Check, test and build the site (pipeline data)
+        working-directory: web
+        run: |
+          npm run check
+          npm test
+          npm run build
+
+      # First deploy / fresh clone: no completed run yet (run_id, as_of and fx.as_of are null).
+      - name: Site data from an empty data/ directory
+        run: |
+          rm -rf web/src/data
+          mkdir -p "$RUNNER_TEMP/empty"
+          uv run --frozen --no-dev haggler site-data --data-dir "$RUNNER_TEMP/empty" --out web/src/data
+
+      - name: Check, test and build the site (empty data)
+        working-directory: web
+        run: |
+          npm run check
+          npm test
+          npm run build

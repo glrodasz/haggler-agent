@@ -1,6 +1,7 @@
 # Builds the job image, pushes it to Artifact Registry and (re)deploys the Cloud Run Job.
 # Needs the repository variables printed by infra/bootstrap.sh (docs/SETUP.md); without them the
-# workflow only emits a notice.
+# workflow only emits a notice. Workload Identity Federation only trusts the default branch, so a
+# manual run from another branch is skipped with a notice too.
 name: deploy-job
 
 on:
@@ -27,7 +28,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  JOB_NAME: haggler-daily
+  # bootstrap.sh prints GCP_JOB_NAME when JOB was overridden; it must name the scheduled job.
+  JOB_NAME: ${{ vars.GCP_JOB_NAME || 'haggler-daily' }}
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   REGION: ${{ vars.GCP_REGION }}
   AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
@@ -49,7 +51,13 @@ jobs:
           GCP_JOB_SA: ${{ vars.GCP_JOB_SA }}
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
           AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
+          if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]; then
+            echo "::notice title=deploy-job omitido::${GITHUB_REF} no es la rama por defecto; Workload Identity Federation solo la acepta a ella. Ver docs/SETUP.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           missing=""
           for name in GCP_PROJECT_ID GCP_REGION GCP_WIF_PROVIDER GCP_GITHUB_SA GCP_JOB_SA \
                       GCS_BUCKET AR_REPOSITORY; do
@@ -62,18 +70,18 @@ jobs:
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.cfg.outputs.ok == 'true'
 
       - name: Authenticate to Google Cloud (WIF)
         if: steps.cfg.outputs.ok == 'true'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_GITHUB_SA }}
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
         if: steps.cfg.outputs.ok == 'true'
 
       - name: Build and push image
@@ -103,6 +111,9 @@ jobs:
           if [ -n "${EXTRACT_MODEL}" ]; then
             env_vars="${env_vars},HAGGLER_EXTRACT_MODEL=${EXTRACT_MODEL}"
           fi
+          # --max-retries 1 only re-runs a task that crashed: "haggler daily" exits 0 once it has
+          # persisted latest/ (a low success ratio is reported in run.json/coverage.json, not by
+          # the exit code), so a bad day is never re-validated against its own output.
           gcloud run jobs deploy "${JOB_NAME}" \
             --image "${IMAGE}" \
             --region "${REGION}" \

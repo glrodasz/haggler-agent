@@ -1,9 +1,11 @@
 /**
  * Site data contract: the JSON files that `haggler site-data` writes into web/src/data/.
  *
- * These types mirror the Python publish step (src/haggler/jobs/publish.py). Every number is a
- * JSON number; money is already rounded to 2 decimals. Keep this file in sync with the contract
- * described in the project plan: pages only ever read these shapes.
+ * These types mirror the Python publish step (src/haggler/publish.py). Every number is a JSON
+ * number; money is already rounded to 2 decimals. Keep this file in sync with the contract
+ * described in the project plan: pages only ever read these shapes. A data/ dir without any
+ * completed run still produces a valid contract (run_id/as_of/fx.as_of null, empty lists); CI
+ * builds the site from that too.
  */
 
 export type Channel = "web" | "ios_iap";
@@ -38,8 +40,10 @@ export interface Attribution {
 
 export interface Meta {
   generated_at: string;
-  run_id: string;
-  as_of: string;
+  /** Null before the first completed run. */
+  run_id: string | null;
+  /** Date of the run (YYYY-MM-DD); null before the first completed run. */
+  as_of: string | null;
   residence: string;
   profile: string;
   /** Percent, e.g. 2 means 2 %. */
@@ -75,7 +79,8 @@ export interface CountryInfo {
 }
 
 export interface FxData {
-  as_of: string;
+  /** Null when no FX table was published yet (rates is then empty). */
+  as_of: string | null;
   base: "EUR";
   /** Units of currency per 1 EUR. */
   rates: Record<string, number>;

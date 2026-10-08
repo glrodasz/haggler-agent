@@ -1,9 +1,4 @@
 import { describe, expect, it } from "vitest";
-import cheapestSample from "../data-sample/cheapest.json";
-import countriesSample from "../data-sample/countries.json";
-import fxSample from "../data-sample/fx.json";
-import metaSample from "../data-sample/meta.json";
-import offersSample from "../data-sample/offers.json";
 import {
   type CompareContext,
   type CompareOfferFields,
@@ -18,7 +13,7 @@ import {
   summarize,
   toOfferRef,
 } from "./compare";
-import type { CheapestRow, Offer, OfferRef, RiskKey } from "./types";
+import type { PlanInfo } from "./types";
 import { RISK_LEVELS, UNKNOWN_RANK } from "./types";
 
 const ctx: CompareContext = {
@@ -88,20 +83,27 @@ describe("roundTo", () => {
 describe("priceOffer", () => {
   it("converts to EUR and adds the FX fee only for foreign currencies", () => {
     const home = priceOffer(se, ctx);
-    expect(home?.cost_eur).toBe(15.3636);
-    expect(home?.cost_eur_with_fee).toBe(15.3636);
+    expect(home?.cost_eur).toBe(15.36);
+    expect(home?.cost_eur_with_fee).toBe(15.36);
     expect(home?.fee_applied).toBe(false);
 
     const foreign = priceOffer(co, ctx);
-    expect(foreign?.cost_eur).toBe(7.5333);
-    expect(foreign?.cost_eur_with_fee).toBe(roundTo(7.5333 * 1.02, 4));
+    expect(foreign?.cost_eur).toBe(7.53);
+    expect(foreign?.cost_eur_with_fee).toBe(7.68); // 7.5333 * 1.02 = 7.684
     expect(foreign?.fee_applied).toBe(true);
   });
 
   it("charges the fee on EUR offers too when the residence is not in the euro area", () => {
     const lt = priceOffer(offer({ country: "LT", currency: "EUR", monthly_equiv: 12.99 }), ctx);
     expect(lt?.cost_eur).toBe(12.99);
-    expect(lt?.cost_eur_with_fee).toBe(roundTo(12.99 * 1.02, 4));
+    expect(lt?.cost_eur_with_fee).toBe(13.25); // 13.2498
+  });
+
+  it("rounds to cents half up, applying the fee to the unrounded EUR cost (like compare.py)", () => {
+    const lt = priceOffer(offer({ country: "LT", currency: "EUR", monthly_equiv: 0.995 }), ctx);
+    expect(lt?.cost_eur).toBe(1);
+    // 0.995 * 1.02 = 1.0149, not 1.00 * 1.02 = 1.02.
+    expect(lt?.cost_eur_with_fee).toBe(1.01);
   });
 
   it("returns null when the currency has no rate", () => {
@@ -131,7 +133,23 @@ describe("cheapestFor", () => {
     expect(r.bestByRisk[2]?.country).toBe("CO");
     expect(r.bestByRisk[3]?.country).toBe("CO");
     expect(r.savingsMonthEur[0]).toBe(0);
-    expect(r.savingsMonthEur[2]).toBe(roundTo(15.3636 - roundTo(7.5333 * 1.02, 4), 4));
+    // Saving = difference of the rounded costs, in cents.
+    expect(r.savingsMonthEur[2]).toBe(7.68);
+  });
+
+  it("treats sub-cent differences as ties and applies the tie-breaks", () => {
+    // 5.004 and 5.001 EUR both cost 5.10 with the fee: web wins although App Store is cheaper.
+    const web = offer({ country: "LT", currency: "EUR", monthly_equiv: 5.004, rank: 2 });
+    const iap = offer({
+      country: "LT",
+      currency: "EUR",
+      channel: "ios_iap",
+      monthly_equiv: 5.001,
+      rank: 2,
+    });
+    const r = cheapestFor("netflix", "standard", [iap, web], ctx);
+    expect(r.bestByRisk[2]?.channel).toBe("web");
+    expect(r.offers.map((o) => o.cost_eur_with_fee)).toEqual([5.1, 5.1]);
   });
 
   it("never chooses unknown offers, even when they are the cheapest", () => {
@@ -184,7 +202,7 @@ describe("cheapestFor", () => {
       monthly_equiv: 108.25,
     });
     const r = cheapestFor("netflix", "family", [yearly], ctx);
-    expect(r.home?.cost_eur).toBe(roundTo(108.25 / 11, 4));
+    expect(r.home?.cost_eur).toBe(roundTo(108.25 / 11, 2));
   });
 
   it("breaks ties: web, then official, then lower country code", () => {
@@ -217,6 +235,16 @@ describe("cheapestFor", () => {
       "AR",
     ]);
   });
+
+  it("prefers monthly billing before the obs_key on a full tie", () => {
+    const base = priceOffer(offer({ country: "MX", currency: "EUR", monthly_equiv: 5 }), ctx)!;
+    const yearly = { ...base, billing_period: "year" as const, obs_key: "a" };
+    const monthly = { ...base, billing_period: "month" as const, obs_key: "b" };
+    expect([yearly, monthly].sort(compareOffers).map((o) => o.billing_period)).toEqual([
+      "month",
+      "year",
+    ]);
+  });
 });
 
 describe("summarize", () => {
@@ -235,9 +263,9 @@ describe("summarize", () => {
     expect(rows[0]?.homeCost).toBe(169);
     expect(totals.comparable).toBe(1);
     expect(totals.home).toBe(169);
-    expect(totals.optimized).toBeCloseTo(roundTo(7.5333 * 1.02, 4) * 11, 6);
-    expect(totals.saving).toBeCloseTo(169 - roundTo(7.5333 * 1.02, 4) * 11, 6);
-    expect(totals.fee).toBeCloseTo((roundTo(7.5333 * 1.02, 4) - 7.5333) * 11, 6);
+    expect(totals.optimized).toBeCloseTo(7.68 * 11, 6);
+    expect(totals.saving).toBeCloseTo(169 - 7.68 * 11, 6);
+    expect(totals.fee).toBeCloseTo((7.68 - 7.53) * 11, 6);
     expect(totals.withoutHome).toEqual(["spotify"]);
     expect(totals.withoutOffers).toEqual(["vix"]);
   });
@@ -257,56 +285,42 @@ describe("summarize", () => {
   it("applies the fee when the display currency equals a foreign offer currency", () => {
     const p = priceOffer(co, ctx)!;
     expect(displayCost(p, "COP", ctx.rates, 2)).toBeCloseTo(33900 * 1.02, 6);
-    expect(displayCost(priceOffer(se, ctx)!, "EUR", ctx.rates, 2)).toBeCloseTo(15.3636, 6);
+    expect(displayCost(priceOffer(se, ctx)!, "EUR", ctx.rates, 2)).toBeCloseTo(15.36, 6);
   });
 });
 
-describe("sample data", () => {
-  // Golden test: the TypeScript comparison must reproduce the published cheapest.json.
-  const residenceCurrency =
-    countriesSample.find((c) => c.cc === metaSample.residence)?.currency ?? "EUR";
-  const sampleCtx: CompareContext = {
-    rates: fxSample.rates as Record<string, number>,
-    residence: metaSample.residence,
-    residenceCurrency,
-    feePct: metaSample.fx_fee_pct,
-  };
-  const offers = offersSample as Offer[];
-  const expected = cheapestSample as unknown as CheapestRow[];
-  const actual = cheapestAll(offers, sampleCtx);
+describe("cheapestAll", () => {
+  const plan = (id: string, rank: number): PlanInfo => ({ id, label_es: id, rank, ads: false });
+  const services = [
+    { id: "netflix", plans: [plan("premium", 3), plan("basic", 1), plan("standard", 2)] },
+  ];
+  const rows = [
+    offer({ country: "SE", plan_id: "premium", monthly_equiv: 229 }),
+    offer({ country: "SE", plan_id: "basic", monthly_equiv: 99 }),
+    offer({ country: "SE", plan_id: "standard", monthly_equiv: 169 }),
+    offer({ country: "SE", plan_id: "retired", monthly_equiv: 1 }),
+    offer({ country: "SE", plan_id: "ads", monthly_equiv: 1, status: "quarantined" }),
+  ];
 
-  it("covers the same (service, plan) pairs", () => {
-    expect(actual.map((r) => `${r.service_id}:${r.plan_id}`)).toEqual(
-      expected.map((r) => `${r.service_id}:${r.plan_id}`),
-    );
+  it("orders rows by plan rank and drops plans outside the catalog, like compare.py", () => {
+    expect(cheapestAll(rows, ctx, services).map((r) => r.plan_id)).toEqual([
+      "basic",
+      "standard",
+      "premium",
+    ]);
   });
 
-  it("chooses the same home and best offers with the same costs", () => {
-    for (const [i, row] of actual.entries()) {
-      const exp = expected[i]!;
-      const strip = (o: OfferRef | null): Omit<OfferRef, "source_url"> | null => {
-        if (!o) return null;
-        const { source_url: _ignored, ...rest } = o;
-        return rest;
-      };
-      const near = (
-        a: Omit<OfferRef, "source_url"> | null,
-        b: Omit<OfferRef, "source_url"> | null,
-      ) => {
-        if (a === null || b === null) return expect(a).toBe(b);
-        expect(a.obs_key).toBe(b.obs_key);
-        expect(a.cost_eur_with_fee).toBeCloseTo(b.cost_eur_with_fee, 2);
-      };
-      near(row.home ? toOfferRef(row.home) : null, strip(exp.home));
-      for (const k of RISK_LEVELS) {
-        const key = `${k}` as RiskKey;
-        const best = row.bestByRisk[k];
-        near(best ? toOfferRef(best) : null, strip(exp.best_by_risk[key]));
-        const saving = row.savingsMonthEur[k];
-        const expSaving = exp.savings_month_eur[key];
-        if (saving === null || expSaving === null) expect(saving).toBe(expSaving);
-        else expect(saving).toBeCloseTo(expSaving, 1);
-      }
-    }
+  it("without the catalog sorts by plan id and keeps only plans with a candidate", () => {
+    expect(cheapestAll(rows, ctx).map((r) => r.plan_id)).toEqual([
+      "basic",
+      "premium",
+      "retired",
+      "standard",
+    ]);
+  });
+
+  it("publishes refs in cents", () => {
+    const home = cheapestAll(rows, ctx, services)[1]!.home!;
+    expect(toOfferRef(home)).toMatchObject({ cost_eur: 15.36, cost_eur_with_fee: 15.36 });
   });
 });

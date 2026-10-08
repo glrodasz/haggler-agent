@@ -18,9 +18,9 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
-| `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra |
+| `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
 | `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter (no usa GCP) |
-| `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual | build + push de la imagen y `gcloud run jobs deploy haggler-daily` |
+| `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy haggler-daily` |
 | `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages |
 
 ## 1. Requisitos
@@ -56,11 +56,12 @@ Variables configurables (todas opcionales salvo `PROJECT_ID`):
 | `BUCKET` | `$PROJECT_ID-haggler-data` | bucket de datos |
 | `BUCKET_LOCATION` | `$REGION` | ubicación del bucket |
 | `AR_REPO` | `haggler` | repositorio Docker de Artifact Registry |
-| `JOB` | `haggler-daily` | nombre del Cloud Run Job |
+| `JOB` | `haggler-daily` | nombre del Cloud Run Job (si lo cambias, crea también la variable `GCP_JOB_NAME`, paso 3) |
 | `SCHEDULER_JOB` | `$JOB-trigger` | nombre del job de Cloud Scheduler |
 | `SCHEDULE` | `17 4 * * *` | cron del run diario |
 | `SCHEDULE_TZ` | `Europe/Stockholm` | zona horaria del cron (no se lee `$TZ` a propósito: muchas shells exportan `TZ=UTC`) |
 | `GITHUB_REPO` | `glrodasz/haggler-agent` | único repositorio autorizado por Workload Identity Federation |
+| `GITHUB_BRANCH` | `main` | única rama autorizada por Workload Identity Federation (la rama por defecto) |
 
 Por ejemplo, si Cloud Scheduler sí está disponible en Estocolmo:
 `PROJECT_ID=mi-proyecto SCHEDULER_REGION=europe-north2 ./infra/bootstrap.sh`.
@@ -75,7 +76,7 @@ Qué crea:
 | `haggler-job@` | cuenta del job: `roles/aiplatform.user` y `roles/logging.logWriter` (proyecto), `roles/storage.objectAdmin` (bucket) |
 | `haggler-scheduler@` | `roles/run.invoker` sobre el job `haggler-daily` |
 | `haggler-github@` | `roles/artifactregistry.writer` (repo), `roles/run.developer` (proyecto), `roles/iam.serviceAccountUser` sobre `haggler-job`, `roles/storage.objectViewer` (bucket) |
-| Workload Identity Federation | pool `github` + proveedor OIDC `github` (`token.actions.githubusercontent.com`), condición `assertion.repository=='glrodasz/haggler-agent'`; `roles/iam.workloadIdentityUser` de `haggler-github` para ese repositorio |
+| Workload Identity Federation | pool `github` + proveedor OIDC `github` (`token.actions.githubusercontent.com`), condición `assertion.repository=='glrodasz/haggler-agent' && assertion.ref=='refs/heads/main'`; `roles/iam.workloadIdentityUser` de `haggler-github` para ese repositorio |
 | Cloud Run Job `haggler-daily` | **marcador de posición** con una imagen pública de ejemplo, solo si no existe (para que el Scheduler tenga destino); `deploy-job.yml` despliega la imagen real |
 | Cloud Scheduler `haggler-daily-trigger` | `POST https://run.googleapis.com/v2/projects/…/locations/europe-north2/jobs/haggler-daily:run` con token OAuth de `haggler-scheduler`, 04:17 hora de Estocolmo |
 
@@ -112,11 +113,14 @@ Opcionales:
 
 | Nombre | Tipo | Para qué |
 |---|---|---|
+| `GCP_JOB_NAME` | variable | nombre del Cloud Run Job si el bootstrap se corrió con otro `JOB` (por defecto `haggler-daily`); `deploy-job.yml` despliega ese job, el mismo al que apunta el Scheduler |
 | `HAGGLER_EXTRACT_MODEL` | variable | modelo Gemini del fallback LLM si el de por defecto (`gemini-3.1-flash-lite`) no está disponible en Vertex; `deploy-job.yml` lo pasa al job |
 | `GEMINI_API_KEY` | **secreto** | clave de Google AI Studio, solo para `probe.yml` en `mode=full` (sin ella el probe corre sin LLM) |
 
 Mientras falten variables, `deploy-job.yml` y el paso de sync de `publish.yml` no fallan: dejan un
-aviso (*notice*) en el run y se saltan los pasos de GCP.
+aviso (*notice*) en el run y se saltan los pasos de GCP. Lo mismo ocurre si se lanzan desde una
+rama que no es `main`: Workload Identity Federation solo emite credenciales para la rama por
+defecto.
 
 ## 4. Habilitar GitHub Pages
 
@@ -146,8 +150,10 @@ gcloud run jobs describe haggler-daily --region europe-north2 \
   --format='value(spec.template.spec.template.spec.containers[0].image)'
 ```
 
-> `publish.yml` y `deploy-job.yml` también se pueden lanzar a mano desde otra rama: en ese caso
-> `publish.yml` sincroniza y construye el sitio, pero no hace commit ni despliega.
+> `publish.yml` y `deploy-job.yml` también se pueden lanzar a mano desde otra rama, pero
+> Workload Identity Federation solo confía en `main`: `deploy-job.yml` deja un aviso y no
+> despliega, y `publish.yml` construye el sitio con el `data/` ya versionado en esa rama, sin
+> sync, commit ni despliegue.
 
 ## 6. Primera ejecución manual
 
@@ -178,6 +184,15 @@ gcloud storage cat gs://mi-proyecto-haggler-data/latest/run.json
 
 `latest/run.json` se escribe **al final** y lista el SHA-256 de cada archivo de `latest/`; si no
 está, el run no terminó.
+
+**Código de salida y reintentos.** `haggler daily` sale con 0 en cuanto guardó `latest/`, aunque
+haya sido un mal día (pocas tareas OK: se ve en `run.json` y `coverage.json`, y en el sitio como
+cobertura); solo sale con error si no llegó a guardar nada. El job se despliega con
+`--max-retries 1`, así que Cloud Run solo reintenta una tarea que se cayó antes de guardar, lo que
+es seguro. Un reintento después de guardar validaría el mismo día contra su propia salida: daría
+por confirmados en la misma noche los cambios grandes que estaban en revisión y contaría dos veces
+los runs de *carry-forward*. Por la misma razón, evita relanzar a mano un run completo el mismo
+día salvo que el anterior haya fallado.
 
 Probar también el camino del Scheduler (dispara el job como lo hará cada noche):
 
@@ -229,8 +244,8 @@ gcloud logging read 'resource.type="cloud_scheduler_job"' --freshness=2d --limit
 ```
 
 **GitHub Actions**: pestaña *Actions*. `publish.yml` deja en el resumen del run el `diff --stat`
-de `data/`; `probe.yml` deja el `summary.md` del probe en el resumen y el directorio `probe-out/`
-como artefacto (3 días).
+de `data/` (y un *warning* si el sync falló); `probe.yml` deja el `summary.md` del probe en el
+resumen y `summary.md` + `summary.json` como artefacto `probe-summary-<modo>` (3 días).
 
 ## 8. Probe (afinar parsers con las páginas reales)
 
@@ -244,6 +259,10 @@ dispara solo con push a `claude/**` que toque `src/haggler/sources/`, `fetch/`, 
   `netflix SE CO; spotify *`.
 
 Los targets que fallan no hacen fallar el job; solo un crash del CLI lo hace.
+
+Las páginas descargadas (`probe-out/raw/`, y el store completo en `mode=full`) se quedan en el
+runner: el artefacto solo lleva el resumen, que cita como mucho fragmentos cortos, porque el HTML
+crudo de los proveedores nunca se republica. El probe no usa GCP ni credenciales.
 
 ## 9. Costos estimados
 
@@ -310,25 +329,32 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 |---|---|
 | `bootstrap.sh`: Cloud Scheduler no disponible en la región | usar otra `SCHEDULER_REGION` (por defecto `europe-north1`); el job sigue en `REGION` |
 | `bootstrap.sh`: "service account does not exist" justo después de crearla | propagación de IAM; el script reintenta 6 veces cada 10 s. Si aun así falla, volver a correrlo |
-| `google-github-actions/auth`: `Permission 'iam.serviceAccounts.getAccessToken' denied` | `GCP_WIF_PROVIDER` o `GCP_GITHUB_SA` mal copiados, o el repo no coincide con la condición (`GITHUB_REPO`, distingue mayúsculas). Tras crear WIF puede tardar ~5 min en propagarse |
+| `google-github-actions/auth`: `Permission 'iam.serviceAccounts.getAccessToken' denied` o `unauthorized_client` / "rejected by the attribute condition" | `GCP_WIF_PROVIDER` o `GCP_GITHUB_SA` mal copiados, o el run no coincide con la condición: otro repositorio (`GITHUB_REPO`, distingue mayúsculas) u otra rama (`GITHUB_BRANCH`, solo `main`). Tras crear WIF puede tardar ~5 min en propagarse |
 | `deploy-job`: `denied: Permission "artifactregistry.repositories.uploadArtifacts"` | `GCP_REGION`/`AR_REPOSITORY` no coinciden con el repo creado; volver a correr el bootstrap |
 | `deploy-job`: `iam.serviceaccounts.actAs` denegado | falta `roles/iam.serviceAccountUser` de `haggler-github` sobre `haggler-job` (bootstrap) |
 | Scheduler en estado de error / `PERMISSION_DENIED` | falta `roles/run.invoker` de `haggler-scheduler` sobre el job; volver a correr el bootstrap. Ver `status` con `gcloud scheduler jobs describe` |
-| El job corre la imagen de ejemplo (`us-docker.pkg.dev/cloudrun/container/job`) y no escribe nada en el bucket | todavía no se corrió `deploy-job.yml` (paso 5) |
+| El job corre la imagen de ejemplo (`us-docker.pkg.dev/cloudrun/container/job`) y no escribe nada en el bucket | todavía no se corrió `deploy-job.yml` (paso 5), o el bootstrap se corrió con otro `JOB` y falta la variable `GCP_JOB_NAME`: `deploy-job` desplegó `haggler-daily`, que no tiene Scheduler (`gcloud run jobs list --region europe-north2`) |
 | Errores 404 / modelo no encontrado en Vertex AI | el modelo no está disponible en `global` para el proyecto: fijar la variable `HAGGLER_EXTRACT_MODEL` y volver a correr `deploy-job` |
-| `publish`: el sync falla por `run_id` distinto entre archivos | el job estaba escribiendo `latest/` en ese momento; relanzar `publish` más tarde |
-| `publish`: "Aún no hay data/latest/prices.json" | todavía no hay ningún run completo del job en GCS (paso 6) |
+| `publish`: *warning* "sync falló: … latest/run.json no existe" | el job aún no terminó ninguna corrida en GCS (pasos 5–6). El sitio se publica igual con el `data/` ya versionado |
+| `publish`: *warning* "sync falló" por `run_id` o SHA-256 distintos entre archivos | el job estaba escribiendo `latest/` en ese momento; el sitio se publica con el `data/` anterior; relanzar `publish` más tarde |
+| `publish`: "Aún no hay data/latest/prices.json" | no hay datos versionados en `data/` y no hubo sync: faltan variables (paso 3), se lanzó desde otra rama, o el sync falló (ver el *warning* del job de sync) |
+| `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con la ruta base `/haggler-agent` y no detecta un dominio propio |
 | `publish`: el deploy a Pages falla | Pages no está habilitado con *Source: GitHub Actions* (paso 4), o se lanzó desde una rama que no es `main` |
 | Los workflows programados dejaron de correr | GitHub desactiva los `schedule` de repos públicos tras 60 días sin actividad; reactivarlos en *Actions* |
 
 ## 12. Notas de seguridad
 
-- Sin claves de larga duración: GitHub usa WIF y solo el repositorio `glrodasz/haggler-agent`
-  puede asumir `haggler-github`.
+- Sin claves de larga duración: GitHub usa WIF y solo los workflows del repositorio
+  `glrodasz/haggler-agent` que corren en la rama `main` pueden asumir `haggler-github`. Un
+  workflow nuevo empujado a otra rama (`claude/**`, un pull request del mismo repo) no recibe
+  credenciales de GCP. Para que esto valga, protege `main` (*Settings → Branches*): quien puede
+  hacer push a `main` puede desplegar el job. Si corriste el bootstrap con una versión anterior
+  (condición solo por repositorio), vuelve a correrlo: reaplica la condición del proveedor.
 - `haggler-github` puede publicar imágenes y desplegar el job, y solo **leer** el bucket.
   `haggler-job` escribe en el bucket y llama a Vertex AI. `haggler-scheduler` solo puede ejecutar
   el job.
 - El bucket es privado (acceso uniforme + *public access prevention*). El HTML crudo de las
-  páginas (`raw/`) nunca se publica y se borra a los 90 días.
+  páginas (`raw/`) nunca se publica y se borra a los 90 días. El probe tampoco lo sube como
+  artefacto: solo su resumen.
 - Los commits de datos los hace `github-actions[bot]` con el `GITHUB_TOKEN` del run, que solo
   tiene `contents: write` en el job de sync.

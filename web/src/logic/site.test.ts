@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { es } from "../i18n/es";
 import { cheapestFor } from "./compare";
 import { decodeState, defaultState, encodeState } from "./selection";
 import { assertSiteData, buildIndex, riskClass } from "./site";
@@ -153,6 +154,40 @@ describe("SiteIndex", () => {
     expect(riskClass(0)).toBe("risk-0");
     expect(riskClass(4)).toBe("risk-4");
     expect(riskClass(99)).toBe("risk-unknown");
+  });
+});
+
+describe("empty data contract", () => {
+  // What `haggler site-data` writes for a data/ dir without any completed run (first deploy,
+  // fresh clone): no run_id, no as_of, no FX table, no prices; the changelog may still exist.
+  const empty: SiteData = {
+    ...data,
+    meta: { ...data.meta, run_id: null, as_of: null },
+    fx: { as_of: null, base: "EUR", rates: {}, stale: [] },
+    offers: [],
+    cheapest: [],
+    coverage: [],
+    changes: [{ ...data.changes[0]!, date: "2026-01-15" }],
+  };
+
+  it("builds the index without a run", () => {
+    const idx = buildIndex(assertSiteData({ ...empty }));
+    expect(idx.isSample).toBe(false);
+    expect(idx.pricedServices()).toEqual([]);
+    expect(idx.residenceName).toBe("Suecia");
+  });
+
+  it("keeps the changelog when as_of is unknown", () => {
+    expect(
+      buildIndex(empty)
+        .recentChanges(90)
+        .map((c) => c.date),
+    ).toEqual(["2026-01-15"]);
+  });
+
+  it("never prints a null run in the footer", () => {
+    expect(es.site.footer.dataAsOf("—", null)).not.toMatch(/null/);
+    expect(es.site.footer.dataAsOf("8 oct 2026", "2026-10-08-abc")).toContain("2026-10-08-abc");
   });
 });
 

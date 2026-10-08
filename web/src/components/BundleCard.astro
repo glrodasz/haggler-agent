@@ -96,7 +96,7 @@ const saving = b.saving_pct;
   {
     feasibility.length > 0 && (
       <>
-        <h4>{t.feasibility}</h4>
+        <h4>{t.feasibility(site.residenceName)}</h4>
         <dl>
           {feasibility.map(([k, v]) => (
             <>

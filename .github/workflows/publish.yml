@@ -1,7 +1,10 @@
 # Daily publication: copy the job's latest/ snapshot from GCS into data/ (commit if it changed),
 # generate the site data and deploy the static site to GitHub Pages.
 # Scheduled workflows only run from the default branch. On other branches (manual dispatch) the
-# data is synced and the site is built, but nothing is pushed or deployed.
+# site is built from the data/ already committed: Workload Identity Federation only trusts the
+# default branch, so there is no sync, and nothing is pushed or deployed.
+# A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
+# leaves a warning and the site is rebuilt from the committed data/.
 name: publish
 
 on:
@@ -40,6 +43,11 @@ jobs:
           GCP_GITHUB_SA: ${{ vars.GCP_GITHUB_SA }}
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
         run: |
+          if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
+            echo "::notice title=sync omitido::${GITHUB_REF_NAME} no es la rama por defecto y Workload Identity Federation solo la acepta a ella. Se construye el sitio con los datos ya versionados en data/."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           missing=""
           for name in GCP_PROJECT_ID GCP_WIF_PROVIDER GCP_GITHUB_SA GCS_BUCKET; do
             [ -n "${!name}" ] || missing="$missing $name"
@@ -51,18 +59,18 @@ jobs:
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.cfg.outputs.ok == 'true'
 
       - name: Authenticate to Google Cloud (WIF)
         if: steps.cfg.outputs.ok == 'true'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_GITHUB_SA }}
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         if: steps.cfg.outputs.ok == 'true'
         with:
           enable-cache: true
@@ -71,12 +79,25 @@ jobs:
         if: steps.cfg.outputs.ok == 'true'
         run: uv sync --frozen --no-dev
 
+      # A failed sync must not block the site: the step stays "failure" (synced=false, nothing is
+      # committed or uploaded) but the job succeeds, and build uses the checked-out data/.
       - name: haggler sync
         id: sync
         if: steps.cfg.outputs.ok == 'true'
+        continue-on-error: true
         env:
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
-        run: uv run --frozen --no-dev haggler sync --from "gs://${GCS_BUCKET}" --data-dir data
+        run: |
+          status=0
+          uv run --frozen --no-dev haggler sync --from "gs://${GCS_BUCKET}" --data-dir data \
+            2> "$RUNNER_TEMP/sync.err" || status=$?
+          cat "$RUNNER_TEMP/sync.err" >&2
+          if [ "$status" -ne 0 ]; then
+            msg="$(grep -v '^[[:space:]]*$' "$RUNNER_TEMP/sync.err" | tail -n 1 || true)"
+            msg="${msg//'%'/'%25'}"
+            echo "::warning title=sync falló::${msg} Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md §11."
+            exit "$status"
+          fi
 
       - name: Commit and push data/
         if: steps.sync.outcome == 'success'
@@ -109,7 +130,7 @@ jobs:
 
       - name: Upload synced data
         if: steps.sync.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: data
           path: data
@@ -123,10 +144,11 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      pages: read # actions/configure-pages reads the Pages site (base path, custom domain)
     outputs:
       has_data: ${{ steps.data.outputs.has_data }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The artifact holds the whole data/ tree, so files removed by the sync stay removed.
       - name: Drop checked-out data/
@@ -135,7 +157,7 @@ jobs:
 
       - name: Download synced data
         if: needs.sync.outputs.synced == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: data
           path: data
@@ -150,7 +172,7 @@ jobs:
             echo "has_data=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         if: steps.data.outputs.has_data == 'true'
         with:
           enable-cache: true
@@ -161,7 +183,7 @@ jobs:
           uv sync --frozen --no-dev
           uv run --frozen --no-dev haggler site-data --data-dir data --out web/src/data --residence SE
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.data.outputs.has_data == 'true'
         with:
           node-version: "22"
@@ -174,7 +196,7 @@ jobs:
         id: pages
         if: steps.data.outputs.has_data == 'true'
         continue-on-error: true
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Build site
         if: steps.data.outputs.has_data == 'true'
@@ -192,6 +214,7 @@ jobs:
           else
             export BASE_PATH="/${REPO_NAME}"
             export SITE_URL="https://${OWNER}.github.io"
+            echo "::warning title=Pages::actions/configure-pages falló; se usa la ruta base por defecto ${BASE_PATH} (un dominio propio no se detecta). ¿Pages habilitado con Source: GitHub Actions?"
           fi
           echo "BASE_PATH='${BASE_PATH}' SITE_URL='${SITE_URL}'"
           npm ci
@@ -199,7 +222,7 @@ jobs:
 
       - name: Upload Pages artifact
         if: steps.data.outputs.has_data == 'true'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
@@ -221,4 +244,4 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

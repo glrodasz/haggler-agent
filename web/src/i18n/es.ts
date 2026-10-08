@@ -7,8 +7,8 @@ export const es = {
   site: {
     name: "haggler",
     tagline: "Precios de suscripciones por país, con su riesgo",
-    description:
-      "Comparador de precios oficiales de suscripciones (Netflix, Spotify, iCloud+, YouTube Premium…) en distintos países, con el riesgo de cada opción para alguien que vive en Suecia.",
+    description: (residence: string) =>
+      `Comparador de precios oficiales de suscripciones (Netflix, Spotify, iCloud+, YouTube Premium…) en distintos países, con el riesgo de cada opción para alguien que vive en ${residence}.`,
     skipToContent: "Saltar al contenido",
     navLabel: "Principal",
     nav: {
@@ -23,7 +23,8 @@ export const es = {
     footer: {
       disclaimer:
         "Información de precios y riesgos, no asesoría legal. Nunca recomendamos declarar datos falsos.",
-      dataAsOf: (date: string, run: string) => `Datos al ${date} · ejecución ${run}`,
+      dataAsOf: (date: string, run: string | null) =>
+        run ? `Datos al ${date} · ejecución ${run}` : `Datos al ${date} · todavía sin ejecuciones`,
       generatedAt: (when: string) => `Generado el ${when}`,
       methodologyLink: "Cómo se obtienen los datos",
       noAnalytics: "Sin analítica ni cookies.",
@@ -143,13 +144,13 @@ export const es = {
   } as Record<string, { name: string; description: string }>,
   riskLevel: (rank: number) => `Nivel ${rank}`,
   euBadge: "UE",
-  euBadgeTitle:
-    "Podría existir un derecho bajo el Reglamento (UE) 2018/302 (no probado; precio neto + IVA sueco)",
+  euBadgeTitle: (residence: string) =>
+    `Podría existir un derecho bajo el Reglamento (UE) 2018/302 (no probado; precio neto + IVA de ${residence})`,
 
   axes: {
     legality: {
       name: "Legalidad",
-      question: "¿Choca con alguna norma?",
+      question: () => "¿Choca con alguna norma?",
       values: {
         lawful: "Legal",
         contestable_eu_right: "Derecho UE discutible",
@@ -158,7 +159,7 @@ export const es = {
     },
     tos: {
       name: "Términos del servicio",
-      question: "¿Lo permiten los términos del servicio y se controla?",
+      question: () => "¿Lo permiten los términos del servicio y se controla?",
       values: {
         compliant: "Cumple",
         breach_unenforced: "Incumple, sin control conocido",
@@ -167,7 +168,7 @@ export const es = {
     },
     practical: {
       name: "Practicidad",
-      question: "¿Se puede hacer desde Suecia?",
+      question: (residence: string) => `¿Se puede hacer desde ${residence}?`,
       values: {
         remote: "En remoto",
         presence_once: "Presencia en el país una vez",
@@ -175,7 +176,10 @@ export const es = {
         impossible: "Imposible",
       },
     },
-  } as Record<string, { name: string; question: string; values: Record<string, string> }>,
+  } as Record<
+    string,
+    { name: string; question: (residence: string) => string; values: Record<string, string> }
+  >,
 
   confidence: { low: "Baja", medium: "Media", high: "Alta" } as Record<string, string>,
   curatedStatus: {
@@ -217,7 +221,7 @@ export const es = {
     marginal: (amount: string) => `Coste adicional sobre el plan base: ${amount}`,
     components: "Incluye",
     requirements: "Requisitos",
-    feasibility: "Desde Suecia",
+    feasibility: (residence: string) => `Desde ${residence}`,
     lastVerified: (date: string) => `Última verificación: ${date}`,
     status: "Estado",
     noPrice: "Precio sin confirmar",
@@ -273,7 +277,8 @@ export const es = {
 
   home: {
     title: "Comparador de suscripciones",
-    lead: "Compara lo que pagas por tus suscripciones en Suecia con su precio oficial en otros países, teniendo en cuenta el riesgo de cada opción y la comisión por pagar en otra moneda.",
+    lead: (residence: string) =>
+      `Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países, teniendo en cuenta el riesgo de cada opción y la comisión por pagar en otra moneda.`,
     howTitle: "Cómo leer el resultado",
     howItems: [
       "El precio de cada país es el oficial publicado por el servicio, convertido a la moneda que elijas.",
@@ -351,7 +356,7 @@ export const es = {
     colRisk: "Riesgo máximo",
     colOffer: "Oferta",
     colCost: "EUR/mes",
-    colSaving: "Ahorro frente a Suecia",
+    colSaving: (residence: string) => `Ahorro frente a ${residence}`,
     offersTitle: "Precios por país",
     offersCaption: (name: string) =>
       `Todas las ofertas de ${name}, ordenadas por precio mensual en EUR`,
@@ -371,11 +376,11 @@ export const es = {
     noOffers: "Todavía no hay una fuente de precios para este servicio; aparece por los paquetes.",
     bundlesTitle: "Paquetes que lo incluyen",
     noBundles: "No hay paquetes registrados que incluyan este servicio.",
-    feasibilityTitle: "Factibilidad desde Suecia",
-    feasibilityLead:
-      "Fichas curadas a mano para quien vive en Suecia. Son semillas conservadoras y casi todas están sin verificar.",
-    noFeasibility:
-      "No hay fichas de factibilidad para este servicio: fuera de Suecia sus ofertas figuran como «Sin evaluar».",
+    feasibilityTitle: (residence: string) => `Factibilidad desde ${residence}`,
+    feasibilityLead: (residence: string) =>
+      `Fichas curadas a mano para quien vive en ${residence}. Son semillas conservadoras y casi todas están sin verificar.`,
+    noFeasibility: (residence: string) =>
+      `No hay fichas de factibilidad para este servicio: fuera de ${residence} sus ofertas figuran como «Sin evaluar».`,
     colTarget: "País objetivo",
     colLabel: "Etiqueta",
     colConfidence: "Confianza",
@@ -407,7 +412,7 @@ export const es = {
     noOffers: "Todavía no hay precios publicados para este país.",
     bundlesTitle: "Paquetes",
     noBundles: "No hay paquetes registrados en este país.",
-    feasibilityTitle: "Factibilidad desde Suecia",
+    feasibilityTitle: (residence: string) => `Factibilidad desde ${residence}`,
     noFeasibility: "No hay fichas de factibilidad para este país.",
     backToCountries: "Todos los países",
   },
@@ -452,7 +457,7 @@ export const es = {
       },
       {
         title: "Tipos de cambio y comisión",
-        text: "Los tipos de cambio vienen del Banco Central Europeo y, como respaldo, de Frankfurter y ExchangeRate-API. Si todos fallan se usa la última tabla disponible marcada como desactualizada. Las conversiones son orientativas: el comparador añade una comisión de cambio a toda oferta en una moneda distinta de la de tu país.",
+        text: "Cada moneda se convierte con el tipo de su banco central (vía Frankfurter) cuando está fijado: peso colombiano, argentino y chileno, libra egipcia y naira. Las demás usan el Banco Central Europeo y, como respaldo, Frankfurter y ExchangeRate-API. Si todos fallan se usa la última tabla disponible marcada como desactualizada. Las conversiones son orientativas: el comparador añade una comisión de cambio a toda oferta en una moneda distinta de la de tu país.",
       },
     ],
     feeLine: (fee: string) => `Comisión de cambio usada en el comparador: ${fee}.`,
@@ -473,7 +478,7 @@ export const es = {
     colDescription: "Qué significa",
     assumptionsTitle: "Cinco supuestos arriesgados",
     assumptionsLead: "Errores frecuentes al razonar sobre precios de otros países:",
-    assumptions: [
+    assumptions: (residence: string) => [
       {
         title: "Una tarjeta extranjera no te convierte en cliente extranjero",
         text: "Pagar con una tarjeta de otro país no te hace residente de ese país. La mayoría de los servicios atan la cuenta al país donde vives o donde te registraste, no al banco que emitió la tarjeta.",
@@ -484,7 +489,7 @@ export const es = {
       },
       {
         title: "El derecho UE solo cubre servicios tipo nube y no está probado",
-        text: "El Reglamento (UE) 2018/302 excluye los servicios audiovisuales y, en la práctica, la música y los contenidos protegidos. Para servicios tipo nube como iCloud+ o Google One podría aplicarse, pero el precio sería el neto del otro país más el IVA sueco, y ningún tribunal lo ha confirmado.",
+        text: `El Reglamento (UE) 2018/302 excluye los servicios audiovisuales y, en la práctica, la música y los contenidos protegidos. Para servicios tipo nube como iCloud+ o Google One podría aplicarse, pero el precio sería el neto del otro país más el IVA de ${residence}, y ningún tribunal lo ha confirmado.`,
       },
       {
         title: "Los precios y las comprobaciones de cuenta cambian",
@@ -513,9 +518,9 @@ export const es = {
     attributionsLead: "Datos de terceros usados con su licencia:",
     license: (license: string) => `Licencia: ${license}`,
     disclaimerTitle: "No es asesoría legal",
-    disclaimer: [
+    disclaimer: (profile: string) => [
       "Este sitio informa de precios y de riesgos. No es asesoría legal, fiscal ni financiera, y no recomienda incumplir los términos de ningún servicio ni declarar datos falsos.",
-      "Las fichas de factibilidad son semillas conservadoras, casi todas sin verificar, escritas para un perfil concreto (residente en Suecia con ciudadanía y tarjeta colombianas). Pueden no aplicarse a tu caso.",
+      `Las fichas de factibilidad son semillas conservadoras, casi todas sin verificar, escritas para un perfil concreto (${profile}). Pueden no aplicarse a tu caso.`,
       "Decide bajo tu responsabilidad y consulta siempre los términos vigentes de cada servicio.",
     ],
     axisPoints: "Nivel",
@@ -526,6 +531,13 @@ export const es = {
       license: "CC BY 4.0",
     },
   },
+
+  /** meta.profile -> who the feasibility records were written for (residence from meta). */
+  profiles: {
+    se_resident_co_citizen: (residence: string) =>
+      `residente en ${residence} con ciudadanía y tarjeta colombianas`,
+  } as Record<string, (residence: string) => string>,
+  unknownProfile: (id: string, residence: string) => `perfil «${id}», residente en ${residence}`,
 
   notFound: {
     title: "Página no encontrada",
@@ -540,6 +552,10 @@ export const es = {
 };
 
 export type Strings = typeof es;
+
+export function profileDescription(id: string, residence: string): string {
+  return es.profiles[id]?.(residence) ?? es.unknownProfile(id, residence);
+}
 
 export function riskLabelName(id: string): string {
   return es.riskLabels[id]?.name ?? id;

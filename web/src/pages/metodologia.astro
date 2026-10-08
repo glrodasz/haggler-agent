@@ -2,7 +2,7 @@
 import CountryLabel from "../components/CountryLabel.astro";
 import RiskBadge from "../components/RiskBadge.astro";
 import TableWrap from "../components/TableWrap.astro";
-import { es, lookup } from "../i18n/es";
+import { es, lookup, profileDescription } from "../i18n/es";
 import Base from "../layouts/Base.astro";
 import { getSite } from "../logic/data";
 import { AXIS_RANKS, COVERAGE_ORDER } from "../logic/feasibility";
@@ -46,6 +46,8 @@ const counts = serviceIds.map((id) => {
 const attributions = [...(site.meta.attributions ?? [])];
 if (!attributions.some((a) => a.url.includes("tompec"))) attributions.push(t.tompecFallback);
 
+const disclaimer = t.disclaimer(profileDescription(site.meta.profile, site.residenceName));
+
 const toc = [
   ["recogida", t.collectTitle],
   ["ejes", t.axesTitle],
@@ -88,7 +90,7 @@ const toc = [
         axes.map(({ key, info, values }) => (
           <li class="card">
             <h3>{info?.name}</h3>
-            <p class="small muted">{info?.question}</p>
+            <p class="small muted">{info?.question(site.residenceName)}</p>
             <table>
               <caption class="visually-hidden">{t.axisValueCaption(info?.name ?? key)}</caption>
               <thead>
@@ -149,7 +151,7 @@ const toc = [
     <p>{t.assumptionsLead}</p>
     <ol>
       {
-        t.assumptions.map((a) => (
+        t.assumptions(site.residenceName).map((a) => (
           <li>
             <strong>{a.title}.</strong> {a.text}
           </li>
@@ -255,6 +257,6 @@ const toc = [
 
   <section aria-labelledby="aviso-legal" class="callout warning">
     <h2 id="aviso-legal">{t.disclaimerTitle}</h2>
-    {t.disclaimer.map((p) => <p>{p}</p>)}
+    {disclaimer.map((p) => <p>{p}</p>)}
   </section>
 </Base>

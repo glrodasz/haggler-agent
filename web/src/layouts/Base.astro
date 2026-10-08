@@ -15,8 +15,13 @@ interface Props {
   indexable?: boolean;
 }
 
-const { title, description = es.site.description, current, indexable = true } = Astro.props;
 const site = getSite();
+const {
+  title,
+  description = es.site.description(site.residenceName),
+  current,
+  indexable = true,
+} = Astro.props;
 const fullTitle = title ? `${title} · ${es.site.name}` : `${es.site.name} · ${es.site.tagline}`;
 const canonical =
   indexable && Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;

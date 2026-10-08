@@ -63,7 +63,7 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
                 <th scope="col">{t.colRisk}</th>
                 <th scope="col">{t.colOffer}</th>
                 <th scope="col" class="num">{t.colCost}</th>
-                <th scope="col" class="num">{t.colSaving}</th>
+                <th scope="col" class="num">{t.colSaving(site.residenceName)}</th>
               </tr>
             </thead>
             <tbody>
@@ -122,17 +122,17 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
   </section>
 
   <section aria-labelledby="factibilidad">
-    <h2 id="factibilidad">{t.feasibilityTitle}</h2>
+    <h2 id="factibilidad">{t.feasibilityTitle(site.residenceName)}</h2>
     {
       records.length === 0 ? (
-        <p>{t.noFeasibility}</p>
+        <p>{t.noFeasibility(site.residenceName)}</p>
       ) : (
         <>
-          <p class="note">{t.feasibilityLead}</p>
+          <p class="note">{t.feasibilityLead(site.residenceName)}</p>
           <FeasibilityTable
             records={records}
             mode="service"
-            caption={`${t.feasibilityTitle}: ${service.name}`}
+            caption={`${t.feasibilityTitle(site.residenceName)}: ${service.name}`}
             captionId="factibilidad-caption"
           />
         </>

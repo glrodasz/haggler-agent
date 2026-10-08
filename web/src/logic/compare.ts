@@ -3,16 +3,20 @@
  * comparator and the published cheapest.json agree:
  *
  *  - candidates: status accepted | carried_forward (quarantined/rejected never compete);
- *  - cost_eur = monthly_equiv / per_eur(currency), rounded to 4 decimals;
- *  - offers in a currency other than the residence currency pay the FX fee (fx_fee_pct) ->
- *    cost_eur_with_fee; all comparisons use cost_eur_with_fee so savings are net of the fee;
+ *  - eur = monthly_equiv / per_eur(currency); offers in a currency other than the residence
+ *    currency pay the FX fee (fx_fee_pct) on the unrounded eur; cost_eur and cost_eur_with_fee
+ *    are then rounded to cents (half up), so sub-cent differences are ties;
+ *  - all comparisons use cost_eur_with_fee, so savings (home - best, in cents) are net of the fee;
  *  - home = residence-country offer, channel "web" preferred, else "ios_iap";
  *  - for each risk threshold k in 0..3: best = cheapest offer with rank <= k; ties prefer web,
- *    then official sources, then the lower country code;
+ *    then official sources, then the lower country code, then monthly before longer billing;
  *  - "unknown" verdicts (rank 99) and "not_feasible" (rank 4) are listed but never chosen.
+ *
+ * Float division can still differ from Python's Decimal by a cent at exact .xx5 boundaries; the
+ * contract test (contract.test.ts) compares both on every CI run.
  */
 
-import type { Offer, OfferRef, RiskKey, RiskLevel } from "./types";
+import type { Offer, OfferRef, RiskKey, RiskLevel, ServiceInfo } from "./types";
 import { RISK_LEVELS } from "./types";
 
 /** The subset of an offer the comparison needs (the island ships only these fields). */
@@ -60,6 +64,7 @@ export interface Cheapest {
 }
 
 const CANDIDATE_STATUSES: ReadonlySet<string> = new Set(["accepted", "carried_forward"]);
+const PERIOD_ORDER: Readonly<Record<string, number>> = { month: 0, quarter: 1, year: 2 };
 
 /** Decimal-safe rounding (avoids 1.005 -> 1.00 binary artefacts). */
 export function roundTo(value: number, decimals: number): number {
@@ -91,19 +96,23 @@ export function priceOffer<T extends CompareOfferFields>(
 ): (T & PricedOffer) | null {
   const per = perEur(offer.currency, ctx.rates);
   if (per === null || !Number.isFinite(offer.monthly_equiv)) return null;
-  const cost_eur = roundTo(offer.monthly_equiv / per, 4);
+  const eur = offer.monthly_equiv / per;
+  const cost_eur = roundTo(eur, 2);
   const fee_applied = offer.currency !== ctx.residenceCurrency;
-  const cost_eur_with_fee = fee_applied ? roundTo(cost_eur * (1 + ctx.feePct / 100), 4) : cost_eur;
+  const cost_eur_with_fee = fee_applied ? roundTo(eur * (1 + ctx.feePct / 100), 2) : cost_eur;
   return { ...offer, cost_eur, cost_eur_with_fee, fee_applied };
 }
 
-/** Total order used everywhere: cost, then web, then official, then country, then key. */
+/** Total order used everywhere: cost (cents), web, official, country, billing period, key. */
 export function compareOffers(a: PricedOffer, b: PricedOffer): number {
   if (a.cost_eur_with_fee !== b.cost_eur_with_fee) return a.cost_eur_with_fee - b.cost_eur_with_fee;
   if (a.channel !== b.channel) return a.channel === "web" ? -1 : 1;
   if (a.source_kind !== b.source_kind) return a.source_kind === "official" ? -1 : 1;
   if (a.country !== b.country) return a.country < b.country ? -1 : 1;
-  return a.obs_key < b.obs_key ? -1 : a.obs_key > b.obs_key ? 1 : 0;
+  const pa = PERIOD_ORDER[a.billing_period] ?? 9;
+  const pb = PERIOD_ORDER[b.billing_period] ?? 9;
+  if (pa !== pb) return pa - pb;
+  return cmp(a.obs_key, b.obs_key);
 }
 
 export function pickHome(priced: PricedOffer[], residence: string): PricedOffer | null {
@@ -136,7 +145,7 @@ export function cheapestFor(
     const best = priced.find((o) => withinRisk(o, k)) ?? null;
     bestByRisk[k] = best;
     savingsMonthEur[k] =
-      home && best ? roundTo(home.cost_eur_with_fee - best.cost_eur_with_fee, 4) : null;
+      home && best ? roundTo(home.cost_eur_with_fee - best.cost_eur_with_fee, 2) : null;
   }
   return {
     service_id: serviceId,
@@ -148,23 +157,44 @@ export function cheapestFor(
   };
 }
 
-/** Every (service, plan) present in `offers`, sorted by service then plan id (like Python). */
+/**
+ * Every (service, plan) with at least one costed candidate, like cheapest.json. With `services`
+ * (services.json) rows follow compare.py: plans outside the catalog are left out and rows are
+ * sorted by service id, then plan rank, then catalog order. Without it, by service then plan id.
+ */
 export function cheapestAll(
   offers: readonly CompareOfferFields[],
   ctx: CompareContext,
+  services?: readonly Pick<ServiceInfo, "id" | "plans">[],
 ): Cheapest[] {
+  const planOrder = services
+    ? new Map<string, readonly [number, number]>(
+        services.flatMap((s) => s.plans.map((p, pos) => [`${s.id}\u0000${p.id}`, [p.rank, pos]])),
+      )
+    : null;
   const pairs = new Map<string, [string, string]>();
-  for (const o of offers) pairs.set(`${o.service_id}\u0000${o.plan_id}`, [o.service_id, o.plan_id]);
+  for (const o of offers) {
+    const key = `${o.service_id}\u0000${o.plan_id}`;
+    if (!planOrder || planOrder.has(key)) pairs.set(key, [o.service_id, o.plan_id]);
+  }
+  const order = (s: string, p: string) => planOrder?.get(`${s}\u0000${p}`) ?? [0, 0];
   return [...pairs.values()]
-    .sort(([s1, p1], [s2, p2]) => (s1 === s2 ? cmp(p1, p2) : cmp(s1, s2)))
-    .map(([s, p]) => cheapestFor(s, p, offers, ctx));
+    .sort(([s1, p1], [s2, p2]) => {
+      if (s1 !== s2) return cmp(s1, s2);
+      if (!planOrder) return cmp(p1, p2);
+      const [r1, i1] = order(s1, p1);
+      const [r2, i2] = order(s2, p2);
+      return r1 - r2 || i1 - i2;
+    })
+    .map(([s, p]) => cheapestFor(s, p, offers, ctx))
+    .filter((row) => row.offers.length > 0);
 }
 
 function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Same shape as cheapest.json OfferRef minus source_url (money rounded to 2 decimals). */
+/** Same shape as cheapest.json OfferRef minus source_url. */
 export function toOfferRef(o: PricedOffer): Omit<OfferRef, "source_url"> {
   return {
     obs_key: o.obs_key,

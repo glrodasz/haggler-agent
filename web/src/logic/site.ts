@@ -53,7 +53,7 @@ export interface SiteIndex extends SiteData {
   isStale(currency: string): boolean;
   /** Services that have at least one published offer (the comparator only lists these). */
   pricedServices(): ServiceInfo[];
-  /** changes.json sorted newest first, limited to `days` before meta.as_of. */
+  /** changes.json sorted newest first, limited to `days` before meta.as_of (all without it). */
   recentChanges(days?: number): ChangeRow[];
   formatChangeValue(row: ChangeRow, value: ChangeValue): string;
 }
@@ -105,6 +105,8 @@ export function buildIndex(data: SiteData): SiteIndex {
   const residenceCountry = countries.get(data.meta.residence);
   const stale = new Set(data.fx.stale ?? []);
   const offerCurrency = new Map(data.offers.map((o) => [o.obs_key, o.currency]));
+  // site-data already limits changes.json to the window before as_of (or before today).
+  const asOf = data.meta.as_of;
 
   const serviceName = (id: string) => services.get(id)?.name ?? id;
   const countryName = (cc: string) => countries.get(cc)?.name_es ?? cc;
@@ -127,7 +129,7 @@ export function buildIndex(data: SiteData): SiteIndex {
     residenceCountry,
     residenceName: residenceCountry?.name_es ?? data.meta.residence,
     residenceCurrency: residenceCountry?.currency ?? "EUR",
-    isSample: data.meta.run_id.startsWith("sample"),
+    isSample: (data.meta.run_id ?? "").startsWith("sample"),
     service: (id) => services.get(id),
     country: (cc) => countries.get(cc),
     serviceName,
@@ -188,7 +190,7 @@ export function buildIndex(data: SiteData): SiteIndex {
     },
     recentChanges: (days = 90) =>
       [...data.changes]
-        .filter((c) => daysBetween(c.date, data.meta.as_of) <= days)
+        .filter((c) => asOf === null || daysBetween(c.date, asOf) <= days)
         .sort((a, b) =>
           a.date === b.date ? (a.obs_key < b.obs_key ? -1 : 1) : a.date < b.date ? 1 : -1,
         ),

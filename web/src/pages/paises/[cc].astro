@@ -61,7 +61,7 @@ const records = site.feasibilityForCountry(country.cc);
   </section>
 
   <section aria-labelledby="factibilidad">
-    <h2 id="factibilidad">{t.feasibilityTitle}</h2>
+    <h2 id="factibilidad">{t.feasibilityTitle(site.residenceName)}</h2>
     {
       records.length === 0 ? (
         <p>{t.noFeasibility}</p>
@@ -69,7 +69,7 @@ const records = site.feasibilityForCountry(country.cc);
         <FeasibilityTable
           records={records}
           mode="country"
-          caption={`${t.feasibilityTitle}: ${country.name_es}`}
+          caption={`${t.feasibilityTitle(site.residenceName)}: ${country.name_es}`}
           captionId="factibilidad-caption"
         />
       )
