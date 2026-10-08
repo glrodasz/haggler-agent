@@ -1,0 +1,116 @@
+---
+import { es, lookup } from "../i18n/es";
+import { getSite } from "../logic/data";
+import { formatDate, formatMoney, formatPercent, formatPrice, periodSuffix } from "../logic/format";
+import { routes } from "../logic/paths";
+import type { Bundle, BundleComponent } from "../logic/types";
+import CountryLabel from "./CountryLabel.astro";
+
+interface Props {
+  bundle: Bundle;
+}
+
+const { bundle: b } = Astro.props;
+const site = getSite();
+const t = es.bundle;
+
+function inclusionText(c: BundleComponent): string {
+  const fmt = t.inclusion[c.inclusion] ?? (() => c.inclusion);
+  if (c.value === null || c.value === undefined) return fmt("");
+  if (c.inclusion === "discount_pct") return fmt(formatPercent(c.value, { digits: 0 }));
+  if (c.inclusion === "discount_abs") return fmt(formatPrice(c.value, b.price.currency));
+  return fmt(String(c.value));
+}
+
+const requirements = Object.entries(b.requirements ?? {}).filter(
+  ([, v]) => v !== null && v !== undefined && v !== "unknown",
+);
+const reqValue = (v: unknown): string =>
+  typeof v === "boolean" ? (v ? es.common.yes : es.common.no) : lookup(t.requirementValues, String(v));
+const feasibility = b.feasibility ? Object.entries(b.feasibility) : [];
+const saving = b.saving_pct;
+---
+
+<li class="card">
+  <h3>{b.name}</h3>
+  <p class="small muted"><CountryLabel cc={b.country} /> · {lookup(es.curatedStatus, b.status)}</p>
+  <dl>
+    <dt>{t.price}</dt>
+    <dd>
+      {
+        b.price.amount === null ? (
+          t.noPrice
+        ) : (
+          <>
+            {formatPrice(b.price.amount, b.price.currency)}
+            {periodSuffix(b.price.period)}
+          </>
+        )
+      }
+      {b.price.tax_included === true && <span class="muted"> · {t.taxIncluded}</span>}
+      {b.price.tax_included === false && <span class="muted"> · {t.taxExcluded}</span>}
+      {
+        b.price.marginal_amount !== null && (
+          <div class="small muted">
+            {t.marginal(formatPrice(b.price.marginal_amount, b.price.currency) + periodSuffix(b.price.period))}
+          </div>
+        )
+      }
+    </dd>
+    <dt>{t.monthlyEur}</dt>
+    <dd>{formatMoney(b.monthly_eur, "EUR")}</dd>
+    <dt>{t.standalone}</dt>
+    <dd>{formatMoney(b.standalone_sum_eur, "EUR")}</dd>
+    <dt>{t.saving}</dt>
+    <dd class={saving !== null && saving > 0 ? "positive" : saving !== null && saving < 0 ? "negative" : ""}>
+      {formatPercent(saving, { signed: true })}
+    </dd>
+  </dl>
+  <h4>{t.components}</h4>
+  <ul>
+    {
+      b.components.map((c) => (
+        <li>
+          <a href={routes.service(c.service_id)}>{site.serviceName(c.service_id)}</a>
+          {c.plan_id && <> ({site.planLabel(c.service_id, c.plan_id)})</>}: {inclusionText(c)}
+          {c.ads && <span class="muted"> · {t.withAds}</span>}
+        </li>
+      ))
+    }
+  </ul>
+  {
+    requirements.length > 0 && (
+      <>
+        <h4>{t.requirements}</h4>
+        <dl>
+          {requirements.map(([k, v]) => (
+            <>
+              <dt>{lookup(t.requirementFields, k)}</dt>
+              <dd>{reqValue(v)}</dd>
+            </>
+          ))}
+        </dl>
+      </>
+    )
+  }
+  {
+    feasibility.length > 0 && (
+      <>
+        <h4>{t.feasibility}</h4>
+        <dl>
+          {feasibility.map(([k, v]) => (
+            <>
+              <dt>{lookup(t.feasibilityFields, k)}</dt>
+              <dd>{lookup(t.feasibilityValues, v)}</dd>
+            </>
+          ))}
+        </dl>
+      </>
+    )
+  }
+  {b.notes_es && <p class="note">{b.notes_es}</p>}
+  <p class="small">
+    <a href={b.official_url} rel="nofollow noopener noreferrer external">{t.officialPage}</a> ·{" "}
+    <span class="muted">{t.lastVerified(formatDate(b.last_verified))}</span>
+  </p>
+</li>

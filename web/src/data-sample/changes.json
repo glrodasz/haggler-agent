@@ -1,0 +1,14 @@
+[
+{"channel": "web", "country": "SE", "date": "2026-10-06", "kind": "changed", "new": 139, "obs_key": "spotify:individual:SE:web:month", "old": 129, "pct": 7.75, "plan_id": "individual", "service_id": "spotify"},
+{"channel": "web", "country": "SE", "date": "2026-10-06", "kind": "changed", "new": 179, "obs_key": "spotify:duo:SE:web:month", "old": 169, "pct": 5.92, "plan_id": "duo", "service_id": "spotify"},
+{"channel": "web", "country": "SE", "date": "2026-10-06", "kind": "changed", "new": 229, "obs_key": "spotify:family:SE:web:month", "old": 209, "pct": 9.57, "plan_id": "family", "service_id": "spotify"},
+{"channel": "web", "country": "TR", "date": "2026-10-01", "kind": "changed", "new": 349.99, "obs_key": "netflix:standard:TR:web:month", "old": 299.99, "pct": 16.67, "plan_id": "standard", "service_id": "netflix"},
+{"channel": "web", "country": "TR", "date": "2026-10-01", "kind": "changed", "new": 449.99, "obs_key": "netflix:premium:TR:web:month", "old": 379.99, "pct": 18.42, "plan_id": "premium", "service_id": "netflix"},
+{"channel": "ios_iap", "country": "DE", "date": "2026-09-24", "kind": "new", "new": 5.99, "obs_key": "hbo_max:basic_with_ads:DE:ios_iap:month", "old": null, "pct": null, "plan_id": "basic_with_ads", "service_id": "hbo_max"},
+{"channel": "ios_iap", "country": "DE", "date": "2026-09-24", "kind": "new", "new": 9.99, "obs_key": "hbo_max:standard:DE:ios_iap:month", "old": null, "pct": null, "plan_id": "standard", "service_id": "hbo_max"},
+{"channel": "ios_iap", "country": "DE", "date": "2026-09-24", "kind": "new", "new": 15.99, "obs_key": "hbo_max:premium:DE:ios_iap:month", "old": null, "pct": null, "plan_id": "premium", "service_id": "hbo_max"},
+{"channel": "web", "country": "SE", "date": "2026-09-18", "kind": "removed", "new": null, "obs_key": "netflix:basic:SE:web:month", "old": 129, "pct": null, "plan_id": "basic", "service_id": "netflix"},
+{"channel": "ios_iap", "country": "TR", "date": "2026-09-15", "kind": "changed", "new": 104.99, "obs_key": "youtube_premium:individual:TR:ios_iap:month", "old": 89.99, "pct": 16.67, "plan_id": "individual", "service_id": "youtube_premium"},
+{"channel": "web", "country": "BR", "date": "2026-09-15", "kind": "changed", "new": 29.9, "obs_key": "apple_tv:standard:BR:web:month", "old": 21.9, "pct": 36.53, "plan_id": "standard", "service_id": "apple_tv"},
+{"channel": "ios_iap", "country": "CO", "date": "2026-09-14", "kind": "changed", "new": 7900, "obs_key": "google_one:100gb:CO:ios_iap:month", "old": 8900, "pct": -11.24, "plan_id": "100gb", "service_id": "google_one"}
+]

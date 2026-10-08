@@ -1,0 +1,77 @@
+---
+import { es, lookup } from "../i18n/es";
+import { getSite } from "../logic/data";
+import { routes } from "../logic/paths";
+import type { FeasibilityView } from "../logic/types";
+import CountryLabel from "./CountryLabel.astro";
+import EuBadge from "./EuBadge.astro";
+import RiskBadge from "./RiskBadge.astro";
+import TableWrap from "./TableWrap.astro";
+
+interface Props {
+  records: FeasibilityView[];
+  /** "service": first column is the target country; "country": the service. */
+  mode: "service" | "country";
+  caption: string;
+  captionId: string;
+}
+
+const { records, mode, caption, captionId } = Astro.props;
+const site = getSite();
+const t = es.service;
+const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}, value);
+---
+
+<TableWrap captionId={captionId}>
+  <table>
+    <caption id={captionId}>{caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{mode === "service" ? t.colTarget : es.country.colService}</th>
+        <th scope="col">{t.colLabel}</th>
+        <th scope="col">{es.axes.legality?.name}</th>
+        <th scope="col">{es.axes.tos?.name}</th>
+        <th scope="col">{es.axes.practical?.name}</th>
+        <th scope="col">{t.colConfidence}</th>
+        <th scope="col">{t.colStatus}</th>
+        <th scope="col">{t.colNotes}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        records.map((r) => (
+          <tr>
+            <th scope="row">
+              {mode === "service" ? (
+                <CountryLabel cc={r.target_country} />
+              ) : (
+                <a href={routes.service(r.service_id)}>{site.serviceName(r.service_id)}</a>
+              )}
+            </th>
+            <td>
+              <span class="badges">
+                <RiskBadge label={r.label} rank={r.rank} />
+                {r.eu_badge && <EuBadge />}
+              </span>
+            </td>
+            <td>{axis("legality", r.legality)}</td>
+            <td>{axis("tos", r.tos)}</td>
+            <td>{axis("practical", r.practical)}</td>
+            <td>{lookup(es.confidence, r.confidence)}</td>
+            <td>{lookup(es.curatedStatus, r.status)}</td>
+            <td class="notes">
+              {r.notes_es}
+              {r.tos_clause_url && (
+                <div class="small">
+                  <a href={r.tos_clause_url} rel="nofollow noopener noreferrer external">
+                    {t.tosClause}
+                  </a>
+                </div>
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</TableWrap>

@@ -1,0 +1,29 @@
+{
+  "name": "haggler-web",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Sitio estático de haggler-agent: comparador de precios de suscripciones por país.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/check-data.mjs && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "sample-data": "node scripts/sample-data.mjs"
+  },
+  "dependencies": {
+    "@astrojs/preact": "^6.0.6",
+    "astro": "^7.3.8",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.20.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

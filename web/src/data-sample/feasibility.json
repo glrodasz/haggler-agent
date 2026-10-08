@@ -1,0 +1,224 @@
+{
+  "labels": [
+    {
+      "id": "official_home",
+      "rank": 0,
+      "name_es": "Oficial",
+      "description_es": "Precio del país donde vives. Sin conflicto con los términos del servicio."
+    },
+    {
+      "id": "eu_right_untested",
+      "rank": 1,
+      "name_es": "Derecho UE no probado",
+      "description_es": "Cumple los términos, pero depende de una interpretación del Reglamento (UE) 2018/302 que ningún tribunal ha confirmado."
+    },
+    {
+      "id": "tos_breach_low_enforcement",
+      "rank": 2,
+      "name_es": "Incumple ToS, sin control conocido",
+      "description_es": "Contradice los términos del servicio; no se conocen cancelaciones ni bloqueos por ello."
+    },
+    {
+      "id": "tos_breach_enforced",
+      "rank": 3,
+      "name_es": "Incumple ToS, con control activo",
+      "description_es": "El servicio verifica el país y cancela o bloquea cuentas que no cumplen."
+    },
+    {
+      "id": "not_feasible",
+      "rank": 4,
+      "name_es": "No factible",
+      "description_es": "No se puede conseguir de forma realista con tu perfil."
+    },
+    {
+      "id": "unknown",
+      "rank": 99,
+      "name_es": "Sin evaluar",
+      "description_es": "Todavía no hay análisis de factibilidad. Nunca se elige como opción."
+    }
+  ],
+  "records": [
+    {
+      "service_id": "apple_music",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "apple_one",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "apple_tv",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "disney_plus",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "Controles de hogar en LatAm desde 2024; error 73 con VPN.",
+      "tos_clause_url": "https://www.disneyplus.com/legal/subscriber-agreement"
+    },
+    {
+      "service_id": "google_one",
+      "target_country": "LT",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": true,
+      "legality": "contestable_eu_right",
+      "tos": "breach_unenforced",
+      "practical": "presence_once",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "El perfil de pagos de Google no cambia de país (hay que crear otro) y Play solo permite un cambio cada 12 meses estando físicamente en el país.",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "hbo_max",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "El país de origen es donde te registraste; fuera del EEE ves el catálogo local.",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "icloud_plus",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "Cambiar el país de la cuenta Apple afecta a todo el storefront (apps, Music, suscripciones, Family Sharing). Requiere saldo cero y método de pago del país.",
+      "tos_clause_url": "https://www.apple.com/legal/internet-services/icloud/"
+    },
+    {
+      "service_id": "icloud_plus",
+      "target_country": "LT",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": true,
+      "legality": "contestable_eu_right",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "Derecho UE no probado: servicio tipo nube; el precio legal sería el neto lituano + IVA sueco. Apple exige dirección de facturación del país, por eso hoy implica declarar datos falsos.",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "microsoft_365",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "La región de la cuenta Microsoft solo cambia cada 3 meses y el saldo no se transfiere.",
+      "tos_clause_url": null
+    },
+    {
+      "service_id": "netflix",
+      "target_country": "CO",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "presence_once",
+      "confidence": "medium",
+      "status": "unverified",
+      "notes_es": "El país se fija en el registro (ubicación al suscribirse). Usarla principalmente fuera de CO contradice los términos; no se conocen cancelaciones por vivir en el exterior. El catálogo sigue la ubicación actual.",
+      "tos_clause_url": "https://help.netflix.com/legal/termsofuse"
+    },
+    {
+      "service_id": "spotify",
+      "target_country": "CO",
+      "label": "tos_breach_enforced",
+      "rank": 3,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_enforced",
+      "practical": "remote",
+      "confidence": "medium",
+      "status": "unverified",
+      "notes_es": "La tarjeta debe ser del país de la cuenta (la del usuario es CO). Los términos 2025 exigen que la cuenta esté en el país de residencia.",
+      "tos_clause_url": "https://www.spotify.com/int/legal/end-user-agreement/"
+    },
+    {
+      "service_id": "youtube_premium",
+      "target_country": "CO",
+      "label": "tos_breach_enforced",
+      "rank": 3,
+      "eu_badge": false,
+      "legality": "requires_misrepresentation",
+      "tos": "breach_enforced",
+      "practical": "presence_once",
+      "confidence": "medium",
+      "status": "unverified",
+      "notes_es": "El país de suscripción debe coincidir con dónde vives; Google lo verifica.",
+      "tos_clause_url": "https://www.youtube.com/t/terms_paycontent"
+    },
+    {
+      "service_id": "youtube_premium",
+      "target_country": "US",
+      "label": "not_feasible",
+      "rank": 4,
+      "eu_badge": false,
+      "legality": "requires_misrepresentation",
+      "tos": "breach_enforced",
+      "practical": "impossible",
+      "confidence": "medium",
+      "status": "unverified",
+      "notes_es": "Requiere instrumento de pago estadounidense; no disponible para este perfil.",
+      "tos_clause_url": null
+    }
+  ]
+}

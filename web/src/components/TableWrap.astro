@@ -1,0 +1,15 @@
+---
+/**
+ * Scrollable, keyboard-reachable container for wide tables (WCAG 2.1.1: a region with
+ * tabindex lets keyboard users scroll it). `captionId` must match the table's <caption id>.
+ */
+interface Props {
+  captionId: string;
+}
+
+const { captionId } = Astro.props;
+---
+
+<div class="table-wrap" role="region" aria-labelledby={captionId} tabindex="0">
+  <slot />
+</div>
