@@ -41,6 +41,15 @@ def dumps(obj: Any, *, indent: int | None = 1) -> bytes:
     ).encode()
 
 
+def dumps_lines(rows: list[Any]) -> bytes:
+    """JSON array with one compact, key-sorted object per line (stable, diff-friendly in git)."""
+    body = ",\n".join(
+        json.dumps(_to_jsonable(r), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        for r in rows
+    )
+    return (f"[\n{body}\n]\n" if rows else "[]\n").encode()
+
+
 def write_json(store: Store, key: str, obj: Any, *, indent: int | None = 1) -> str:
     return store.write_bytes(key, dumps(obj, indent=indent))
 
