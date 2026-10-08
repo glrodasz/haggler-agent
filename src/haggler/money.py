@@ -108,8 +108,11 @@ _ISO_CODES = [
 # Currencies whose prices are effectively always shown without minor units.
 ZERO_DECIMAL = {"CLP", "COP", "VND", "IDR", "JPY", "KRW", "ISK", "HUF", "PKR", "UGX"}
 
-_SPACES = "     "
-_NUM = rf"\d(?:[\d.,'’{_SPACES}]*\d)?"
+_SPACES = "\u00a0\u202f\u2009\u2007 "
+# A digit run, then thousands groups (any separator, exactly 3 digits not followed by another
+# digit), then an optional decimal part. Spaces only ever act as thousands separators, so a
+# footnote digit after a price ("$59.99 4") is not glued onto it.
+_NUM = rf"\d+(?:[.,'’{_SPACES}]\d{{3}}(?!\d))*(?:[.,]\d+)?"
 
 
 def _marker_regex() -> re.Pattern[str]:
