@@ -2,7 +2,9 @@
 
 Rules (thresholds from Settings):
   REJECT (status=rejected, kept only in the snapshot):
-    * currency not in CountryDef.expected_currencies(channel)            -> flag currency_mismatch
+    * currency not in CountryDef.expected_currencies(channel) — plus the country's
+      appstore_currency when the draft carries flag "apple_billing" (Apple's own services are
+      billed in the storefront currency)                                 -> flag currency_mismatch
     * monthly EUR outside PlanDef.plausible_monthly_eur (needs FX)       -> flag implausible
     * amount <= 0                                                        -> flag non_positive
     * unknown service/plan id                                            -> flag unknown_plan
