@@ -393,14 +393,20 @@ def _covering_tasks(
 
 
 def _absent_state(
-    old: KeyState, tasks: list[TaskResult], *, failed: bool = False
+    old: KeyState, tasks: list[TaskResult], *, failed: bool = False, same_day: bool = False
 ) -> KeyState | None:
     """Counters after a run without a live row for a tracked key (`tasks` = its covering tasks);
-    None when no task of this run covers it (the key is left as it was)."""
+    None when no task of this run covers it (the key is left as it was).
+
+    A same-day re-run (Cloud Run retry, manual re-execution) already counted today, so the
+    counters stay as they are: retries must not age keys out faster.
+    """
     if not failed:
         if not tasks:
             return None
         failed = not any(t.status in SUCCESS_STATUSES for t in tasks)
+    if same_day:
+        return old
     return old.model_copy(
         update={"missing_runs": old.missing_runs + 1}
         if failed
@@ -453,6 +459,8 @@ def validate(
     services = {s.id: s for s in catalog.services}
     countries = {c.cc: c for c in catalog.countries}
     threshold = Decimal(str(settings.quarantine_change_pct))
+    # The stored state was written by an earlier run on this same date (retry / re-execution).
+    same_day = state.as_of == run_date
     anomalies: list[Anomaly] = []
     output: list[PriceObservation] = []
 
@@ -508,7 +516,7 @@ def validate(
                 ]
                 rejected_official = any(r.source_kind == "official" for r in rows)
                 old = state.keys.get(key) or KeyState()
-                nxt = _absent_state(old, tasks, failed=rejected_official)
+                nxt = _absent_state(old, tasks, failed=rejected_official, same_day=same_day)
                 if nxt is not None and _aged_out(nxt):
                     fallback[key] = nxt
                 else:
@@ -580,7 +588,12 @@ def validate(
         old = state.keys.get(key)
         if FLAG_SECOND_OPINION_AGREES in row.flags:
             released = "released: second opinion agrees"
-        elif old is not None and _token_matches(old.pending_value, row):
+        elif (
+            old is not None
+            and _token_matches(old.pending_value, row)
+            and (old.pending_since is None or old.pending_since < run_date)
+        ):
+            # Confirmation needs a LATER run: a same-day retry re-reads the same page.
             released = "released: same value as the previous run"
         else:
             released = ""
@@ -635,12 +648,14 @@ def validate(
         if key in held:
             new = held[key]  # official row carried behind today's secondary row (step 2)
         elif key in rows_by_key:
-            new = _absent_state(old, [], failed=True)  # observed, but every row was rejected
+            new = _absent_state(
+                old, [], failed=True, same_day=same_day
+            )  # observed, but every row was rejected
         else:
             tasks = _covering_tasks(
                 task_results, parts[0], parts[2], parts[3], prev.adapter_id if prev else None
             )
-            new = _absent_state(old, tasks)
+            new = _absent_state(old, tasks, same_day=same_day)
         if new is None:
             # Not attempted by this run: keep everything as it was.
             if key in state.keys:

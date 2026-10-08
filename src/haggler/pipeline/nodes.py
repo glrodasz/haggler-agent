@@ -236,9 +236,9 @@ def plan_hints(svc: ServiceDef) -> list[LlmPlanHint]:
 
 
 def page_text_lines(text: str) -> list[str]:
-    """Visible lines of a page (haggler.text.html_to_lines: short "129 kr" lines kept)."""
+    """Visible lines of a page without header/nav/footer chrome (short "129 kr" lines kept)."""
     try:
-        return html_to_lines(text)
+        return html_to_lines(text, drop_chrome=True)
     except Exception:  # malformed markup must not kill the task
         return [ln.strip() for ln in text.splitlines() if ln.strip()]
 
@@ -497,6 +497,11 @@ def to_observation(
 ) -> PriceObservation:
     country = _country(cat, draft.country)
     vat = getattr(country.vat_included, task.channel, None) if country else None
+    # The source itself can say how the price is taxed (Microsoft's TaxType).
+    if "taxes_not_included" in draft.flags:
+        vat = False
+    elif "vat_included" in draft.flags:
+        vat = True
     return PriceObservation.from_draft(
         draft,
         channel=task.channel,

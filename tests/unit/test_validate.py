@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -237,6 +237,10 @@ def with_currency_overrides(catalog, adapter: str, overrides: dict) -> Catalog:
 
 def test_source_currency_overrides_are_allowed(catalog):
     # tompec lists Romania in EUR; the source pins it with params.currency_overrides.
+    # Start from an unpinned copy: the shipped catalog already pins RO on both Netflix sources.
+    catalog = with_currency_overrides(
+        with_currency_overrides(catalog, "tompec_netflix", {}), "netflix_help", {}
+    )
     pinned = with_currency_overrides(catalog, "tompec_netflix", {"RO": "EUR"})
     eur = obs("netflix", "standard", "RO", "10.99", "EUR", kind="secondary")
     out = check([eur], catalog)
@@ -625,7 +629,8 @@ def _official_down(catalog, runs: int, secondary: str | None, *, official_status
     previous = published(obs("netflix", "standard", "SE", "169", "SEK"))
     state = PipelineState()
     history = []
-    for _ in range(runs):
+    for i in range(runs):
+        day = D1 + timedelta(days=i)  # one run per day, as in production
         current = []
         if secondary is not None:
             current.append(obs("netflix", "standard", "SE", secondary, "SEK", kind="secondary"))
@@ -633,10 +638,10 @@ def _official_down(catalog, runs: int, secondary: str | None, *, official_status
             task("netflix_help", "netflix", ["SE"], status=official_status),
             task("tompec_netflix", "netflix", ["CO", "SE"]),
         ]
-        out = check(current, catalog, previous=previous, state=state, tasks=tasks)
+        out = check(current, catalog, previous=previous, state=state, tasks=tasks, run_date=day)
         history.append(out)
-        previous = publish(out, previous, D1)
-        state = PipelineState(keys=out.key_state)
+        previous = publish(out, previous, day)
+        state = PipelineState(keys=out.key_state, as_of=day)
     return history, previous
 
 
@@ -702,7 +707,7 @@ def test_secondary_fallback_with_a_big_change_is_quarantined_then_released(catal
     assert (row.status, row.source_kind, row.flags) == ("quarantined", "secondary", ["big_change"])
     # The counters of the aged-out official row survive the quarantine: no second carry cycle.
     assert fallback.key_state[SE_STD] == KeyState(
-        missing_runs=8, pending_value="99|SEK|month", pending_since=D1
+        missing_runs=8, pending_value="99|SEK|month", pending_since=D1 + timedelta(days=7)
     )
     (held,) = publishable(fallback)
     assert (held.amount, held.source_kind, held.flags) == (
@@ -1037,3 +1042,63 @@ def test_publishable_has_one_row_per_key_and_no_rejected_rows(catalog):
     assert by_key[SE_STD].flags == ["quarantine_hold"]
     assert by_key[SE_PREMIUM].amount == Decimal("229")  # rejected today, carried forward
     assert by_key["youtube_premium:individual:AR:ios_iap:month"].currency == "USD"
+
+
+def test_same_day_rerun_neither_confirms_quarantine_nor_ages_keys(catalog):
+    # Day 1: the official price jumps +77% -> quarantined, previous value stays live.
+    previous = published(obs("netflix", "standard", "SE", "169", "SEK"))
+    jump = obs("netflix", "standard", "SE", "299", "SEK")
+    first = check([jump], catalog, previous=previous, run_date=D1)
+    assert first.observations[0].status == "quarantined"
+    state = PipelineState(keys=first.key_state, as_of=D1)
+    # A Cloud Run retry on the same date re-reads the same page: still quarantined.
+    retry = check([jump], catalog, previous=previous, state=state, run_date=D1)
+    assert retry.observations[0].status == "quarantined"
+    # The next day's run confirms it.
+    nxt = check([jump], catalog, previous=previous, state=state, run_date=D2)
+    assert nxt.observations[0].status == "accepted"
+
+    # A failing task on a same-day retry does not count a second missing run.
+    tasks = [task("netflix_help", "netflix", ["SE"], status="blocked")]
+    day1 = check([], catalog, previous=previous, tasks=tasks, run_date=D1)
+    missing = day1.key_state[SE_STD].missing_runs
+    again = check(
+        [],
+        catalog,
+        previous=previous,
+        state=PipelineState(keys=day1.key_state, as_of=D1),
+        tasks=tasks,
+        run_date=D1,
+    )
+    assert again.key_state[SE_STD].missing_runs == missing
+    later = check(
+        [],
+        catalog,
+        previous=previous,
+        state=PipelineState(keys=day1.key_state, as_of=D1),
+        tasks=tasks,
+        run_date=D2,
+    )
+    assert later.key_state[SE_STD].missing_runs == missing + 1
+
+
+def test_success_ratio_ignores_structural_statuses():
+    from haggler.models.run import RunReport
+
+    report = RunReport(
+        run_id="r",
+        run_date=D1,
+        started_at=NOW,
+        tasks_total=10,
+        tasks_by_status={"ok": 4, "failed": 1, "not_configured": 3, "robots_disallowed": 2},
+    )
+    assert report.success_ratio == 0.8
+    assert RunReport(run_id="r", run_date=D1, started_at=NOW).success_ratio == 0.0
+    only = RunReport(
+        run_id="r",
+        run_date=D1,
+        started_at=NOW,
+        tasks_total=2,
+        tasks_by_status={"not_configured": 2},
+    )
+    assert only.success_ratio == 1.0

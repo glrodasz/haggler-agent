@@ -21,6 +21,7 @@ TaskStatus = Literal[
     "not_configured",
     "wrong_country",
 ]
+STRUCTURAL_STATUSES = ("not_configured", "robots_disallowed")
 LlmReason = Literal["parser_failed", "unmapped_iap", "second_opinion"]
 
 
@@ -166,8 +167,13 @@ class RunReport(BaseModel):
     def success_ratio(self) -> float:
         if not self.tasks_total:
             return 0.0
+        # Structural statuses (no catalog config, robots.txt says no) are not failures of the run.
+        structural = sum(self.tasks_by_status.get(s, 0) for s in STRUCTURAL_STATUSES)
+        considered = self.tasks_total - structural
+        if considered <= 0:
+            return 1.0
         good = sum(self.tasks_by_status.get(s, 0) for s in ("ok", "partial", "not_available"))
-        return good / self.tasks_total
+        return good / considered
 
 
 class Snapshot(BaseModel):
