@@ -7,7 +7,7 @@ import pytest
 
 from haggler.fetch import RawResponse
 from haggler.models.catalog import SourceDef
-from haggler.sources.icloud_support import ICloudSupportAdapter
+from haggler.sources.icloud_support import ICloudSupportAdapter, currency_code
 
 FIXTURES = Path(__file__).parent / "fixtures" / "icloud_support"
 URL = "https://support.apple.com/en-us/108047"
@@ -284,3 +284,127 @@ def test_footnote_sup_after_price_is_not_part_of_the_number(adapter, task, catal
         "50gb": (Decimal("0.99"), "USD"),
         "12tb": (Decimal("59.99"), "USD"),
     }
+
+
+# ---------------------------------------------------------------- 2026 layout (probe-verified)
+
+EURO_WITHOUT_OWN_ROW = ("FI", "LT", "LV", "EE", "DE", "ES", "NL", "PT")
+
+
+@pytest.fixture(scope="module")
+def tables(adapter, task, catalog):
+    return adapter.parse(task, _resp(_html("108047_2026_tables.html")), catalog)
+
+
+def test_2026_tables_currency_names(tables):
+    assert _prices(tables, "SE")["200gb"] == (Decimal("39"), "SEK")  # "(Swedish Krona)"
+    assert _prices(tables, "TR")["6tb"] == (Decimal("1199.99"), "TRY")  # "(Turkish Lira)"
+    assert _prices(tables, "GB")["2tb"] == (Decimal("8.99"), "GBP")  # "(British Pound)"
+    assert _prices(tables, "CO")["200gb"] == (Decimal("11900"), "COP")  # "(Colombian Peso)"
+    assert _prices(tables, "MX")["12tb"] == (Decimal("1099"), "MXN")  # plural "(Mexican Pesos)"
+    assert _prices(tables, "AR")["200gb"] == (Decimal("2.99"), "USD")  # "(US Dollar)"
+    assert _prices(tables, "VN")["12tb"] == (Decimal("1199000"), "VND")
+    assert _prices(tables, "CH")["50gb"] == (Decimal("1.00"), "CHF")  # ISO code still works
+    assert len(_prices(tables, "US")) == 5
+
+
+def test_2026_euro_row_covers_euro_countries_without_their_own_row(tables):
+    for cc in EURO_WITHOUT_OWN_ROW:
+        assert _prices(tables, cc) == {
+            "50gb": (Decimal("0.99"), "EUR"),
+            "200gb": (Decimal("2.99"), "EUR"),
+            "2tb": (Decimal("9.99"), "EUR"),
+            "6tb": (Decimal("29.99"), "EUR"),
+            "12tb": (Decimal("59.99"), "EUR"),
+        }, cc
+    fi = next(o for o in tables.observations if o.country == "FI" and o.plan_id == "200gb")
+    assert fi.evidence_snippet == "Euro (Euro) | 200 GB: 2.99 €"
+    note = next(n for n in tables.notes if n.startswith("EUR row applied"))
+    assert note.endswith(", ".join(EURO_WITHOUT_OWN_ROW))
+
+
+def test_2026_own_row_beats_the_euro_row(tables):
+    # Ireland has a row of its own (listed before "Euro"); Croatia's is not a catalog country.
+    assert _prices(tables, "IE")["200gb"] == (Decimal("3.49"), "EUR")
+    assert "IE" not in next(n for n in tables.notes if n.startswith("EUR row applied"))
+    # Non-catalog rows (Croatia, Cameroon, Japan) never leak into other countries.
+    assert not [
+        o for o in tables.observations if o.amount in (Decimal("3.49"),) and o.country != "IE"
+    ]
+    assert not [o for o in tables.observations if o.currency == "JPY"]
+
+
+def test_2026_tables_status_and_missing_countries(tables, task):
+    found = {o.country for o in tables.observations}
+    assert found == {
+        "AR",
+        "CO",
+        "MX",
+        "US",
+        "IE",
+        "SE",
+        "CH",
+        "TR",
+        "GB",
+        "VN",
+        *EURO_WITHOUT_OWN_ROW,
+    }
+    assert tables.status == "partial"  # 18 of 35: the rest of this fixture is illustrative
+    assert any(n.startswith("countries not on page:") and "NO" in n for n in tables.notes)
+
+
+def test_euro_row_before_a_country_row_still_loses(adapter, task, catalog):
+    html = _page(
+        "<p><b>Euro (Euro)</b></p><p>50GB: 0.99 €<br>200GB: 2.99 €</p>"
+        "<p><b>Finland (EUR)</b></p><p>200GB: 3.99 €</p>"
+    )
+    result = adapter.parse(task, _resp(html), catalog)
+    assert _prices(result, "FI") == {"200gb": (Decimal("3.99"), "EUR")}  # no 50gb from "Euro"
+    assert _prices(result, "LT") == {
+        "50gb": (Decimal("0.99"), "EUR"),
+        "200gb": (Decimal("2.99"), "EUR"),
+    }
+
+
+@pytest.mark.parametrize(
+    "name", ["Euro", "Eurozone", "Euro area", "Other euro countries", "Euro countries"]
+)
+def test_currency_region_spellings(adapter, task, catalog, name):
+    html = _page(
+        f"<table><tr><th>Country (Currency)</th><th>50 GB</th><th>200 GB</th></tr>"
+        f"<tr><td>{name}¹ (Euro)</td><td>0.99 €</td><td>2.99 €</td></tr></table>"
+    )
+    result = adapter.parse(task, _resp(html), catalog)
+    assert _prices(result, "DE")["200gb"] == (Decimal("2.99"), "EUR")
+
+
+def test_unknown_currency_name_falls_back_to_catalog_currency_with_a_note(adapter, task, catalog):
+    html = _page(
+        "<table><tr><th>Country (Currency)</th><th>50 GB</th><th>200 GB</th></tr>"
+        "<tr><td>Sweden (Kronor)</td><td>12 kr</td><td>39 kr</td></tr></table>"
+    )
+    result = adapter.parse(task, _resp(html), catalog)
+    assert _prices(result, "SE")["200gb"] == (Decimal("39"), "SEK")
+    assert any("not recognised; assumed SEK" in n for n in result.notes)
+
+
+@pytest.mark.parametrize(
+    ("text", "code"),
+    [
+        ("Euro", "EUR"),
+        ("euros", "EUR"),
+        ("US Dollar", "USD"),
+        ("US dollars", "USD"),
+        ("Swedish Krona", "SEK"),
+        ("Swedish kronor", "SEK"),
+        ("Turkish Lira", "TRY"),
+        ("Pound Sterling", "GBP"),
+        ("Vietnamese Dong", "VND"),
+        ("SEK", "SEK"),
+        ("XYZ", None),  # not an ISO code
+        ("Currency", None),
+        ("see note", None),
+    ],
+)
+def test_currency_code(catalog, text, code):
+    assert currency_code(text, catalog) == code

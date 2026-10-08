@@ -53,6 +53,7 @@ from haggler.sources.base import (
     draft,
     match_iap_plan,
 )
+from haggler.text import text_node_lines
 
 DEFAULT_URL = "https://apps.apple.com/{cc_lower}/app/id{app_id}"
 FLAG_MARKUP = "iap_maybe_marked_up"
@@ -114,12 +115,13 @@ _M_UNIT = (
 _NAME_YEAR = re.compile(
     rf"\b(?:annual\w*|yearly|anual\w*|arlig\w*|ars\w*(?:abonnemang|prenumeration|plan)"
     rf"|jahrlich\w*|jahres\w*|annuel\w*|annuale|yillik|roczn\w*|jaarlijks|aarlig\w*|vuosi\w*"
-    rf"|eves|{_ONE} {_Y_UNIT}|12 {_M_UNIT}|per {_Y_UNIT})\b"
+    rf"|eves|year|jahr|jaar|anno|{_ONE} {_Y_UNIT}|12 {_M_UNIT}|per {_Y_UNIT})\b"
 )
 _NAME_MONTH = re.compile(
     rf"\b(?:monthly|mensual\w*|mensal\w*|manatlig\w*|manads\w*|monatlich\w*|monats\w*"
     rf"|mensuel\w*|mensile|aylik|miesieczn\w*|maandelijks|kuukausi\w*|havi|mesicni|bulanan"
-    rf"|maanedlig\w*|manedlig\w*|{_ONE} {_M_UNIT}|per {_M_UNIT})\b"
+    rf"|maanedlig\w*|manedlig\w*|month|manad|monat|mes|mois|mese|maand|maned|maaned"
+    rf"|{_ONE} {_M_UNIT}|per {_M_UNIT})\b"
 )
 _NAME_QUARTER = re.compile(rf"\b(?:quarter\w*|trimestr\w*|kvartal\w*|vierteljahr\w*|3 {_M_UNIT})\b")
 
@@ -356,8 +358,7 @@ def _expand(obj: Any, depth: int = 0) -> Any:
 def json_blobs(tree: LexborHTMLParser) -> list[Any]:
     """Parsed ld+json / application/json / __NEXT_DATA__ scripts plus fastboot shoebox caches.
 
-    Same selection as haggler.text.json_scripts, which cannot be imported while it still uses
-    selectolax's removed modest backend.
+    haggler.text.json_scripts plus the shoebox script types, on an already parsed tree.
     """
     blobs: list[Any] = []
     for node in tree.css("script"):
@@ -373,15 +374,9 @@ def json_blobs(tree: LexborHTMLParser) -> list[Any]:
 
 
 def text_lines(html: str) -> list[str]:
-    """Visible text, one line per text node (as haggler.text.html_to_lines, lexbor backend)."""
-    tree = LexborHTMLParser(html)
-    for tag in ("script", "style", "noscript", "svg", "template", "iframe", "head"):
-        for node in tree.css(tag):
-            node.decompose()
-    root = tree.body or tree.root
-    if root is None:
-        return []
-    return [line for raw in root.text(separator="\n").splitlines() if (line := _clean(raw))]
+    """Visible text, one line per text node (haggler.text.text_node_lines): every App Store
+    row field is its own text node, so names never pick up a neighbour's text."""
+    return text_node_lines(html)
 
 
 def items_from_json(tree: LexborHTMLParser, expected: list[str]) -> list[IapItem]:

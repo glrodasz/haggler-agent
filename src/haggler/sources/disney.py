@@ -8,6 +8,11 @@ Bundles (Hulu, ESPN+, Max, Combo+, Star+) are ignored, annual prices are skipped
 
 A 404, an "unavailable" path or "not available in your region" text -> not_available; a
 redirect to another locale segment -> wrong_country.
+
+Not used by the catalog since 2026-10: www.disneyplus.com/robots.txt disallows every user agent
+except named search and AI crawlers ("User-agent: *" / "Disallow: /"), and haggler respects
+robots.txt with its own user agent. Disney+ prices come from the App Store listing
+(appstore_iap) instead; this adapter stays, with its tests, for the day the page opens up.
 """
 
 from __future__ import annotations
@@ -31,40 +36,10 @@ from haggler.sources.spotify import (
     json_documents,
     json_plan_hits,
     monthly_price,
-    node_lines,
-    page_lines,
     resolve,
-    with_aliases,
 )
+from haggler.text import html_to_lines, node_lines
 
-# Plan names on Disney+ locale pages that catalog/services.yaml lacks (requested there).
-EXTRA_ALIASES: dict[str, list[str]] = {
-    "standard_with_ads": [
-        "with adverts",
-        "med reklame",
-        "med reklamer",
-        "mainoksilla",
-        "mit werbung",
-        "z reklamami",
-        "s reklamami",
-        "s reklamou",
-        "reklámokkal",
-        "hirdetésekkel",
-        "cu reclame",
-        "met reclame",
-        "met advertenties",
-        "com anúncios",
-        "com anuncios",
-        "con publicidad",
-        "su reklamomis",
-        "ar reklāmām",
-        "reklaamidega",
-        "standart reklamlı",
-        "avec pub",
-        "avec publicités",
-    ],
-    "standard": ["standaard", "standart", "padrão", "estandar"],
-}
 # Bundles and add-ons that reuse plan words ("Disney+, Hulu Bundle Basic", "Combo+ Premium").
 _BUNDLE = re.compile(
     r"(?<!\w)(?:hulu|espn\+?|bundle|combo\+?|star\+|paket|paquete|pacote|trio|duo|max)(?!\w)"
@@ -173,7 +148,7 @@ class DisneyWebAdapter(PerCountryAdapter):
     requires: ClassVar[tuple[str, ...]] = ("disney_locale",)
 
     def parse(self, task: Task, resp: RawResponse, cat: Catalog) -> ParseResult:
-        svc = with_aliases(cat.service(task.service_ids[0]), EXTRA_ALIASES)
+        svc = cat.service(task.service_ids[0])
         country = cat.country(task.countries[0])
         expected = expected_currencies(task, country)
         final = resp.final_url or resp.url
@@ -190,7 +165,7 @@ class DisneyWebAdapter(PerCountryAdapter):
             )
 
         html = resp.text
-        lines = page_lines(html)
+        lines = html_to_lines(html, drop_chrome=True)
         docs = json_documents(html)
 
         def bundle(text: str) -> bool:

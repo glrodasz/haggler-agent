@@ -1,83 +1,128 @@
 <!DOCTYPE html>
+<!--
+  Structure and texts of www.apple.com/se/apple-music/ as rendered by the probe on 2026-10-08
+  (GitHub Actions dump, 130 lines): hero offers without prices, the plan cards "Personligt" /
+  "Familj" / "Student" whose price shares a sentence with the free-month offer ("119 kr/månad,
+  första månaden är gratis ..."), the student card that starts with "Spara stort för bara 69 kr"
+  and the FAQ answer with all three prices. Markup and class names are reconstructed; texts
+  between the dumped lines are shortened.
+-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="sv-SE" lang="sv-SE" dir="ltr" prefix="og: http://ogp.me/ns#" class="no-js">
 <head>
 <meta charset="utf-8" />
 <link rel="canonical" href="https://www.apple.com/se/apple-music/" />
 <link rel="alternate" href="https://www.apple.com/apple-music/" hreflang="en-US" />
 <title>Apple Music – Apple (SE)</title>
-<meta name="description" content="Lyssna på över 100 miljoner låtar utan reklam med Apple Music. Prova gratis i en månad." />
-<meta property="og:locale" content="sv_SE" />
 <meta property="og:url" content="https://www.apple.com/se/apple-music/" />
-<link rel="stylesheet" href="/v/apple-music/ag/built/styles/main.built.css" type="text/css" />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Apple Music","url":"https://www.apple.com/se/apple-music/","publisher":{"@type":"Organization","name":"Apple"}}</script>
 </head>
 <body class="page-apple-music">
 <div id="globalheader">
-  <nav id="globalnav" lang="sv-SE" dir="ltr" aria-label="Globalt">
+  <nav id="globalnav" lang="sv-SE" aria-label="Globalt">
     <ul class="globalnav-list">
-      <li class="globalnav-item globalnav-item-apple"><a href="/se/" class="globalnav-link globalnav-link-apple"><span class="globalnav-link-text">Apple</span></a></li>
-      <li class="globalnav-item globalnav-menu"><a href="/se/store" class="globalnav-link"><span class="globalnav-link-text">Butik</span></a></li>
-      <li class="globalnav-item globalnav-menu"><a href="/se/iphone/" class="globalnav-link"><span class="globalnav-link-text">iPhone</span></a></li>
-      <li class="globalnav-item globalnav-menu"><a href="/se/entertainment/" class="globalnav-link"><span class="globalnav-link-text">Underhållning</span></a></li>
+      <li class="globalnav-item"><a href="/se/" class="globalnav-link"><span class="globalnav-link-text">Apple</span></a></li>
+      <li class="globalnav-item"><a href="/se/store" class="globalnav-link"><span class="globalnav-link-text">Butik</span></a></li>
+      <li class="globalnav-item"><a href="/se/entertainment/" class="globalnav-link"><span class="globalnav-link-text">Underhållning</span></a></li>
     </ul>
   </nav>
 </div>
 <div id="ac-localnav" class="ac-localnav" lang="sv-SE" role="navigation" aria-label="Apple Music">
   <div class="ac-ln-title"><a href="/se/apple-music/">Apple Music</a></div>
-  <div class="ac-ln-actions"><a class="ac-ln-button" href="https://music.apple.com/se/subscribe?itscg=10000&amp;itsct=mus-0">Prova gratis</a></div>
+  <div class="ac-ln-actions"><a class="ac-ln-button" href="https://music.apple.com/se/subscribe">Prova gratis</a></div>
 </div>
 <main id="main" class="main" role="main">
   <section class="section section-hero" data-analytics-section-engagement="name:hero">
     <h1 class="typography-hero-headline"><span class="visuallyhidden">Apple Music</span></h1>
-    <p class="hero-intro typography-hero-intro">En månad gratis för nya prenumeranter.<sup class="footnote footnote-diamond"><a href="#footnote-1" aria-label="Fotnot ◊ symbol">◊</a></sup></p>
-    <a class="button button-elevated" href="https://music.apple.com/se/subscribe">Prova gratis</a>
-    <p class="hero-copy typography-hero-copy">Abonnemanget förnyas automatiskt för 129&nbsp;kr/mån. efter provperioden.</p>
+    <h2 class="hero-headline">Över 100 miljoner låtar.<br />Kom igång direkt<br />och börja lyssna gratis.</h2>
+    <a class="button button-elevated" href="https://music.apple.com/se/subscribe">Prova gratis*</a>
+  </section>
+
+  <section class="section section-offers" data-analytics-section-engagement="name:offers">
+    <div class="offer-tile">
+      <p class="offer-eyebrow">Familjeabonnemang</p>
+      <p class="offer-badge">1 månad gratis</p>
+      <h3 class="offer-headline">Dela Apple Music</h3>
+      <p class="offer-copy">med upp till fem personer med ett familje&shy;abonnemang.</p>
+      <a class="button" href="https://music.apple.com/se/subscribe?plan=family">Prova gratis</a><sup class="footnote"><a href="#footnote-3">3</a></sup>
+    </div>
+    <div class="offer-tile">
+      <p class="offer-eyebrow">Nya enheter</p>
+      <h3 class="offer-headline">Upp till tre månader gratis.</h3>
+      <p class="offer-copy">Kom igång om du har köpt en enhet som ingår i erbjudandet.</p>
+      <a class="button" href="https://music.apple.com/se/subscribe?offer=device">Prova gratis</a><sup class="footnote"><a href="#footnote-4">4</a></sup>
+    </div>
+    <div class="offer-tile">
+      <p class="offer-eyebrow">Studentabonnemang</p>
+      <h3 class="offer-headline">Apple Music<br />och Apple TV</h3>
+      <p class="offer-copy">Studenter får Apple Music gratis i en månad och tillgång till Apple TV.</p>
+      <a class="button" href="https://music.apple.com/se/subscribe?plan=student">Prova gratis</a><sup class="footnote"><a href="#footnote-5">5</a></sup>
+      <p class="offer-badge">1 månad gratis</p>
+    </div>
   </section>
 
   <section class="section section-features" data-analytics-section-engagement="name:features">
-    <h2 class="typography-section-headline">Över 100 miljoner låtar. Spela upp dem i rumsligt ljud.</h2>
-    <p class="typography-section-intro">Lyssna utan reklam, ladda ned och spela upp offline. Med Familjedelning får alla i familjen ett eget bibliotek.</p>
+    <h2 class="typography-section-headline">Lyssna på det du gillar.</h2>
+    <p>Spela upp hela katalogen i rumsligt ljud.</p>
+    <h3>Hitta musik</h3>
+    <p>Där dina nya favoriter hittar dig.</p>
+    <p>Utforska en hel värld av genrer och få personliga förslag på artister och album baserat på din lyssningshistorik. Och aktivera automatiska notiser för att hålla dig uppdaterad om dina favoritartister.</p>
+    <h3>Exklusivt innehåll</h3>
+    <p>Kom närmare</p>
+    <p>dina favoritartister med intervjuer och liveframträdanden.</p>
   </section>
 
   <section class="section section-plans" id="plans" data-analytics-section-engagement="name:plans">
-    <h2 class="typography-section-headline">Välj ett abonnemang.</h2>
-    <ul class="plans-list">
-      <li class="plan-item plan-item-student">
-        <h3 class="typography-plan-name">Student</h3>
-        <p class="typography-plan-price">65&nbsp;kr/mån.</p>
-        <p class="typography-plan-copy">Inkluderar Apple TV utan extra kostnad.<sup class="footnote footnote-number"><a href="#footnote-2" aria-label="Fotnot 2">2</a></sup></p>
-        <a class="button" href="https://music.apple.com/se/subscribe?plan=student">Prova gratis</a>
-      </li>
-      <li class="plan-item plan-item-individual">
-        <h3 class="typography-plan-name">Individuell</h3>
-        <p class="typography-plan-price">129&nbsp;kr/mån.</p>
-        <a class="button" href="https://music.apple.com/se/subscribe?plan=individual">Prova gratis</a>
-      </li>
-      <li class="plan-item plan-item-family">
-        <h3 class="typography-plan-name">Familj</h3>
-        <p class="typography-plan-price">199&nbsp;kr/mån.</p>
-        <p class="typography-plan-copy">Dela med upp till fem personer.</p>
-        <a class="button" href="https://music.apple.com/se/subscribe?plan=family">Prova gratis</a>
-      </li>
-      <li class="plan-item plan-item-apple-one">
-        <h3 class="typography-plan-name">Apple One</h3>
-        <p class="typography-plan-eyebrow">Individuell</p>
-        <p class="typography-plan-price">195&nbsp;kr/mån.</p>
-        <p class="typography-plan-copy">Samla Apple Music och tre andra fantastiska tjänster i ett enda abonnemang.</p>
-        <a class="button" href="/se/apple-one/">Läs mer</a>
-      </li>
-    </ul>
+    <h2 class="typography-section-headline">Välj det abonnemang<br />som passar dig.</h2>
+    <p class="plans-intro">Ingen bindningstid. Avsluta när du vill.</p>
+    <div class="plans-gallery">
+      <div class="plan-tile plan-tile-individual">
+        <h3 class="plan-name">Personligt</h3>
+        <p class="plan-price">119&nbsp;kr/månad, första månaden är gratis när du tecknar ett nytt abonnemang.</p>
+        <ul class="plan-features">
+          <li>Över 100 miljoner låtar som du kan ladda ner och lyssna på offline – helt utan reklam</li>
+          <li>Rumsligt ljud och förlustfritt ljud</li>
+          <li>Låttexter i realtid</li>
+          <li>Funkar med iOS, Android, Windows, Sonos, smarta tv-apparater med flera</li>
+        </ul>
+        <a class="button" href="https://music.apple.com/se/subscribe?plan=individual">Prova gratis*</a>
+      </div>
+      <div class="plan-tile plan-tile-family">
+        <h3 class="plan-name">Familj</h3>
+        <p class="plan-price">209&nbsp;kr/månad, en månad gratis när du tecknar ett nytt abonnemang.</p>
+        <ul class="plan-features">
+          <li>Samma innehåll som med ett personligt abonnemang</li>
+          <li>Dela med upp till fem personer med Familjedelning</li>
+          <li>Var och en får ett eget bibliotek, personliga rekommendationer och egna spellistor</li>
+        </ul>
+        <a class="button" href="https://music.apple.com/se/subscribe?plan=family">Prova gratis</a><sup class="footnote"><a href="#footnote-3">3</a></sup>
+      </div>
+      <div class="plan-tile plan-tile-student">
+        <h3 class="plan-name">Student</h3>
+        <p class="plan-price">Spara stort för bara 69&nbsp;kr/månad, första månaden är gratis när du tecknar ett nytt abonnemang.</p>
+        <ul class="plan-features">
+          <li>Specialpris för studenter</li>
+          <li>Samma innehåll som med ett personligt abonnemang</li>
+          <li>Apple TV ingår utan extra kostnad</li>
+        </ul>
+        <a class="button" href="https://music.apple.com/se/subscribe?plan=student">Prova gratis</a><sup class="footnote"><a href="#footnote-5">5</a></sup>
+      </div>
+    </div>
   </section>
 
-  <section class="section section-footnotes">
-    <ul class="footnotes-list">
-      <li id="footnote-1">◊ Ny prenumerant krävs. 129&nbsp;kr/mån. efter provperioden. Abonnemanget förnyas automatiskt tills det sägs upp.</li>
-      <li id="footnote-2">Erbjudandet för studenter kräver verifiering via UNiDAYS.</li>
+  <section class="section section-faq" id="faq" data-analytics-section-engagement="name:faq">
+    <h2 class="typography-section-headline">Vanliga frågor</h2>
+    <ul class="accordion">
+      <li><h3>Vilka enheter fungerar med Apple Music?</h3><p>Apple Music finns redan på din iPhone, iPad, Apple Watch, Apple TV 4K, Mac och HomePod-högtalare. Du kan också lyssna med CarPlay eller online på music.apple.com. Det går även att använda Apple Music på Windows- och Android-enheter.</p></li>
+      <li><h3>Hur mycket kostar Apple Music?</h3><p>Det beror på vilket erbjudande du väljer. (1) Ett student&shy;abonnemang på Apple Music kostar 69&nbsp;kr per månad. (2) Ett personligt abonnemang kostar bara 119&nbsp;kr per månad efter den kostnadsfria provperioden. (3) Med familje&shy;abonnemanget kan upp till sex personer använda Apple Music för 209&nbsp;kr per månad.</p></li>
+      <li><h3>Finns det något student&shy;abonnemang på Apple Music?</h3><p>Studenter får samma funktioner och förmåner som ingår i det personliga abonnemanget på Apple Music. När du har visat att du är student vid en högskola eller ett universitet får du student&shy;abonnemangspriset i upp till fyra år.</p></li>
+      <li><h3>Funkar Siri med alla abonnemang?</h3><p>Ja. Du kan använda alla Apple Music- och Siri-funktioner om du har en Siri-kompatibel enhet och ett Apple Music-abonnemang. Alla abonnemang har även stöd för Skriv till Siri.</p></li>
+      <li><h3>Kan jag dela det med min familj?</h3><p>Ja. Med ett familje&shy;abonnemang kan upp till sex familje&shy;medlemmar dra nytta av alla funktionerna och hela musik&shy;katalogen i Apple Music. Kom igång genom att ställa in Familjedelning på din iOS- eller iPadOS-enhet.</p></li>
+      <li><h3>Visas det reklam?</h3><p>Apple Music är helt fritt från reklam.</p></li>
     </ul>
   </section>
 </main>
 <footer id="ac-globalfooter" lang="sv-SE" role="contentinfo">
-  <div class="ac-gf-footer-locale"><a class="ac-gf-footer-locale-link" href="/se/choose-country-region/" title="Välj land eller region">Sverige</a></div>
+  <div class="ac-gf-footer-locale"><a href="/se/choose-country-region/">Sverige</a></div>
   <div class="ac-gf-footer-legal-copyright">Copyright © 2026 Apple Inc. Alla rättigheter förbehållna.</div>
 </footer>
 </body>

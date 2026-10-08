@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import ClassVar, Literal, Protocol
+from typing import Any, ClassVar, Literal, Protocol
 from urllib.parse import urlsplit
 
 from haggler.fetch import RawResponse
@@ -83,6 +83,14 @@ def url_vars(country: CountryDef) -> dict[str, str]:
     }
 
 
+def market_segment(params: dict[str, Any], cc: str) -> str:
+    """URL path segment of a country's market: params.path_overrides[cc] or the lower-case code
+    (Spotify's UK market is /uk/, not /gb/)."""
+    overrides = params.get("path_overrides") or {}
+    seg = overrides.get(cc) if isinstance(overrides, dict) else None
+    return str(seg).strip("/").lower() if seg else cc.lower()
+
+
 def render_url(template: str, country: CountryDef | None, **extra: object) -> str:
     values: dict[str, object] = dict(url_vars(country)) if country else {}
     values.update(extra)
@@ -110,7 +118,8 @@ class PerCountryAdapter:
             if not src.applies_to(country.cc):
                 continue
             missing = [f for f in self.requires if getattr(country, f) is None]
-            url = "" if missing else render_url(src.params["url"], country, **self.extra_vars(src))
+            values = {"market": market_segment(src.params, country.cc), **self.extra_vars(src)}
+            url = "" if missing else render_url(src.params["url"], country, **values)
             tasks.append(
                 Task(
                     task_id=make_task_id(self.id, svc.id, country.cc),

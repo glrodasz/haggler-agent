@@ -20,15 +20,9 @@ from haggler.models.catalog import Catalog, ServiceDef
 from haggler.models.run import Task
 from haggler.money import find_prices
 from haggler.sources.base import ParseResult, PerCountryAdapter, match_plan
-from haggler.sources.spotify import (
-    PlanHit,
-    card_hits,
-    expected_currencies,
-    is_intro,
-    page_lines,
-    price_period,
-    resolve,
-)
+from haggler.sources.heuristics import is_intro, price_period
+from haggler.sources.spotify import PlanHit, card_hits, expected_currencies, resolve
+from haggler.text import html_to_lines
 
 _EXTRA = re.compile(
     r"\bextra\b|\badditional\b|\bextra-?medlem|\bmiembro\s+extra|\bmembro\s+extra"
@@ -97,7 +91,7 @@ class NetflixHelpAdapter(PerCountryAdapter):
             return ParseResult(
                 status="wrong_country", notes=[f"final URL is for {url_cc}: {final}"]
             )
-        lines = page_lines(resp.text)
+        lines = html_to_lines(resp.text, drop_chrome=True)
 
         def run(cur: list[str]) -> list[tuple[str, list[PlanHit]]]:
             return [

@@ -1,15 +1,17 @@
-"""Spotify Premium prices from spotify.com/{cc}/premium/.
+"""Spotify Premium prices from spotify.com/{market}/premium/.
 
 The page is server-rendered (Next.js). Plan data is read from embedded JSON when present
 (`__NEXT_DATA__` or other JSON scripts) and otherwise from the visible plan cards ("Premium
 Individual" ... "129 kr/månad"). Intro offers ("0 kr i 1 månad", "€0 for 1 month", "3 meses por
 COP 9.250") are dropped so only the regular monthly price is recorded. Tiers outside the catalog
-(Premium Lite / Standard / Platinum, Basic) are ignored.
+(Premium Lite / Standard / Platinum, Basic) are ignored. The market path segment is the country
+code unless params.path_overrides names another one (the UK market is /uk/, not /gb/).
 
 The second half of this module holds page helpers that are generic across marketing-page
-adapters (disney.py and netflix_help.py import them). They belong in haggler.sources.heuristics
-and live here only because that shared module is owned elsewhere. They use selectolax's lexbor
-backend directly: haggler.text still imports the removed `selectolax.parser` (modest) backend.
+adapters (disney.py and netflix_help.py import them): label/price strategies, embedded JSON and
+the choice between strategies. Line rendering lives in haggler.text and price classification
+(intro offers, billing periods) in haggler.sources.heuristics; `page_lines`, `is_intro` and
+`price_period` are re-exported here for older callers.
 """
 
 from __future__ import annotations
@@ -17,39 +19,31 @@ from __future__ import annotations
 import contextlib
 import json
 import re
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, ClassVar
 from urllib.parse import urlsplit
 
-from selectolax.lexbor import LexborHTMLParser, LexborNode
+from selectolax.lexbor import LexborHTMLParser
 
 from haggler.fetch import RawResponse
 from haggler.models.catalog import Catalog, CountryDef, ServiceDef
 from haggler.models.observations import BillingPeriod
 from haggler.models.run import Task
 from haggler.money import ZERO_DECIMAL, Money, find_prices, parse_bare_amount
-from haggler.sources.base import ParseResult, ParseStatus, PerCountryAdapter, draft, match_plan
-from haggler.sources.heuristics import PlanPrice, detect_period, plan_price_pairs
+from haggler.sources.base import (
+    ParseResult,
+    ParseStatus,
+    PerCountryAdapter,
+    draft,
+    market_segment,
+    match_plan,
+)
+from haggler.sources.heuristics import PlanPrice, is_intro, plan_price_pairs, price_period
+from haggler.text import html_to_lines, page_title
+from haggler.text import node_lines as node_lines  # re-exported for older callers
 
-# Localized plan names seen on Spotify market pages that catalog/services.yaml lacks (requested
-# there; kept here so parsing works meanwhile). "Premium Familiar" (es) must not fall through.
-EXTRA_ALIASES: dict[str, list[str]] = {
-    "individual": ["bireysel", "individu", "indywidualny", "individuell"],
-    "family": ["familiar", "rodzinny", "rodzina", "keluarga", "rodina", "családi", "gia đình"],
-    "student": [
-        "estudiante",
-        "estudantes",
-        "universitário",
-        "universitario",
-        "studencki",
-        "pelajar",
-        "mahasiswa",
-        "sinh viên",
-        "diák",
-    ],
-}
 # Tiers sold in some markets that are not catalog plans ("Premium Lite", "Basic Individual").
 _OTHER_TIER = re.compile(r"\b(lite|platinum|standard|basic|mini)\b", re.IGNORECASE)
 # Internal plan identifiers that may appear in embedded JSON ("premium-family", "duo").
@@ -69,15 +63,19 @@ def _plan_from_id(value: str) -> str | None:
     return m.group(1).lower() if m else None
 
 
-def _market_mismatch(url: str, cc: str) -> str | None:
-    """The market segment of a final URL when it is not the requested one (/us/, /int/...)."""
+def _market_mismatch(url: str, cc: str, market: str | None = None) -> str | None:
+    """The market segment of a final URL when it is not the requested one (/us/, /int/...).
+
+    `market` is the segment the request used when it is not the country code (GB -> "uk").
+    """
     parts = [p for p in urlsplit(url).path.lower().split("/") if p]
     if not parts:
         return None
     seg = parts[0]
     if seg in {"int", "intl"}:
         return seg
-    if re.fullmatch(r"[a-z]{2}(?:-[a-z]{2,4})?", seg) and seg.split("-")[0] != cc.lower():
+    accepted = {cc.lower(), (market or cc).lower()}
+    if re.fullmatch(r"[a-z]{2}(?:-[a-z]{2,4})?", seg) and seg.split("-")[0] not in accepted:
         return seg
     return None
 
@@ -86,15 +84,16 @@ class SpotifyPremiumAdapter(PerCountryAdapter):
     id: ClassVar[str] = "spotify_premium"
 
     def parse(self, task: Task, resp: RawResponse, cat: Catalog) -> ParseResult:
-        svc = with_aliases(cat.service(task.service_ids[0]), EXTRA_ALIASES)
+        svc = cat.service(task.service_ids[0])
         country = cat.country(task.countries[0])
         expected = expected_currencies(task, country)
         final = resp.final_url or resp.url
-        seg = _market_mismatch(final, country.cc)
+        market = market_segment(task.params, country.cc)
+        seg = _market_mismatch(final, country.cc, market)
         if seg:
             return ParseResult(
                 status="wrong_country",
-                notes=[f"final URL is market /{seg}/, not /{country.cc.lower()}/: {final}"],
+                notes=[f"final URL is market /{seg}/, not /{market}/: {final}"],
             )
         if resp.status_code in (404, 410):
             return ParseResult(
@@ -124,23 +123,8 @@ class SpotifyPremiumAdapter(PerCountryAdapter):
 
 
 # =============================================================================================
-# Generic page helpers (shared with disney.py / netflix_help.py; candidates for heuristics.py)
+# Generic page helpers (shared with disney.py / netflix_help.py)
 # =============================================================================================
-
-_SKIP_TAGS = frozenset(
-    {"script", "style", "noscript", "svg", "template", "iframe", "head", "-comment", "title"}
-)
-_CHROME_TAGS = frozenset({"header", "footer", "nav"})
-_BLOCK_TAGS = frozenset(
-    {
-        "address", "article", "aside", "blockquote", "br", "button", "caption", "dd", "details",
-        "dialog", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1",
-        "h2", "h3", "h4", "h5", "h6", "header", "hr", "label", "legend", "li", "main", "nav",
-        "ol", "option", "p", "pre", "section", "summary", "table", "tbody", "td", "tfoot", "th",
-        "thead", "tr", "ul",
-    }
-)  # fmt: skip
-_WS = re.compile(r"\s+")
 
 
 @dataclass
@@ -165,69 +149,12 @@ def expected_currencies(task: Task, country: CountryDef) -> list[str]:
     return country.expected_currencies(task.channel)
 
 
-def with_aliases(svc: ServiceDef, extra: Mapping[str, Sequence[str]]) -> ServiceDef:
-    """Copy of `svc` whose plans also accept adapter-local aliases (lower-case)."""
-    plans = []
-    for p in svc.plans:
-        add = [a for a in extra.get(p.id, ()) if a not in p.aliases]
-        plans.append(p.model_copy(update={"aliases": [*p.aliases, *add]}) if add else p)
-    return svc.model_copy(update={"plans": plans})
-
-
-# ---- HTML -> rendered lines ---------------------------------------------------------------
-
-
-def _render(node: LexborNode, parts: list[str], drop: frozenset[str], depth: int = 0) -> None:
-    if depth > 400:
-        return
-    for child in node.iter(include_text=True):
-        tag = child.tag
-        if tag == "-text":
-            text = _WS.sub(" ", child.text_content or "")
-            if not text.strip():
-                if parts and not parts[-1].endswith((" ", "\n")):
-                    parts.append(" ")
-                continue
-            # Adjacent inline elements ("<span>Premium</span><span>Duo</span>") stay separate
-            # words, while "129 kr" + "/mån" still reads "129 kr/mån".
-            if parts and parts[-1][-1:].isalnum() and text[:1].isalnum():
-                parts.append(" ")
-            parts.append(text)
-        elif tag is None or tag in _SKIP_TAGS or tag in drop:
-            continue
-        elif tag in _BLOCK_TAGS:
-            parts.append("\n")
-            _render(child, parts, drop, depth + 1)
-            parts.append("\n")
-        else:
-            _render(child, parts, drop, depth + 1)
-
-
-def node_lines(node: LexborNode, *, drop: frozenset[str] = frozenset()) -> list[str]:
-    """Text of `node` as a browser lays it out: one line per block, inline text joined.
-
-    haggler.text.html_to_lines splits at every inline tag ("<b>Basic</b>: 129 kr" becomes two
-    lines), which breaks "Label: price" parsing.
-    """
-    parts: list[str] = []
-    _render(node, parts, drop)
-    lines = (_WS.sub(" ", ln).strip() for ln in "".join(parts).split("\n"))
-    return [ln for ln in lines if ln]
+# ---- HTML -> rendered lines (haggler.text) -------------------------------------------------
 
 
 def page_lines(html: str, *, drop_chrome: bool = True) -> list[str]:
     """Rendered lines of the page body, without header/nav/footer (menus list plan names)."""
-    tree = LexborHTMLParser(html)
-    root = tree.body or tree.root
-    if root is None:
-        return []
-    lines = node_lines(root, drop=_CHROME_TAGS if drop_chrome else frozenset())
-    return lines or (node_lines(root) if drop_chrome else lines)
-
-
-def page_title(html: str) -> str:
-    node = LexborHTMLParser(html).css_first("title")
-    return node.text(strip=True) if node else ""
+    return html_to_lines(html, drop_chrome=drop_chrome)
 
 
 # ---- page state ---------------------------------------------------------------------------
@@ -278,55 +205,10 @@ def unavailable_text(lines: list[str]) -> str | None:
 
 # ---- price classification -----------------------------------------------------------------
 
-_N = (
-    r"(?:\d+|one|two|three|six|twelve|en|ett|två|tre|sex|un|uno|una|dos|tres|seis|ein|einen"
-    r"|eine|zwei|drei|een|twee|drie|jeden|dwa|trzy|bir|iki|üç)"
-)
-_UNIT = (
-    r"(?:months?|mo|månad(?:er)?|måneder?|måned|mes(?:es)?|mês|meses|mois|monat(?:e|en)?"
-    r"|maand(?:en)?|kuukau\w*|miesi\w*|měsíc\w*|hónap\w*|lun[aiă]\w*|ay|bulan|tháng"
-    r"|weeks?|veckor|vecka|semanas?|days?|dagar|días?)"
-)
-_LEAD = r"(?:the\s+first\s+|de\s+första\s+|los\s+primeros\s+|las\s+primeras\s+|the\s+next\s+)?"
-_INTRO_AFTER = re.compile(
-    rf"^\s*(?:/\s*[^\s\d/]{{1,8}}\.?\s*)?"
-    rf"(?:for|för|i|in|por|para|durante|pendant|für|voor|per|na|za|po|için|selama|trong|på"
-    rf"|under|x)\s+{_LEAD}{_N}\s+{_UNIT}\b",
-    re.IGNORECASE,
-)
-_INTRO_BEFORE = re.compile(
-    rf"(?:{_N}\s+{_UNIT}|first\s+{_UNIT}|första\s+{_UNIT}|primer\s+mes)"
-    rf"(?:\s+(?:of|av|de|von|med)\s+[\w+ ]{{1,25}}?)?"
-    r"\s+(?:for|för|por|à|pour|für|voor|za|na|på|med|at)\s*[:\-–]?\s*$",
-    re.IGNORECASE,
-)
-_MONTH_EXTRA = re.compile(
-    r"/\s*(?:kk|kuukausi|mėn\.?|mēn\.?|kuu|mo\.)(?![^\W\d_])|\bkuukaudessa\b", re.IGNORECASE
-)
-_YEAR_EXTRA = re.compile(
-    r"/\s*(?:v|vuosi|metus|metai|gadā|gads|aasta)(?![^\W\d_])|\bvuodessa\b|\bper\s+år\b"
-    r"|\bper\s+annum\b|\bi\s+året\b|\bom\s+året\b",
-    re.IGNORECASE,
-)
 # A period marker right after a price ("/år", " per year") cut together with a yearly price.
 _PERIOD_TOKEN = re.compile(
     r"^\s*(?:/\s*[^\s\d/]+\.?|(?:per|a|om|al|por|pro|par|i|na|w)\s+[^\s\d]+)", re.IGNORECASE
 )
-
-
-def is_intro(before: str, after: str) -> bool:
-    """True for introductory prices: "0 kr i 1 månad", "3 months for €0", "€5 for 3 months"."""
-    return bool(_INTRO_AFTER.match(after) or _INTRO_BEFORE.search(before[-80:]))
-
-
-def price_period(tail: str) -> BillingPeriod | None:
-    """Billing period stated right after a price (pass only the text up to the next price)."""
-    if _YEAR_EXTRA.search(tail):
-        return "year"
-    period = detect_period(tail)
-    if period:
-        return period
-    return "month" if _MONTH_EXTRA.search(tail) else None
 
 
 def currency_ok(amount: Decimal, currency: str | None, expected: list[str]) -> bool:
@@ -473,7 +355,9 @@ def card_hits(
     hits: list[PlanHit] = []
     for idxs in segments:
         seg = [cleaned[k] for k in idxs]
-        for pp in plan_price_pairs(seg, svc, expected, window=window):
+        # clean_price_lines already removed intro prices with the number-based rule; the
+        # offer-word rule is tuned on Apple pages, so it stays off for these cards.
+        for pp in plan_price_pairs(seg, svc, expected, window=window, intro_words=False):
             hits.append(
                 PlanHit(
                     plan_id=pp.plan_id,

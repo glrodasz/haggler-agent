@@ -1,40 +1,237 @@
-"""Shared text heuristics for marketing/help pages: pair plan labels with nearby prices."""
+"""Shared text heuristics for marketing/help pages: what a price in a line *is*, and plan labels
+paired with nearby prices.
+
+Every price found in a line gets a role and a billing period:
+  * period: the first explicit marker between the price and the next price ("109 kr/mån eller
+    1 090 kr/år" -> 109 month, 1090 year); a lone price may also take one stated before it
+    ("Monthly: 129 kr"); None when nothing is stated.
+  * role:
+      - "savings": the amount saved, not a price ("Spara 124 kr/mån", "Save over $8/mo.");
+      - "compare": a struck-through or comparison price ("Inte 339 kr/mån", "Not $29.95",
+        "statt 9,99 €", "au lieu de", "en lugar de", "antes", "regular price", "$27.95
+        separately");
+      - "intro": an introductory offer on either side of the price ("3 months for $2.99",
+        "$2.99/mo. for 3 months", "0 kr i 1 månad"); "then/därefter/luego $X" marks the
+        regular price that follows an offer;
+      - "regular": anything else.
+"""
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 from haggler.models.catalog import ServiceDef
 from haggler.models.observations import BillingPeriod
 from haggler.money import Money, find_prices
 from haggler.sources.base import match_plan
 
+PriceRole = Literal["regular", "intro", "compare", "savings"]
+
+# ---- billing period markers ----------------------------------------------------------------
+
+_MONTH_WORD = (
+    r"(?:month|måna?d(?:en)?|måned(?:en)?|maand|mes|monat|mois|mese|miesiąc|měsíc|hónap|ay"
+    r"|bulan|tháng|mnd)"
+)
+_YEAR_WORD = r"(?:year|år(?:et)?|jahr|an|año|ano|anno|jaar|rok|yıl|év)"
+_PER = r"(?:per|pr\.?|a|al|por|par|pro|i|om|w|na|za|each)"
 _MONTH = re.compile(
-    r"(/\s*(mo|mth|month|mes|mån|månad|md|mnd|mois|monat|mese|ay|mies|měs|hó|lună|mês|maand)\b"
-    r"|per\s+month|a\s+month|al\s+mes|por\s+mes|i\s+månaden|pr\.?\s*md|par\s+mois|pro\s+monat"
-    r"|monthly|mensual|mensal|månadsvis|aylık|miesięcznie|/m\b)",
+    rf"(/\s*(mo|mth|month|mes|mån|månad|md|mnd|mois|monat|mese|ay|mies|měs|hó|lună|mês|maand"
+    rf"|kk|kuukausi|mėn|mēn|kuu)(?![^\W\d_])"
+    rf"|\b{_PER}\s+{_MONTH_WORD}\b|al\s+mes|i\s+månaden|pr\.?\s*md|par\s+mois"
+    rf"|monthly|mensual|mensal|månadsvis|aylık|miesięcznie|kuukaudessa|/m\b)",
     re.IGNORECASE,
 )
 _YEAR = re.compile(
-    r"(/\s*(yr|year|año|ano|år|an|jahr|anno|yıl|rok|év|jaar)\b|per\s+year|a\s+year|al\s+año"
-    r"|por\s+año|om\s+året|par\s+an|pro\s+jahr|annual|yearly|anual|årlig|yıllık|rocznie)",
+    rf"(/\s*(yr|year|año|ano|år|an|jahr|anno|yıl|rok|év|jaar|v|vuosi|metus|metai|gadā|gads"
+    rf"|aasta)(?![^\W\d_])"
+    rf"|\b{_PER}\s+{_YEAR_WORD}\b|al\s+año|om\s+året|i\s+året|par\s+an|per\s+annum"
+    rf"|annual|yearly|anual|årlig|yıllık|rocznie|vuodessa)",
     re.IGNORECASE,
 )
-# Text that marks an introductory / trial price we must not record as the regular price.
-_INTRO = re.compile(
-    r"(free\s+for|gratis|0\s*kr\s+i|for\s+\d+\s+months?|first\s+\d+\s+months?|primer(o|os)\s+\d+"
-    r"|trial|prueba|provperiod|then|after|därefter|luego|después|danach|ensuite)",
+_QUARTER = re.compile(
+    r"(/\s*(quarter|qtr|kvartal|trimestre)(?![^\W\d_])|\bquarterly\b|\btrimestral\w*"
+    r"|\bkvartals\w*|\bper\s+quarter\b|\bvierteljährlich\b)",
     re.IGNORECASE,
 )
+
+
+_PERIOD_MARKERS: tuple[tuple[BillingPeriod, re.Pattern[str]], ...] = (
+    ("month", _MONTH),
+    ("year", _YEAR),
+    ("quarter", _QUARTER),
+)
+
+
+def period_marker(text: str) -> BillingPeriod | None:
+    """The billing period whose marker appears first in `text` (None when there is none).
+
+    Earliest wins: "/mo. or $109/yr." is monthly for the price it follows.
+    """
+    best: tuple[int, BillingPeriod] | None = None
+    for period, rx in _PERIOD_MARKERS:
+        m = rx.search(text)
+        if m and (best is None or m.start() < best[0]):
+            best = (m.start(), period)
+    return best[1] if best else None
 
 
 def detect_period(text: str) -> BillingPeriod | None:
-    if _YEAR.search(text):
-        return "year"
-    if _MONTH.search(text):
-        return "month"
-    return None
+    """Billing period stated in `text` (the first marker wins)."""
+    return period_marker(text)
+
+
+def price_period(tail: str) -> BillingPeriod | None:
+    """Billing period stated right after a price (pass only the text up to the next price)."""
+    return period_marker(tail)
+
+
+# ---- introductory offers -------------------------------------------------------------------
+
+_N = (
+    r"(?:\d+|one|two|three|six|twelve|en|ett|två|tre|sex|un|uno|una|dos|tres|seis|ein|einen"
+    r"|eine|zwei|drei|een|twee|drie|jeden|dwa|trzy|bir|iki|üç)"
+)
+_UNIT = (
+    r"(?:months?|mo|månad(?:er)?|måneder?|måned|mes(?:es)?|mês|meses|mois|monat(?:e|en)?"
+    r"|maand(?:en)?|kuukau\w*|miesi\w*|měsíc\w*|hónap\w*|lun[aiă]\w*|ay|bulan|tháng"
+    r"|weeks?|veckor|vecka|semanas?|days?|dagar|días?|dias)"
+)
+_LEAD = r"(?:the\s+first\s+|de\s+första\s+|los\s+primeros\s+|las\s+primeras\s+|the\s+next\s+)?"
+# "$2.99/mo. for 3 months", " i 1 månad", "/mes durante 3 meses" right after the price.
+_INTRO_AFTER = re.compile(
+    rf"^\s*(?:/\s*[^\s\d/]{{1,8}}\.?)?[\s,]*(?:[^\W\d_]+[^\w/]+){{0,2}}?"
+    rf"(?:for|för|i|in|por|para|durante|pendant|für|voor|per|na|za|po|için|selama|trong|på"
+    rf"|under|x)\s+{_LEAD}{_N}\s+{_UNIT}\b",
+    re.IGNORECASE,
+)
+# "3 months for ", "Try 1 month of Premium for ", "första månaden för " right before the price.
+_INTRO_BEFORE = re.compile(
+    rf"(?:{_N}\s+{_UNIT}|first\s+{_UNIT}|första\s+{_UNIT}|primer\s+mes)"
+    rf"(?:\s+(?:of|av|de|von|med)\s+[\w+ ]{{1,25}}?)?"
+    r"\s+(?:for|för|por|à|pour|für|voor|za|na|på|med|at)\s*[:\-–]?\s*$",
+    re.IGNORECASE,
+)
+# A price right after these words is the regular one ("Free for 1 month, then $10.99/mo.").
+_THEN = re.compile(
+    r"(?<!\w)(then|after(wards)?|thereafter|därefter|sedan|luego|despu[ée]s|danach|anschließend"
+    r"|ensuite|puis|derefter|deretter|sonra|potem|depois|daarna|poi|jälkeen|potom|apoi)"
+    r"\W*(\w+\W+){0,2}$",
+    re.IGNORECASE,
+)
+# Offer words in the clause before a price ("Free trial, then...": the clause is cut at ". ").
+_INTRO_WORDS = re.compile(
+    r"free|gratis|gratuit|kostenlos|ücretsiz|trial|prueba|provperiod|prøve|essai|first|primer"
+    r"|första|intro|special|oferta|erbjudande|offer|angebot|promo",
+    re.IGNORECASE,
+)
+_CLAUSE = re.compile(r"[.!?;•|]\s")
+
+
+def is_intro(before: str, after: str, *, words: bool = False) -> bool:
+    """True for introductory prices: "0 kr i 1 månad", "3 months for €0", "€5 for 3 months".
+
+    `before`/`after` are the text around the price. "then/därefter/luego ..." right before a
+    price marks it as the regular price. With words=True an offer word ("free", "trial",
+    "erbjudande") earlier in the same clause also counts.
+    """
+    prefix = before[-80:]
+    if _THEN.search(prefix):
+        return False
+    if _INTRO_AFTER.match(after) or _INTRO_BEFORE.search(prefix):
+        return True
+    return words and bool(_INTRO_WORDS.search(_CLAUSE.split(prefix)[-1]))
+
+
+# ---- comparison and savings ----------------------------------------------------------------
+
+# Marker immediately before a struck-through / comparison price ("Inte 339 kr", "Not $29.95").
+_COMPARE_BEFORE = re.compile(
+    r"(?<!\w)(?:not|inte|ikke|ej|ei|nicht|nie|non|não|niet|no|statt|anstatt|instead\s+of"
+    r"|i\s+st[äa]llet\s+för|ist[äa]llet\s+för|i\s+stedet\s+for|au\s+lieu\s+de|en\s+lugar\s+de"
+    r"|en\s+vez\s+de|em\s+vez\s+de|ao\s+inv[ée]s\s+de|invece\s+di|zamiast|antes|was|previously"
+    r"|originally|regular(?:ly)?\s+pric(?:e|ed)(?:\s+(?:of|at))?|precio\s+regular(?:\s+de)?"
+    r"|tidigare|vorher|ehemals|value\s+of|valor\s+de|valued\s+at|worth|total\s+value(?:\s+of)?)"
+    r"\s*[:\-–]?\s*$",
+    re.IGNORECASE,
+)
+# Marker right after a comparison price ("$27.95/mo. separately", "79,99 TL yerine").
+_COMPARE_AFTER = re.compile(
+    r"^\s*(?:/\s*[^\s\d/]{1,8}\.?\s*)?(?:\(?\s*)?(?:when\s+(?:bought|purchased)\s+)?"
+    r"(?:separately|por\s+separado|separat\w*|einzeln|individually|yerine|in\s+total\s+value)\b",
+    re.IGNORECASE,
+)
+_SAVE_FILLER = (
+    r"(?:over|up\s+to|upp\s+till|upp\s+mot|över|mer\s+än|more\s+than|nearly|almost|about"
+    r"|around|hasta|más\s+de|bis\s+zu|über|plus\s+de|jusqu.à|até|oltre|op\s+til|opp\s+til|yli"
+    r"|sie|du|ca\.?|cirka|ungefär|of|de)"
+)
+# The amount saved ("Spara 124 kr/mån", "Save over $8/mo.", "Ahorra hasta $ 10.000").
+_SAVINGS_BEFORE = re.compile(
+    rf"(?<!\w)(?:save|saves|saving|savings|you\s+save|spara|sparar|spar|ahorra\w*|ahórra\w*"
+    rf"|economiz\w*|économis\w*|sparen|sparst|risparmi\w*|oszczędź\w*|ušetř\w*"
+    rf"|tasarruf\s+edin|säästä\w*)\s+(?:{_SAVE_FILLER}\s+){{0,2}}$",
+    re.IGNORECASE,
+)
+_SAVINGS_AFTER = re.compile(
+    r"^\s*(?:/\s*[^\s\d/]{1,8}\.?\s*)?(?:i\s+|in\s+|en\s+|of\s+)?"
+    r"(?:savings?|besparing\w*|ahorro|d.économies?|ersparnis|risparmio|sparen)\b",
+    re.IGNORECASE,
+)
+
+
+def is_comparison(before: str, after: str) -> bool:
+    return bool(_COMPARE_BEFORE.search(before[-60:]) or _COMPARE_AFTER.match(after))
+
+
+def is_savings(before: str, after: str) -> bool:
+    return bool(_SAVINGS_BEFORE.search(before[-60:]) or _SAVINGS_AFTER.match(after))
+
+
+@dataclass(frozen=True)
+class PriceInfo:
+    money: Money
+    period: BillingPeriod | None  # explicit marker (None = not stated)
+    role: PriceRole
+
+
+def classify_prices(
+    text: str, expected: list[str], *, next_text: str = "", intro_words: bool = False
+) -> list[PriceInfo]:
+    """Every price in `text` with its stated period and role (see the module docstring).
+
+    `next_text` is the following line: a short one holds a period split off by markup
+    ("<span>1 090 kr</span><div>/år</div>").
+    """
+    found = find_prices(text, expected)
+    out: list[PriceInfo] = []
+    prev_end = 0
+    for k, m in enumerate(found):
+        nxt = found[k + 1].start if k + 1 < len(found) else len(text)
+        tail = text[m.end : min(nxt, m.end + 40)]
+        if not tail.strip() and k + 1 == len(found) and next_text and len(next_text) <= 20:
+            tail = next_text
+        period = period_marker(tail)
+        if period is None and len(found) == 1:
+            period = period_marker(text[: m.start])  # "Monthly: 129 kr", "Årsvis: 1 290 kr"
+        before, after = text[prev_end : m.start], text[m.end : nxt]
+        role: PriceRole
+        if is_savings(before, after):
+            role = "savings"
+        elif is_comparison(before, after):
+            role = "compare"
+        elif is_intro(before, after, words=intro_words):
+            role = "intro"
+        else:
+            role = "regular"
+        out.append(PriceInfo(m, period, role))
+        prev_end = m.end
+    return out
+
+
+# ---- plan label / price pairing ------------------------------------------------------------
 
 
 @dataclass
@@ -54,12 +251,14 @@ def plan_price_pairs(
     *,
     window: int = 6,
     default_period: BillingPeriod = "month",
+    intro_words: bool = True,
 ) -> list[PlanPrice]:
     """For each plan label found in `lines`, the first regular price within `window` lines.
 
-    A price is skipped when it is zero, in an unexpected currency, or appears in a line that reads
-    like an introductory offer AND a later price exists in the same window (e.g. "0 kr for 1 month,
-    then 129 kr/month" keeps 129).
+    The window ends at the next plan's label. Zero prices, prices in an unexpected currency,
+    savings amounts, comparison prices and intro offers are never taken; a monthly price wins
+    over other periods ("109 kr/mån eller 1 090 kr/år" -> 109). A plan whose window holds only
+    intro offers gets no price at all (the pipeline's LLM fallback sees the page instead).
     """
     found: dict[str, PlanPrice] = {}
     for i, line in enumerate(lines):
@@ -70,24 +269,26 @@ def plan_price_pairs(
         for j in range(i, min(len(lines), i + window)):
             if j > i and match_plan(svc, lines[j]) not in (None, plan_id):
                 break  # reached the next plan's card
-            for money in find_prices(lines[j], expected):
+            nxt = lines[j + 1] if j + 1 < len(lines) else ""
+            for info in classify_prices(lines[j], expected, next_text=nxt, intro_words=intro_words):
+                money = info.money
                 if money.amount <= 0 or (expected and money.currency not in expected):
                     continue
-                tail = lines[j][money.end : money.end + 40]
-                period = detect_period(tail) or detect_period(lines[j]) or default_period
+                if info.role in ("savings", "compare"):
+                    continue
                 candidates.append(
                     PlanPrice(
                         plan_id=plan_id,
                         label=line,
                         money=money,
-                        period=period,
+                        period=info.period or default_period,
                         evidence=" ".join(lines[i : j + 1])[-240:],
-                        intro_context=bool(_INTRO.search(lines[j][: money.start])),
+                        intro_context=info.role == "intro",
                     )
                 )
-        if not candidates:
+        regular = [c for c in candidates if not c.intro_context]
+        if not regular:
             continue
-        regular = [c for c in candidates if not c.intro_context] or candidates
         monthly = [c for c in regular if c.period == "month"]
         found[plan_id] = (monthly or regular)[0]
     return list(found.values())

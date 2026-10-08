@@ -5,16 +5,28 @@ from pathlib import Path
 import pytest
 
 from haggler.fetch import RawResponse
+from haggler.models.catalog import SourceDef
 from haggler.sources.disney import DisneyWebAdapter
 
 FIX = Path(__file__).parent / "fixtures" / "disney_web"
 ADAPTER = DisneyWebAdapter()
+# Not in the catalog any more (disneyplus.com/robots.txt disallows us); kept for the day it opens.
+SOURCE = SourceDef(
+    adapter="disney_web",
+    params={"url": "https://www.disneyplus.com/{disney_locale}"},
+    exclude=["IN", "ID", "PK", "NG", "VN"],
+)
 
 
 def _tasks(catalog):
     svc = catalog.service("disney_plus")
-    src = next(s for s in svc.sources if s.adapter == ADAPTER.id)
-    return {t.countries[0]: t for t in ADAPTER.plan(svc, src, catalog)}
+    return {t.countries[0]: t for t in ADAPTER.plan(svc, SOURCE, catalog)}
+
+
+def test_catalog_uses_the_app_store_not_the_robots_disallowed_web_page(catalog):
+    svc = catalog.service("disney_plus")
+    assert [s.adapter for s in svc.sources] == ["appstore_iap"]
+    assert "robots.txt" in svc.notes_es
 
 
 def _parse(catalog, cc, html, *, final_url=None, status=200):

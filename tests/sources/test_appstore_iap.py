@@ -398,6 +398,19 @@ def test_not_iap_headings(text):
         ("Premium (3 months)", "quarter"),
         ("Annual plan billed monthly", None),
         ("100 GB", None),
+        # Disney+ names seen by the probe (2026-10-08) and their siblings in other storefronts.
+        ("Disney+ Premium mensual", "month"),
+        ("Disney+ Premium anual", "year"),
+        ("Disney+ Estándar mensual", "month"),
+        ("Disney+ Premium (månad)", "month"),
+        ("Disney+ Premium 1 år", "year"),
+        ("Disney+ Premium jährlich", "year"),
+        ("Disney+ Premium mensile", "month"),
+        ("Disney+ Premium annuale", "year"),
+        ("Disney+ Premium Monat", "month"),
+        ("Disney+ Standard ar reklāmām", None),  # Latvian "with ads", not "år"
+        ("Disney+ Premium 3 meses", "quarter"),
+        ("HBO Max Estándar trimestral", "quarter"),
     ],
 )
 def test_name_period(name, period):
@@ -414,3 +427,52 @@ def test_infer_periods_pairs_and_duplicates():
     assert infer_periods([d("42900")], [(d("429900"), "year")])[0][0] == "month"
     assert infer_periods([d("1290")], [(d("129"), "month")])[0][0] == "year"
     assert infer_periods([d("5")], default="year") == [("year", "default")]
+
+
+# ---------------------------------------------------------------- Disney+ (probe 2026-10-08)
+
+
+def test_disney_plus_sweden_from_the_app_store(catalog):
+    # Names carry no period; 1 590,00 kr is 10x 159,00 kr, so it is the annual Premium price.
+    result = _parse(catalog, "disney_plus", "SE", _html("se_disney_plus.html"))
+    assert result.status == "ok"
+    assert _prices(result) == {
+        ("standard_with_ads", "month"): (Decimal("69.00"), "SEK"),
+        ("standard", "month"): (Decimal("109.00"), "SEK"),
+        ("premium", "month"): (Decimal("159.00"), "SEK"),
+        ("premium", "year"): (Decimal("1590.00"), "SEK"),
+    }
+    assert result.missing_plans == []
+    for o in result.observations:
+        assert o.flags == [FLAG_MARKUP]  # repeated rows are the same item, not duplicates
+    labels = {o.plan_id: o.plan_label_raw for o in result.observations}
+    assert labels["standard_with_ads"] == "Disney+ Standard med reklam"
+    assert any("1 590,00 kr read as year" in n for n in result.notes)
+
+
+def test_disney_plus_colombia_from_the_app_store(catalog):
+    result = _parse(catalog, "disney_plus", "CO", _html("co_disney_plus.html"))
+    assert result.status == "ok"
+    assert _prices(result) == {
+        ("standard", "month"): (Decimal("36900.00"), "COP"),
+        ("premium", "month"): (Decimal("54900.00"), "COP"),
+        ("premium", "year"): (Decimal("459900.00"), "COP"),  # "anual" in the name
+    }
+    assert result.missing_plans == ["standard_with_ads"]
+
+
+def test_disney_plus_plan_and_bundle_exclusions(catalog):
+    svc = catalog.service("disney_plus")
+    [src] = svc.sources
+    assert src.adapter == "appstore_iap" and src.channel == "ios_iap"
+    tasks = {t.countries[0]: t for t in ADAPTER.plan(svc, src, catalog)}
+    assert tasks["SE"].url == "https://apps.apple.com/se/app/id1446075923"
+    assert not {"IN", "ID", "PK", "NG", "VN"} & set(tasks)
+    html = _html("se_disney_plus.html").replace(
+        "<span>Disney+ Standard</span> <span>109,00&nbsp;kr</span>",
+        "<span>Disney+, Hulu, Max Bundle Standard</span> <span>209,00&nbsp;kr</span>",
+        1,
+    )
+    result = _parse(catalog, "disney_plus", "SE", html)
+    assert _prices(result)[("standard", "month")] == (Decimal("109.00"), "SEK")
+    assert any("exclude_patterns" in n for n in result.notes)

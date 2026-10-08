@@ -1,18 +1,31 @@
 """Microsoft 365 prices from the Microsoft Store catalog API (DisplayCatalog v7).
 
 displaycatalog.mp.microsoft.com/v7.0/products?bigIds=...&market={cc}&languages=en-US returns the
-market's catalog entries as JSON. Each product's DisplaySkuAvailabilities pair a SKU (titles like
-"Microsoft 365 Family - 12-month subscription") with availabilities that carry
-OrderManagementData.Price {CurrencyCode, ListPrice, MSRP} and the Actions allowed on them.
+market's catalog entries as JSON. Each product's DisplaySkuAvailabilities pair a SKU with
+availabilities that carry OrderManagementData.Price {CurrencyCode, ListPrice, MSRP,
+RecurrencePrice, TaxType, DiscountDuration} and the Actions allowed on them.
 
-We keep availabilities whose Actions include "Purchase" with ListPrice > 0 (inside their
-Conditions date window when the fetch time is known), map ProductId -> plan through
-params.big_ids, and skip trial / "Classic" SKUs (Classic plans are only offered to existing
-subscribers). The billing period comes from the SKU title, then period-like SKU properties, then
-the SKU description; failing that, the 8-12.5x price ratio between SKUs of the same plan, and
-finally params.default_period ("year": the Store sells Microsoft 365 mainly as annual
-subscriptions). The lowest price per (plan, period) wins. A market where the products are not
-sold answers "Products": [] -> not_available.
+What the live API serves (probe of 2026-10-08, SE and US):
+  * every SKU titles itself just "Microsoft 365 Personal": no period in titles or properties;
+  * the purchasable subscription SKUs (007N, 007P, 007Q, 007R) have one "Purchase"
+    availability with ListPrice 0.0 (a free first month, DiscountDuration {Month, 1}, or no
+    charge at checkout) and the real price in RecurrencePrice: SE Personal 119.99 / 1199.99,
+    Family 155.99 / 1559.0 SEK; US Personal 9.99 / 99.99 USD;
+  * availabilities with RecurrencePrice 0 are one-off or multi-year purchases (US SKU 00HZ:
+    ListPrice 190 / 165.76 / 209.99) or free placeholders (00HQ), not subscriptions;
+  * "Renew", "Redeem" and "Tokenize" availabilities are for existing subscribers or keys.
+
+So we keep availabilities whose Actions include "Purchase" and take RecurrencePrice when it is
+present and > 0 (ListPrice is only the first-period charge), skip those whose RecurrencePrice is
+0, and fall back to ListPrice > 0 for payloads without a RecurrencePrice. Prices are grouped per
+SKU. A SKU's period comes from its title or period-like properties when stated, else from the
+8-12.5x ratio between the plan's SKUs (1199.99 is ~10x 119.99 -> annual), else from the SKU
+id (007N month, 007R year: the only ids whose period was the same for Personal and Family,
+007P/007Q swap between products; params.sku_period_hints adds or overrides ids), else from a
+SKU at the same price whose period is known, else params.default_period ("year"). One price
+per (plan, period) is kept (the lowest, noting any other). TaxType
+"TaxesNotIncluded" adds the flag taxes_not_included. A market where the products are not sold
+answers "Products": [] -> not_available.
 """
 
 from __future__ import annotations
@@ -39,6 +52,9 @@ DEFAULT_URL = (
 _SKIP_SKU = re.compile(r"\b(trial|classic|prueba|test)\b", re.IGNORECASE)
 _PERIOD_KEY = re.compile(r"duration|period|recurr|billing|renew|interval|frequen", re.I)
 _ISO_DURATION = re.compile(r"P(\d+)([DWMY])", re.IGNORECASE)
+# SKU ids whose period was identical for Personal and Family in every probed market.
+DEFAULT_SKU_PERIOD_HINTS: dict[str, BillingPeriod] = {"007N": "month", "007R": "year"}
+FLAG_TAXES_NOT_INCLUDED = "taxes_not_included"
 _UNIT_MONTHS = {
     "day": Decimal(1) / 30,
     "week": Decimal(7) / 30,
@@ -186,6 +202,19 @@ class _Offer:
     how: str
     msrp: Decimal | None
     tax_type: str
+    price_field: str  # "RecurrencePrice" or "ListPrice"
+    first_period: str = ""  # "first 1 month free", "first period 49.99" ...
+
+
+def _first_period(price: Any, list_price: Decimal | None, amount: Decimal) -> str:
+    """What the first period costs when it differs from the recurring price."""
+    if list_price is None or list_price == amount:
+        return ""
+    dd = _get(price, "DiscountDuration")
+    units, unit = _get(dd, "Units"), str(_get(dd, "UnitType") or "").casefold()
+    if not (units and unit):
+        return f"ListPrice {list_price}"
+    return f"first {units} {unit} {'free' if list_price == 0 else f'at {list_price}'}"
 
 
 class MsDisplayCatalogAdapter(PerCountryAdapter):
@@ -335,9 +364,20 @@ class MsDisplayCatalogAdapter(PerCountryAdapter):
         if "purchase" not in actions:
             return None
         price = _get(_get(av, "OrderManagementData"), "Price") or {}
-        amount = _decimal(_get(price, "ListPrice"))
         currency = str(_get(price, "CurrencyCode") or "").upper()
-        if amount is None or amount <= 0 or not re.fullmatch(r"[A-Z]{3}", currency):
+        list_price = _decimal(_get(price, "ListPrice"))
+        recurrence = _decimal(_get(price, "RecurrencePrice"))
+        if recurrence is not None:
+            # A subscription renews at RecurrencePrice; 0 means a one-off or multi-year
+            # purchase (US 00HZ: ListPrice 190) or a free placeholder, not a subscription.
+            if recurrence <= 0:
+                return None
+            amount, field = recurrence, "RecurrencePrice"
+        elif list_price is not None and list_price > 0:
+            amount, field = list_price, "ListPrice"
+        else:
+            return None
+        if not re.fullmatch(r"[A-Z]{3}", currency):
             return None
         conditions = _get(av, "Conditions") or {}
         start, end = _when(_get(conditions, "StartDate")), _when(_get(conditions, "EndDate"))
@@ -356,7 +396,19 @@ class MsDisplayCatalogAdapter(PerCountryAdapter):
             how=how,
             msrp=_decimal(_get(price, "MSRP")),
             tax_type=str(_get(price, "TaxType") or ""),
+            price_field=field,
+            first_period=_first_period(price, list_price, amount) if field != "ListPrice" else "",
         )
+
+    @staticmethod
+    def _hints(task: Task, notes: list[str]) -> dict[str, BillingPeriod]:
+        hints: dict[str, BillingPeriod] = dict(DEFAULT_SKU_PERIOD_HINTS)
+        for sku, period in (task.params.get("sku_period_hints") or {}).items():
+            if period in ("month", "quarter", "year"):
+                hints[str(sku).upper()] = period
+            else:
+                notes.append(f"ignored sku_period_hints[{sku}]={period!r}")
+        return hints
 
     def _drafts(
         self, task: Task, svc: ServiceDef, offers: list[_Offer], notes: list[str]
@@ -365,21 +417,39 @@ class MsDisplayCatalogAdapter(PerCountryAdapter):
         if default_period not in ("month", "quarter", "year"):
             notes.append(f"invalid params.default_period {default_period!r}; using year")
             default_period = "year"
+        hints = self._hints(task, notes)
         best: dict[tuple[str, BillingPeriod], _Offer] = {}
         seen: dict[tuple[str, BillingPeriod], set[Decimal]] = {}
         for plan in svc.plans:
-            mine = [o for o in offers if o.plan_id == plan.id]
-            known = [(o.amount, o.period) for o in mine if o.period]
-            unknown = [o for o in mine if o.period is None]
-            amounts = [o.amount for o in unknown]
-            for o, (period, reason) in zip(
-                unknown, infer_periods(amounts, known, default=default_period), strict=True
-            ):
-                o.period = period
-                o.how = "params.default_period" if reason == "default" else f"ratio: {reason}"
-                if reason == "default":
-                    notes.append(f"{plan.id}: SKU {o.sku_id} period assumed {period}")
-            for o in mine:
+            # One price per SKU: the lowest of its purchasable availabilities.
+            per_sku: dict[str, _Offer] = {}
+            for o in (o for o in offers if o.plan_id == plan.id):
+                prev = per_sku.get(o.sku_id)
+                if prev is not None and prev.amount != o.amount:
+                    notes.append(f"{plan.id}: SKU {o.sku_id} at {prev.amount} and {o.amount}")
+                if prev is None or o.amount < prev.amount:
+                    per_sku[o.sku_id] = o
+            skus = list(per_sku.values())
+            known = [(o.amount, o.period) for o in skus if o.period]
+            unknown = [o for o in skus if o.period is None]
+            inferred = infer_periods([o.amount for o in unknown], known, default=default_period)
+            undecided: list[_Offer] = []
+            for o, (period, reason) in zip(unknown, inferred, strict=True):
+                if reason != "default":
+                    o.period, o.how = period, f"ratio: {reason}"
+                elif (hint := hints.get(o.sku_id.upper())) is not None:
+                    o.period, o.how = hint, f"SKU id {o.sku_id}"
+                else:
+                    undecided.append(o)
+            for o in undecided:
+                # Same price as a SKU whose period is known (007N and 007Q both 119.99).
+                twin = next((t for t in skus if t.period and t.amount == o.amount), None)
+                if twin is not None:
+                    o.period, o.how = twin.period, f"same price as SKU {twin.sku_id}"
+                else:
+                    o.period, o.how = default_period, "params.default_period"
+                    notes.append(f"{plan.id}: SKU {o.sku_id} period assumed {default_period}")
+            for o in skus:
                 assert o.period is not None
                 key = (plan.id, o.period)
                 seen.setdefault(key, set()).add(o.amount)
@@ -395,8 +465,10 @@ class MsDisplayCatalogAdapter(PerCountryAdapter):
             if len(seen[(plan_id, period)]) > 1:
                 amounts = ", ".join(str(a) for a in sorted(seen[(plan_id, period)]))
                 notes.append(f"{plan_id}/{period}: prices {amounts}; kept the lowest")
-            if o.msrp is not None and o.msrp > o.amount:
+            if o.price_field == "ListPrice" and o.msrp is not None and o.msrp > o.amount:
                 notes.append(f"{plan_id}/{period}: ListPrice {o.amount} below MSRP {o.msrp}")
+            extra = f"; {o.first_period}" if o.first_period else ""
+            tax = f"; {o.tax_type}" if o.tax_type else ""
             out.append(
                 draft(
                     task,
@@ -406,9 +478,12 @@ class MsDisplayCatalogAdapter(PerCountryAdapter):
                     currency=o.currency,
                     period=period,
                     evidence=(
-                        f"{o.title}: ListPrice {o.amount} {o.currency} "
-                        f"(SKU {o.sku_id}; period from {o.how or 'n/a'})"
+                        f"{o.title}: {o.price_field} {o.amount} {o.currency} "
+                        f"(SKU {o.sku_id}; period from {o.how or 'n/a'}{extra}{tax})"
                     ),
+                    flags=[FLAG_TAXES_NOT_INCLUDED]
+                    if o.tax_type.casefold() == "taxesnotincluded"
+                    else [],
                 )
             )
         return out

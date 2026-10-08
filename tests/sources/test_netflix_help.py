@@ -154,10 +154,16 @@ def test_currency_override_from_source_params(catalog):
         "<b>Premium</b>: €13.99 / month",
     )
     # Netflix bills Romania in EUR; without a pin the page looks like another country's.
-    assert _parse(catalog, "RO", html).status == "wrong_country"
+    assert _parse(catalog, "RO", html, currency_overrides={}).status == "wrong_country"
     pinned = _parse(catalog, "RO", html, currency_overrides={"RO": "EUR"})
     assert pinned.status == "ok"
     assert _prices(pinned)["standard"] == (Decimal("10.99"), "EUR")
+
+
+def test_catalog_pins_romania_to_eur(catalog):
+    html = _article("<b>Standard</b>: €10.99 / month")
+    assert _task(catalog, "RO").params["currency_overrides"] == {"RO": "EUR"}
+    assert _prices(_parse(catalog, "RO", html)) == {"standard": (Decimal("10.99"), "EUR")}
 
 
 @pytest.mark.parametrize(

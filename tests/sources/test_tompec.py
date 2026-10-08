@@ -79,15 +79,15 @@ def test_parse_dataset(catalog):
 
 
 def test_currency_that_differs_from_catalog_is_noted(catalog):
-    result = _parse(catalog, _fixture_text())
+    unpinned = _task(catalog)
+    unpinned = unpinned.model_copy(update={"params": {**unpinned.params, "currency_overrides": {}}})
+    result = _parse(catalog, _fixture_text(), unpinned)
     # Netflix bills Romania in EUR; the validator decides, the adapter reports what it saw.
     assert _by_key(result)[("RO", "standard")].currency == "EUR"
     assert any(n.startswith("RO: dataset currency EUR") for n in result.notes)
-    pinned = _task(catalog)
-    pinned = pinned.model_copy(
-        update={"params": {**pinned.params, "currency_overrides": {"RO": "EUR"}}}
-    )
-    assert not any(n.startswith("RO:") for n in _parse(catalog, _fixture_text(), pinned).notes)
+    # The catalog pins RO to EUR, so the default task has nothing to report.
+    assert _task(catalog).params["currency_overrides"] == {"RO": "EUR"}
+    assert not any(n.startswith("RO:") for n in _parse(catalog, _fixture_text()).notes)
 
 
 def test_missing_country_unknown_plan_and_wrapper(catalog):

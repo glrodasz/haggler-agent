@@ -77,27 +77,76 @@ def test_plan_marks_countries_without_apple_path(adapter, catalog, cc):
 
 
 def test_se_apple_one(run):
+    # Real page structure (probe 2026-10-08): "Personligt" / "Familj" cards, each also listed
+    # with component prices, a struck total ("Inte 339 kr/mån") and the saving ("Spara 124").
     result = run("apple_one", "SE", _html("se_apple_one.html"))
     assert result.status == "ok"
     assert _prices(result) == {
-        "individual": (Decimal("195"), "SEK"),
-        "family": (Decimal("255"), "SEK"),
+        "individual": (Decimal("215"), "SEK"),
+        "family": (Decimal("295"), "SEK"),
     }
     # Premier is not sold in Sweden: reported, but not a problem.
     assert result.missing_plans == ["premier"]
     labels = {o.plan_id: o.plan_label_raw for o in result.observations}
-    assert labels == {"individual": "Individuell", "family": "Familj"}
+    assert labels == {"individual": "Personligt", "family": "Familj"}
+    assert {o.billing_period for o in result.observations} == {"month"}
+    assert result.observations[0].evidence_snippet == "Personligt 215 kr/mån per månad"
 
 
-def test_se_apple_music_ignores_apple_one_card(run):
+@pytest.mark.parametrize(
+    ("drop", "expected"),
+    [
+        # Only the detailed cards: the plan price comes after the label, before the parts.
+        (
+            re.compile(r'<div class="plan-tile plan-tile-(?:individual|family)">.*?</div>', re.S),
+            {"individual": (Decimal("215"), "SEK"), "family": (Decimal("295"), "SEK")},
+        ),
+        # No cards at all: the FAQ sentence ("Det personliga abonnemanget kostar 215 kr ...")
+        # names no plan label we map, so nothing is guessed (the LLM fallback gets the page).
+        (re.compile(r'<section class="section section-plans".*?</section>', re.S), {}),
+    ],
+)
+def test_se_apple_one_never_takes_component_compare_or_savings_prices(run, drop, expected):
+    result = run("apple_one", "SE", drop.sub("", _html("se_apple_one.html")))
+    assert _prices(result) == expected
+
+
+def test_se_apple_one_card_with_components_before_the_price(run):
+    # A card that lists its parts first: "iCloud+ 50 GB 12 kr/mån" must not be the plan price.
+    body = (
+        "<div><h3>Personligt</h3><p>iCloud+ 50 GB 12 kr/mån</p><p>Apple TV</p>"
+        "<p>119 kr/mån</p><p><s>Inte 339 kr/mån</s></p><p>215 kr/mån</p></div>"
+    )
+    result = run("apple_one", "SE", _page(body, lang="sv-SE"))
+    assert _prices(result) == {"individual": (Decimal("215"), "SEK")}
+
+
+def test_se_apple_music(run):
+    # "Personligt" / "Familj" / "Student" cards whose price shares a sentence with the
+    # free-month offer, and a student card that starts with "Spara stort för bara 69 kr".
     result = run("apple_music", "SE", _html("se_apple_music.html"))
     assert result.status == "ok"
     assert _prices(result) == {
-        "student": (Decimal("65"), "SEK"),
-        "individual": (Decimal("129"), "SEK"),
-        "family": (Decimal("199"), "SEK"),
+        "student": (Decimal("69"), "SEK"),
+        "individual": (Decimal("119"), "SEK"),
+        "family": (Decimal("209"), "SEK"),
     }
     assert result.missing_plans == []
+    labels = {o.plan_id: o.plan_label_raw for o in result.observations}
+    assert labels == {"student": "Student", "individual": "Personligt", "family": "Familj"}
+
+
+def test_apple_music_ignores_apple_one_upsell_card(run):
+    body = (
+        '<ul class="plans-list"><li><h3>Personligt</h3><p>119 kr/mån</p></li>'
+        '<li class="plan-item plan-item-apple-one"><h3>Apple One</h3><p>Personligt</p>'
+        "<p>215 kr/mån</p></li><li><h3>Familj</h3><p>209 kr/mån</p></li></ul>"
+    )
+    result = run("apple_music", "SE", _page(body, lang="sv-SE"))
+    assert _prices(result) == {
+        "individual": (Decimal("119"), "SEK"),
+        "family": (Decimal("209"), "SEK"),
+    }
 
 
 def test_se_apple_tv_skips_intro_offer(run):
@@ -266,7 +315,7 @@ def test_blocked(run):
 
 
 def test_lang_mismatch_is_noted(run):
-    html = _page("<h3>Individuell</h3><p>195 kr/mån.</p>", lang="nb-NO")
+    html = _page("<h3>Personligt</h3><p>215 kr/mån</p>", lang="nb-NO")
     result = run("apple_one", "SE", html)
     assert result.status == "ok"
     assert any("nb-NO" in n for n in result.notes)
@@ -290,7 +339,7 @@ def test_no_prices_when_labels_have_no_price(run):
 
 def test_unparsed_local_prices_are_no_prices_not_wrong_country(run):
     # Plan names in a language the catalog has no aliases for: prices exist, in SEK.
-    result = run("apple_music", "SE", _page("<h3>Indywidualny</h3><p>129 kr/mån.</p>"))
+    result = run("apple_music", "SE", _page("<h3>Ατομικό</h3><p>129 kr/mån.</p>"))
     assert result.status == "no_prices"
 
 
@@ -374,3 +423,31 @@ def test_footnote_sup_inside_price_and_label(run):
         "individual": (Decimal("10.99"), "USD"),
     }
     assert result.observations[0].plan_label_raw == "Student"
+
+
+def test_monthly_or_yearly_and_intro_then_regular(run):
+    # python_correctness/F1: "$10.99/mo. or $109/yr." is monthly 10.99, and in "Get 3 months
+    # for $2.99/mo., then $16.99/mo." the regular price is the one after "then".
+    html = _page(
+        "<h3>Student</h3><p>$5.99/mo.</p>"
+        "<h3>Individual</h3><p>$10.99/mo. or $109/yr.</p>"
+        "<h3>Family</h3><p>Get 3 months for $2.99/mo., then $16.99/mo.</p>"
+    )
+    result = run("apple_music", "US", html)
+    got = {o.plan_id: (o.amount, o.billing_period) for o in result.observations}
+    assert got == {
+        "student": (Decimal("5.99"), "month"),
+        "individual": (Decimal("10.99"), "month"),
+        "family": (Decimal("16.99"), "month"),
+    }
+
+
+def test_apple_tv_skips_savings_and_comparison_prices(run):
+    html = _page(
+        "<h1>Apple TV</h1><p>Spara 30 kr/mån med ett årsabonnemang.</p>"
+        "<p>Spara 30 kr/mån med ett årsabonnemang.</p><p><s>Inte 129 kr/mån</s></p>"
+        "<p><s>Inte 129 kr/mån</s></p><p>99 kr/mån</p>",
+        lang="sv-SE",
+    )
+    result = run("apple_tv", "SE", html)
+    assert _prices(result) == {"standard": (Decimal("99"), "SEK")}

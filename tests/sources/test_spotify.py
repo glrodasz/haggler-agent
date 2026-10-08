@@ -62,6 +62,41 @@ def test_plan_urls(catalog):
     assert task.url == "https://www.spotify.com/se/premium/"
     assert task.host == "www.spotify.com"
     assert _task(catalog, "CO").url == "https://www.spotify.com/co/premium/"
+    # Spotify's UK market is /uk/ (params.path_overrides {GB: uk}).
+    assert _task(catalog, "GB").url == "https://www.spotify.com/uk/premium/"
+
+
+@pytest.mark.parametrize(
+    ("final_url", "status"),
+    [
+        ("https://www.spotify.com/uk/premium/", "ok"),
+        ("https://www.spotify.com/uk-en/premium/", "ok"),
+        ("https://www.spotify.com/gb/premium/", "ok"),
+        ("https://www.spotify.com/us/premium/", "wrong_country"),
+    ],
+)
+def test_uk_market_segment_is_not_wrong_country(catalog, final_url, status):
+    html = _cards(("Individual", ["£11.99/month"]))
+    result = _parse(catalog, "GB", html, final_url=final_url)
+    assert result.status == status
+    if status == "ok":
+        assert _prices(result) == {"individual": (Decimal("11.99"), "GBP")}
+    else:
+        assert "/uk/" in result.notes[0]
+
+
+def test_localized_plan_names_come_from_the_catalog(catalog):
+    # Formerly adapter-local EXTRA_ALIASES; now catalog aliases (Spanish, Polish, Turkish...).
+    svc = catalog.service("spotify")
+    aliases = {p.id: set(p.aliases) for p in svc.plans}
+    assert {"familiar", "rodzinny", "keluarga"} <= aliases["family"]
+    assert {"estudiante", "studencki", "mahasiswa"} <= aliases["student"]
+    assert {"bireysel", "individuell"} <= aliases["individual"]
+    html = _cards(("Premium Rodzinny", ["37,99 zł/mies."]), ("Premium Indywidualny", ["23,99 zł"]))
+    assert _prices(_parse(catalog, "PL", html)) == {
+        "family": (Decimal("37.99"), "PLN"),
+        "individual": (Decimal("23.99"), "PLN"),
+    }
 
 
 def test_sweden_from_embedded_json(catalog):

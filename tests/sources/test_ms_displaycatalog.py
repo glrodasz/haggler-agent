@@ -38,6 +38,20 @@ def _parse(catalog, cc, text, *, status=200, fetched_at=FETCHED):
     return ADAPTER.parse(task, resp, catalog)
 
 
+def _parse_with(catalog, cc, text, **params):
+    task = _task(catalog, cc)
+    task = task.model_copy(update={"params": {**task.params, **params}})
+    resp = RawResponse(
+        url=task.url,
+        final_url=task.url,
+        status_code=200,
+        text=text,
+        content_type="application/json",
+        fetched_at=FETCHED,
+    )
+    return ADAPTER.parse(task, resp, catalog)
+
+
 def _prices(result):
     return {(o.plan_id, o.billing_period): (o.amount, o.currency) for o in result.observations}
 
@@ -71,8 +85,107 @@ def test_plan_without_big_ids_is_not_configured(catalog):
     assert all(t.params["not_configured"] == ["big_ids"] and t.url == "" for t in tasks)
 
 
-def test_sweden(catalog):
+# ---------------------------------------------------------------- real payloads (probe 2026-10-08)
+
+
+def test_sweden_real_payload(catalog):
+    # Purchase availabilities carry ListPrice 0.0 (first month free) and the price in
+    # RecurrencePrice; SKU titles say nothing about the period, the 10x ratio does.
     result = _parse(catalog, "SE", _json("se.json"))
+    assert result.status == "ok"
+    assert _prices(result) == {
+        ("personal", "month"): (Decimal("119.99"), "SEK"),
+        ("personal", "year"): (Decimal("1199.99"), "SEK"),
+        ("family", "month"): (Decimal("155.99"), "SEK"),
+        ("family", "year"): (Decimal("1559"), "SEK"),
+    }
+    assert result.missing_plans == []
+    year = next(
+        o for o in result.observations if o.plan_id == "family" and o.billing_period == "year"
+    )
+    assert year.evidence_snippet.startswith("Microsoft 365 Family: RecurrencePrice 1559 SEK")
+    assert "SKU 007R" in year.evidence_snippet and "first 1 month free" in year.evidence_snippet
+    assert "VATIncluded" in year.evidence_snippet
+    assert all(o.flags == [] for o in result.observations)  # VAT included: nothing to flag
+    assert "TaxType=VATIncluded" in result.notes
+
+
+def test_us_real_payload_ignores_one_off_and_multi_year_purchases(catalog):
+    # SKU 00HZ sells with ListPrice 190 / 165.76 / 209.99 and RecurrencePrice 0: not a
+    # subscription. The dump was cut before the Family product, hence partial.
+    result = _parse(catalog, "US", _json("us.json"))
+    assert result.status == "partial"
+    assert result.missing_plans == ["family"]
+    assert _prices(result) == {
+        ("personal", "month"): (Decimal("9.99"), "USD"),
+        ("personal", "year"): (Decimal("99.99"), "USD"),
+    }
+    for o in result.observations:
+        assert o.flags == ["taxes_not_included"]
+        assert "TaxesNotIncluded" in o.evidence_snippet
+    assert not any(o.amount in (Decimal("190"), Decimal("165.76")) for o in result.observations)
+
+
+def test_real_payload_without_the_ratio_uses_sku_id_hints(catalog):
+    # Only the annual SKUs left: no sibling to compare with, so 007R's hint decides.
+    data = json.loads(_json("se.json"))
+    for product in data["Products"]:
+        product["DisplaySkuAvailabilities"] = [
+            d for d in product["DisplaySkuAvailabilities"] if d["Sku"]["SkuId"] in ("007R",)
+        ]
+    result = _parse(catalog, "SE", json.dumps(data))
+    assert _prices(result) == {
+        ("personal", "year"): (Decimal("1199.99"), "SEK"),
+        ("family", "year"): (Decimal("1559"), "SEK"),
+    }
+    assert all("SKU id 007R" in o.evidence_snippet for o in result.observations)
+
+
+def test_real_payload_monthly_hint_and_custom_hints(catalog):
+    data = json.loads(_json("se.json"))
+    for product in data["Products"]:
+        product["DisplaySkuAvailabilities"] = [
+            d for d in product["DisplaySkuAvailabilities"] if d["Sku"]["SkuId"] in ("007N", "007P")
+        ]
+    # Personal: 007N 119.99 + 007P 1199.99 (ratio). Family: 007N and 007P are both 155.99
+    # (007P is monthly for Family but annual for Personal): 007N's hint decides and 007P,
+    # at the same price, follows it instead of defaulting to "year".
+    result = _parse(catalog, "SE", json.dumps(data))
+    assert _prices(result) == {
+        ("personal", "month"): (Decimal("119.99"), "SEK"),
+        ("personal", "year"): (Decimal("1199.99"), "SEK"),
+        ("family", "month"): (Decimal("155.99"), "SEK"),
+    }
+    assert not any("assumed" in n for n in result.notes)
+    # params.sku_period_hints extends the defaults.
+    only_p = json.loads(json.dumps(data))
+    for product in only_p["Products"]:
+        product["DisplaySkuAvailabilities"] = [
+            d for d in product["DisplaySkuAvailabilities"] if d["Sku"]["SkuId"] == "007P"
+        ]
+    assert _prices(_parse(catalog, "SE", json.dumps(only_p)))[("family", "year")][0] == Decimal(
+        "155.99"
+    )  # no hint: params.default_period ("year") — the probe notes "period assumed year"
+    custom = _parse_with(catalog, "SE", json.dumps(only_p), sku_period_hints={"007P": "month"})
+    assert _prices(custom)[("family", "month")] == (Decimal("155.99"), "SEK")
+
+
+def test_recurrence_price_zero_is_not_a_subscription(catalog):
+    data = json.loads(_json("us.json"))
+    product = data["Products"][0]
+    product["DisplaySkuAvailabilities"] = [
+        d for d in product["DisplaySkuAvailabilities"] if d["Sku"]["SkuId"] in ("00HZ", "00HQ")
+    ]
+    result = _parse(catalog, "US", json.dumps(data))
+    assert result.status == "not_available"
+    assert result.observations == []
+
+
+# ---------------------------------------------------------------- synthetic payloads
+
+
+def test_sweden(catalog):
+    result = _parse(catalog, "SE", _json("synthetic_se.json"))
     assert result.status == "ok"
     assert _prices(result) == {
         # Period from SKU properties (RecurrencePolicy.BillingPeriod = P1M) ...
@@ -99,12 +212,12 @@ def test_sweden(catalog):
 def test_expired_availability_is_ignored_without_fetch_time(catalog):
     # Replays may lack fetched_at: the payload's LastModifiedDate still dates the 699 kr promo
     # (ended 2024-01-31) as expired.
-    result = _parse(catalog, "SE", _json("se.json"), fetched_at=None)
+    result = _parse(catalog, "SE", _json("synthetic_se.json"), fetched_at=None)
     assert _prices(result)[("personal", "year")] == (Decimal("1049"), "SEK")
 
 
 def test_colombia_periods_from_price_ratio(catalog):
-    result = _parse(catalog, "CO", _json("co.json"))
+    result = _parse(catalog, "CO", _json("synthetic_co.json"))
     assert result.status == "ok"
     assert _prices(result) == {
         # Two Family SKUs with identical titles: 449 900 is ~10x 44 900.
@@ -126,14 +239,14 @@ def test_market_without_products(catalog):
 
 
 def test_currency_of_another_market(catalog):
-    data = _json("co.json").replace('"CurrencyCode":"COP"', '"CurrencyCode":"USD"')
+    data = _json("synthetic_co.json").replace('"CurrencyCode":"COP"', '"CurrencyCode":"USD"')
     result = _parse(catalog, "CO", data)
     assert result.status == "wrong_country"
     assert any("expected COP" in n for n in result.notes)
 
 
 def test_only_one_plan_is_partial(catalog):
-    data = json.loads(_json("se.json"))
+    data = json.loads(_json("synthetic_se.json"))
     data["Products"] = [p for p in data["Products"] if p["ProductId"] == "CFQ7TTC0K5BF"]
     result = _parse(catalog, "SE", json.dumps(data))
     assert result.status == "partial"
@@ -141,14 +254,14 @@ def test_only_one_plan_is_partial(catalog):
 
 
 def test_nothing_purchasable(catalog):
-    data = _json("co.json").replace('"Purchase",', "")
+    data = _json("synthetic_co.json").replace('"Purchase",', "")
     result = _parse(catalog, "CO", data)
     assert result.status == "not_available"
     assert not result.observations
 
 
 def test_single_product_response(catalog):
-    data = json.loads(_json("se.json"))
+    data = json.loads(_json("synthetic_se.json"))
     family = next(p for p in data["Products"] if p["ProductId"] == "CFQ7TTC0K5DM")
     result = _parse(catalog, "SE", json.dumps({"Product": family}))
     assert result.status == "ok"

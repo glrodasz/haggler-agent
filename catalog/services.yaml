@@ -1,6 +1,8 @@
 # Service catalog. Each source names an adapter in haggler.sources.registry.
 # URL templates accept: {cc} (SE), {cc_lower} (se), {apple_prefix} ("se/" or "" for US),
-# {disney_locale}, {app_id}.
+# {disney_locale}, {app_id}, {market} (params.path_overrides[cc] or cc_lower: GB -> uk).
+# params.currency_overrides {CC: CUR} pins the currency a source bills a country in when it is
+# not the country's own (Netflix bills Romania in EUR).
 # plausible_monthly_eur bounds are deliberately wide; they only catch parse errors.
 # iap_patterns are case-insensitive regexes over App Store in-app purchase names; exactly one
 # plan must match, otherwise the item goes to the LLM for mapping.
@@ -27,11 +29,14 @@ services:
          aliases: [premium]}
     sources:
       - adapter: netflix_help
-        params: {url: "https://help.netflix.com/en/node/24926/{cc_lower}"}
+        params:
+          url: "https://help.netflix.com/en/node/24926/{cc_lower}"
+          currency_overrides: {RO: EUR}
       - adapter: tompec_netflix
         kind: secondary
         params:
           url: https://raw.githubusercontent.com/tompec/netflix-prices/main/data/latest.json
+          currency_overrides: {RO: EUR}
           license: CC BY 4.0
           attribution: Netflix prices dataset by Thomas Pecserke (thomas.io), github.com/tompec/netflix-prices
 
@@ -46,13 +51,13 @@ services:
       in-app del App Store, que suele ser más caro que la web.
     plans:
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.8, 30],
-         iap_patterns: ['^(?!.*(famil|student|estudiant|[ée]tudiant|öğrenci|studer|\blite\b|\bduo\b|music)).*premium']}
+         iap_patterns: ['^(?!.*(famil|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe|student|studenc|estudiant|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên|\blite\b|\bduo\b|music)).*premium']}
       - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [1, 35],
          iap_patterns: ['\bduo\b']}
       - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1.2, 45],
-         iap_patterns: ['famil']}
+         iap_patterns: ['famil|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe']}
       - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.4, 20],
-         iap_patterns: ['student|estudiant|[ée]tudiant|öğrenci|studer']}
+         iap_patterns: ['student|studenc|estudiant|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên']}
       - {id: lite, label_es: Lite, label_en: Lite, rank: 0, plausible_monthly_eur: [0.4, 15],
          iap_patterns: ['\blite\b']}
     sources:
@@ -66,16 +71,33 @@ services:
     eu_geo_class: audiovisual_excluded
     homepage: https://www.disneyplus.com
     default_plan: standard
+    notes_es: >-
+      Los precios salen del listado de compras in-app del App Store (app 1446075923), no de la
+      web: www.disneyplus.com/robots.txt prohíbe el acceso a todos los agentes salvo buscadores
+      y bots de IA con nombre propio ("User-agent: *" / "Disallow: /"). Respetamos robots.txt y
+      nunca falsificamos el user agent, así que la fuente web (adapter disney_web) queda fuera
+      del catálogo; su código y sus tests se conservan por si Disney cambia su robots.txt.
     plans:
       - {id: standard_with_ads, label_es: Estándar con anuncios, label_en: Standard with ads, rank: 1, ads: true,
-         plausible_monthly_eur: [0.8, 20], aliases: [standard with ads, basic, med reklam, con anuncios]}
+         plausible_monthly_eur: [0.8, 20],
+         aliases: [standard with ads, basic, med reklam, con anuncios, with adverts, med reklame, med reklamer,
+                   mainoksilla, mit werbung, z reklamami, s reklamami, s reklamou, reklámokkal, hirdetésekkel,
+                   cu reclame, met reclame, met advertenties, com anúncios, com anuncios, con publicidad,
+                   su reklamomis, ar reklāmām, reklaamidega, standart reklamlı, avec pub, avec publicités],
+         iap_patterns: ['with ads|with adverts|\bads\b|reklam|rekl[aá]m|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|advertenties|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic']}
       - {id: standard, label_es: Estándar, label_en: Standard, rank: 2, plausible_monthly_eur: [1.2, 25],
-         aliases: [standard, estándar]}
+         aliases: [standard, estándar, standaard, standart, padrão, estandar],
+         iap_patterns: ['^(?!.*(\bads\b|advert|reklam|rekl[aá]m|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic)).*(standard|est[aá]ndar|padr[aã]o|standaard|standart)']}
       - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
-         aliases: [premium]}
+         aliases: [premium], iap_patterns: ['premium']}
     sources:
-      - adapter: disney_web
-        params: {url: "https://www.disneyplus.com/{disney_locale}"}
+      - adapter: appstore_iap
+        channel: ios_iap
+        params:
+          app_id: 1446075923
+          # Bundles and add-ons sold in the same app (Disney+, Hulu, ESPN+, Max, Star+ ...).
+          exclude_patterns: ['hulu', 'espn', 'bundle', 'combo', '\bduo\b', '\btrio\b', 'star\+', '\bmax\b', 'paquete', 'pacote', 'paket']
+        # Disney+ is not sold there (other apps such as JioHotstar).
         exclude: [IN, ID, PK, NG, VN]
 
   - id: hbo_max
@@ -106,15 +128,18 @@ services:
     default_plan: individual
     plans:
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20],
-         aliases: [individual, personal]}
+         aliases: [individual, personal, bireysel, individu, indywidualny, individuell]}
       - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [0.8, 25], aliases: [duo]}
       - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1, 35],
-         aliases: [family, familia, familj, famille, familie, família, aile]}
+         aliases: [family, familia, familj, famille, familie, família, aile, familiar, rodzinny, rodzina,
+                   keluarga, rodina, családi, gia đình]}
       - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
-         aliases: [student, estudiantes, estudante, studenter, öğrenci]}
+         aliases: [student, estudiantes, estudante, studenter, öğrenci, estudiante, estudantes, universitário,
+                   universitario, studencki, pelajar, mahasiswa, sinh viên, diák]}
     sources:
       - adapter: spotify_premium
-        params: {url: "https://www.spotify.com/{cc_lower}/premium/"}
+        # Spotify's UK market lives under /uk/, not /gb/.
+        params: {url: "https://www.spotify.com/{market}/premium/", path_overrides: {GB: uk}}
 
   - id: icloud_plus
     name: iCloud+
@@ -150,7 +175,7 @@ services:
       - {id: ai_plus, label_es: Google AI Plus, label_en: Google AI Plus, rank: 2, plausible_monthly_eur: [1, 20],
          iap_patterns: ['\bai\s*plus\b']}
       - {id: ai_pro, label_es: Google AI Pro, label_en: Google AI Pro, rank: 3, plausible_monthly_eur: [3, 45],
-         iap_patterns: ['\bai\s*pro\b|gemini\s*advanced']}
+         iap_patterns: ['\bai\s*pro\b|\bai\s*premium\b|gemini\s*advanced']}
     sources:
       - adapter: appstore_iap
         channel: ios_iap
@@ -163,10 +188,13 @@ services:
     homepage: https://www.apple.com/apple-one/
     default_plan: individual
     plans:
+      # Swedish apple.com calls the individual plan "Personligt".
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [2, 40],
-         aliases: [individual, individuell, individuel, einzelperson]}
+         aliases: [individual, individuell, individuel, einzelperson, personligt, personlig, individueel,
+                   individuale, yksilö, jednotlivec, egyéni, bireysel, individu, cá nhân, indywidualny]}
       - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [3, 50],
-         aliases: [family, familj, familiar, familia, famille, familie, família]}
+         aliases: [family, familj, familiar, familia, famille, familie, família, famiglia, gezin, perhe,
+                   rodina, családi, aile, keluarga, gia đình, rodzinny]}
       - {id: premier, label_es: Premier, label_en: Premier, rank: 3, plausible_monthly_eur: [5, 70],
          aliases: [premier]}
     sources:
@@ -181,11 +209,15 @@ services:
     default_plan: individual
     plans:
       - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
-         aliases: [student, estudiantes, studenter, étudiants, studierende, öğrenci]}
+         aliases: [student, estudiantes, studenter, étudiants, studierende, öğrenci, studerende, opiskelija,
+                   estudante, universitário, diák, pelajar, sinh viên, studencki, studenti]}
+      # Swedish apple.com calls the individual plan "Personligt".
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20],
-         aliases: [individual, individuell, individuel, einzelperson]}
+         aliases: [individual, individuell, individuel, einzelperson, personligt, personlig, individueel,
+                   individuale, yksilö, jednotlivec, egyéni, bireysel, individu, cá nhân, indywidualny]}
       - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [0.8, 30],
-         aliases: [family, familj, familiar, familia, famille, familie, família]}
+         aliases: [family, familj, familiar, familia, famille, familie, família, famiglia, gezin, perhe,
+                   rodina, családi, aile, keluarga, gia đình, rodzinny]}
     sources:
       - adapter: apple_marketing
         params: {page: apple-music, url: "https://www.apple.com/{apple_prefix}apple-music/"}
@@ -215,7 +247,7 @@ services:
     sources:
       - adapter: ms_displaycatalog
         params:
-          # Microsoft Store product ids (bigIds); confirm with the probe workflow.
+          # Microsoft Store product ids (bigIds), served by the API in SE and US (probe 2026-10-08).
           big_ids: {personal: CFQ7TTC0K5BF, family: CFQ7TTC0K5DM}
           url: "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={big_ids}&market={cc}&languages=en-US"
 

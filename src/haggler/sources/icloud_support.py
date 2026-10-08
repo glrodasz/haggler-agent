@@ -1,20 +1,28 @@
 """iCloud+ prices for every country from Apple's support article (one static page).
 
-support.apple.com/en-us/108047 ("iCloud+ plans and pricing", formerly HT201238) lists each
-country or region as a header such as "Sweden (SEK)" or "Bahamas²³ (USD)" (several countries may
-share one header), followed by one line per storage tier ("50GB: $0.99", "2 TB: 129 kr"). One
-fetch covers all countries, so this adapter plans a single task and fans the page out into
-per-country drafts. A table layout (countries as rows, tiers as columns) is parsed too, in case
-Apple reformats the article.
+support.apple.com/en-us/108047 ("iCloud+ plans and pricing", formerly HT201238) is one fetch for
+all countries, so this adapter plans a single task and fans the page out into per-country
+drafts. Two layouts are read:
+  * tables (the 2026 article): one table per region, header row "Country (Currency) | 50 GB |
+    200 GB | 2 TB | 6 TB | 12 TB", rows such as "Croatia³ (Euro) | 0.99 € | 2.99 € | ...";
+  * lists (the older article): headers such as "Sweden (SEK)" or "Bahamas²³ (USD)" (several
+    countries may share one header) followed by one line per tier ("50GB: $0.99").
+The currency in parentheses is an ISO code or an English currency name ("Euro", "US Dollar",
+babel's names in singular and plural). A row named after a currency instead of a country
+("Euro³ (Euro)") covers every catalog country billed in that currency that has no row of its own
+(the article lists Croatia separately and the other euro countries under "Euro").
 """
 
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from decimal import Decimal
+from functools import cache
 from urllib.parse import urlsplit
 
+from babel.numbers import get_currency_name, list_currencies
 from selectolax.lexbor import LexborHTMLParser, LexborNode
 
 from haggler.fetch import RawResponse
@@ -23,6 +31,7 @@ from haggler.models.observations import ObservationDraft
 from haggler.models.run import Task
 from haggler.money import find_prices, parse_bare_amount
 from haggler.sources.base import ParseResult, draft, host_of, make_task_id
+from haggler.text import node_lines
 
 FLAGS = ["apple_billing"]
 # Share of the task's countries that must be on the page for status "ok".
@@ -32,78 +41,74 @@ OK_RATIO = 0.8
 _TIER = re.compile(r"(?<![\w.,])(\d{1,3})\s?(GB|TB)\b", re.IGNORECASE)
 _FOOTNOTE_MARKS = "¹²³⁴⁵⁶⁷⁸⁹⁰*†‡§"
 _FOOTNOTE = re.compile(rf"[\d{_FOOTNOTE_MARKS}]+")
-# "Sweden (SEK)", "Bahamas 2 3 (USD)", "Estonia, Latvia, and Lithuania (EUR):", "Peru (PEN)¹".
+# "Sweden (SEK)", "Bahamas 2 3 (USD)", "Estonia, Latvia, and Lithuania (EUR):", "Peru (PEN)¹",
+# "Croatia³ (Euro)", "Ecuador (US Dollar)".
 _HEADER = re.compile(
-    rf"^(?P<names>[^()]*?[^\W\d_][^()]*?)\s*\(\s*(?P<cur>[A-Z]{{3}})\s*\)\s*:?"
+    rf"^(?P<names>[^()]*?[^\W\d_][^()]*?)\s*\(\s*(?P<cur>[^()]{{2,40}}?)\s*\)\s*:?"
     rf"\s*[\d\s{_FOOTNOTE_MARKS}]*$"
 )
+# Words around a currency used as a region name ("Euro", "Eurozone", "Other euro countries").
+_REGION_WORDS = re.compile(r"\b(?:other|all)\s+|\s*(?:zone|area|countries|region|regions)$")
 _NAME_SPLIT = re.compile(r"\s*(?:,|;|/|&|\band\b)\s*")
 _BARE_NUMBER = re.compile(r"^\W*(\d[\d.,\s]*\d|\d)\W*$")
 _BLOCKED = re.compile(r"access denied|you don't have permission to access|request unsuccessful")
-
-_SKIP_TAGS = frozenset(
-    {"script", "style", "noscript", "svg", "template", "iframe", "head", "-comment"}
-)
-_BLOCK_TAG_NAMES = (
-    "address article aside blockquote body caption dd details dialog div dl dt fieldset "
-    "figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr li main nav ol p "
-    "pre section summary table tbody td tfoot th thead tr ul button option "
-)
-_BLOCK_TAGS = frozenset(_BLOCK_TAG_NAMES.split())
-_WS = re.compile(r"[\s\u200b]+")
+# Spellings babel does not list.
+_EXTRA_CURRENCY_NAMES = {"pound sterling": "GBP", "sterling": "GBP", "uk pound": "GBP"}
 
 
-def _is_footnote_mark(sup: LexborNode) -> bool:
-    """Short <sup> content (footnote "2", "◊") is dropped, not spaced out: "$59.99<sup>4</sup>"
-    as "$59.99 4" would parse as 59994 because spaces are thousands separators."""
-    return len((sup.text(deep=True) or "").strip()) <= 4
+def _fold(text: str) -> str:
+    """Lower-case ASCII words: "Türkiye  Lira" -> "turkiye lira", "Króna" -> "krona"."""
+    ascii_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", ascii_text.lower()).split())
 
 
-def _block_lines(root: LexborNode | None) -> list[str]:
-    """Visible text, one line per block element, with inline markup joined.
+@cache
+def _iso_codes() -> frozenset[str]:
+    return frozenset(list_currencies())
 
-    haggler.text.html_to_lines emits one line per text node, which splits "<b>Sweden</b> (SEK)"
-    and "Bahamas<sup>2</sup> (USD)" into fragments; this keeps each block on one line and turns
-    <br> into a line break. Footnote marks in <sup> are dropped.
+
+@cache
+def _names_of(code: str) -> frozenset[str]:
+    """Folded English names of a currency: display name, singular and plural."""
+    names = set()
+    for count in (None, 1, 2):
+        try:
+            names.add(_fold(get_currency_name(code, count=count, locale="en")))
+        except (KeyError, ValueError):  # pragma: no cover - babel has every ISO code
+            continue
+    return frozenset(n for n in names if n and n != code.lower())
+
+
+@cache
+def _all_names() -> dict[str, str]:
+    out: dict[str, str] = {}
+    for code in sorted(_iso_codes()):
+        for name in _names_of(code):
+            out.setdefault(name, code)
+    return out
+
+
+def currency_code(text: str, cat: Catalog) -> str | None:
+    """ISO code for "SEK", "Euro", "US Dollar", "Swedish kronor" ... (None when unknown).
+
+    Names of the catalog's currencies win over historical ones that share a spelling.
     """
-    lines: list[str] = []
-    buf: list[str] = []
+    raw = text.strip()
+    if re.fullmatch(r"[A-Z]{3}", raw):
+        return raw if raw in _iso_codes() else None
+    key = _fold(raw)
+    if not key:
+        return None
+    for code in sorted(cat.currencies()):
+        if key in _names_of(code):
+            return code
+    return _EXTRA_CURRENCY_NAMES.get(key) or _all_names().get(key)
 
-    def flush() -> None:
-        text = _WS.sub(" ", "".join(buf)).strip()
-        buf.clear()
-        if text:
-            lines.append(text)
 
-    def walk(node: LexborNode) -> None:
-        for child in node.iter(include_text=True):
-            if child.is_text_node:
-                buf.append(child.text_content or "")
-                continue
-            tag = child.tag or ""
-            if tag in _SKIP_TAGS or child.is_comment_node:
-                continue
-            if tag == "br":
-                flush()
-                continue
-            if tag == "sup":
-                if _is_footnote_mark(child):
-                    continue
-                buf.append(" ")
-                walk(child)
-                buf.append(" ")
-                continue
-            is_block = tag in _BLOCK_TAGS
-            if is_block:
-                flush()
-            walk(child)
-            if is_block:
-                flush()
-
-    if root is not None:
-        walk(root)
-        flush()
-    return lines
+def _currency_region(names: str, cat: Catalog) -> str | None:
+    """Currency named by a pseudo-country row ("Euro", "Eurozone", "Other euro countries")."""
+    key = _REGION_WORDS.sub(" ", _fold(_clean_names(names))).strip()
+    return currency_code(key, cat) if key else None
 
 
 @dataclass
@@ -116,6 +121,9 @@ class _Entry:
     label: str
     amount: Decimal
     evidence: str
+    # Set for a currency row ("Euro (Euro)"): it covers catalog countries in that currency
+    # that have no row of their own.
+    covers: str | None = None
 
 
 @dataclass
@@ -123,6 +131,7 @@ class _Header:
     text: str
     countries: list[CountryDef]
     currency: str
+    covers: str | None = None
 
 
 def _tier_plan(svc: ServiceDef, size: str, unit: str) -> str | None:
@@ -150,16 +159,25 @@ def _countries_named(names: str, cat: Catalog) -> list[CountryDef]:
 
 
 def _parse_header(text: str, cat: Catalog) -> _Header | None:
+    """ "Sweden (SEK)", "Croatia³ (Euro)", "Euro³ (Euro)"; None unless the parentheses hold a
+    currency."""
     text = text.strip()
     if len(text) > 600:
         return None
     m = _HEADER.match(text)
     if not m:
         return None
+    currency = currency_code(m["cur"], cat)
+    if currency is None:
+        return None
+    names = m.group("names")
+    countries = _countries_named(names, cat)
+    covers = None if countries else _currency_region(names, cat)
     return _Header(
-        text=f"{_clean_names(m.group('names'))} ({m['cur']})",
-        countries=_countries_named(m.group("names"), cat),
-        currency=m["cur"],
+        text=f"{_clean_names(names)} ({m['cur'].strip()})",
+        countries=countries,
+        currency=currency,
+        covers=covers if covers == currency else None,
     )
 
 
@@ -211,16 +229,18 @@ def _tier_entries(line: str, header: _Header, svc: ServiceDef) -> list[_Entry]:
                 label=tok.group(0),
                 amount=amount,
                 evidence=_evidence(header, tier_text),
+                covers=header.covers,
             )
         )
     return out
 
 
-def _from_lines(lines: list[str], svc: ServiceDef, cat: Catalog) -> list[_Entry]:
+def _from_lines(lines: list[str], svc: ServiceDef, cat: Catalog, named: set[str]) -> list[_Entry]:
     """Walk the article: a header opens a country block, tier lines fill it.
 
     The block closes at the next header, at the first non-tier line after its tiers, or after
     two unrelated lines, so footnotes and region headings are never attributed to a country.
+    Countries that get a header of their own are added to `named`.
     """
     entries: list[_Entry] = []
     header: _Header | None = None
@@ -232,6 +252,7 @@ def _from_lines(lines: list[str], svc: ServiceDef, cat: Catalog) -> list[_Entry]
             inline = _parse_header(line[: first.start()], cat)
             if inline:
                 header, seen_tiers, gap = inline, False, 0
+                named.update(c.cc for c in inline.countries)
             if header:
                 found = _tier_entries(line, header, svc)
                 if found:
@@ -241,6 +262,7 @@ def _from_lines(lines: list[str], svc: ServiceDef, cat: Catalog) -> list[_Entry]
         parsed = _parse_header(line, cat)
         if parsed:
             header, seen_tiers, gap = parsed, False, 0
+            named.update(c.cc for c in parsed.countries)
             continue
         if header:
             gap += 1
@@ -250,11 +272,34 @@ def _from_lines(lines: list[str], svc: ServiceDef, cat: Catalog) -> list[_Entry]
 
 
 def _cell_text(cell: LexborNode) -> str:
-    return " ".join(_block_lines(cell))
+    return " ".join(node_lines(cell))
 
 
-def _from_tables(tree: LexborHTMLParser, svc: ServiceDef, cat: Catalog) -> list[_Entry]:
-    """Countries as rows and tiers as columns ("Country or region | 50GB | 200GB | ...")."""
+def _row_header(
+    cells: list[str], currency_col: int | None, cat: Catalog, notes: list[str]
+) -> _Header | None:
+    """The country (or currency) a table row is for, and the currency of its cells."""
+    header = _parse_header(cells[0], cat)
+    if header is not None:
+        return header
+    names = cells[0].split("(")[0]  # "Sweden (Kronor)": a currency we cannot read
+    countries = _countries_named(names, cat)
+    if not countries:
+        return None
+    cur = None
+    if currency_col not in (None, 0) and currency_col < len(cells):
+        cur = currency_code(cells[currency_col], cat)
+    if cur is None:
+        cur = countries[0].currency
+        if "(" in cells[0]:
+            notes.append(f"currency of row {cells[0]!r} not recognised; assumed {cur}")
+    return _Header(text=f"{_clean_names(names)} ({cur})", countries=countries, currency=cur)
+
+
+def _from_tables(
+    tree: LexborHTMLParser, svc: ServiceDef, cat: Catalog, named: set[str], notes: list[str]
+) -> list[_Entry]:
+    """Countries as rows and tiers as columns ("Country (Currency) | 50 GB | 200 GB | ...")."""
     entries: list[_Entry] = []
     for table in tree.css("table"):
         columns: list[str | None] | None = None
@@ -275,17 +320,10 @@ def _from_tables(tree: LexborHTMLParser, svc: ServiceDef, cat: Catalog) -> list[
                         None,
                     )
                 continue
-            header = _parse_header(cells[0], cat)
+            header = _row_header(cells, currency_col, cat, notes)
             if header is None:
-                cur = cells[currency_col].strip() if currency_col is not None else ""
-                countries = _countries_named(cells[0], cat)
-                if not countries:
-                    continue
-                if not re.fullmatch(r"[A-Z]{3}", cur):
-                    cur = countries[0].currency
-                header = _Header(
-                    text=f"{_clean_names(cells[0])} ({cur})", countries=countries, currency=cur
-                )
+                continue
+            named.update(c.cc for c in header.countries)
             for idx, plan_id in enumerate(columns):
                 if plan_id is None or idx == 0 or idx >= len(cells):
                     continue
@@ -301,6 +339,7 @@ def _from_tables(tree: LexborHTMLParser, svc: ServiceDef, cat: Catalog) -> list[
                         label=label,
                         amount=amount,
                         evidence=_evidence(header, f"{label}: {cells[idx]}"),
+                        covers=header.covers,
                     )
                 )
     return entries
@@ -347,35 +386,51 @@ class ICloudSupportAdapter:
             notes.append(f"final URL is not the en-us article: {resp.final_url}")
 
         tree = LexborHTMLParser(resp.text)
-        entries = _from_tables(tree, svc, cat) + _from_lines(_block_lines(tree.body), svc, cat)
+        named: set[str] = set()
+        entries = _from_tables(tree, svc, cat, named, notes)
+        entries += _from_lines(node_lines(tree.body), svc, cat, named)
 
         wanted = set(task.countries)
         values: dict[tuple[str, str], Decimal] = {}
         drafts: list[ObservationDraft] = []
+
+        def add(e: _Entry, cc: str) -> None:
+            key = (cc, e.plan_id)
+            if key in values:
+                if values[key] != e.amount:
+                    notes.append(f"{cc} {e.plan_id}: kept {values[key]}, ignored {e.amount}")
+                return
+            values[key] = e.amount
+            drafts.append(
+                draft(
+                    task,
+                    plan_id=e.plan_id,
+                    label=e.label,
+                    amount=e.amount,
+                    currency=e.currency,
+                    evidence=e.evidence,
+                    country=cc,
+                    flags=list(FLAGS),
+                )
+            )
+
         for e in entries:
             for country in e.countries:
-                if country.cc not in wanted:
-                    continue
-                key = (country.cc, e.plan_id)
-                if key in values:
-                    if values[key] != e.amount:
-                        notes.append(
-                            f"{country.cc} {e.plan_id}: kept {values[key]}, ignored {e.amount}"
-                        )
-                    continue
-                values[key] = e.amount
-                drafts.append(
-                    draft(
-                        task,
-                        plan_id=e.plan_id,
-                        label=e.label,
-                        amount=e.amount,
-                        currency=e.currency,
-                        evidence=e.evidence,
-                        country=country.cc,
-                        flags=list(FLAGS),
-                    )
-                )
+                if country.cc in wanted:
+                    add(e, country.cc)
+        # Currency rows ("Euro (Euro)") last: a country's own row always wins.
+        covered: dict[str, list[str]] = {}
+        for e in entries:
+            if e.covers is None:
+                continue
+            for country in cat.countries:
+                cc = country.cc
+                if cc in wanted and cc not in named and country.currency == e.covers:
+                    add(e, cc)
+                    if cc not in covered.setdefault(e.covers, []):
+                        covered[e.covers].append(cc)
+        for cur, ccs in covered.items():
+            notes.append(f"{cur} row applied to countries without their own row: {', '.join(ccs)}")
 
         order = {cc: i for i, cc in enumerate(task.countries)}
         rank = {p.id: i for i, p in enumerate(svc.plans)}

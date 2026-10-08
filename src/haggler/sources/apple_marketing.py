@@ -1,7 +1,10 @@
 """Apple One, Apple Music and Apple TV prices from apple.com marketing pages.
 
-apple.com/{apple_path}/{page}/ is server-rendered HTML with localized plan names ("Individuell",
-"Familiar", "Premier") and prices such as "195 kr/mån.", "$19.95/mo." or "$ 16.900/mes".
+apple.com/{apple_path}/{page}/ is server-rendered HTML with localized plan names ("Personligt",
+"Familj", "Familiar", "Premier") and prices such as "215 kr/mån", "$19.95/mo." or
+"$ 16.900/mes". Apple One cards also list each component service with its own price, a struck
+comparison total ("Inte 339 kr/mån") and the saving ("Spara 124 kr/mån"); none of those is the
+plan's price.
 Strategies, in order: schema.org Offers in ld+json, then plan-label/price pairing over the
 visible text (single-plan services such as Apple TV take the most repeated regular monthly
 price). Apple serves unknown storefronts the US page, so the final URL and canonical link must
@@ -18,7 +21,7 @@ from decimal import Decimal
 from typing import Any
 from urllib.parse import urlsplit
 
-from selectolax.lexbor import LexborHTMLParser, LexborNode
+from selectolax.lexbor import LexborHTMLParser
 
 from haggler.fetch import RawResponse
 from haggler.models.catalog import Catalog, CountryDef, ServiceDef
@@ -26,7 +29,8 @@ from haggler.models.observations import BillingPeriod, ObservationDraft
 from haggler.models.run import Task
 from haggler.money import Money, find_prices, parse_bare_amount
 from haggler.sources.base import ParseResult, PerCountryAdapter, draft, match_plan
-from haggler.sources.heuristics import detect_period, plan_price_pairs
+from haggler.sources.heuristics import classify_prices, detect_period, plan_price_pairs
+from haggler.text import TextLine, render_lines
 
 FLAGS = ["apple_billing"]
 
@@ -37,12 +41,6 @@ _FOREIGN: dict[str, str] = {
     "mls": r"(?<![a-z])mls(?![a-z])",
     "peacock": r"peacock",
 }
-_SAVINGS = re.compile(
-    r"(?<!\w)(save|saving|savings|ahorr\w*|spara|sparar|spar|besparing|sparen|économis\w*"
-    r"|economiz\w*|risparmi\w*|oszczęd\w*|ušetř\w*|tasarruf\w*|separately|por separado"
-    r"|separat|einzeln|value of|valor de)(?!\w)",
-    re.IGNORECASE,
-)
 _INSTALLMENTS = re.compile(
     r"installment|instalment|cuotas|meses sin intereses|delbetal|avbetal|ratenzahlung"
     r"|apple card|financ",
@@ -54,123 +52,24 @@ _FAMILY_SHARING = re.compile(
     r"|familienfreigabe|familiedeling|perhejako|aile\s+paylaşımı",
     re.IGNORECASE,
 )
-# A price right after these words is the regular one ("Free for 1 month, then $10.99/mo.").
-_THEN = re.compile(
-    r"(then|after(wards)?|thereafter|därefter|sedan|luego|despu[ée]s|danach|anschließend"
-    r"|ensuite|puis|derefter|deretter|sonra|potem|depois|daarna|poi|jälkeen|potom|apoi)"
-    r"\W*(\w+\W+){0,2}$",
+# Component services listed inside an Apple One card with their own prices ("iCloud+" /
+# "50 GB" / "12 kr/mån", "Apple TV" / "119 kr/mån"): those prices are not the plan's.
+_COMPONENT = re.compile(
+    r"(?:icloud\+?(?:\s+\d+\s*[gt]b)?|apple\s+(?:tv\+?|music|arcade|news\+?|fitness\+?)"
+    r"|\d+\s*[gt]b)",
     re.IGNORECASE,
-)
-_INTRO_WORDS = re.compile(
-    r"free|gratis|gratuit|kostenlos|ücretsiz|trial|prueba|provperiod|prøve|essai|first|primer"
-    r"|första|intro|special|oferta|erbjudande|offer|angebot|promo",
-    re.IGNORECASE,
-)
-_N_MONTHS = (
-    r"\d+\s*(months?|mo\b|mån\w*|meses|mes\b|monate?n?|mois|weeks?|veckor|semanas|days?"
-    r"|dagar|días|dias)"
-)
-# "$2.99/mo. for 3 months", "for 12 mo." (installments) right after the price.
-_INTRO_AFTER = re.compile(
-    rf"^\W*(\w+\W+){{0,3}}?(for|för|por|durante|für|pendant|i|en|per)\s+(the\s+)?"
-    rf"(first\s+|primeros?\s+|första\s+|ersten\s+)?{_N_MONTHS}",
-    re.IGNORECASE,
-)
-# "Get 3 months of Apple TV for $2.99/mo." right before the price.
-_INTRO_BEFORE = re.compile(
-    rf"{_N_MONTHS}\s+(of\s+\w+(\s+\w+)?\s+)?(for|för|por|für|pour|på)\s*$", re.IGNORECASE
 )
 _BLOCKED = re.compile(r"access denied|you don't have permission to access|request unsuccessful")
 _STOREFRONT = re.compile(r"[a-z]{2}|[a-z]{2}(de|fr|it|nl|en)|lae")
 
-_SKIP_TAGS = frozenset(
-    {"script", "style", "noscript", "svg", "template", "iframe", "head", "-comment"}
-)
-_BLOCK_TAG_NAMES = (
-    "address article aside blockquote caption dd details dialog div dl dt fieldset "
-    "figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr li main nav ol p "
-    "pre section summary table tbody td tfoot th thead tr ul button option "
-)
-_BLOCK_TAGS = frozenset(_BLOCK_TAG_NAMES.split())
-_HEADINGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
-_WS = re.compile(r"[\s\u200b]+")
+
+def _page_lines(tree: LexborHTMLParser) -> list[TextLine]:
+    """Rendered lines with their heading level and section ids/classes (the upsell filter
+    needs both); see haggler.text.render_lines."""
+    return render_lines(tree.body, context=True)
 
 
-@dataclass(frozen=True)
-class _Line:
-    text: str
-    heading: int  # 1-6 when the text sits in a heading element, else 0
-    context: str  # lower-cased ids/classes of the enclosing elements (inside <body>)
-
-
-def _page_lines(root: LexborNode | None) -> list[_Line]:
-    """Visible text, one line per block element, with inline markup joined.
-
-    Unlike haggler.text.html_to_lines (one line per text node) this keeps
-    "<span>195 kr</span>/mån." together and remembers headings and section classes, which the
-    upsell filter needs. Footnote marks in <sup> are dropped.
-    """
-    lines: list[_Line] = []
-    buf: list[str] = []
-    stack: list[tuple[int, str]] = []  # (heading level, ids/classes) of open elements
-    # Heading level and context of the first visible text in `buf` (None = nothing yet).
-    meta: tuple[int, str] | None = None
-
-    def flush() -> None:
-        nonlocal meta
-        text = _WS.sub(" ", "".join(buf)).strip()
-        buf.clear()
-        if text and meta is not None:
-            lines.append(_Line(text, *meta))
-        meta = None
-
-    def add(text: str) -> None:
-        nonlocal meta
-        if meta is None and text.strip():
-            level = next((lvl for lvl, _ in reversed(stack) if lvl), 0)
-            meta = (level, " ".join(ident for _, ident in stack if ident).lower())
-        buf.append(text)
-
-    def walk(node: LexborNode) -> None:
-        for child in node.iter(include_text=True):
-            if child.is_text_node:
-                add(child.text_content or "")
-                continue
-            tag = child.tag or ""
-            if tag in _SKIP_TAGS or child.is_comment_node:
-                continue
-            if tag == "br":
-                flush()
-                continue
-            attrs = child.attributes
-            ident = " ".join(
-                v
-                for k in ("id", "class", "data-analytics-section-engagement")
-                if (v := attrs.get(k))
-            )
-            stack.append((_HEADINGS.get(tag, 0), ident))
-            if tag == "sup":
-                # Footnote marks are dropped: "$5.99<sup>3</sup>/mo." must not read "5.99 3".
-                if len((child.text(deep=True) or "").strip()) > 4:
-                    add(" ")
-                    walk(child)
-                    add(" ")
-            else:
-                is_block = tag in _BLOCK_TAGS
-                if is_block:
-                    flush()
-                walk(child)
-                if is_block:
-                    flush()
-            stack.pop()
-
-    if root is not None:
-        walk(root)
-        flush()
-    return lines
-
-
-def _without_foreign(lines: list[_Line], svc: ServiceDef, expected: list[str]) -> list[_Line]:
+def _without_foreign(lines: list[TextLine], svc: ServiceDef, expected: list[str]) -> list[TextLine]:
     """Drop upsell sections for other products (Apple One on the Apple Music page, ...).
 
     A heading naming another product hides everything up to the next heading of the same or
@@ -182,7 +81,7 @@ def _without_foreign(lines: list[_Line], svc: ServiceDef, expected: list[str]) -
         return lines
     word = re.compile("|".join(rf"(?<!\w){re.escape(m)}(?!\w)" for m in markers), re.I)
     slug = re.compile("|".join(_FOREIGN[m] for m in markers), re.I)
-    out: list[_Line] = []
+    out: list[TextLine] = []
     skip_level = 0
     for line in lines:
         if line.heading and skip_level and line.heading <= skip_level:
@@ -208,14 +107,23 @@ def _plans_named(svc: ServiceDef, text: str) -> set[str]:
     }
 
 
-def _clean_texts(lines: list[_Line], svc: ServiceDef, expected: list[str]) -> list[str]:
-    """Lines that could mislead label/price pairing are removed: savings and installment
-    claims, "Family Sharing" mentions and plan enumerations without a price."""
+def _clean_texts(lines: list[TextLine], svc: ServiceDef, expected: list[str]) -> list[str]:
+    """Lines that could mislead label/price pairing are removed: installment offers, the
+    component services of a bundle card with their own prices ("Apple TV" / "119 kr/mån"),
+    "Family Sharing" mentions and plan enumerations without a price. Savings, comparison and
+    intro prices are recognised per price by heuristics.classify_prices."""
     out: list[str] = []
+    prev = ""
     for line in lines:
         text = line.text
-        priced = bool(find_prices(text, expected))
-        if priced and (_SAVINGS.search(text) or _INSTALLMENTS.search(text)):
+        prices = find_prices(text, expected)
+        priced = bool(prices)
+        head = text[: prices[0].start].strip(" :-–") if prices else ""
+        component = svc.category == "bundle" and bool(
+            _COMPONENT.fullmatch(head) or (not head and _COMPONENT.fullmatch(prev))
+        )
+        prev = text
+        if priced and (_INSTALLMENTS.search(text) or component):
             continue
         if not priced and (_FAMILY_SHARING.search(text) or len(_plans_named(svc, text)) > 1):
             continue
@@ -223,33 +131,18 @@ def _clean_texts(lines: list[_Line], svc: ServiceDef, expected: list[str]) -> li
     return out
 
 
-def _is_intro(line: str, money: Money) -> bool:
-    prefix = line[max(0, money.start - 60) : money.start]
-    if _THEN.search(prefix):
-        return False
-    if _INTRO_AFTER.search(line[money.end : money.end + 50]) or _INTRO_BEFORE.search(prefix):
-        return True
-    clause = re.split(r"[.!?;•|]\s", prefix)[-1]
-    return bool(_INTRO_WORDS.search(clause))
-
-
 def _single_plan_price(texts: list[str], expected: list[str]) -> tuple[Money, str] | None:
     """The regular monthly price of a one-plan service: the most repeated non-introductory
-    monthly amount (Apple repeats it in hero, fine print and footnotes); ties -> first seen."""
+    monthly amount (Apple repeats it in hero, fine print and footnotes); ties -> first seen.
+    Savings, comparison and intro prices never count, and the period must be stated."""
     candidates: list[tuple[Money, str]] = []
     for i, text in enumerate(texts):
-        prices = find_prices(text, expected)
-        for k, money in enumerate(prices):
+        nxt = texts[i + 1] if i + 1 < len(texts) else ""
+        for info in classify_prices(text, expected, next_text=nxt, intro_words=True):
+            money = info.money
             if money.amount <= 0 or money.currency not in expected:
                 continue
-            # The period must follow this price, not the next one ("$129 or $10.75/mo.").
-            stop = prices[k + 1].start if k + 1 < len(prices) else len(text)
-            tail = text[money.end : min(stop, money.end + 30)]
-            if not tail.strip() and i + 1 < len(texts):
-                tail = texts[i + 1][:20]  # "<p>99 kr</p><p>/mån.</p>"
-            if detect_period(tail) != "month":
-                continue
-            if not _is_intro(text, money):
+            if info.role == "regular" and info.period == "month":
                 candidates.append((money, text))
     if not candidates:
         return None
@@ -433,7 +326,7 @@ class AppleMarketingAdapter(PerCountryAdapter):
         if found:
             notes.append(f"ld+json offers: {', '.join(sorted(found))}")
 
-        lines = _without_foreign(_page_lines(tree.body), svc, expected)
+        lines = _without_foreign(_page_lines(tree), svc, expected)
         texts = _clean_texts(lines, svc, expected)
         for d in self._from_text(task, svc, texts, expected):
             prev = found.setdefault(d.plan_id, d)
