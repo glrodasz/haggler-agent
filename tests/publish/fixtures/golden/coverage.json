@@ -1,0 +1,34 @@
+[
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": "2026-10-06",
+    "service_id": "spotify",
+    "status": "blocked"
+  }
+]

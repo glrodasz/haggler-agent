@@ -1,0 +1,37 @@
+[
+  {
+    "cc": "SE",
+    "currency": "SEK",
+    "eu_eea": true,
+    "name_es": "Suecia",
+    "region": "nordics"
+  },
+  {
+    "cc": "LT",
+    "currency": "EUR",
+    "eu_eea": true,
+    "name_es": "Lituania",
+    "region": "eu"
+  },
+  {
+    "cc": "CO",
+    "currency": "COP",
+    "eu_eea": false,
+    "name_es": "Colombia",
+    "region": "latam"
+  },
+  {
+    "cc": "AR",
+    "currency": "ARS",
+    "eu_eea": false,
+    "name_es": "Argentina",
+    "region": "latam"
+  },
+  {
+    "cc": "US",
+    "currency": "USD",
+    "eu_eea": false,
+    "name_es": "Estados Unidos",
+    "region": "north_america"
+  }
+]

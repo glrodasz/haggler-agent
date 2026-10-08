@@ -1,0 +1,84 @@
+# Bundle fixture for the publish tests: one of each pricing shape.
+bundles:
+  # Price observed from the daily data; one component (Apple Arcade) has no price source.
+  - bundle_id: apple_one_individual_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Individual
+    tier: individual
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: individual}
+    components:
+      - {service_id: apple_music, plan_id: individual, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
+    last_verified: 2026-10-08
+
+  # Observed price that is not in the data yet.
+  - bundle_id: apple_one_family_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Familj
+    tier: family
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, source: observed,
+            observed_service_id: apple_one, observed_plan_id: family}
+    components:
+      - {service_id: apple_music, plan_id: family, inclusion: included}
+    last_verified: 2026-10-08
+
+  # Curated monthly price in a foreign currency; a discount component is not counted.
+  - bundle_id: meli_co
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CO
+    name: Meli+ Total
+    tier: total
+    official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+    price: {amount: "24900", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: spotify, inclusion: discount_pct, value: "30"}
+    requirements: {local_id: cedula, local_payment: any_card}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: medium, evidence: user_report}
+    notes_es: >-
+      Precio en conflicto.
+    last_verified: 2026-10-08
+
+  # Telco add-on: only the marginal amount counts.
+  - bundle_id: telia_se
+    provider_id: telia_se
+    provider_type: telco_mobile
+    country: SE
+    name: Telia + Netflix y Spotify
+    tier: plus
+    official_url: https://www.telia.se/privat/mobilt/abonnemang
+    price: {amount: "699", currency: SEK, period: month, tax_included: true, marginal_amount: "130"}
+    components:
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: spotify, plan_id: individual, inclusion: included}
+    requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
+    feasibility_from:
+      SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
+    last_verified: 2026-10-08
+
+  # Yearly price; the included Netflix plan is unknown (cheapest plan of the country is used).
+  - bundle_id: yearly_lt
+    provider_id: go3
+    provider_type: streaming_joint
+    country: LT
+    name: Go3 anual + Netflix
+    tier: annual
+    official_url: https://example.com/go3
+    price: {amount: "120", currency: EUR, period: year, tax_included: true}
+    components:
+      - {service_id: netflix, inclusion: included}
+    status: expired
+    last_verified: 2026-09-01

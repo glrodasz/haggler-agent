@@ -1,0 +1,4 @@
+{"channel":"web","country":"SE","date":"2026-10-08","extraction":"parser","kind":"changed","new":"149 SEK/month","obs_key":"netflix:standard:SE:web:month","old":"139 SEK/month","pct":7.19,"plan_id":"standard","run_id":"20261008T041700Z-ab12cd","service_id":"netflix","source_url":"https://example.com/netflix/se"}
+{"channel":"web","country":"LT","date":"2026-10-08","extraction":"llm","kind":"added","new":"2.99 EUR/month","obs_key":"icloud_plus:200gb:LT:web:month","old":null,"pct":null,"plan_id":"200gb","run_id":"20261008T041700Z-ab12cd","service_id":"icloud_plus","source_url":"https://example.com/icloud_plus/lt"}
+
+{"channel":"web","country":"SE","date":"2026-10-08","extraction":"parser","kind":"changed","new":"149 SEK/month","obs_key":"netflix:standard:SE:web:month","old":"139 SEK/month","pct":7.19,"plan_id":"standard","run_id":"20261008T041700Z-ab12cd","service_id":"netflix","source_url":"https://example.com/netflix/se"}

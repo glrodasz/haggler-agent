@@ -1,0 +1,83 @@
+[
+  {
+    "channel": "web",
+    "country": "LT",
+    "date": "2026-10-08",
+    "kind": "added",
+    "new": {
+      "amount": 2.99,
+      "currency": "EUR"
+    },
+    "obs_key": "icloud_plus:200gb:LT:web:month",
+    "old": null,
+    "pct": null,
+    "plan_id": "200gb",
+    "service_id": "icloud_plus"
+  },
+  {
+    "channel": "web",
+    "country": "SE",
+    "date": "2026-10-08",
+    "kind": "changed",
+    "new": {
+      "amount": 149.0,
+      "currency": "SEK"
+    },
+    "obs_key": "netflix:standard:SE:web:month",
+    "old": {
+      "amount": 139.0,
+      "currency": "SEK"
+    },
+    "pct": 7.19,
+    "plan_id": "standard",
+    "service_id": "netflix"
+  },
+  {
+    "channel": "web",
+    "country": "CO",
+    "date": "2026-09-20",
+    "kind": "removed",
+    "new": null,
+    "obs_key": "netflix:basic:CO:web:month",
+    "old": {
+      "amount": 16900.0,
+      "currency": "COP"
+    },
+    "pct": null,
+    "plan_id": "basic",
+    "service_id": "netflix"
+  },
+  {
+    "channel": "web",
+    "country": "SE",
+    "date": "2026-09-20",
+    "kind": "changed",
+    "new": {
+      "amount": 139.0,
+      "currency": "SEK"
+    },
+    "obs_key": "spotify:individual:SE:web:month",
+    "old": {
+      "amount": 129.0,
+      "currency": "SEK"
+    },
+    "pct": 7.75,
+    "plan_id": "individual",
+    "service_id": "spotify"
+  },
+  {
+    "channel": "web",
+    "country": "SE",
+    "date": "2026-09-01",
+    "kind": "added",
+    "new": {
+      "amount": 139.0,
+      "currency": "SEK"
+    },
+    "obs_key": "netflix:standard:SE:web:month",
+    "old": null,
+    "pct": null,
+    "plan_id": "standard",
+    "service_id": "netflix"
+  }
+]

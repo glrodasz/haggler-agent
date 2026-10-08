@@ -1,0 +1,822 @@
+[
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 119.0,
+        "channel": "web",
+        "cost_eur": 10.82,
+        "cost_eur_with_fee": 10.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 119.0,
+        "obs_key": "apple_music:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_music/se"
+      },
+      "1": {
+        "amount": 119.0,
+        "channel": "web",
+        "cost_eur": 10.82,
+        "cost_eur_with_fee": 10.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 119.0,
+        "obs_key": "apple_music:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_music/se"
+      },
+      "2": {
+        "amount": 119.0,
+        "channel": "web",
+        "cost_eur": 10.82,
+        "cost_eur_with_fee": 10.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 119.0,
+        "obs_key": "apple_music:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_music/se"
+      },
+      "3": {
+        "amount": 119.0,
+        "channel": "web",
+        "cost_eur": 10.82,
+        "cost_eur_with_fee": 10.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 119.0,
+        "obs_key": "apple_music:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_music/se"
+      }
+    },
+    "home": {
+      "amount": 119.0,
+      "channel": "web",
+      "cost_eur": 10.82,
+      "cost_eur_with_fee": 10.82,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 119.0,
+      "obs_key": "apple_music:individual:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/apple_music/se"
+    },
+    "plan_id": "individual",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "service_id": "apple_music"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 195.0,
+        "channel": "web",
+        "cost_eur": 17.73,
+        "cost_eur_with_fee": 17.73,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 195.0,
+        "obs_key": "apple_one:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_one/se"
+      },
+      "1": {
+        "amount": 195.0,
+        "channel": "web",
+        "cost_eur": 17.73,
+        "cost_eur_with_fee": 17.73,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 195.0,
+        "obs_key": "apple_one:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_one/se"
+      },
+      "2": {
+        "amount": 19900.0,
+        "channel": "web",
+        "cost_eur": 4.42,
+        "cost_eur_with_fee": 4.51,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 19900.0,
+        "obs_key": "apple_one:individual:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/apple_one/co"
+      },
+      "3": {
+        "amount": 19900.0,
+        "channel": "web",
+        "cost_eur": 4.42,
+        "cost_eur_with_fee": 4.51,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 19900.0,
+        "obs_key": "apple_one:individual:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/apple_one/co"
+      }
+    },
+    "home": {
+      "amount": 195.0,
+      "channel": "web",
+      "cost_eur": 17.73,
+      "cost_eur_with_fee": 17.73,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 195.0,
+      "obs_key": "apple_one:individual:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/apple_one/se"
+    },
+    "plan_id": "individual",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 13.22,
+      "3": 13.22
+    },
+    "service_id": "apple_one"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 99.0,
+        "channel": "web",
+        "cost_eur": 9.0,
+        "cost_eur_with_fee": 9.0,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 99.0,
+        "obs_key": "apple_tv:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_tv/se"
+      },
+      "1": {
+        "amount": 99.0,
+        "channel": "web",
+        "cost_eur": 9.0,
+        "cost_eur_with_fee": 9.0,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 99.0,
+        "obs_key": "apple_tv:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_tv/se"
+      },
+      "2": {
+        "amount": 99.0,
+        "channel": "web",
+        "cost_eur": 9.0,
+        "cost_eur_with_fee": 9.0,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 99.0,
+        "obs_key": "apple_tv:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_tv/se"
+      },
+      "3": {
+        "amount": 99.0,
+        "channel": "web",
+        "cost_eur": 9.0,
+        "cost_eur_with_fee": 9.0,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 99.0,
+        "obs_key": "apple_tv:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/apple_tv/se"
+      }
+    },
+    "home": {
+      "amount": 99.0,
+      "channel": "web",
+      "cost_eur": 9.0,
+      "cost_eur_with_fee": 9.0,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 99.0,
+      "obs_key": "apple_tv:standard:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/apple_tv/se"
+    },
+    "plan_id": "standard",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "service_id": "apple_tv"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 12.0,
+        "channel": "web",
+        "cost_eur": 1.09,
+        "cost_eur_with_fee": 1.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 12.0,
+        "obs_key": "icloud_plus:50gb:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/icloud_plus/se"
+      },
+      "1": {
+        "amount": 12.0,
+        "channel": "web",
+        "cost_eur": 1.09,
+        "cost_eur_with_fee": 1.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 12.0,
+        "obs_key": "icloud_plus:50gb:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/icloud_plus/se"
+      },
+      "2": {
+        "amount": 12.0,
+        "channel": "web",
+        "cost_eur": 1.09,
+        "cost_eur_with_fee": 1.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 12.0,
+        "obs_key": "icloud_plus:50gb:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/icloud_plus/se"
+      },
+      "3": {
+        "amount": 12.0,
+        "channel": "web",
+        "cost_eur": 1.09,
+        "cost_eur_with_fee": 1.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 12.0,
+        "obs_key": "icloud_plus:50gb:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/icloud_plus/se"
+      }
+    },
+    "home": {
+      "amount": 12.0,
+      "channel": "web",
+      "cost_eur": 1.09,
+      "cost_eur_with_fee": 1.09,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 12.0,
+      "obs_key": "icloud_plus:50gb:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/icloud_plus/se"
+    },
+    "plan_id": "50gb",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "service_id": "icloud_plus"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 39.0,
+        "channel": "web",
+        "cost_eur": 3.55,
+        "cost_eur_with_fee": 3.55,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 39.0,
+        "obs_key": "icloud_plus:200gb:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/icloud_plus/se"
+      },
+      "1": {
+        "amount": 2.99,
+        "channel": "web",
+        "cost_eur": 2.99,
+        "cost_eur_with_fee": 3.05,
+        "country": "LT",
+        "currency": "EUR",
+        "eu_badge": true,
+        "label": "eu_right_untested",
+        "monthly_equiv": 2.99,
+        "obs_key": "icloud_plus:200gb:LT:web:month",
+        "rank": 1,
+        "source_url": "https://example.com/icloud_plus/lt"
+      },
+      "2": {
+        "amount": 2.99,
+        "channel": "web",
+        "cost_eur": 2.99,
+        "cost_eur_with_fee": 3.05,
+        "country": "LT",
+        "currency": "EUR",
+        "eu_badge": true,
+        "label": "eu_right_untested",
+        "monthly_equiv": 2.99,
+        "obs_key": "icloud_plus:200gb:LT:web:month",
+        "rank": 1,
+        "source_url": "https://example.com/icloud_plus/lt"
+      },
+      "3": {
+        "amount": 2.99,
+        "channel": "web",
+        "cost_eur": 2.99,
+        "cost_eur_with_fee": 3.05,
+        "country": "LT",
+        "currency": "EUR",
+        "eu_badge": true,
+        "label": "eu_right_untested",
+        "monthly_equiv": 2.99,
+        "obs_key": "icloud_plus:200gb:LT:web:month",
+        "rank": 1,
+        "source_url": "https://example.com/icloud_plus/lt"
+      }
+    },
+    "home": {
+      "amount": 39.0,
+      "channel": "web",
+      "cost_eur": 3.55,
+      "cost_eur_with_fee": 3.55,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 39.0,
+      "obs_key": "icloud_plus:200gb:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/icloud_plus/se"
+    },
+    "plan_id": "200gb",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.5,
+      "2": 0.5,
+      "3": 0.5
+    },
+    "service_id": "icloud_plus"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 89.0,
+        "channel": "web",
+        "cost_eur": 8.09,
+        "cost_eur_with_fee": 8.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 89.0,
+        "obs_key": "netflix:standard_with_ads:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "1": {
+        "amount": 89.0,
+        "channel": "web",
+        "cost_eur": 8.09,
+        "cost_eur_with_fee": 8.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 89.0,
+        "obs_key": "netflix:standard_with_ads:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "2": {
+        "amount": 16900.0,
+        "channel": "web",
+        "cost_eur": 3.76,
+        "cost_eur_with_fee": 3.83,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 16900.0,
+        "obs_key": "netflix:standard_with_ads:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/netflix/co"
+      },
+      "3": {
+        "amount": 16900.0,
+        "channel": "web",
+        "cost_eur": 3.76,
+        "cost_eur_with_fee": 3.83,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 16900.0,
+        "obs_key": "netflix:standard_with_ads:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/netflix/co"
+      }
+    },
+    "home": {
+      "amount": 89.0,
+      "channel": "web",
+      "cost_eur": 8.09,
+      "cost_eur_with_fee": 8.09,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 89.0,
+      "obs_key": "netflix:standard_with_ads:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/netflix/se"
+    },
+    "plan_id": "standard_with_ads",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 4.26,
+      "3": 4.26
+    },
+    "service_id": "netflix"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 149.0,
+        "channel": "web",
+        "cost_eur": 13.55,
+        "cost_eur_with_fee": 13.55,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 149.0,
+        "obs_key": "netflix:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "1": {
+        "amount": 149.0,
+        "channel": "web",
+        "cost_eur": 13.55,
+        "cost_eur_with_fee": 13.55,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 149.0,
+        "obs_key": "netflix:standard:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "2": {
+        "amount": 26900.0,
+        "channel": "web",
+        "cost_eur": 5.98,
+        "cost_eur_with_fee": 6.1,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 26900.0,
+        "obs_key": "netflix:standard:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/netflix/co"
+      },
+      "3": {
+        "amount": 26900.0,
+        "channel": "web",
+        "cost_eur": 5.98,
+        "cost_eur_with_fee": 6.1,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_low_enforcement",
+        "monthly_equiv": 26900.0,
+        "obs_key": "netflix:standard:CO:web:month",
+        "rank": 2,
+        "source_url": "https://example.com/netflix/co"
+      }
+    },
+    "home": {
+      "amount": 149.0,
+      "channel": "web",
+      "cost_eur": 13.55,
+      "cost_eur_with_fee": 13.55,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 149.0,
+      "obs_key": "netflix:standard:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/netflix/se"
+    },
+    "plan_id": "standard",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 7.45,
+      "3": 7.45
+    },
+    "service_id": "netflix"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 199.0,
+        "channel": "web",
+        "cost_eur": 18.09,
+        "cost_eur_with_fee": 18.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 199.0,
+        "obs_key": "netflix:premium:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "1": {
+        "amount": 199.0,
+        "channel": "web",
+        "cost_eur": 18.09,
+        "cost_eur_with_fee": 18.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 199.0,
+        "obs_key": "netflix:premium:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "2": {
+        "amount": 199.0,
+        "channel": "web",
+        "cost_eur": 18.09,
+        "cost_eur_with_fee": 18.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 199.0,
+        "obs_key": "netflix:premium:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      },
+      "3": {
+        "amount": 199.0,
+        "channel": "web",
+        "cost_eur": 18.09,
+        "cost_eur_with_fee": 18.09,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 199.0,
+        "obs_key": "netflix:premium:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/netflix/se"
+      }
+    },
+    "home": {
+      "amount": 199.0,
+      "channel": "web",
+      "cost_eur": 18.09,
+      "cost_eur_with_fee": 18.09,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 199.0,
+      "obs_key": "netflix:premium:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/netflix/se"
+    },
+    "plan_id": "premium",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "service_id": "netflix"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 139.0,
+        "channel": "web",
+        "cost_eur": 12.64,
+        "cost_eur_with_fee": 12.64,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 139.0,
+        "obs_key": "spotify:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "1": {
+        "amount": 139.0,
+        "channel": "web",
+        "cost_eur": 12.64,
+        "cost_eur_with_fee": 12.64,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 139.0,
+        "obs_key": "spotify:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "2": {
+        "amount": 139.0,
+        "channel": "web",
+        "cost_eur": 12.64,
+        "cost_eur_with_fee": 12.64,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 139.0,
+        "obs_key": "spotify:individual:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "3": {
+        "amount": 16900.0,
+        "channel": "web",
+        "cost_eur": 3.76,
+        "cost_eur_with_fee": 3.83,
+        "country": "CO",
+        "currency": "COP",
+        "eu_badge": false,
+        "label": "tos_breach_enforced",
+        "monthly_equiv": 16900.0,
+        "obs_key": "spotify:individual:CO:web:month",
+        "rank": 3,
+        "source_url": "https://example.com/spotify/co"
+      }
+    },
+    "home": {
+      "amount": 139.0,
+      "channel": "web",
+      "cost_eur": 12.64,
+      "cost_eur_with_fee": 12.64,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 139.0,
+      "obs_key": "spotify:individual:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/spotify/se"
+    },
+    "plan_id": "individual",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 8.81
+    },
+    "service_id": "spotify"
+  },
+  {
+    "best_by_risk": {
+      "0": {
+        "amount": 229.0,
+        "channel": "web",
+        "cost_eur": 20.82,
+        "cost_eur_with_fee": 20.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 229.0,
+        "obs_key": "spotify:family:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "1": {
+        "amount": 229.0,
+        "channel": "web",
+        "cost_eur": 20.82,
+        "cost_eur_with_fee": 20.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 229.0,
+        "obs_key": "spotify:family:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "2": {
+        "amount": 229.0,
+        "channel": "web",
+        "cost_eur": 20.82,
+        "cost_eur_with_fee": 20.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 229.0,
+        "obs_key": "spotify:family:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      },
+      "3": {
+        "amount": 229.0,
+        "channel": "web",
+        "cost_eur": 20.82,
+        "cost_eur_with_fee": 20.82,
+        "country": "SE",
+        "currency": "SEK",
+        "eu_badge": false,
+        "label": "official_home",
+        "monthly_equiv": 229.0,
+        "obs_key": "spotify:family:SE:web:month",
+        "rank": 0,
+        "source_url": "https://example.com/spotify/se"
+      }
+    },
+    "home": {
+      "amount": 229.0,
+      "channel": "web",
+      "cost_eur": 20.82,
+      "cost_eur_with_fee": 20.82,
+      "country": "SE",
+      "currency": "SEK",
+      "eu_badge": false,
+      "label": "official_home",
+      "monthly_equiv": 229.0,
+      "obs_key": "spotify:family:SE:web:month",
+      "rank": 0,
+      "source_url": "https://example.com/spotify/se"
+    },
+    "plan_id": "family",
+    "savings_month_eur": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0
+    },
+    "service_id": "spotify"
+  }
+]

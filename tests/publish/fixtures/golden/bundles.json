@@ -1,0 +1,247 @@
+[
+  {
+    "bundle_id": "apple_one_individual_se",
+    "components": [
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "individual",
+        "service_id": "apple_music",
+        "value": null
+      },
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "apple_tv",
+        "value": null
+      },
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "apple_arcade",
+        "value": null
+      },
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "50gb",
+        "service_id": "icloud_plus",
+        "value": null
+      }
+    ],
+    "country": "SE",
+    "feasibility": {
+      "evidence": "terms",
+      "purchasable_remotely": "yes",
+      "tos_risk": "low",
+      "usable_abroad": "yes"
+    },
+    "last_verified": "2026-10-08",
+    "monthly_eur": 17.73,
+    "name": "Apple One Individual",
+    "notes_es": "",
+    "official_url": "https://www.apple.com/se/apple-one/",
+    "price": {
+      "amount": 195.0,
+      "currency": "SEK",
+      "marginal_amount": null,
+      "period": "month",
+      "tax_included": true
+    },
+    "provider_id": "apple",
+    "provider_type": "platform",
+    "requirements": {
+      "credit_check": null,
+      "local_id": "unknown",
+      "local_line": "unknown",
+      "local_payment": "unknown",
+      "residency": null
+    },
+    "saving_pct": 15.21,
+    "standalone_sum_eur": 20.91,
+    "status": "unverified",
+    "tier": "individual"
+  },
+  {
+    "bundle_id": "apple_one_family_se",
+    "components": [
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "family",
+        "service_id": "apple_music",
+        "value": null
+      }
+    ],
+    "country": "SE",
+    "feasibility": null,
+    "last_verified": "2026-10-08",
+    "monthly_eur": null,
+    "name": "Apple One Familj",
+    "notes_es": "",
+    "official_url": "https://www.apple.com/se/apple-one/",
+    "price": {
+      "amount": null,
+      "currency": "SEK",
+      "marginal_amount": null,
+      "period": "month",
+      "tax_included": null
+    },
+    "provider_id": "apple",
+    "provider_type": "platform",
+    "requirements": {
+      "credit_check": null,
+      "local_id": "unknown",
+      "local_line": "unknown",
+      "local_payment": "unknown",
+      "residency": null
+    },
+    "saving_pct": null,
+    "standalone_sum_eur": null,
+    "status": "unverified",
+    "tier": "family"
+  },
+  {
+    "bundle_id": "meli_co",
+    "components": [
+      {
+        "ads": true,
+        "inclusion": "included",
+        "plan_id": "standard_with_ads",
+        "service_id": "netflix",
+        "value": null
+      },
+      {
+        "ads": null,
+        "inclusion": "discount_pct",
+        "plan_id": null,
+        "service_id": "spotify",
+        "value": 30.0
+      }
+    ],
+    "country": "CO",
+    "feasibility": {
+      "evidence": "user_report",
+      "purchasable_remotely": "yes",
+      "tos_risk": "medium",
+      "usable_abroad": "yes"
+    },
+    "last_verified": "2026-10-08",
+    "monthly_eur": 5.53,
+    "name": "Meli+ Total",
+    "notes_es": "Precio en conflicto.",
+    "official_url": "https://www.mercadolibre.com.co/suscripciones/melimas/planes",
+    "price": {
+      "amount": 24900.0,
+      "currency": "COP",
+      "marginal_amount": null,
+      "period": "month",
+      "tax_included": true
+    },
+    "provider_id": "mercado_libre",
+    "provider_type": "marketplace",
+    "requirements": {
+      "credit_check": null,
+      "local_id": "cedula",
+      "local_line": "unknown",
+      "local_payment": "any_card",
+      "residency": null
+    },
+    "saving_pct": -47.07,
+    "standalone_sum_eur": 3.76,
+    "status": "unverified",
+    "tier": "total"
+  },
+  {
+    "bundle_id": "telia_se",
+    "components": [
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "netflix",
+        "value": null
+      },
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": "individual",
+        "service_id": "spotify",
+        "value": null
+      }
+    ],
+    "country": "SE",
+    "feasibility": {
+      "evidence": "terms",
+      "purchasable_remotely": "yes",
+      "tos_risk": "low",
+      "usable_abroad": "travel_only"
+    },
+    "last_verified": "2026-10-08",
+    "monthly_eur": 11.82,
+    "name": "Telia + Netflix y Spotify",
+    "notes_es": "",
+    "official_url": "https://www.telia.se/privat/mobilt/abonnemang",
+    "price": {
+      "amount": 699.0,
+      "currency": "SEK",
+      "marginal_amount": 130.0,
+      "period": "month",
+      "tax_included": true
+    },
+    "provider_id": "telia_se",
+    "provider_type": "telco_mobile",
+    "requirements": {
+      "credit_check": true,
+      "local_id": "personnummer",
+      "local_line": "mobile",
+      "local_payment": "local_bank",
+      "residency": null
+    },
+    "saving_pct": 54.85,
+    "standalone_sum_eur": 26.18,
+    "status": "unverified",
+    "tier": "plus"
+  },
+  {
+    "bundle_id": "yearly_lt",
+    "components": [
+      {
+        "ads": null,
+        "inclusion": "included",
+        "plan_id": null,
+        "service_id": "netflix",
+        "value": null
+      }
+    ],
+    "country": "LT",
+    "feasibility": null,
+    "last_verified": "2026-09-01",
+    "monthly_eur": 10.0,
+    "name": "Go3 anual + Netflix",
+    "notes_es": "",
+    "official_url": "https://example.com/go3",
+    "price": {
+      "amount": 120.0,
+      "currency": "EUR",
+      "marginal_amount": null,
+      "period": "year",
+      "tax_included": true
+    },
+    "provider_id": "go3",
+    "provider_type": "streaming_joint",
+    "requirements": {
+      "credit_check": null,
+      "local_id": "unknown",
+      "local_line": "unknown",
+      "local_payment": "unknown",
+      "residency": null
+    },
+    "saving_pct": -43.06,
+    "standalone_sum_eur": 6.99,
+    "status": "expired",
+    "tier": "annual"
+  }
+]

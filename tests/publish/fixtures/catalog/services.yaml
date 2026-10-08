@@ -1,0 +1,111 @@
+# Small catalog for the publish tests (independent of catalog/services.yaml on purpose: golden
+# files must not change when the real catalog is edited).
+services:
+  - id: netflix
+    name: Netflix
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.netflix.com
+    default_plan: standard
+    plans:
+      - {id: standard_with_ads, label_es: Estándar con anuncios, label_en: Standard with ads, rank: 2,
+         ads: true, plausible_monthly_eur: [1, 20], aliases: [standard with ads]}
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 3, plausible_monthly_eur: [1.5, 30],
+         aliases: [standard]}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 4, plausible_monthly_eur: [2, 40],
+         aliases: [premium]}
+    sources:
+      - adapter: netflix_help
+        params: {url: "https://help.netflix.com/en/node/24926/{cc_lower}"}
+      - adapter: tompec_netflix
+        kind: secondary
+        params:
+          url: https://raw.githubusercontent.com/tompec/netflix-prices/main/data/latest.json
+          license: CC BY 4.0
+          attribution: Netflix prices dataset by Thomas Pecserke (thomas.io), github.com/tompec/netflix-prices
+
+  - id: spotify
+    name: Spotify Premium
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.spotify.com
+    default_plan: individual
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1, 35]}
+    sources:
+      - adapter: spotify_premium
+        params: {url: "https://www.spotify.com/{cc_lower}/premium/"}
+
+  - id: icloud_plus
+    name: iCloud+
+    category: cloud
+    eu_geo_class: eservice_art4_1b
+    homepage: https://www.apple.com/icloud/
+    default_plan: 200gb
+    notes_es: >-
+      Precios de la tabla oficial de Apple.
+    plans:
+      - {id: 50gb, label_es: 50 GB, label_en: 50 GB, rank: 0, plausible_monthly_eur: [0.2, 4]}
+      - {id: 200gb, label_es: 200 GB, label_en: 200 GB, rank: 1, plausible_monthly_eur: [0.4, 8]}
+    sources:
+      - adapter: icloud_support
+        params: {url: https://support.apple.com/en-us/108047}
+
+  - id: apple_one
+    name: Apple One
+    category: bundle
+    eu_geo_class: software_unclear
+    homepage: https://www.apple.com/apple-one/
+    default_plan: individual
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [2, 40]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [3, 50]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-one, url: "https://www.apple.com/{apple_prefix}apple-one/"}
+
+  - id: apple_music
+    name: Apple Music
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.apple.com/apple-music/
+    default_plan: individual
+    plans:
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20]}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [0.8, 30]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-music, url: "https://www.apple.com/{apple_prefix}apple-music/"}
+
+  - id: apple_tv
+    name: Apple TV
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.apple.com/apple-tv/
+    default_plan: standard
+    plans:
+      - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 25]}
+    sources:
+      - adapter: apple_marketing
+        params: {page: apple-tv, url: "https://www.apple.com/{apple_prefix}apple-tv/"}
+
+  # No source, but referenced by a bundle: must be in services.json.
+  - id: apple_arcade
+    name: Apple Arcade
+    category: gaming
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.apple.com/apple-arcade/
+    default_plan: standard
+    plans:
+      - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 15]}
+
+  # No source and no bundle: must NOT be in services.json.
+  - id: vix
+    name: ViX Premium
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://vix.com
+    default_plan: premium
+    plans:
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [0.5, 20]}
