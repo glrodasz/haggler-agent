@@ -195,3 +195,24 @@ def test_bootstrap_trusts_only_the_default_branch_and_prints_the_job_name() -> N
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
 def test_bootstrap_is_valid_bash() -> None:
     subprocess.run(["bash", "-n", str(ROOT / "infra" / "bootstrap.sh")], check=True)
+
+
+def test_deploy_job_also_deploys_the_research_job() -> None:
+    deploy = load("deploy-job.yml")
+    assert deploy["env"]["RESEARCH_JOB_NAME"] == (
+        "${{ vars.GCP_RESEARCH_JOB_NAME || 'haggler-research' }}"
+    )
+    run = step(deploy, "deploy", "Deploy research Cloud Run Job")["run"]
+    assert '"${RESEARCH_JOB_NAME}"' in run
+    assert "--args=research,run,--store,gcs" in run
+    # A retry would spend the search budget again.
+    assert "--max-retries 0" in run
+    assert "HAGGLER_RESEARCH_MODEL" in run
+
+
+def test_bootstrap_schedules_the_research_job_weekly_and_expires_its_pages() -> None:
+    text = (ROOT / "infra" / "bootstrap.sh").read_text(encoding="utf-8")
+    assert 'RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-23 5 * * 1}"' in text
+    assert 'ensure_job_and_trigger "${RESEARCH_JOB}"' in text
+    assert '"condition": {"age": 30, "matchesPrefix": ["raw/research/"]}' in text
+    assert "gh variable set GCP_RESEARCH_JOB_NAME" in text

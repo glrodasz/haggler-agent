@@ -10,8 +10,10 @@ Cloud Scheduler (europe-north1, 04:17 Europe/Stockholm)
    ▼
 Cloud Run Job haggler-daily (europe-north2)  ──►  gs://PROYECTO-haggler-data/
    imagen de Artifact Registry                      raw/  runs/  latest/
-   cuenta haggler-job + Gemini en Vertex AI               │
-                                                          ▼
+   cuenta haggler-job + Gemini en Vertex AI         research/  (semanal, §13)
+                                                          │
+Cloud Run Job haggler-research (lunes 05:23) ─────────────┤
+   misma imagen: haggler research run                     ▼
 GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
    haggler sync ─► commit de data/ ─► haggler site-data ─► build Astro ─► GitHub Pages
 ```
@@ -19,8 +21,8 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
-| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter (no usa GCP) |
-| `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy haggler-daily` |
+| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación (no usa GCP) |
+| `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
 | `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages |
 
 ## 1. Requisitos
@@ -114,8 +116,10 @@ Opcionales:
 | Nombre | Tipo | Para qué |
 |---|---|---|
 | `GCP_JOB_NAME` | variable | nombre del Cloud Run Job si el bootstrap se corrió con otro `JOB` (por defecto `haggler-daily`); `deploy-job.yml` despliega ese job, el mismo al que apunta el Scheduler |
+| `GCP_RESEARCH_JOB_NAME` | variable | nombre del job de investigación si el bootstrap se corrió con otro `RESEARCH_JOB` (por defecto `haggler-research`) |
 | `HAGGLER_EXTRACT_MODEL` | variable | modelo Gemini del fallback LLM si el de por defecto (`gemini-3.1-flash-lite`) no está disponible en Vertex; `deploy-job.yml` lo pasa al job |
-| `GEMINI_API_KEY` | **secreto** | clave de Google AI Studio, solo para `probe.yml` en `mode=full` (sin ella el probe corre sin LLM) |
+| `HAGGLER_RESEARCH_MODEL` | variable | modelo Gemini con Google Search del job de investigación (por defecto `gemini-3-flash-preview`; el probe `mode=research` lista los disponibles) |
+| `GEMINI_API_KEY` | **secreto** | clave de Google AI Studio, solo para `probe.yml` en `mode=full` y `mode=research` (sin ella el probe corre sin LLM) |
 
 Mientras falten variables, `deploy-job.yml` y el paso de sync de `publish.yml` no fallan: dejan un
 aviso (*notice*) en el run y se saltan los pasos de GCP. Lo mismo ocurre si se lanzan desde una
@@ -253,8 +257,9 @@ resumen y `summary.md` + `summary.json` como artefacto `probe-summary-<modo>` (3
 dispara solo con push a `claude/**` que toque `src/haggler/sources/`, `fetch/`, `fx/`,
 `catalog/` o `probe/targets.txt`, o a mano:
 
-- **Actions → probe → Run workflow**: `mode` = `adapters` (solo parsers), `fx` (tipos de cambio)
-  o `full` (workflow completo con store local; LLM solo si existe el secreto `GEMINI_API_KEY`).
+- **Actions → probe → Run workflow**: `mode` = `adapters` (solo parsers), `fx` (tipos de cambio),
+  `full` (workflow completo con store local; LLM solo si existe el secreto `GEMINI_API_KEY`) o
+  `research` (ver §13; targets en `probe/research_targets.txt`).
 - `targets` reemplaza `probe/targets.txt` para ese run, separado por `;`:
   `netflix SE CO; spotify *`.
 
@@ -277,6 +282,7 @@ verificar en la calculadora de GCP:
 | Cloud Storage | `raw/` 90 días + snapshots, ~1–3 GB | < 0,10 USD |
 | Artifact Registry | ≤ 5 imágenes (~1 GB) | ~0,05–0,10 USD (0,5 GB gratis) |
 | Vertex AI (Gemini flash-lite) | fallback ≤ 150 llamadas/día, típico ~0 | 0–3 USD (tope de diseño ≈ 0,10 USD/día) |
+| Vertex AI (Gemini flash + Google Search) | investigación semanal: ≤ 40 llamadas y ≤ 200 consultas de búsqueda por corrida, tope de 1 500 consultas/mes | tokens < 1 USD; las consultas de *grounding* tienen una cuota gratuita mensual (5 000 en Gemini 3) y luego se facturan (~14 USD por 1 000): con los topes por defecto, ~0 |
 | Cloud Logging | pocos MB | 0 (50 GiB gratis) |
 | GitHub Actions / Pages | repo público | 0 |
 
@@ -290,6 +296,7 @@ con alertas en **Billing → Budgets & alerts** (por ejemplo 5 USD).
 ```bash
 gcloud scheduler jobs pause haggler-daily-trigger --location europe-north1
 gcloud scheduler jobs resume haggler-daily-trigger --location europe-north1   # reanudar
+gcloud scheduler jobs pause haggler-research-trigger --location europe-north1  # solo la investigación
 ```
 
 **Pausar la publicación / despliegues**:
@@ -310,7 +317,9 @@ deja sin efecto: los workflows solo dejarán un aviso.
 ```bash
 P=mi-proyecto
 gcloud scheduler jobs delete haggler-daily-trigger --location europe-north1 --project $P
+gcloud scheduler jobs delete haggler-research-trigger --location europe-north1 --project $P
 gcloud run jobs delete haggler-daily --region europe-north2 --project $P
+gcloud run jobs delete haggler-research --region europe-north2 --project $P
 gcloud artifacts repositories delete haggler --location europe-north2 --project $P
 gcloud storage rm --recursive gs://$P-haggler-data          # borra también el bucket
 gcloud iam workload-identity-pools delete github --location global --project $P
@@ -364,3 +373,64 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
   identidad que hace el push (una GitHub App o una *deploy key* con permiso de escritura, cambiando
   el `actions/checkout` del job de sync para usarla). Sin eso el workflow avisa con un *warning* y
   publica el sitio con los datos sincronizados igualmente (§11).
+
+## 13. Investigación de factibilidad (Fase 2)
+
+Un segundo Cloud Run Job, `haggler-research` (misma imagen, `haggler research run --store gcs`),
+corre los lunes a las 05:23 Europe/Stockholm, después del run diario. Investiga con Gemini +
+Google Search las reglas de país de los servicios, lo que exige contratar la oferta de un país
+(solo para los pares servicio × país que ahorran al menos 1 €/mes y 15 %) y los medios de pago, y
+**solo guarda lo que nuestro propio fetch verifica**: la cita literal tiene que aparecer en la URL
+citada (o en las páginas oficiales conocidas de `research_urls` en `catalog/services.yaml` y
+`data/curated/payment_instruments.yaml`), respetando `robots.txt` y sin evadir bloqueos.
+
+```
+research/runs/AAAA-MM-DD/RUN/report.json    presupuesto usado, verificación por clase de fuente
+research/latest/{services,pairs,instruments}.json   hechos verificados (citas + URL + fecha)
+research/latest/state.json                  vigencia, reintentos y consultas del mes
+research/latest/run.json                    se escribe al final, con los SHA-256
+raw/research/AAAA-MM-DD/…                   páginas leídas (se borran a los 30 días)
+```
+
+`publish.yml` no cambia: `haggler sync` también copia la investigación a `data/research/`, y
+`haggler site-data` calcula los veredictos por perfil (`data/curated/profiles.yaml`). Los
+hallazgos nuevos aparecen en el sitio como **Pendiente de revisión** y el comparador los ignora
+salvo que se marque la casilla correspondiente.
+
+**Primera vez** (después del bootstrap y del primer `deploy-job`):
+
+```bash
+gcloud run jobs execute haggler-research --region europe-north2 --wait
+gcloud storage cat gs://mi-proyecto-haggler-data/research/latest/run.json
+```
+
+Para una prueba acotada: `--args='^;^research;run;--store;gcs;--services;netflix;--max-jobs;1'`.
+
+**Revisar y aceptar** (en tu copia del repo, con `data/` al día):
+
+```bash
+uv run haggler research review                     # hallazgos pendientes e impacto por perfil
+uv run haggler research accept netflix --by tu-usuario --note "revisado"
+uv run haggler research reject pair:netflix:CO --note "la cita no dice eso"
+git add data/curated/research_review.yaml && git commit -m "Revisión de hallazgos" && git push
+```
+
+Una decisión vale para el id del hallazgo **y** su hash de evidencia: si el agente encuentra otra
+cita u otra URL para el mismo hecho, vuelve a quedar pendiente. Lo curado a mano en
+`data/curated/feasibility.yaml` siempre gana.
+
+**Probar antes de desplegar**: crea el secreto `GEMINI_API_KEY` (clave de Google AI Studio) y
+lanza **Actions → probe → Run workflow → mode = research**. El resumen lista los modelos flash
+disponibles, si `robots.txt` deja seguir las redirecciones de *grounding* (hoy no:
+`vertexaisearch.cloud.google.com` lo prohíbe, por eso existen las `research_urls`), cuántas citas
+se verifican por clase de fuente y lo que costó en consultas y tokens. Si menos del 60 % de las
+citas oficiales se verifican, revisa las `research_urls` antes de activar el job.
+
+**Ajustes** (variables de entorno, ver `.env.example`): `HAGGLER_RESEARCH_MODEL`,
+`HAGGLER_RESEARCH_MAX_CALLS` (40), `HAGGLER_RESEARCH_MAX_QUERIES` (200),
+`HAGGLER_RESEARCH_MAX_MONTH_QUERIES` (1500), `HAGGLER_RESEARCH_MAX_PAIRS` (6),
+`HAGGLER_RESEARCH_MAX_SERVICES` (3), `HAGGLER_RESEARCH_MAX_INSTRUMENTS` (2). El job se despliega
+con `--max-retries 0`: un reintento gastaría otra vez las consultas de búsqueda.
+
+Nada de esto es asesoría legal: el sitio informa riesgos con su fuente y nunca sugiere VPN ni
+declarar datos falsos (una ruta que lo exigiría se muestra como *No factible*).

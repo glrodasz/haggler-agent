@@ -8,9 +8,11 @@
 # script never changes your gcloud configuration: the project is passed through the environment.
 #
 # Creates: APIs, Artifact Registry repo (cleanup: keep 5 versions), GCS bucket (raw/ deleted after
-# 90 days), service accounts haggler-job / haggler-scheduler / haggler-github, Workload Identity
-# Federation for GitHub Actions, a placeholder Cloud Run Job (deploy-job.yml deploys the real
-# image) and the Cloud Scheduler trigger. Finally prints the GitHub repository variables.
+# 90 days, raw/research/ after 30), service accounts haggler-job / haggler-scheduler /
+# haggler-github, Workload Identity Federation for GitHub Actions, two placeholder Cloud Run Jobs
+# (deploy-job.yml deploys the real image) and their Cloud Scheduler triggers: haggler-daily
+# (prices, every day) and haggler-research (feasibility research, weekly). Finally prints the
+# GitHub repository variables.
 
 set -euo pipefail
 
@@ -31,6 +33,10 @@ SCHEDULE="${SCHEDULE:-17 4 * * *}"
 # Not read from $TZ on purpose: shells often export TZ=UTC or TZ=:/etc/localtime, which would
 # silently move the schedule. Override with SCHEDULE_TZ.
 SCHEDULE_TZ="${SCHEDULE_TZ:-Europe/Stockholm}"
+# Weekly feasibility research, on Mondays after the daily run (same time zone).
+RESEARCH_JOB="${RESEARCH_JOB:-haggler-research}"
+RESEARCH_SCHEDULER_JOB="${RESEARCH_SCHEDULER_JOB:-${RESEARCH_JOB}-trigger}"
+RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-23 5 * * 1}"
 WIF_POOL="${WIF_POOL:-github}"
 WIF_PROVIDER="${WIF_PROVIDER:-github}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-us-docker.pkg.dev/cloudrun/container/job:latest}"
@@ -132,7 +138,7 @@ PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(proje
 [[ -n "${PROJECT_NUMBER}" ]] || die "could not resolve the project number of ${PROJECT_ID}"
 info "account=${ACCOUNT} project=${PROJECT_ID} (#${PROJECT_NUMBER})"
 info "region=${REGION} scheduler_region=${SCHEDULER_REGION} bucket=gs://${BUCKET}"
-info "job=${JOB} github=${GITHUB_REPO}@${GITHUB_BRANCH}"
+info "jobs=${JOB},${RESEARCH_JOB} github=${GITHUB_REPO}@${GITHUB_BRANCH}"
 # Best effort: the call itself needs the Cloud Billing API, so only a definite "False" stops us.
 BILLING="$(gcloud billing projects describe "${PROJECT_ID}" --format='value(billingEnabled)' \
   2>/dev/null || true)"
@@ -193,20 +199,26 @@ else
     --public-access-prevention
   info "created"
 fi
-# Raw pages are only kept for debugging/replays; snapshots and latest/ are kept forever.
+# Raw pages are only kept for debugging/replays; snapshots and latest/ are kept forever. Pages
+# fetched by the research job (third-party terms and press) are kept for 30 days only.
 cat >"${TMP_DIR}/lifecycle.json" <<'JSON'
 {
   "rule": [
     {
       "action": {"type": "Delete"},
       "condition": {"age": 90, "matchesPrefix": ["raw/"]}
+    },
+    {
+      "action": {"type": "Delete"},
+      "condition": {"age": 30, "matchesPrefix": ["raw/research/"]}
     }
   ]
 }
 JSON
 gcloud storage buckets update "gs://${BUCKET}" --lifecycle-file="${TMP_DIR}/lifecycle.json" \
   --uniform-bucket-level-access --public-access-prevention
-info "lifecycle: delete raw/ after 90 days; uniform access + public access prevention"
+info "lifecycle: delete raw/ after 90 days, raw/research/ after 30"
+info "uniform bucket-level access + public access prevention"
 
 # --- Service accounts --------------------------------------------------------------------------
 step "Service accounts"
@@ -276,47 +288,56 @@ WIF_PROVIDER_NAME="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityP
 WIF_PRINCIPAL="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WIF_POOL}/attribute.repository/${GITHUB_REPO}"
 bind_sa "${GITHUB_SA}" "${WIF_PRINCIPAL}" roles/iam.workloadIdentityUser
 
-# --- Cloud Run Job (placeholder) ---------------------------------------------------------------
-step "Cloud Run Job ${JOB} (${REGION})"
-if exists gcloud run jobs describe "${JOB}" --region="${REGION}"; then
-  info "already exists (not touched; deploy-job.yml manages its image and settings)"
-else
-  # A public sample image, only so the scheduler has a target before the first real deploy.
-  retry gcloud run jobs create "${JOB}" --region="${REGION}" --image="${PLACEHOLDER_IMAGE}" \
-    --service-account="${JOB_SA}" --tasks=1 --max-retries=0 --task-timeout=10m \
-    --labels=managed-by=haggler-bootstrap --format=none
-  info "created placeholder job (image ${PLACEHOLDER_IMAGE})"
-fi
+# --- Cloud Run Jobs (placeholders) and their Cloud Scheduler triggers ---------------------------
+ensure_job_and_trigger() { # job scheduler_job schedule description
+  local job="$1" scheduler_job="$2" schedule="$3" description="$4"
 
-step "IAM: ${SCHEDULER_SA_NAME}"
-retry gcloud run jobs add-iam-policy-binding "${JOB}" --region="${REGION}" \
-  --member="serviceAccount:${SCHEDULER_SA}" --role=roles/run.invoker --format=none
-info "job ${JOB}: roles/run.invoker -> serviceAccount:${SCHEDULER_SA}"
+  step "Cloud Run Job ${job} (${REGION})"
+  if exists gcloud run jobs describe "${job}" --region="${REGION}"; then
+    info "already exists (not touched; deploy-job.yml manages its image and settings)"
+  else
+    # A public sample image, only so the scheduler has a target before the first real deploy.
+    retry gcloud run jobs create "${job}" --region="${REGION}" --image="${PLACEHOLDER_IMAGE}" \
+      --service-account="${JOB_SA}" --tasks=1 --max-retries=0 --task-timeout=10m \
+      --labels=managed-by=haggler-bootstrap --format=none
+    info "created placeholder job (image ${PLACEHOLDER_IMAGE})"
+  fi
 
-# --- Cloud Scheduler -----------------------------------------------------------------------------
-step "Cloud Scheduler ${SCHEDULER_JOB} (${SCHEDULER_REGION}): '${SCHEDULE}' ${SCHEDULE_TZ}"
-RUN_URI="https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/jobs/${JOB}:run"
-SCHEDULER_ARGS=(
-  --location="${SCHEDULER_REGION}"
-  --schedule="${SCHEDULE}"
-  --time-zone="${SCHEDULE_TZ}"
-  --uri="${RUN_URI}"
-  --http-method=POST
-  --oauth-service-account-email="${SCHEDULER_SA}"
-  --oauth-token-scope="https://www.googleapis.com/auth/cloud-platform"
-  --attempt-deadline=180s
-  --max-retry-attempts=2
-  --min-backoff=120s
-  --description="Runs Cloud Run Job ${JOB} (haggler daily prices)"
-  --format=none
-)
-if exists gcloud scheduler jobs describe "${SCHEDULER_JOB}" --location="${SCHEDULER_REGION}"; then
-  gcloud scheduler jobs update http "${SCHEDULER_JOB}" "${SCHEDULER_ARGS[@]}"
-  info "already exists; schedule/target re-applied"
-else
-  retry gcloud scheduler jobs create http "${SCHEDULER_JOB}" "${SCHEDULER_ARGS[@]}"
-  info "created"
-fi
+  step "IAM: ${SCHEDULER_SA_NAME} on ${job}"
+  retry gcloud run jobs add-iam-policy-binding "${job}" --region="${REGION}" \
+    --member="serviceAccount:${SCHEDULER_SA}" --role=roles/run.invoker --format=none
+  info "job ${job}: roles/run.invoker -> serviceAccount:${SCHEDULER_SA}"
+
+  step "Cloud Scheduler ${scheduler_job} (${SCHEDULER_REGION}): '${schedule}' ${SCHEDULE_TZ}"
+  local run_uri="https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}"
+  run_uri+="/jobs/${job}:run"
+  local scheduler_args=(
+    --location="${SCHEDULER_REGION}"
+    --schedule="${schedule}"
+    --time-zone="${SCHEDULE_TZ}"
+    --uri="${run_uri}"
+    --http-method=POST
+    --oauth-service-account-email="${SCHEDULER_SA}"
+    --oauth-token-scope="https://www.googleapis.com/auth/cloud-platform"
+    --attempt-deadline=180s
+    --max-retry-attempts=2
+    --min-backoff=120s
+    --description="${description}"
+    --format=none
+  )
+  if exists gcloud scheduler jobs describe "${scheduler_job}" --location="${SCHEDULER_REGION}"; then
+    gcloud scheduler jobs update http "${scheduler_job}" "${scheduler_args[@]}"
+    info "already exists; schedule/target re-applied"
+  else
+    retry gcloud scheduler jobs create http "${scheduler_job}" "${scheduler_args[@]}"
+    info "created"
+  fi
+}
+
+ensure_job_and_trigger "${JOB}" "${SCHEDULER_JOB}" "${SCHEDULE}" \
+  "Runs Cloud Run Job ${JOB} (haggler daily prices)"
+ensure_job_and_trigger "${RESEARCH_JOB}" "${RESEARCH_SCHEDULER_JOB}" "${RESEARCH_SCHEDULE}" \
+  "Runs Cloud Run Job ${RESEARCH_JOB} (haggler weekly feasibility research)"
 
 # --- Output --------------------------------------------------------------------------------------
 step "Done. Set these GitHub repository VARIABLES (Settings > Secrets and variables > Actions >"
@@ -331,6 +352,7 @@ cat <<EOF
   GCS_BUCKET       = ${BUCKET}
   AR_REPOSITORY    = ${AR_REPO}
   GCP_JOB_NAME     = ${JOB}    (optional while it is haggler-daily)
+  GCP_RESEARCH_JOB_NAME = ${RESEARCH_JOB}    (optional while it is haggler-research)
 
 Or with the GitHub CLI:
 
@@ -342,7 +364,9 @@ Or with the GitHub CLI:
   gh variable set GCS_BUCKET       --repo ${GITHUB_REPO} --body '${BUCKET}'
   gh variable set AR_REPOSITORY    --repo ${GITHUB_REPO} --body '${AR_REPO}'
   gh variable set GCP_JOB_NAME     --repo ${GITHUB_REPO} --body '${JOB}'
+  gh variable set GCP_RESEARCH_JOB_NAME --repo ${GITHUB_REPO} --body '${RESEARCH_JOB}'
 
 Next: run the "deploy-job" workflow from ${GITHUB_BRANCH} (or merge to it), then
   gcloud run jobs execute ${JOB} --region ${REGION} --wait
+  gcloud run jobs execute ${RESEARCH_JOB} --region ${REGION} --wait   # after the daily run
 EOF

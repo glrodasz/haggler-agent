@@ -4,8 +4,9 @@ Agente construido con **Google ADK** (`google-adk` 2.x) que recolecta cada día 
 suscripciones de consumo **por país** desde fuentes oficiales, los valida y alimenta un sitio
 estático para encontrar la combinación más barata *y factible* para quien vive en Suecia.
 
-> Estado: **Fase 1** — precios diarios + sitio mínimo. Factibilidad, bundles e instrumentos de
-> pago son datos curados a mano (`data/curated/`). Ver [el roadmap](#roadmap).
+> Estado: **Fase 2** — precios diarios, sitio y un agente semanal de investigación de
+> factibilidad con perfiles configurables. Bundles e instrumentos de pago siguen curados a mano
+> (`data/curated/`). Ver [el roadmap](#roadmap).
 
 ## Qué hace
 
@@ -21,6 +22,16 @@ estático para encontrar la combinación más barata *y factible* para quien viv
 es el peor de los tres. El sitio informa riesgos y supuestos; **no es asesoría legal** ni
 recomienda declarar datos falsos.
 
+### Investigación de factibilidad (Fase 2)
+
+| Paso | Cómo |
+|---|---|
+| Qué investiga | Reglas de país de cada servicio, lo que exige contratar la oferta de un país (solo los pares con ahorro ≥ 1 €/mes y ≥ 15 %) y los medios de pago, con un vocabulario cerrado de hechos (`src/haggler/research/fields.py`). |
+| Descubrir | Tres agentes ADK `single_turn` con Gemini + Google Search y salida estructurada; topes de llamadas, de consultas por corrida y por mes. |
+| Verificar | Un hecho cuenta solo si nuestro fetch (robots.txt, sin evadir bloqueos) encuentra la **cita literal** en la página citada o en las páginas oficiales conocidas del sujeto. Clase de fuente: oficial / prensa / foro. |
+| Evaluar | Función pura (`research/evaluate.py`) que deriva los tres ejes **por perfil** (`data/curated/profiles.yaml`): país de la tarjeta, presencia, documentos, dirección. Lo curado gana; las mejoras exigen fuente oficial; una ruta que requiere declarar datos falsos es *No factible*. |
+| Revisar | Los hallazgos quedan *Pendiente de revisión* hasta `haggler research accept`; el comparador los excluye salvo que se active la casilla. |
+
 ## Arquitectura
 
 ```
@@ -28,6 +39,9 @@ Cloud Scheduler ──► Cloud Run Job (europe-north2) ──► GCS (snapshots
                      haggler daily (ADK Workflow)            │
                                                              ▼
                     GitHub Actions publish.yml ──► commit data/ ──► GitHub Pages (web/)
+
+Cloud Scheduler (lunes) ──► Cloud Run Job haggler-research ──► GCS research/latest/
+                             haggler research run (ADK Workflow)   (sync → data/research/)
 ```
 
 Workflow ADK (cadena lineal; cada nodo es un no-op si no recibe trabajo):
@@ -37,15 +51,23 @@ plan_tasks → fetch_and_parse (paralelo, reintentos por ítem) → llm_extract 
           → validate → adjudicate (segunda opinión LLM) → persist
 ```
 
+Workflow de investigación:
+
+```
+plan_research → research (agentes con Google Search) → verify_evidence (nuestro fetch) → persist
+```
+
 ## Estructura
 
 ```
 src/haggler/        paquete Python (modelos, fuentes, fetch, fx, validación, pipeline ADK, CLI)
 agents/haggler_agent/  shim para `adk web agents` / `adk run agents/haggler_agent`
+agents/haggler_research/  shim del workflow de investigación para `adk web agents`
 catalog/            servicios, planes, fuentes y países (YAML editable)
 data/latest/        últimos precios publicados (gestionado por el bot)
 data/changes/       historial de cambios de precio (append-only)
-data/curated/       factibilidad, bundles, instrumentos de pago (curado a mano)
+data/curated/       factibilidad, perfiles, revisiones, bundles, instrumentos de pago
+data/research/      hechos verificados por el agente de investigación (gestionado por el bot)
 web/                sitio estático (Astro + Preact)
 infra/              bootstrap de GCP
 .github/workflows/  CI, probe, despliegue del job, publicación
@@ -70,6 +92,12 @@ uv run haggler sync --from-dir .haggler --data-dir data
 uv run haggler site-data --data-dir data --out web/src/data
 npm --prefix web ci && npm --prefix web run build
 
+# Investigación de factibilidad (necesita LLM con Google Search para investigar)
+uv run haggler research run --store local --dry-run --no-llm   # solo planifica
+uv run haggler research run --store local --services netflix --pairs spotify:CO
+uv run haggler research review                                   # pendientes e impacto
+uv run haggler research accept netflix --by tu-usuario
+
 # UI de desarrollo de ADK
 PYTHONPATH=agents uv run adk web agents
 ```
@@ -83,9 +111,9 @@ Despliegue en GCP y GitHub Pages: ver [docs/SETUP.md](docs/SETUP.md).
 
 ## Roadmap
 
-1. **Fase 1 (esta)**: precios diarios por país + sitio mínimo.
-2. **Fase 2**: agente de investigación de factibilidad que propone cambios a
-   `data/curated/feasibility.yaml` como PR revisable.
+1. **Fase 1**: precios diarios por país + sitio mínimo.
+2. **Fase 2 (esta)**: agente semanal de investigación de factibilidad (hechos verificados con cita
+   literal, evaluador determinístico por perfil, revisión humana por hash de evidencia).
 3. **Fase 3**: agente de bundles (Meli+, telcos, Apple One…) que monitorea páginas/PDF oficiales.
 4. **Fase 4**: optimizador de combinaciones en el navegador (una región por cuenta Apple/Google,
    máximo de instrumentos de pago extranjeros, bundles como SKU virtuales).

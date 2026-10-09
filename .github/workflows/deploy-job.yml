@@ -1,4 +1,5 @@
-# Builds the job image, pushes it to Artifact Registry and (re)deploys the Cloud Run Job.
+# Builds the job image, pushes it to Artifact Registry and (re)deploys both Cloud Run Jobs: the
+# daily prices job and the weekly feasibility research job (same image, other arguments).
 # Needs the repository variables printed by infra/bootstrap.sh (docs/SETUP.md); without them the
 # workflow only emits a notice. Workload Identity Federation only trusts the default branch, so a
 # manual run from another branch is skipped with a notice too.
@@ -30,6 +31,7 @@ concurrency:
 env:
   # bootstrap.sh prints GCP_JOB_NAME when JOB was overridden; it must name the scheduled job.
   JOB_NAME: ${{ vars.GCP_JOB_NAME || 'haggler-daily' }}
+  RESEARCH_JOB_NAME: ${{ vars.GCP_RESEARCH_JOB_NAME || 'haggler-research' }}
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   REGION: ${{ vars.GCP_REGION }}
   AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
@@ -131,4 +133,36 @@ jobs:
             echo "- Job: \`${JOB_NAME}\` (${REGION})"
             echo "- Imagen: \`${IMAGE}\`"
             echo "- Ejecutar ahora: \`gcloud run jobs execute ${JOB_NAME} --region ${REGION} --wait\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy research Cloud Run Job
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          IMAGE: ${{ steps.image.outputs.ref }}
+          # Optional repository variable (default: HAGGLER_RESEARCH_MODEL in src/haggler/config.py).
+          RESEARCH_MODEL: ${{ vars.HAGGLER_RESEARCH_MODEL }}
+        run: |
+          env_vars="HAGGLER_STORE=gcs,HAGGLER_GCS_BUCKET=${GCS_BUCKET},GOOGLE_GENAI_USE_ENTERPRISE=1"
+          env_vars="${env_vars},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global"
+          if [ -n "${RESEARCH_MODEL}" ]; then
+            env_vars="${env_vars},HAGGLER_RESEARCH_MODEL=${RESEARCH_MODEL}"
+          fi
+          # --max-retries 0: a retry would spend the run's search-query budget again; the next
+          # weekly run picks up what this one could not do (failed subjects keep their facts).
+          gcloud run jobs deploy "${RESEARCH_JOB_NAME}" \
+            --image "${IMAGE}" \
+            --region "${REGION}" \
+            --service-account "${JOB_SA}" \
+            --args=research,run,--store,gcs \
+            --cpu 1 \
+            --memory 1Gi \
+            --task-timeout 30m \
+            --max-retries 0 \
+            --set-env-vars "${env_vars}" \
+            --labels "managed-by=github-actions,commit=${GITHUB_SHA::12}" \
+            --quiet
+          {
+            echo ""
+            echo "- Job de investigación: \`${RESEARCH_JOB_NAME}\` (semanal)"
+            echo "- Ejecutar ahora: \`gcloud run jobs execute ${RESEARCH_JOB_NAME} --region ${REGION} --wait\`"
           } >> "$GITHUB_STEP_SUMMARY"
