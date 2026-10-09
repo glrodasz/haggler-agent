@@ -100,6 +100,8 @@ class Verdict:
     rank: int
     eu_badge: bool
     record_id: str | None
+    # "home" | "curated" | "agent_reviewed" | "agent_pending"; None = nothing evaluated.
+    provenance: str | None = None
 
 
 def record_rank(record: FeasibilityRecord) -> int:
@@ -117,7 +119,7 @@ def eu_badge(record: FeasibilityRecord) -> bool:
     return any(basis.strength in EU_BADGE_STRENGTHS for basis in record.legal_basis)
 
 
-def _find_record(
+def find_record(
     feasibility: FeasibilityFile,
     service_id: str,
     target_country: str,
@@ -146,8 +148,8 @@ def verdict(
     feasibility: FeasibilityFile,
 ) -> Verdict:
     if target_country == residence_country:
-        return Verdict(label=LABELS[0], rank=0, eu_badge=False, record_id=None)
-    record = _find_record(
+        return Verdict(label=LABELS[0], rank=0, eu_badge=False, record_id=None, provenance="home")
+    record = find_record(
         feasibility,
         service_id,
         target_country,
@@ -157,4 +159,10 @@ def verdict(
     if record is None:
         return Verdict(label=UNKNOWN_LABEL, rank=UNKNOWN_RANK, eu_badge=False, record_id=None)
     rank = record_rank(record)
-    return Verdict(label=LABELS[rank], rank=rank, eu_badge=eu_badge(record), record_id=record.id)
+    return Verdict(
+        label=LABELS[rank],
+        rank=rank,
+        eu_badge=eu_badge(record),
+        record_id=record.id,
+        provenance="curated",
+    )

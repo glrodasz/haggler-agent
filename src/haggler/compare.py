@@ -8,7 +8,9 @@ Algorithm:
   * for each risk threshold k in 0..3: best = min cost_eur_with_fee over offers whose verdict rank
     <= k (feasibility.verdict); ties -> prefer web, then official, then lower country code;
   * savings_month_eur = home.cost_eur_with_fee - best.cost_eur_with_fee (None without home);
-  * offers whose verdict is "unknown" are listed in `all_offers` but never chosen as best.
+  * offers whose verdict is "unknown" are listed in `all_offers` but never chosen as best;
+  * `verdicts=` swaps the verdict source (research-derived verdicts per profile); the rules
+    above stay the same.
 
 Details:
   * money is Decimal, quantized to 0.01 EUR (ROUND_HALF_UP) after the FX conversion and after the
@@ -25,10 +27,11 @@ Details:
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
-from haggler.feasibility import verdict
+from haggler.feasibility import Verdict, verdict
 from haggler.models.catalog import Catalog
 from haggler.models.curated import FeasibilityFile
 from haggler.models.fx import FxTable
@@ -95,7 +98,10 @@ def cheapest(
     residence: str = "SE",
     profile: str = "se_resident_co_citizen",
     fx_fee_pct: float = 2.0,
+    verdicts: Callable[[str, str], Verdict] | None = None,
 ) -> list[CheapestRow]:
+    """`verdicts(service_id, country)` replaces the curated-only feasibility.verdict lookup
+    (haggler.research.evaluate.verdict_fn adds research-derived verdicts per profile)."""
     try:
         home_currency = catalog.country(residence).currency
     except KeyError:
@@ -118,12 +124,16 @@ def cheapest(
             continue
         eur = offer.monthly_equiv / per_eur
         with_fee = eur if offer.currency == home_currency else eur * fee_factor
-        v = verdict(
-            offer.service_id,
-            offer.country,
-            residence_country=residence,
-            profile=profile,
-            feasibility=feasibility,
+        v = (
+            verdicts(offer.service_id, offer.country)
+            if verdicts is not None
+            else verdict(
+                offer.service_id,
+                offer.country,
+                residence_country=residence,
+                profile=profile,
+                feasibility=feasibility,
+            )
         )
         ref = OfferRef(
             obs_key=offer.obs_key,
