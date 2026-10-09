@@ -1,0 +1,12 @@
+# Targets for "haggler probe --mode research" (.github/workflows/probe.yml, mode=research).
+#
+#   <service_id>                 the service's general country rules
+#   <service_id> <CC> [<CC> ...] subscribing to that country's offer (pairs)
+#   instrument <instrument_id>   a payment instrument (data/curated/payment_instruments.yaml)
+#
+# Every target is one agent run with Google Search grounding (search queries are billed past
+# the free tier): keep the list short.
+
+netflix
+spotify CO
+instrument revolut_eea

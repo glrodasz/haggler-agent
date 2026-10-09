@@ -12,7 +12,8 @@ Modes:
   fx        build the FX table with DefaultFxService and print source/as_of/stale per currency;
   full      run the daily job (haggler.jobs.daily) against a LocalStore in <out>/raw/store, once
             per distinct country set of the targets, with the LLM only when credentials exist,
-            and print the RunReports.
+            and print the RunReports;
+  research  one real feasibility research run (haggler.probe_research; its own target format).
 
 Targets file: one target per non-comment line, "service_id CC [CC ...]" ("*" = all countries).
 
@@ -59,7 +60,7 @@ from haggler.sources.base import Adapter, ParseResult
 from haggler.sources.registry import get_adapter
 
 Mode = Literal["adapters", "fx", "full"]
-MODES: tuple[str, ...] = ("adapters", "fx", "full")
+MODES: tuple[str, ...] = ("adapters", "fx", "full", "research")
 ALL_COUNTRIES = "*"
 TASK_TIMEOUT_S = 90.0
 TRANSIENT_ATTEMPTS = 2
@@ -814,6 +815,12 @@ def run_probe(
     now = now or datetime.now(UTC)
     today = today or now.date()
     out_dir = Path(out_dir)
+    if mode == "research":
+        from haggler import probe_research
+
+        summary, md = probe_research.run(targets_file, out_dir, settings, today=today)
+        _write_outputs(out_dir, summary, md, out)
+        return 1 if summary.get("error") else 0
     targets = parse_targets(Path(targets_file).read_text(encoding="utf-8"), catalog)
 
     if mode == "fx":

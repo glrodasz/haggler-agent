@@ -701,3 +701,88 @@ def test_unexpected_fetch_exception_is_a_row_not_a_crash(tmp_path: Path, catalog
     assert rows["netflix_help:netflix:SE"]["status"] == "error"
     assert rows["netflix_help:netflix:SE"]["error"] == "ValueError: bad url"
     assert rows["tompec_netflix:netflix:all"]["status"] == "ok"
+
+
+# ------------------------------------------------------------------ research mode
+
+
+def test_research_targets_and_flash_models():
+    from haggler.probe_research import flash_models, parse_research_targets
+
+    t = parse_research_targets("netflix; spotify co us # comment\ninstrument revolut_eea nope; zz")
+    assert t.services == ["netflix"] and t.pairs == ["spotify:CO", "spotify:US"]
+    assert t.instruments == ["revolut_eea"]
+    assert t.errors == ["unknown instrument nope", "unknown service zz"]
+    names = [
+        "models/gemini-2.5-flash",
+        "models/gemini-3-flash-preview",
+        "models/gemini-3.1-flash-lite",
+        "models/gemini-3.1-flash",
+        "models/gemini-3-pro-preview",
+    ]
+    assert flash_models(names) == ["gemini-3.1-flash", "gemini-3-flash-preview", "gemini-2.5-flash"]
+
+
+def test_research_probe_without_llm(tmp_path, monkeypatch):
+    from haggler import probe_research
+    from haggler.config import Settings
+
+    async def robots(settings):
+        return "allowed"
+
+    monkeypatch.setattr(probe_research, "redirect_robots", robots)
+    monkeypatch.setenv("HAGGLER_LLM", "off")
+    targets = tmp_path / "t.txt"
+    targets.write_text("netflix\n", encoding="utf-8")
+    summary, md = probe_research.run(targets, tmp_path / "out", Settings(), today=date(2026, 10, 9))
+    assert summary["llm"] is False and summary["report"] is None and summary["gate"] is None
+    assert "robots.txt de las redirecciones de grounding: allowed" in md
+
+
+def test_research_probe_markdown_reports_the_gate():
+    from haggler.probe_research import render_md
+
+    summary = {
+        "llm": True,
+        "model": "gemini-3.1-flash",
+        "configured_model": "gemini-3-flash-preview",
+        "flash_models": ["gemini-3.1-flash"],
+        "models_error": None,
+        "redirect_robots": "allowed",
+        "targets": {"services": ["netflix"], "pairs": [], "instruments": [], "errors": []},
+        "error": None,
+        "official_verified_ratio": 0.5,
+        "gate": "fail",
+        "report": {
+            "by_status": {"researched": 1},
+            "claims_verified": 1,
+            "claims_unverified": 1,
+            "checks": {"official": {"verified": 1, "quote_not_found": 1}},
+            "budget": {"calls": 1, "queries": 3},
+            "errors": [],
+        },
+        "grounding": {
+            "service_x": {"queries": ["a"], "domains": ["netflix.com"], "finish": ["STOP"]}
+        },
+        "subjects": [
+            {
+                "key": "service:netflix",
+                "status": "researched",
+                "verified": [
+                    {
+                        "field": "residence_clause",
+                        "value": "must_reside",
+                        "class": "official",
+                        "host": "help.netflix.com",
+                        "via_grounding": False,
+                        "quote": "Only residents",
+                    }
+                ],
+                "unverified": [],
+                "open_questions": [],
+            }
+        ],
+    }
+    md = render_md(summary, date(2026, 10, 9))
+    assert "no disponible" in md and "50% (compuerta 60%: fail)" in md
+    assert "✅ `residence_clause=must_reside` [official] help.netflix.com" in md

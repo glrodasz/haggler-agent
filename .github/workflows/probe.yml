@@ -18,14 +18,17 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "adapters = solo parsers; fx = tipos de cambio; full = workflow completo (store local)"
+        description: >-
+          adapters = solo parsers; fx = tipos de cambio; full = workflow completo (store local);
+          research = una corrida real de investigación de factibilidad (Google Search)
         type: choice
-        options: [adapters, fx, full]
+        options: [adapters, fx, full, research]
         default: adapters
       targets:
         description: >-
-          Opcional: reemplaza probe/targets.txt. Targets separados por ';',
-          p. ej. "netflix SE CO; spotify *"
+          Opcional: reemplaza probe/targets.txt (o probe/research_targets.txt en research).
+          Separados por ';', p. ej. "netflix SE CO; spotify *" o "netflix; spotify CO;
+          instrument revolut_eea"
         type: string
         required: false
         default: ""
@@ -56,10 +59,11 @@ jobs:
 
       - name: Run probe (${{ env.MODE }})
         env:
-          # Only exported to the CLI in mode=full (see below); never echoed.
+          # Only exported to the CLI in mode=full|research (see below); never echoed.
           GEMINI_SECRET: ${{ secrets.GEMINI_API_KEY }}
         run: |
           targets=probe/targets.txt
+          if [ "$MODE" = "research" ]; then targets=probe/research_targets.txt; fi
           if [ -n "$(printf '%s' "$TARGETS_OVERRIDE" | tr -d '[:space:];')" ]; then
             targets="$RUNNER_TEMP/targets.txt"
             printf '%s\n' "$TARGETS_OVERRIDE" | tr ';' '\n' | sed 's/^[[:space:]]*//' > "$targets"
@@ -67,12 +71,12 @@ jobs:
             cat "$targets"
           fi
 
-          if [ "$MODE" = "full" ] && [ -n "$GEMINI_SECRET" ]; then
+          if { [ "$MODE" = "full" ] || [ "$MODE" = "research" ]; } && [ -n "$GEMINI_SECRET" ]; then
             export GOOGLE_API_KEY="$GEMINI_SECRET"
-            echo "LLM fallback: on (AI Studio key from secrets.GEMINI_API_KEY)"
+            echo "LLM: on (AI Studio key from secrets.GEMINI_API_KEY)"
           else
             export HAGGLER_LLM=off
-            echo "LLM fallback: off"
+            echo "LLM: off"
           fi
           unset GEMINI_SECRET
 
