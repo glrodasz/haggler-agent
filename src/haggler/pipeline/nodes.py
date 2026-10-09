@@ -48,6 +48,7 @@ from haggler.fetch import (
     RobotsDisallowedError,
     TransientFetchError,
 )
+from haggler.llm.runner import AgentJob, run_agent_jobs
 from haggler.models.catalog import Catalog, CountryDef, ServiceDef, SourceKind
 from haggler.models.fx import FxTable
 from haggler.models.observations import ObservationDraft, PriceObservation, PublishedPrice
@@ -70,11 +71,6 @@ from haggler.models.run import (
     pair_key,
 )
 from haggler.money import Money, parse_money
-from haggler.pipeline._adk_compat import (
-    DynamicNodeFailError,
-    LlmCallsLimitExceededError,
-    root_cause,
-)
 from haggler.pipeline.agents import build_price_extractor
 from haggler.pipeline.deps import Deps, RunBuffer
 from haggler.sources.base import ParseResult
@@ -101,7 +97,6 @@ FOCUS_AFTER = 14
 # Marker entry older state.json files keep inside TaskState.llm_obs (now llm_checked_hash).
 LEGACY_LLM_CHECKED_KEY = "_llm_checked_hash"
 # Finish reasons of an empty answer worth one more try (a SAFETY or RECITATION block repeats).
-RETRY_EMPTY_REASONS = frozenset({None, "STOP", "FINISH_REASON_UNSPECIFIED"})
 # LLM page_status answers that make the job's (service, country) pair count as that failure.
 PAIR_FAILURE_PAGE_STATUSES = frozenset({"wrong_country", "blocked"})
 LATEST_FILES = ("prices.json", "fx.json", "coverage.json", "review_queue.json", "state.json")
@@ -977,33 +972,6 @@ def post_check(job: LlmJob, extraction: LlmExtraction) -> tuple[list, list]:
     return accepted, rejected
 
 
-class LlmBudgetExceededError(LlmCallsLimitExceededError):
-    """Settings.max_llm_calls reached: raised by the pipeline's own before_model_callback, so
-    the budget holds under `adk web`/`adk run` too (their RunConfig knows nothing of it)."""
-
-
-def agent_run_id(callback_context: Any) -> str:
-    """The run id ctx.run_node gave the agent (its node path ends in "price_extractor@<id>")."""
-    path = str(getattr(callback_context, "node_path", "") or "")
-    return path.rsplit("/", 1)[-1].partition("@")[2]
-
-
-def unique_run_ids(stage: str, jobs: list[LlmJob]) -> list[str]:
-    """One ADK run id per job, unique within the node: ADK answers a repeated run id with the
-    first run's cached output."""
-    seen: set[str] = set()
-    out: list[str] = []
-    for job in jobs:
-        base = run_id = f"{stage}_{job.job_id}"
-        n = 1
-        while run_id in seen:
-            n += 1
-            run_id = f"{base}_{n}"
-        seen.add(run_id)
-        out.append(run_id)
-    return out
-
-
 async def run_llm_jobs(
     deps: Deps, ctx: Context, agent: Agent, jobs: list[LlmJob], *, stage: str
 ) -> list[JobOutcome]:
@@ -1011,60 +979,39 @@ async def run_llm_jobs(
     settings.llm_job_timeout_s. Every failure (malformed output after the agent's retry, model
     errors, timeouts, empty answers, the call budget, bugs in the post-checks) stays inside its
     JobOutcome."""
-    sem = asyncio.Semaphore(max(1, deps.settings.llm_concurrency))
-    timeout = deps.settings.llm_job_timeout_s
-    reasons = deps.buffer.finish_reasons
-
-    async def call(job: LlmJob, run_id: str) -> Any:
-        payload = json.dumps(
-            job.model_dump(mode="json", exclude={"compare_to"}), ensure_ascii=False
-        )
-        return await asyncio.wait_for(
-            ctx.run_node(agent, node_input=payload, run_id=run_id), timeout=timeout
-        )
-
-    async def one(job: LlmJob, run_id: str) -> JobOutcome:
-        outcome = JobOutcome(job=job, stage=stage)
-        if not job.page_text.strip():
-            outcome.error = "no page text for this job (the run buffer was reset)"
-            return outcome
-        async with sem:
-            try:
-                out = await call(job, run_id)
-                if out is None and reasons.get(run_id) in RETRY_EMPTY_REASONS:
-                    # An empty answer skips ADK's schema validation, so the agent's own retry
-                    # never fires: ask once more, under a new run id.
-                    run_id = f"{run_id}_retry"
-                    out = await call(job, run_id)
-            except TimeoutError:
-                outcome.error = f"timeout after {timeout:g}s"
-                return outcome
-            except Exception as exc:
-                cause = root_cause(exc) if isinstance(exc, DynamicNodeFailError) else exc
-                if isinstance(cause, LlmCallsLimitExceededError):
-                    if not isinstance(cause, LlmBudgetExceededError):
-                        # ADK's own RunConfig limit refused a call before_model already counted.
-                        deps.buffer.model_calls = max(0, deps.buffer.model_calls - 1)
-                    outcome.skipped = "max_llm_calls"
-                else:
-                    outcome.error = f"{type(cause).__name__}: {str(cause)[:300]}"
-                return outcome
+    outcomes = [JobOutcome(job=job, stage=stage) for job in jobs]
+    callable_ = [o for o in outcomes if o.job.page_text.strip()]
+    for o in outcomes:
+        if not o.job.page_text.strip():
+            o.error = "no page text for this job (the run buffer was reset)"
+    calls = await run_agent_jobs(
+        ctx,
+        agent,
+        [
+            AgentJob(
+                key=f"{stage}_{o.job.job_id}",
+                payload=json.dumps(
+                    o.job.model_dump(mode="json", exclude={"compare_to"}), ensure_ascii=False
+                ),
+            )
+            for o in callable_
+        ],
+        budget=deps.buffer.budget,
+        concurrency=deps.settings.llm_concurrency,
+        timeout_s=deps.settings.llm_job_timeout_s,
+    )
+    for outcome, call in zip(callable_, calls, strict=True):
+        if call.skipped or call.error:
+            outcome.skipped, outcome.error = call.skipped, call.error
+            continue
+        outcome.output = call.output
         try:
-            if out is None:
-                outcome.error = f"empty answer (finish_reason={reasons.get(run_id) or 'none'})"
-                return outcome
-            if isinstance(out, LlmExtraction):
-                out = out.model_dump(mode="json")
-            if not isinstance(out, dict):
-                outcome.error = f"unexpected agent output type {type(out).__name__}"
-                return outcome
-            outcome.output = out
             try:
-                extraction = LlmExtraction.model_validate(out)
+                extraction = LlmExtraction.model_validate(call.output)
             except pydantic.ValidationError as exc:
                 outcome.error = f"ValidationError: {str(exc)[:300]}"
-                return outcome
-            outcome.accepted, outcome.rejected = post_check(job, extraction)
+                continue
+            outcome.accepted, outcome.rejected = post_check(outcome.job, extraction)
             if extraction.page_status != "ok" and outcome.accepted:
                 # By the model's own account the page shows no prices, another country or a bot
                 # wall: its items are never used (the pair still counts as answered).
@@ -1077,10 +1024,7 @@ async def run_llm_jobs(
         except Exception as exc:  # a post-check bug fails this job only
             outcome.accepted, outcome.rejected = [], []
             outcome.error = f"internal: {type(exc).__name__}: {str(exc)[:300]}"
-        return outcome
-
-    run_ids = unique_run_ids(stage, jobs)
-    return list(await asyncio.gather(*(one(j, r) for j, r in zip(jobs, run_ids, strict=True))))
+    return outcomes
 
 
 def apply_llm_items(
@@ -1538,22 +1482,12 @@ def report_summary(report: RunReport) -> dict[str, Any]:
 def build_workflow(deps: Deps) -> Workflow:
     settings = deps.settings
 
+    # The budget lives in the run buffer (plan_tasks resets it): look it up on every call.
     def _before_model(callback_context: Any, llm_request: Any) -> None:
-        """Runs once per model attempt, before ADK sends it: the call budget and its count."""
-        buf = deps.buffer
-        if buf.model_calls >= settings.max_llm_calls:
-            raise LlmBudgetExceededError(
-                f"HAGGLER_MAX_LLM_CALLS={settings.max_llm_calls} model calls reached"
-            )
-        buf.model_calls += 1
-        return None
+        return deps.buffer.budget.before_model(callback_context, llm_request)
 
     def _after_model(callback_context: Any, llm_response: Any) -> None:
-        reason = getattr(llm_response, "finish_reason", None)
-        deps.buffer.finish_reasons[agent_run_id(callback_context)] = (
-            getattr(reason, "name", str(reason)) if reason is not None else None
-        )
-        return None
+        return deps.buffer.budget.after_model(callback_context, llm_response)
 
     # HAGGLER_MAX_LLM_CALLS <= 0 means no LLM at all (ADK would read a 0 limit as unlimited).
     extractor = (
@@ -1774,7 +1708,7 @@ def build_workflow(deps: Deps) -> Workflow:
         run_id = run["run_id"]
         fx = carry.fx or FxTable(as_of=run_date)
         outcome = carry.outcome or rules.ValidationOutcome(observations=[])
-        stats = buf.llm_stats.model_copy(update={"calls": buf.model_calls})
+        stats = buf.llm_stats.model_copy(update={"calls": buf.budget.calls})
         coverage = coverage_rows(deps, carry.tasks, run_date)
         prefix = run_prefix(run["run_date"], run_id)
         outputs = (

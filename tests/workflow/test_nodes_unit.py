@@ -10,6 +10,8 @@ from decimal import Decimal
 import pytest
 
 from haggler.config import Settings
+from haggler.llm.models import HagglerGemini, build_model
+from haggler.llm.runner import unique_run_ids
 from haggler.models.catalog import Catalog
 from haggler.models.run import LlmExtraction, LlmJob, LlmPlanHint, Task, TaskResult
 from haggler.pipeline import deps as deps_mod
@@ -310,10 +312,15 @@ def test_build_model_needs_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     for var in ("GOOGLE_API_KEY", "GEMINI_API_KEY", "GOOGLE_GENAI_USE_ENTERPRISE"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.delenv("GOOGLE_GENAI_USE_VERTEXAI", raising=False)
-    assert deps_mod.build_model(Settings()) is None
+    assert build_model(Settings()) is None
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
-    model = deps_mod.build_model(Settings(extract_model="gemini-test"))
-    assert model is not None and model.model == "gemini-test"
+    model = build_model(Settings(extract_model="gemini-test"))
+    assert isinstance(model, HagglerGemini) and model.model == "gemini-test"
+    # Gemini 3 takes a response schema next to google_search on AI Studio too.
+    assert model.capabilities.output_schema_and_tools is True
+    other = build_model(Settings(), "gemini-research-test", max_calls=5)
+    assert other is not None and other.model == "gemini-research-test"
+    assert build_model(Settings(), "gemini-research-test", max_calls=0) is None
     assert model.retry_options.attempts == 4
     # genai's default retryable set: gateway timeouts (408/502/504) are retried too.
     assert model.retry_options.http_status_codes == [408, 429, 500, 502, 503, 504]
@@ -321,9 +328,9 @@ def test_build_model_needs_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     http = model.client_kwargs["http_options"]
     assert http.timeout == 60_000 and http.retry_options == model.retry_options
     assert model.api_client._api_client._http_options.timeout == 60_000
-    assert deps_mod.build_model(Settings(max_llm_calls=0)) is None
+    assert build_model(Settings(max_llm_calls=0)) is None
     monkeypatch.setenv("HAGGLER_LLM", "off")
-    assert deps_mod.build_model(Settings()) is None
+    assert build_model(Settings()) is None
 
 
 @pytest.mark.parametrize(
@@ -545,7 +552,5 @@ def test_second_opinion_ids_are_scoped_by_service_too(catalog: Catalog) -> None:
 
 
 def test_unique_run_ids() -> None:
-    jobs = [_job("x"), _job("x"), _job("x")]
-    for j, job_id in zip(jobs, ["a", "a", "a_2"], strict=True):
-        j.job_id = job_id
-    assert nodes.unique_run_ids("extract", jobs) == ["extract_a", "extract_a_2", "extract_a_2_2"]
+    keys = ["extract_a", "extract_a", "extract_a_2"]
+    assert unique_run_ids(keys) == ["extract_a", "extract_a_2", "extract_a_2_2"]

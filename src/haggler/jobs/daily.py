@@ -24,14 +24,10 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from google.adk import Runner
-from google.adk.agents.run_config import RunConfig
-from google.adk.sessions import InMemorySessionService
-from google.genai import types
-
 from haggler.config import Settings
 from haggler.fetch.replay import ReplayFetcher
 from haggler.fx.service import StaticFxService
+from haggler.jobs._runner import quiet_handled_node_errors, run_workflow_once
 from haggler.models.fx import FxTable
 from haggler.models.run import RunReport
 from haggler.pipeline.deps import Deps, build_default_deps
@@ -41,32 +37,6 @@ log = logging.getLogger(__name__)
 USER_ID = "daily-job"
 # Below this share of ok/partial/not_available tasks the run is reported as degraded.
 MIN_SUCCESS_RATIO = 0.5
-ADK_NODE_RUNNER_LOGGER = "google_adk.google.adk.workflow._node_runner"
-ADK_NODE_FAILURE_MESSAGE = "Node execution failed with exception"
-
-
-class HandledNodeErrors(logging.Filter):
-    """ADK logs every exception raised inside a node at ERROR with a traceback, before deciding
-    to retry it, even the ones the pipeline handles (a TransientFetchError retry, a failed LLM
-    job). Those are recorded in the run report, so they are logged as WARNING with the exception
-    in one line; a real crash still reaches main(), which logs it with its traceback."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        if record.levelno >= logging.ERROR and record.getMessage() == ADK_NODE_FAILURE_MESSAGE:
-            exc = record.exc_info[1] if record.exc_info else None
-            if exc is not None:
-                record.msg = f"{ADK_NODE_FAILURE_MESSAGE}: {type(exc).__name__}: {exc}"[:500]
-                record.args = None
-            record.levelno, record.levelname = logging.WARNING, "WARNING"
-            record.exc_info, record.exc_text = None, None
-        return True
-
-
-def quiet_handled_node_errors() -> None:
-    """Install HandledNodeErrors on ADK's node runner logger (idempotent)."""
-    logger = logging.getLogger(ADK_NODE_RUNNER_LOGGER)
-    if not any(isinstance(f, HandledNodeErrors) for f in logger.filters):
-        logger.addFilter(HandledNodeErrors())
 
 
 @dataclass
@@ -124,31 +94,14 @@ async def run_daily(options: DailyOptions, deps: Deps | None = None) -> RunRepor
     deps, owned = _prepare_deps(options, deps)
     run_date = options.date or deps.today()
     app = build_app(deps)
-    message = types.UserContent(parts=[types.Part(text=json.dumps(options.request()))])
-    final: dict[str, Any] | None = None
-    target = f"{app.root_agent.name}@1"
     try:
-        runner = Runner(app=app, session_service=InMemorySessionService(), auto_create_session=True)
-        async with runner:
-            async for ev in runner.run_async(
-                user_id=USER_ID,
-                session_id=f"daily-{run_date.isoformat()}",
-                new_message=message,
-                # The pipeline enforces HAGGLER_MAX_LLM_CALLS itself (nodes.build_workflow), so
-                # adk web/run honour it too; this is the same cap as ADK's own guard. A value <= 0
-                # turns the LLM off, which ADK would read as "unlimited": keep ADK's default.
-                run_config=RunConfig(max_llm_calls=deps.settings.max_llm_calls)
-                if deps.settings.max_llm_calls > 0
-                else RunConfig(),
-            ):
-                if ev.error_code:
-                    path = ev.node_info.path if ev.node_info else "?"
-                    log.debug(
-                        "node event error %s at %s: %s", ev.error_code, path, ev.error_message
-                    )
-                node_info = ev.node_info
-                if ev.output is not None and node_info and target in (node_info.output_for or []):
-                    final = ev.output
+        final = await run_workflow_once(
+            app,
+            options.request(),
+            user_id=USER_ID,
+            session_id=f"daily-{run_date.isoformat()}",
+            max_llm_calls=deps.settings.max_llm_calls,
+        )
     finally:
         for res in owned:
             await res.aclose()

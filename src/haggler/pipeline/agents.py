@@ -17,6 +17,7 @@ from google.adk.models.base_llm import BaseLlm
 from google.adk.workflow import RetryConfig
 from google.genai import types
 
+from haggler.llm import models as llm_models
 from haggler.models.run import LlmExtraction
 
 AGENT_NAME = "price_extractor"
@@ -65,22 +66,8 @@ def instruction(ctx: ReadonlyContext) -> str:
     return INSTRUCTION
 
 
-def model_name(model: str | BaseLlm) -> str:
-    """Bare model id ("gemini-3.1-flash-lite") of a model string, resource path or BaseLlm."""
-    name = model if isinstance(model, str) else str(getattr(model, "model", "") or "")
-    return name.rsplit("/", 1)[-1]
-
-
 def generate_content_config(model: str | BaseLlm) -> types.GenerateContentConfig:
-    """Gemini 3 settings: the model's default temperature (Google advises against lowering it for
-    Gemini 3), low thinking for a quoting task, and room for thoughts plus the JSON answer (a
-    truncated answer fails schema validation and costs a retry)."""
-    thinking = None
-    if model_name(model).startswith("gemini-3"):
-        thinking = types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW)
-    return types.GenerateContentConfig(
-        max_output_tokens=MAX_OUTPUT_TOKENS, thinking_config=thinking
-    )
+    return llm_models.generate_content_config(model, max_output_tokens=MAX_OUTPUT_TOKENS)
 
 
 def build_price_extractor(
