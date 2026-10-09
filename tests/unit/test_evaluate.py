@@ -96,7 +96,7 @@ PAIR_CO = subject_key("pair", "netflix", "CO")
 def accept_all(*subjects: SubjectFacts) -> ReviewFile:
     return ReviewFile(
         decisions=[
-            ReviewDecision(id=c.id, hash=c.hash, decision="accept", on=TODAY)
+            ReviewDecision(id=c.id, hash=c.hash, decision="accept", decided_on=TODAY)
             for s in subjects
             for c in s.claims
         ]
@@ -463,11 +463,13 @@ def test_provenance_follows_review_decisions():
     # A rejected decisive claim drops out; a decision for an older hash does not count.
     clause = svc.claims[0]
     stale = accept_all(p).model_copy(deep=True)
-    stale.decisions.append(ReviewDecision(id=clause.id, hash="0" * 12, decision="accept", on=TODAY))
+    stale.decisions.append(
+        ReviewDecision(id=clause.id, hash="0" * 12, decision="accept", decided_on=TODAY)
+    )
     assert assess("netflix", "CO", CO_USER, ctx(svc, p, review=stale)).tos == "unknown"
     rejected = accept_all(svc, p).model_copy(deep=True)
     rejected.decisions.append(
-        ReviewDecision(id=clause.id, hash=clause.hash, decision="reject", on=TODAY)
+        ReviewDecision(id=clause.id, hash=clause.hash, decision="reject", decided_on=TODAY)
     )
     a = assess("netflix", "CO", CO_USER, ctx(svc, p, review=rejected), include_pending=True)
     assert a.tos == "unknown"

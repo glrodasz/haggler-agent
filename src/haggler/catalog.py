@@ -54,9 +54,13 @@ def load_feasibility(curated_dir: Path | None = None) -> FeasibilityFile:
     return FeasibilityFile.model_validate(_read_yaml(base / "feasibility.yaml"))
 
 
-def load_payment_instruments(curated_dir: Path | None = None) -> PaymentInstrumentsFile:
-    base = curated_dir or repo_root() / "data" / "curated"
-    return PaymentInstrumentsFile.model_validate(_read_yaml(base / "payment_instruments.yaml"))
+def load_payment_instruments(
+    curated_dir: Path | None = None, *, missing_ok: bool = False
+) -> PaymentInstrumentsFile:
+    path = (curated_dir or repo_root() / "data" / "curated") / "payment_instruments.yaml"
+    if missing_ok and not path.exists():
+        return PaymentInstrumentsFile(instruments=[])
+    return PaymentInstrumentsFile.model_validate(_read_yaml(path))
 
 
 def load_bundles(curated_dir: Path | None = None) -> BundlesFile:
@@ -232,7 +236,7 @@ def integrity_errors(
     if review:
         seen_decisions: set[tuple[str, str, str, str]] = set()
         for d in review.decisions:
-            key = (d.id, d.hash, d.decision, d.on.isoformat())
+            key = (d.id, d.hash, d.decision, d.decided_on.isoformat())
             if key in seen_decisions:
                 errors.append(f"research_review: duplicate decision {d.decision} {d.id}")
             seen_decisions.add(key)

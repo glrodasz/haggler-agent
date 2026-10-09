@@ -162,7 +162,8 @@ class ReviewDecision(_Strict):
     id: str
     hash: str = Field(pattern=r"^[0-9a-f]{12}$")
     decision: ReviewChoice
-    on: date
+    # Not "on": YAML 1.1 (PyYAML) reads an unquoted `on:` key as the boolean True.
+    decided_on: date
     by: str = ""
     note: str = ""
 

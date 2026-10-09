@@ -90,14 +90,14 @@ def test_integrity_catches_profile_mismatches():
 
 
 def test_integrity_catches_duplicate_review_lines():
-    d = ReviewDecision(id="x", hash="0123456789ab", decision="accept", on=date(2026, 10, 9))
+    d = ReviewDecision(id="x", hash="0123456789ab", decision="accept", decided_on=date(2026, 10, 9))
     errors = integrity_errors(load_catalog(), review=ReviewFile(decisions=[d, d]))
     assert errors == ["research_review: duplicate decision accept x"]
 
 
 def test_review_latest_entry_wins():
-    a = ReviewDecision(id="x", hash="0123456789ab", decision="accept", on=date(2026, 10, 9))
-    r = a.model_copy(update={"decision": "reject", "on": date(2026, 10, 10)})
+    a = ReviewDecision(id="x", hash="0123456789ab", decision="accept", decided_on=date(2026, 10, 9))
+    r = a.model_copy(update={"decision": "reject", "decided_on": date(2026, 10, 10)})
     other = a.model_copy(update={"hash": "ba9876543210"})
     latest = ReviewFile(decisions=[a, r, other]).latest()
     assert latest[("x", "0123456789ab")].decision == "reject"
