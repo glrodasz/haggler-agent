@@ -520,3 +520,78 @@ def test_corrupt_change_log_aborts_before_writing_latest(tmp_path: Path, day1: L
     with pytest.raises(SyncError, match="línea 1 no es JSON válido"):
         sync(day1, data, today=DAY1)
     assert not (data / "latest").exists()
+
+
+# ------------------------------------------------------------------------- research
+
+
+def _facts(key: str, on: date):
+    from haggler.models.research import SubjectFacts
+
+    return SubjectFacts(
+        key=key,
+        kind=key.split(":")[0],
+        researched_on=on,
+        run_id=f"r-{on.isoformat()}",
+        status="nothing_found",
+    )
+
+
+def write_research(store: LocalStore, *, run_id: str, as_of: date, keys: list[str]) -> None:
+    from haggler.models.research import ResearchState
+    from haggler.research import io as rio
+
+    rio.write_latest(
+        store,
+        subjects=[_facts(k, as_of) for k in keys],
+        state=ResearchState(run_id=run_id),
+        run_id=run_id,
+        as_of=as_of.isoformat(),
+        finished_at=None,
+        report_summary={"planned": len(keys)},
+    )
+
+
+def test_sync_copies_research_with_its_own_manifest(tmp_path: Path, day1: LocalStore) -> None:
+    write_research(day1, run_id="r1", as_of=DAY1, keys=["service:netflix", "pair:netflix:CO"])
+    data = tmp_path / "data"
+    result = sync(day1, data, today=DAY1)
+    assert result.research_run_id == "r1" and result.research_subjects == 2
+    files = tree(data / "research")
+    assert set(files) == {"services.json", "pairs.json", "instruments.json", "run.json"}
+    run = json.loads(files["run.json"])
+    assert run["run_id"] == "r1" and run["report"] == {"planned": 2}
+    for name in ("services.json", "pairs.json", "instruments.json"):
+        assert run["files"][name] == hashlib.sha256(files[name]).hexdigest()
+    # state.json (backoff counters) stays in the store.
+    assert "state.json" not in files
+    # data/research is itself a valid source for site-data.
+    from haggler.research.io import load_data_dir
+
+    subjects, _manifest, errors = load_data_dir(data)
+    assert {s.key for s in subjects} == {"service:netflix", "pair:netflix:CO"} and not errors
+
+
+def test_sync_without_research_is_unchanged(tmp_path: Path, day1: LocalStore) -> None:
+    result = sync(day1, tmp_path / "data", today=DAY1)
+    assert result.research_run_id is None and not (tmp_path / "data" / "research").exists()
+    assert not any("investigación" in w for w in result.warnings)
+
+
+def test_broken_research_warns_but_prices_sync(tmp_path: Path, day1: LocalStore) -> None:
+    write_research(day1, run_id="r1", as_of=DAY1, keys=["service:netflix"])
+    day1.write_bytes("research/latest/services.json", b"[]\n")  # hash no longer matches
+    result = sync(day1, tmp_path / "data", today=DAY1)
+    assert result.prices == len(DAY1_PRICES) and result.research_run_id is None
+    assert any("sha256 no coincide" in w for w in result.warnings)
+    assert not (tmp_path / "data" / "research").exists()
+
+
+def test_older_research_is_not_copied(tmp_path: Path, day1: LocalStore, day2: LocalStore) -> None:
+    write_research(day2, run_id="r2", as_of=DAY2, keys=["service:netflix"])
+    write_research(day1, run_id="r1", as_of=DAY1, keys=["service:spotify"])
+    data = tmp_path / "data"
+    sync(day2, data, today=DAY2)
+    result = sync(day1, data, today=DAY2, allow_older=True)
+    assert any("más antigua" in w for w in result.warnings)
+    assert json.loads((data / "research" / "run.json").read_text())["run_id"] == "r2"

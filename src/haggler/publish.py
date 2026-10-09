@@ -173,6 +173,9 @@ class SyncResult:
     changes_file: Path | None = None
     written: list[Path] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    # The research run copied into data/research (None = no research synced this time).
+    research_run_id: str | None = None
+    research_subjects: int = 0
 
     def counts(self) -> dict[str, int]:
         out = dict.fromkeys(CHANGE_KINDS, 0)
@@ -419,9 +422,20 @@ def sync(source: Store, data_dir: Path, *, today: date, allow_older: bool = Fals
     _write_atomic(latest / "run.json", dumps_pretty(run_out))
     written.append(latest / "run.json")
 
+    try:
+        research = sync_research(source, data_dir)
+    except SyncError as exc:  # research is optional: never fails the price sync
+        research = None
+        warnings.append(f"investigación no sincronizada: {exc}")
+    if research is not None:
+        written.extend(research.written)
+        warnings.extend(research.warnings)
+
     for message in warnings:
         log.warning("sync: %s", message)
     return SyncResult(
+        research_run_id=research.run_id if research and research.written else None,
+        research_subjects=research.subjects if research else 0,
         run_id=run_id,
         as_of=as_of,
         previous_run_id=previous_run_id,
@@ -432,6 +446,96 @@ def sync(source: Store, data_dir: Path, *, today: date, allow_older: bool = Fals
         written=written,
         warnings=warnings,
     )
+
+
+# ============================================================================ research sync
+
+
+@dataclass
+class ResearchSyncResult:
+    run_id: str | None
+    as_of: date | None
+    subjects: int = 0
+    written: list[Path] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+
+def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
+    """Copy research/latest/{services,pairs,instruments}.json into data/research (run.json last).
+
+    None when the source has no research yet. Raises SyncError when run.json or a listed file is
+    broken (nothing is written then); an older research run than the published one is skipped
+    with a warning.
+    """
+    from haggler.research import io as rio
+
+    raw = source.read_bytes(f"{rio.LATEST}/run.json")
+    if raw is None:
+        return None
+    try:
+        run = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise SyncError(f"{rio.LATEST}/run.json no es JSON válido ({exc})") from exc
+    if not isinstance(run, dict) or run.get("schema_version") != rio.RUN_SCHEMA_VERSION:
+        raise SyncError(f"{rio.LATEST}/run.json: formato o schema_version no soportado")
+    run_id = run.get("run_id")
+    try:
+        as_of = date.fromisoformat(str(run.get("as_of")))
+    except ValueError as exc:
+        raise SyncError(f"{rio.LATEST}/run.json: as_of inválido") from exc
+    files = run.get("files") if isinstance(run.get("files"), dict) else {}
+    blobs: dict[str, bytes] = {}
+    problems: list[str] = []
+    for name in rio.DATA_FILES:
+        digest = files.get(name)
+        data = source.read_bytes(f"{rio.LATEST}/{name}")
+        if digest is None or data is None:
+            problems.append(f"{name}: falta en el origen o en run.json")
+            continue
+        if sha256_hex(data) != str(digest).strip().lower():
+            problems.append(f"{name}: sha256 no coincide con run.json")
+            continue
+        try:
+            rows = rio.parse_subjects_bytes(data)
+        except ValidationError as exc:
+            problems.append(f"{name}: formato inesperado ({str(exc)[:200]})")
+            continue
+        blobs[name] = rio.subject_files(rows)[name]
+    if problems:
+        raise SyncError(f"investigación {run_id}: " + "; ".join(problems))
+
+    target = Path(data_dir) / rio.PREFIX
+    result = ResearchSyncResult(run_id=run_id, as_of=as_of)
+    try:
+        local = _read_json_file(target / "run.json")
+    except ValueError:
+        local = None
+    if isinstance(local, dict) and local.get("run_id") != run_id:
+        try:
+            local_as_of = date.fromisoformat(str(local.get("as_of")))
+        except ValueError:
+            local_as_of = None
+        if local_as_of and as_of < local_as_of:
+            result.warnings.append(
+                f"la investigación del origen ({run_id}, {as_of}) es más antigua que la publicada "
+                f"({local.get('run_id')}, {local_as_of}); no se copia"
+            )
+            return result
+    for name in rio.DATA_FILES:
+        _write_atomic(target / name, blobs[name])
+        result.written.append(target / name)
+        result.subjects += len(json.loads(blobs[name]))
+    manifest = {
+        "schema_version": rio.RUN_SCHEMA_VERSION,
+        "run_id": run_id,
+        "as_of": as_of.isoformat(),
+        "finished_at": run.get("finished_at"),
+        "files": {name: sha256_hex(blobs[name]) for name in rio.DATA_FILES},
+        "report": run.get("report", {}),
+    }
+    _write_atomic(target / "run.json", dumps_pretty(manifest))
+    result.written.append(target / "run.json")
+    return result
 
 
 # ============================================================================ site data

@@ -174,6 +174,11 @@ def cmd_sync(args: argparse.Namespace) -> int:
         f"{counts['changed']} modificados, {counts['removed']} retirados "
         f"({result.appended} agregados al changelog)"
     )
+    if result.research_run_id:
+        print(
+            f"investigación {result.research_run_id}: {result.research_subjects} sujetos en "
+            f"{args.data_dir}/research"
+        )
     for warning in result.warnings:
         print(f"aviso: {warning}", file=sys.stderr)
     return 0
