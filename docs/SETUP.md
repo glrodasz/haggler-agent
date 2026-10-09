@@ -387,8 +387,9 @@ citada (o en las páginas oficiales conocidas de `research_urls` en `catalog/ser
 ```
 research/runs/AAAA-MM-DD/RUN/report.json    presupuesto usado, verificación por clase de fuente
 research/latest/{services,pairs,instruments}.json   hechos verificados (citas + URL + fecha)
-research/latest/state.json                  vigencia, reintentos y consultas del mes
+research/latest/state.json                  vigencia y reintentos por sujeto
 research/latest/run.json                    se escribe al final, con los SHA-256
+research/usage/AAAA-MM.json                 llamadas y consultas del mes (también las de --dry-run)
 raw/research/AAAA-MM-DD/…                   páginas leídas (se borran a los 30 días)
 ```
 
