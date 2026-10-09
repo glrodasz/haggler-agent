@@ -1,6 +1,7 @@
 ---
 import Comparador, {
   type ComparadorLabel,
+  type ComparadorProfile,
   type ComparadorService,
 } from "../islands/Comparador";
 import { es } from "../i18n/es";
@@ -8,7 +9,8 @@ import Base from "../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../logic/compare";
 import { getSite } from "../logic/data";
 import { routes } from "../logic/paths";
-import { inlineJson, packOffers } from "../logic/transport";
+import { inlineJson, packOffers, packVerdicts } from "../logic/transport";
+import { isPending } from "../logic/verdicts";
 
 const site = getSite();
 const t = es.home;
@@ -47,6 +49,7 @@ const labelIds = new Set([
   ...Object.keys(es.riskLabels),
   ...site.feasibility.labels.map((l) => l.id),
   ...site.offers.map((o) => o.label),
+  ...site.feasibility.records.map((r) => r.label),
 ]);
 const labels: Record<string, ComparadorLabel> = Object.fromEntries(
   [...labelIds].map((id) => [id, site.label(id)]),
@@ -58,6 +61,21 @@ const defaultCurrency = currencies.includes(site.residenceCurrency)
   ? site.residenceCurrency
   : (currencies[0] ?? "EUR");
 const offersJson = inlineJson(packOffers(offers));
+
+// Feasibility records of every public profile, so the island can relabel the offers.
+const profiles: ComparadorProfile[] = site.feasibility.profiles.map((p) => {
+  const home = site.country(p.residence_country);
+  return {
+    id: p.id,
+    name: p.name_es,
+    description: p.description_es,
+    residence: p.residence_country,
+    residenceName: home?.name_es ?? p.residence_country,
+    residenceCurrency: home?.currency ?? site.residenceCurrency,
+  };
+});
+const verdictsJson = inlineJson(packVerdicts(site.feasibility.records));
+const hasPending = site.feasibility.records.some(isPending);
 ---
 
 <Base current="home">
@@ -87,8 +105,13 @@ const offersJson = inlineJson(packOffers(offers));
     currencies={currencies}
     defaultCurrency={defaultCurrency}
     dataId="comparador-ofertas"
+    profiles={profiles}
+    defaultProfile={site.feasibility.default_profile}
+    hasPending={hasPending}
+    verdictsId="comparador-veredictos"
   />
   <script type="application/json" id="comparador-ofertas" is:inline set:html={offersJson} />
+  <script type="application/json" id="comparador-veredictos" is:inline set:html={verdictsJson} />
 
   <section aria-labelledby="como-leer">
     <h2 id="como-leer">{t.howTitle}</h2>

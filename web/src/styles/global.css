@@ -345,6 +345,9 @@ tr.is-home > * {
 tr.is-inactive > * {
   color: var(--color-muted);
 }
+tr.is-pending > * {
+  background: color-mix(in srgb, var(--color-banner-bg) 45%, transparent);
+}
 
 /* ---------------------------------------------------------------- badges */
 
@@ -404,6 +407,21 @@ tr.is-inactive > * {
 .badge-neutral {
   background: var(--color-surface);
   color: var(--color-muted);
+}
+/* Provenance of a feasibility record. Pending findings stand out (banner colours, dashed
+   border) and always say so in words, so colour is never the only cue. */
+.provenance-curated {
+  background: var(--color-surface);
+  color: var(--color-fg);
+}
+.provenance-agent_reviewed {
+  background: var(--channel-web-bg);
+  color: var(--channel-web-fg);
+}
+.provenance-agent_pending {
+  background: var(--color-banner-bg);
+  color: var(--color-banner-fg);
+  border: 1px dashed currentColor;
 }
 .flag {
   font-family: var(--font-sans);
@@ -560,6 +578,10 @@ select:disabled {
   display: grid;
   gap: var(--space-1);
 }
+.profile-desc {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-sm);
+}
 .loading {
   padding: var(--space-4);
   border: 1px dashed var(--color-border);
@@ -611,6 +633,44 @@ summary {
   cursor: pointer;
   font-weight: 600;
   padding: var(--space-2) 0;
+}
+
+/* ---------------------------------------------------------------- evidence (feasibility) */
+
+details.evidence {
+  margin: var(--space-2) 0 0;
+}
+details.evidence summary {
+  font-size: var(--text-sm);
+  padding: var(--space-1) 0;
+}
+.evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.evidence-list li + li {
+  margin-top: var(--space-3);
+}
+.evidence-list p {
+  margin: 0;
+}
+blockquote {
+  margin: var(--space-1) 0;
+  padding: var(--space-1) var(--space-3);
+  border-left: 3px solid var(--color-border);
+  font-style: italic;
+}
+.evidence-heading {
+  font-weight: 600;
+  margin: var(--space-3) 0 var(--space-1);
+}
+.evidence ul.small {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.verified {
+  color: var(--color-positive);
 }
 
 @media (min-width: 48rem) {

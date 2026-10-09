@@ -66,12 +66,17 @@ const records = site.feasibilityForCountry(country.cc);
       records.length === 0 ? (
         <p>{t.noFeasibility}</p>
       ) : (
-        <FeasibilityTable
-          records={records}
-          mode="country"
-          caption={`${t.feasibilityTitle(site.residenceName)}: ${country.name_es}`}
-          captionId="factibilidad-caption"
-        />
+        <>
+          <p class="note">
+            {es.service.feasibilityLead(site.residenceName, site.defaultProfile?.name_es)}
+          </p>
+          <FeasibilityTable
+            records={records}
+            mode="country"
+            caption={`${t.feasibilityTitle(site.residenceName)}: ${country.name_es}`}
+            captionId="factibilidad-caption"
+          />
+        </>
       )
     }
   </section>

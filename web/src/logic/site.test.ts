@@ -150,6 +150,30 @@ describe("SiteIndex", () => {
     );
   });
 
+  it("shows only the default profile's feasibility records, pending ones last", () => {
+    expect(site.defaultProfile?.id).toBe(data.meta.profile);
+    const spotify = site.feasibilityForService("spotify");
+    expect(spotify.map((r) => [r.target_country, r.provenance])).toEqual([
+      ["CO", "curated"],
+      ["LT", "agent_pending"],
+    ]);
+    const netflix = site.feasibilityForService("netflix");
+    expect(netflix.every((r) => r.profile === data.meta.profile)).toBe(true);
+    // Another profile's records (netflix CO for se_resident_eu_generic) stay out of the pages.
+    expect(netflix.map((r) => r.target_country)).toEqual(["CO", "LT"]);
+    const ranks = netflix.filter((r) => r.provenance !== "agent_pending").map((r) => r.rank);
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+
+    const lt = site.feasibilityForCountry("LT");
+    expect(lt.every((r) => r.profile === data.meta.profile)).toBe(true);
+    expect(lt.at(-1)).toMatchObject({ service_id: "spotify", provenance: "agent_pending" });
+    const reviewed = lt.filter((r) => r.provenance !== "agent_pending");
+    expect(reviewed.map((r) => site.serviceName(r.service_id))).toEqual(
+      reviewed.map((r) => site.serviceName(r.service_id)).sort((a, b) => a.localeCompare(b, "es")),
+    );
+    expect(site.feasibilityForCountry("TR")).toEqual([]);
+  });
+
   it("maps ranks to CSS classes", () => {
     expect(riskClass(0)).toBe("risk-0");
     expect(riskClass(4)).toBe("risk-4");
@@ -162,7 +186,7 @@ describe("empty data contract", () => {
   // fresh clone): no run_id, no as_of, no FX table, no prices; the changelog may still exist.
   const empty: SiteData = {
     ...data,
-    meta: { ...data.meta, run_id: null, as_of: null },
+    meta: { ...data.meta, run_id: null, as_of: null, research_run_id: null, research_as_of: null },
     fx: { as_of: null, base: "EUR", rates: {}, stale: [] },
     offers: [],
     cheapest: [],
@@ -240,6 +264,41 @@ describe("selection hash", () => {
     const hash = `#${encodeState(state)}`;
     expect(hash).toBe("#s=netflix.standard,spotify.family&r=2&c=EUR");
     expect(decodeState(hash, services, ["SEK", "EUR", "USD"], fallback)).toEqual(state);
+  });
+
+  it("adds the profile and pending findings only when they differ from the defaults", () => {
+    const options = { profiles: ["se_resident_eu_generic"], pending: true };
+    const state = {
+      ...fallback,
+      services: ["netflix"],
+      profile: "se_resident_eu_generic",
+      pending: true,
+    };
+    const hash = `#${encodeState(state)}`;
+    expect(hash).toBe("#s=netflix.standard&r=0&c=SEK&p=se_resident_eu_generic&u=1");
+    expect(decodeState(hash, services, ["SEK"], fallback, options)).toEqual(state);
+    expect(encodeState({ ...state, profile: null, pending: false })).toBe(
+      "s=netflix.standard&r=0&c=SEK",
+    );
+    // Old links (no p / u) keep the default profile without pending findings.
+    expect(decodeState("#s=netflix.standard&r=0&c=SEK", services, ["SEK"], fallback, options))
+      .toMatchObject({ profile: null, pending: false });
+  });
+
+  it("ignores unknown profiles, the default profile and u=1 without pending records", () => {
+    const options = { profiles: ["se_resident_eu_generic"], pending: true };
+    const decode = (hash: string, opts = options) =>
+      decodeState(hash, services, ["SEK"], fallback, opts);
+    expect(decode("#s=netflix.standard&p=gone").profile).toBeNull();
+    expect(decode("#s=netflix.standard&p=se_resident_co_citizen").profile).toBeNull();
+    expect(decode("#s=netflix.standard&u=yes").pending).toBe(false);
+    expect(decode("#s=netflix.standard&u=1", { profiles: [], pending: false })).toMatchObject({
+      profile: null,
+      pending: false,
+    });
+    expect(decodeState("#u=1&p=se_resident_eu_generic", services, ["SEK"], fallback)).toMatchObject(
+      { profile: null, pending: false },
+    );
   });
 
   it("ignores unknown services, plans, risks and currencies", () => {

@@ -4,6 +4,8 @@
   "as_of": "2026-10-08",
   "residence": "SE",
   "profile": "se_resident_co_citizen",
+  "research_run_id": "sample-research-20261006",
+  "research_as_of": "2026-10-06",
   "fx_fee_pct": 2.0,
   "display_currencies": [
     "SEK",

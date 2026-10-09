@@ -37,10 +37,27 @@
       "description_es": "Todavía no hay análisis de factibilidad. Nunca se elige como opción."
     }
   ],
+  "default_profile": "se_resident_co_citizen",
+  "profiles": [
+    {
+      "id": "se_resident_co_citizen",
+      "name_es": "Residente en Suecia con ciudadanía colombiana",
+      "description_es": "Vive en Suecia (residencia estable), ciudadano colombiano con cédula y tarjeta de crédito emitida en Colombia. Viaja a Colombia de vez en cuando.",
+      "residence_country": "SE"
+    },
+    {
+      "id": "se_resident_eu_generic",
+      "name_es": "Residente en Suecia sin vínculos con otros países",
+      "description_es": "Vive en Suecia, con documentos, teléfono y dirección solo suecos y sin tarjetas extranjeras. Puede abrir en línea cuentas de bancos del EEE.",
+      "residence_country": "SE"
+    }
+  ],
   "records": [
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "apple_music",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -50,11 +67,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "apple_one",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -64,11 +101,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "apple_tv",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -78,11 +135,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "disney_plus",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -92,11 +169,33 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Controles de hogar en LatAm desde 2024; error 73 con VPN.",
-      "tos_clause_url": "https://www.disneyplus.com/legal/subscriber-agreement"
+      "tos_clause_url": "https://www.disneyplus.com/legal/subscriber-agreement",
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "Only residents of the countries where we offer the Disney+ Service ... are eligible",
+          "retrieved_at": null,
+          "url": "https://www.disneyplus.com/legal/subscriber-agreement",
+          "verified": false
+        }
+      ],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "google_one",
       "target_country": "LT",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": true,
@@ -106,11 +205,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "El perfil de pagos de Google no cambia de país (hay que crear otro) y Play solo permite un cambio cada 12 meses estando físicamente en el país.",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": true,
+          "type": "presence",
+          "value": "LT"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "LT"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "hbo_max",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -120,11 +239,25 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "El país de origen es donde te registraste; fuera del EEE ves el catálogo local.",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "icloud_plus",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -134,11 +267,39 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Cambiar el país de la cuenta Apple afecta a todo el storefront (apps, Music, suscripciones, Family Sharing). Requiere saldo cero y método de pago del país.",
-      "tos_clause_url": "https://www.apple.com/legal/internet-services/icloud/"
+      "tos_clause_url": "https://www.apple.com/legal/internet-services/icloud/",
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "Home Country = country or territory of residence",
+          "retrieved_at": null,
+          "url": "https://www.apple.com/legal/internet-services/icloud/",
+          "verified": false
+        }
+      ],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "icloud_plus",
       "target_country": "LT",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": true,
@@ -148,11 +309,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Derecho UE no probado: servicio tipo nube; el precio legal sería el neto lituano + IVA sueco. Apple exige dirección de facturación del país, por eso hoy implica declarar datos falsos.",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "LT"
+        },
+        {
+          "requires_false_declaration": true,
+          "requires_presence": false,
+          "type": "billing_address",
+          "value": "LT"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "microsoft_365",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -162,11 +343,31 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "La región de la cuenta Microsoft solo cambia cada 3 meses y el saldo no se transfiere.",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "store_region",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "netflix",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_low_enforcement",
       "rank": 2,
       "eu_badge": false,
@@ -176,11 +377,77 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "El país se fija en el registro (ubicación al suscribirse). Usarla principalmente fuera de CO contradice los términos; no se conocen cancelaciones por vivir en el exterior. El catálogo sigue la ubicación actual.",
-      "tos_clause_url": "https://help.netflix.com/legal/termsofuse"
+      "tos_clause_url": "https://help.netflix.com/legal/termsofuse",
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": true,
+          "type": "presence",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "...primarily within the country in which you have established your account...",
+          "retrieved_at": null,
+          "url": "https://help.netflix.com/legal/termsofuse",
+          "verified": false
+        }
+      ],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
+      "service_id": "netflix",
+      "target_country": "LT",
+      "provenance": "agent_reviewed",
+      "label": "unknown",
+      "rank": 99,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "unknown",
+      "confidence": "low",
+      "status": "verified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [],
+      "evidence": [
+        {
+          "url": "https://help.netflix.com/legal/termsofuse",
+          "kind": "official",
+          "quote": "...primarily within the country in which you have established your account...",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en LT",
+        "se asume que no hay verificaciones periódicas de ubicación en LT",
+        "se asume que no se pide un documento de LT",
+        "se asume que no se pide un teléfono de LT",
+        "se asume que no se pide una dirección de facturación en LT"
+      ],
+      "reasons_es": [
+        "los términos exigen: uso principal en el país de la cuenta",
+        "no se sabe si el pago exige una tarjeta de LT"
+      ]
+    },
+    {
+      "profile": "se_resident_co_citizen",
       "service_id": "spotify",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_enforced",
       "rank": 3,
       "eu_badge": false,
@@ -190,11 +457,90 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "La tarjeta debe ser del país de la cuenta (la del usuario es CO). Los términos 2025 exigen que la cuenta esté en el país de residencia.",
-      "tos_clause_url": "https://www.spotify.com/int/legal/end-user-agreement/"
+      "tos_clause_url": "https://www.spotify.com/int/legal/end-user-agreement/",
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "...your account must be in your country of residence...",
+          "retrieved_at": null,
+          "url": "https://www.spotify.com/int/legal/end-user-agreement/",
+          "verified": false
+        }
+      ],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
+      "service_id": "spotify",
+      "target_country": "LT",
+      "provenance": "agent_pending",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [
+        {
+          "type": "obtain_instrument",
+          "value": "paysera",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        },
+        {
+          "type": "payment_country",
+          "value": "LT",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.spotify.com/int/legal/end-user-agreement/",
+          "kind": "official",
+          "quote": "Cita de ejemplo: el medio de pago debe ser del país de la cuenta.",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        },
+        {
+          "url": "https://www.spotify.com/int/legal/end-user-agreement/",
+          "kind": "official",
+          "quote": "...your account must be in your country of residence...",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en LT",
+        "se asume que no hay verificaciones periódicas de ubicación en LT",
+        "se asume que no se pide un documento de LT",
+        "se asume que no se pide un teléfono de LT",
+        "se asume que no se pide una dirección de facturación en LT"
+      ],
+      "reasons_es": [
+        "los términos exigen: el país de la cuenta debe ser el de residencia"
+      ]
+    },
+    {
+      "profile": "se_resident_co_citizen",
       "service_id": "youtube_premium",
       "target_country": "CO",
+      "provenance": "curated",
       "label": "tos_breach_enforced",
       "rank": 3,
       "eu_badge": false,
@@ -204,11 +550,39 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "El país de suscripción debe coincidir con dónde vives; Google lo verifica.",
-      "tos_clause_url": "https://www.youtube.com/t/terms_paycontent"
+      "tos_clause_url": "https://www.youtube.com/t/terms_paycontent",
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "CO"
+        },
+        {
+          "requires_false_declaration": true,
+          "requires_presence": true,
+          "type": "presence",
+          "value": "CO"
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "...using the paid service predominantly outside your sign-up country...",
+          "retrieved_at": null,
+          "url": "https://www.youtube.com/t/terms_paycontent",
+          "verified": false
+        }
+      ],
+      "assumptions_es": [],
+      "reasons_es": []
     },
     {
+      "profile": "se_resident_co_citizen",
       "service_id": "youtube_premium",
       "target_country": "US",
+      "provenance": "curated",
       "label": "not_feasible",
       "rank": 4,
       "eu_badge": false,
@@ -218,7 +592,234 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "Requiere instrumento de pago estadounidense; no disponible para este perfil.",
-      "tos_clause_url": null
+      "tos_clause_url": null,
+      "researched_on": "2026-10-08",
+      "steps": [
+        {
+          "requires_false_declaration": false,
+          "requires_presence": false,
+          "type": "payment_country",
+          "value": "US"
+        },
+        {
+          "requires_false_declaration": true,
+          "requires_presence": true,
+          "type": "presence",
+          "value": "US"
+        }
+      ],
+      "evidence": [],
+      "assumptions_es": [],
+      "reasons_es": []
+    },
+    {
+      "profile": "se_resident_eu_generic",
+      "service_id": "icloud_plus",
+      "target_country": "LT",
+      "provenance": "agent_reviewed",
+      "label": "not_feasible",
+      "rank": 4,
+      "eu_badge": false,
+      "legality": "requires_misrepresentation",
+      "tos": "breach_unenforced",
+      "practical": "impossible",
+      "confidence": "low",
+      "status": "verified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [
+        {
+          "type": "store_region",
+          "value": "LT",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        },
+        {
+          "type": "obtain_instrument",
+          "value": "paysera",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        },
+        {
+          "type": "payment_country",
+          "value": "LT",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        },
+        {
+          "type": "billing_address",
+          "value": "LT",
+          "requires_presence": false,
+          "requires_false_declaration": true
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.apple.com/legal/internet-services/itunes/",
+          "kind": "official",
+          "quote": "Cita de ejemplo: la dirección de facturación debe estar en el país de la tienda.",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        },
+        {
+          "url": "https://www.apple.com/legal/internet-services/icloud/",
+          "kind": "official",
+          "quote": "Home Country = country or territory of residence",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en LT",
+        "se asume que no hay verificaciones periódicas de ubicación en LT",
+        "se asume que no se pide un documento de LT",
+        "se asume que no se pide un teléfono de LT"
+      ],
+      "reasons_es": [
+        "los términos exigen: el país de la cuenta debe ser el de residencia",
+        "exige una dirección de facturación en LT y el perfil no tiene una real"
+      ]
+    },
+    {
+      "profile": "se_resident_eu_generic",
+      "service_id": "netflix",
+      "target_country": "CO",
+      "provenance": "agent_reviewed",
+      "label": "unknown",
+      "rank": 99,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "unknown",
+      "confidence": "low",
+      "status": "verified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [],
+      "evidence": [
+        {
+          "url": "https://help.netflix.com/legal/termsofuse",
+          "kind": "official",
+          "quote": "...primarily within the country in which you have established your account...",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en CO",
+        "se asume que no hay verificaciones periódicas de ubicación en CO",
+        "se asume que no se pide un documento de CO",
+        "se asume que no se pide un teléfono de CO",
+        "se asume que no se pide una dirección de facturación en CO"
+      ],
+      "reasons_es": [
+        "los términos exigen: uso principal en el país de la cuenta",
+        "no se sabe si el pago exige una tarjeta de CO"
+      ]
+    },
+    {
+      "profile": "se_resident_eu_generic",
+      "service_id": "netflix",
+      "target_country": "CO",
+      "provenance": "agent_pending",
+      "label": "not_feasible",
+      "rank": 4,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "impossible",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [],
+      "evidence": [
+        {
+          "url": "https://prensa.example/netflix-tarjetas-locales",
+          "kind": "press",
+          "quote": "Cita de ejemplo: Netflix solo acepta tarjetas emitidas en el país de la cuenta.",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        },
+        {
+          "url": "https://help.netflix.com/legal/termsofuse",
+          "kind": "official",
+          "quote": "...primarily within the country in which you have established your account...",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en CO",
+        "se asume que no hay verificaciones periódicas de ubicación en CO",
+        "se asume que no se pide un documento de CO",
+        "se asume que no se pide un teléfono de CO",
+        "se asume que no se pide una dirección de facturación en CO"
+      ],
+      "reasons_es": [
+        "los términos exigen: uso principal en el país de la cuenta",
+        "exige un medio de pago de CO y el perfil no tiene ni puede obtener en línea uno"
+      ]
+    },
+    {
+      "profile": "se_resident_eu_generic",
+      "service_id": "spotify",
+      "target_country": "LT",
+      "provenance": "agent_pending",
+      "label": "tos_breach_low_enforcement",
+      "rank": 2,
+      "eu_badge": false,
+      "legality": "lawful",
+      "tos": "breach_unenforced",
+      "practical": "remote",
+      "confidence": "low",
+      "status": "unverified",
+      "notes_es": "",
+      "tos_clause_url": null,
+      "researched_on": "2026-10-06",
+      "steps": [
+        {
+          "type": "obtain_instrument",
+          "value": "paysera",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        },
+        {
+          "type": "payment_country",
+          "value": "LT",
+          "requires_presence": false,
+          "requires_false_declaration": false
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.spotify.com/int/legal/end-user-agreement/",
+          "kind": "official",
+          "quote": "Cita de ejemplo: el medio de pago debe ser del país de la cuenta.",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        },
+        {
+          "url": "https://www.spotify.com/int/legal/end-user-agreement/",
+          "kind": "official",
+          "quote": "...your account must be in your country of residence...",
+          "retrieved_at": "2026-10-06",
+          "verified": true
+        }
+      ],
+      "assumptions_es": [
+        "se asume que no se verifica la ubicación al registrarse en LT",
+        "se asume que no hay verificaciones periódicas de ubicación en LT",
+        "se asume que no se pide un documento de LT",
+        "se asume que no se pide un teléfono de LT",
+        "se asume que no se pide una dirección de facturación en LT"
+      ],
+      "reasons_es": [
+        "los términos exigen: el país de la cuenta debe ser el de residencia"
+      ]
     }
   ]
 }

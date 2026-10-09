@@ -12,12 +12,14 @@ import type {
   CountryInfo,
   FeasibilityView,
   Offer,
+  Profile,
   RiskLabel,
   ServiceInfo,
   SiteData,
 } from "./types";
 import { DATA_FILES, UNKNOWN_RANK } from "./types";
-import { validateFile } from "./validate";
+import { validateFile, validateReferences } from "./validate";
+import { recordsForDisplay, resolveProfile } from "./verdicts";
 
 export interface LabelInfo {
   id: string;
@@ -30,6 +32,8 @@ export interface SiteIndex extends SiteData {
   residenceCountry: CountryInfo | undefined;
   residenceName: string;
   residenceCurrency: string;
+  /** The profile offers.json, cheapest.json and the feasibility tables are computed for. */
+  defaultProfile: Profile | undefined;
   isSample: boolean;
   service(id: string): ServiceInfo | undefined;
   country(cc: string): CountryInfo | undefined;
@@ -44,7 +48,9 @@ export interface SiteIndex extends SiteData {
   offersForCountry(cc: string): Offer[];
   bundlesForService(serviceId: string): Bundle[];
   bundlesForCountry(cc: string): Bundle[];
+  /** The default profile's records: non-pending first, then those pending review. */
   feasibilityForService(serviceId: string): FeasibilityView[];
+  /** The default profile's records: non-pending first, then those pending review. */
   feasibilityForCountry(cc: string): FeasibilityView[];
   /** Monthly cost without FX fee in `currency` (exact when the offer already uses it). */
   monthlyIn(
@@ -69,6 +75,7 @@ export function assertSiteData(raw: Partial<Record<string, unknown>>): SiteData 
     throw new Error(missing.map((name) => es.errors.missingData(name)).join("\n"));
   }
   const problems = DATA_FILES.flatMap((name) => validateFile(name, raw[name]));
+  if (problems.length === 0) problems.push(...validateReferences(raw));
   if (problems.length > 0) throw new Error(es.errors.invalidData(problems));
   return raw as unknown as SiteData;
 }
@@ -96,6 +103,17 @@ export function buildIndex(data: SiteData): SiteIndex {
   const offerCurrency = new Map(data.offers.map((o) => [o.obs_key, o.currency]));
   // site-data already limits changes.json to the window before as_of (or before today).
   const asOf = data.meta.as_of;
+  const defaultProfile = resolveProfile(data.feasibility, data.feasibility.default_profile);
+  // The pages show the default profile's records: offers.json carries that profile's verdicts.
+  const defaultRecords = (
+    keep: (r: FeasibilityView) => boolean,
+    order: (a: FeasibilityView, b: FeasibilityView) => number,
+  ) =>
+    recordsForDisplay(
+      data.feasibility.records.filter(keep),
+      data.feasibility.default_profile,
+      order,
+    );
 
   const serviceName = (id: string) => services.get(id)?.name ?? id;
   const countryName = (cc: string) => countries.get(cc)?.name_es ?? cc;
@@ -118,6 +136,7 @@ export function buildIndex(data: SiteData): SiteIndex {
     residenceCountry,
     residenceName: residenceCountry?.name_es ?? data.meta.residence,
     residenceCurrency: residenceCountry?.currency ?? "EUR",
+    defaultProfile,
     isSample: (data.meta.run_id ?? "").startsWith("sample"),
     service: (id) => services.get(id),
     country: (cc) => countries.get(cc),
@@ -156,13 +175,15 @@ export function buildIndex(data: SiteData): SiteIndex {
       data.bundles.filter((b) => b.components.some((c) => c.service_id === serviceId)),
     bundlesForCountry: (cc) => data.bundles.filter((b) => b.country === cc),
     feasibilityForService: (serviceId) =>
-      data.feasibility.records
-        .filter((r) => r.service_id === serviceId)
-        .sort((a, b) => a.rank - b.rank || a.target_country.localeCompare(b.target_country)),
+      defaultRecords(
+        (r) => r.service_id === serviceId,
+        (a, b) => a.rank - b.rank || a.target_country.localeCompare(b.target_country),
+      ),
     feasibilityForCountry: (cc) =>
-      data.feasibility.records
-        .filter((r) => r.target_country === cc)
-        .sort((a, b) => serviceName(a.service_id).localeCompare(serviceName(b.service_id), "es")),
+      defaultRecords(
+        (r) => r.target_country === cc,
+        (a, b) => serviceName(a.service_id).localeCompare(serviceName(b.service_id), "es"),
+      ),
     monthlyIn: (offer, currency) => {
       if (offer.currency === currency) return offer.monthly_equiv;
       if (offer.monthly_eur === null || offer.monthly_eur === undefined) return null;

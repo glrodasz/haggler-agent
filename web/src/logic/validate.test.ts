@@ -27,7 +27,7 @@ describe("site data contract (runtime)", () => {
     for (const name of DATA_FILES) expect(validateFile(name, raw[name]), name).toEqual([]);
     const empty = {
       ...raw,
-      meta: { ...raw.meta, run_id: null, as_of: null },
+      meta: { ...raw.meta, run_id: null, as_of: null, research_run_id: null, research_as_of: null },
       fx: { as_of: null, base: "EUR", rates: {}, stale: [] },
       offers: [],
       cheapest: [],
@@ -50,7 +50,112 @@ describe("site data contract (runtime)", () => {
     raw.changes[0].new = { amount: 9.5, currency: "EUR" };
     raw.changes[1].old = "129 SEK/month";
     raw.coverage[0].failing_since = "2026-10-01";
+    raw.meta.research_run_id = null;
+    raw.meta.research_as_of = null;
+    const record = raw.feasibility.records[0];
+    record.researched_on = null;
+    record.tos_clause_url = null;
+    record.evidence = [
+      {
+        url: "https://example.org/t",
+        kind: "official",
+        quote: "",
+        retrieved_at: null,
+        verified: false,
+      },
+    ];
     expect(() => assertSiteData(raw)).not.toThrow();
+  });
+
+  it('accepts "unknown" axis values of research-derived records (rank 99)', () => {
+    const raw = sample();
+    const record = raw.feasibility.records.find((r: any) => r.provenance !== "curated");
+    Object.assign(record, {
+      legality: "unknown",
+      tos: "unknown",
+      practical: "unknown",
+      label: "unknown",
+      rank: 99,
+    });
+    expect(validateFile("feasibility", raw.feasibility)).toEqual([]);
+  });
+
+  it("checks provenance and the profile references in feasibility.json", () => {
+    const cases: [(raw: Record<string, any>) => void, RegExp][] = [
+      [
+        (r) => (r.feasibility.records[0].provenance = "agent"),
+        /records\[0\]\.provenance: se esperaba curated \| agent_reviewed \| agent_pending, hay string/,
+      ],
+      [
+        (r) => delete r.feasibility.records[1].provenance,
+        /feasibility\.json\.records\[1\]: falta el campo "provenance"/,
+      ],
+      [
+        (r) => (r.feasibility.records[2].profile = "nadie"),
+        /feasibility\.json\.records\[2\]\.profile: "nadie" no está en profiles/,
+      ],
+      [
+        (r) => (r.feasibility.default_profile = "nadie"),
+        /feasibility\.json\.default_profile: "nadie" no está en profiles/,
+      ],
+      [
+        (r) => (r.feasibility.profiles = r.feasibility.profiles.slice(1)),
+        /default_profile: "se_resident_co_citizen" no está en profiles/,
+      ],
+      [
+        (r) => delete r.feasibility.profiles[1].residence_country,
+        /feasibility\.json\.profiles\[1\]: falta el campo "residence_country"/,
+      ],
+      [
+        (r) => (r.feasibility.records[3].steps[0].requires_presence = "no"),
+        /records\[3\]\.steps\[0\]\.requires_presence: se esperaba boolean/,
+      ],
+      [
+        (r) => (r.feasibility.records[3].assumptions_es = "ninguno"),
+        /records\[3\]\.assumptions_es: se esperaba una lista/,
+      ],
+      [
+        (r) => (r.meta.profile = "se_resident_eu_generic"),
+        /meta\.json\.profile: "se_resident_eu_generic" no coincide con feasibility\.json/,
+      ],
+      [(r) => delete r.meta.research_as_of, /meta\.json: falta el campo "research_as_of"/],
+    ];
+    for (const [mutate, expected] of cases) {
+      const raw = sample();
+      mutate(raw);
+      expect(() => assertSiteData(raw), `${expected}`).toThrow(expected);
+    }
+  });
+
+  it("rejects malformed evidence items", () => {
+    const item = {
+      url: "https://x.example",
+      kind: "official",
+      quote: "q",
+      retrieved_at: "2026-10-06",
+      verified: true,
+    };
+    const withoutDate: Record<string, unknown> = { ...item };
+    delete withoutDate.retrieved_at;
+    const bad: [Record<string, unknown>, RegExp][] = [
+      [withoutDate, /evidence\[0\]: falta el campo "retrieved_at"/],
+      [{ ...item, quote: null }, /evidence\[0\]\.quote: se esperaba string, hay null/],
+      [{ ...item, verified: "yes" }, /evidence\[0\]\.verified: se esperaba boolean/],
+      [{ ...item, url: null, kind: "forum" }, /evidence\[0\]\.url: se esperaba string, hay null/],
+      [{ ...item, retrieved_at: 20261006 }, /evidence\[0\]\.retrieved_at: se esperaba string/],
+    ];
+    for (const [evidence, expected] of bad) {
+      const raw = sample();
+      raw.feasibility.records[3].evidence = [evidence];
+      const problems = validateFile("feasibility", raw.feasibility);
+      expect(problems.join("\n"), `${expected}`).toMatch(expected);
+      expect(problems.join("\n")).toMatch(/^feasibility\.json\.records\[3\]\.evidence\[0\]/);
+    }
+    const raw = sample();
+    raw.feasibility.records[3].evidence = {};
+    expect(validateFile("feasibility", raw.feasibility)).toEqual([
+      "feasibility.json.records[3].evidence: se esperaba una lista, hay un objeto",
+    ]);
   });
 
   it("fails on renamed offer fields (the page would render '/undefined')", () => {

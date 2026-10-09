@@ -8,8 +8,8 @@ están en `src/i18n/es.ts`.
 
 | Ruta | Contenido |
 |---|---|
-| `/` | Comparador (única isla interactiva): servicios, plan, riesgo máximo aceptado, moneda, ahorro neto de comisión de cambio |
-| `/servicios/[id]/` | Precios por país y plan, factibilidad desde el país de residencia (`meta.residence`) y paquetes que incluyen el servicio |
+| `/` | Comparador (única isla interactiva): servicios, plan, perfil de factibilidad, hallazgos pendientes de revisión (opcional), riesgo máximo aceptado, moneda, ahorro neto de comisión de cambio |
+| `/servicios/[id]/` | Precios por país y plan, factibilidad del perfil por defecto (fuente, evidencia, supuestos y motivos) y paquetes que incluyen el servicio |
 | `/paises/[cc]/` | Todas las ofertas de un país |
 | `/cambios/` | Cambios de precio de los últimos 90 días |
 | `/metodologia/` | Fuentes, ejes de riesgo, supuestos arriesgados, cobertura, atribuciones y aviso legal |
@@ -57,5 +57,10 @@ Variables de entorno para el build: `SITE_URL` (por defecto `https://glrodasz.gi
   elecciones, costes y ahorros) sobre `src/data-sample/` y sobre `src/data/` si existe; en CI, el
   job `contract` lo corre con la salida de `haggler site-data` generada desde los fixtures de
   replay. El `cheapest.json` de ejemplo está calculado con `compare.py`.
+- `src/logic/verdicts.ts` reetiqueta las ofertas para otro perfil de `feasibility.json` (o
+  incluyendo los hallazgos pendientes de revisión): país de residencia → «Oficial», si no la ficha
+  del perfil para (servicio, país), y sin ficha «Sin evaluar». Para el perfil por defecto sin
+  pendientes reproduce las etiquetas de `offers.json` (`verdicts.test.ts`, también sobre
+  `src/data/` si existe). El selector de perfil y la casilla se guardan en el hash (`p=`, `u=1`).
 - `src/logic/format.ts`: formato es-ES con `Intl` (moneda, porcentajes, fechas en UTC).
 - Sin CDNs, fuentes externas, analítica ni cookies.

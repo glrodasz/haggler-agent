@@ -1,7 +1,9 @@
 /**
  * Comparador: the only interactive island. Controls render on the server; the offers list is
  * read from an inline <script type="application/json"> after hydration because passing ~1-2k
- * offers as island props would bloat the HTML with Astro's prop encoding.
+ * offers as island props would bloat the HTML with Astro's prop encoding. The feasibility
+ * records travel the same way: the offers carry the default profile's labels and are relabelled
+ * (logic/verdicts.ts) when the visitor picks another profile or includes pending findings.
  */
 
 import { useEffect, useMemo, useState } from "preact/hooks";
@@ -24,8 +26,14 @@ import {
   periodSuffix,
 } from "../logic/format";
 import { type CompareState, decodeState, defaultState, encodeState } from "../logic/selection";
-import { unpackOffers } from "../logic/transport";
+import { unpackOffers, unpackVerdicts } from "../logic/transport";
 import { RISK_LEVELS, type RiskLevel } from "../logic/types";
+import {
+  relabelOffers,
+  type VerdictRecord,
+  type VerdictSource,
+  verdictLookup,
+} from "../logic/verdicts";
 
 export interface ComparadorService {
   id: string;
@@ -40,6 +48,15 @@ export interface ComparadorLabel {
   rank: number;
   name: string;
   description: string;
+}
+
+export interface ComparadorProfile {
+  id: string;
+  name: string;
+  description: string;
+  residence: string;
+  residenceName: string;
+  residenceCurrency: string;
 }
 
 export interface ComparadorProps {
@@ -60,6 +77,13 @@ export interface ComparadorProps {
   defaultCurrency: string;
   /** id of the inline JSON element holding the packed offers (see logic/transport.ts). */
   dataId: string;
+  /** Public profiles, default first; the selector only renders with two or more. */
+  profiles: ComparadorProfile[];
+  defaultProfile: string;
+  /** Whether any record is pending review (the checkbox only renders then). */
+  hasPending: boolean;
+  /** id of the inline JSON element holding the packed feasibility records. */
+  verdictsId: string;
 }
 
 const t = es.compare;
@@ -86,18 +110,28 @@ export default function Comparador(props: ComparadorProps) {
   );
   const [state, setState] = useState<CompareState>(initial);
   const [offers, setOffers] = useState<CompareOfferFields[] | null>(null);
+  const [records, setRecords] = useState<VerdictRecord[]>([]);
   const [ready, setReady] = useState(false);
+  const showProfiles = props.profiles.length >= 2;
 
   useEffect(() => {
-    let parsed: CompareOfferFields[] = [];
-    try {
-      const text = document.getElementById(props.dataId)?.textContent ?? "{}";
-      parsed = unpackOffers(JSON.parse(text));
-    } catch {
-      parsed = [];
-    }
-    setOffers(parsed);
-    setState(decodeState(window.location.hash, services, currencies, initial));
+    const read = <T,>(id: string, unpack: (value: unknown) => T[]): T[] => {
+      try {
+        return unpack(JSON.parse(document.getElementById(id)?.textContent ?? "{}"));
+      } catch {
+        return [];
+      }
+    };
+    setOffers(read(props.dataId, unpackOffers));
+    setRecords(read(props.verdictsId, unpackVerdicts));
+    setState(
+      decodeState(window.location.hash, services, currencies, initial, {
+        profiles: showProfiles
+          ? props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile)
+          : [],
+        pending: props.hasPending,
+      }),
+    );
     setReady(true);
   }, []);
 
@@ -109,20 +143,45 @@ export default function Comparador(props: ComparadorProps) {
     }
   }, [state, ready]);
 
-  const ctx: CompareContext = useMemo(
+  const profile =
+    props.profiles.find((p) => p.id === (state.profile ?? props.defaultProfile)) ??
+    props.profiles.find((p) => p.id === props.defaultProfile);
+  const residence = profile?.residence ?? props.residence;
+  const residenceName = profile?.residenceName ?? props.residenceName;
+  const residenceCurrency = profile?.residenceCurrency ?? props.residenceCurrency;
+
+  const source: VerdictSource = useMemo(
     () => ({
-      rates,
-      residence: props.residence,
-      residenceCurrency: props.residenceCurrency,
-      feePct,
+      default_profile: props.defaultProfile,
+      profiles: props.profiles.map((p) => ({ id: p.id, residence_country: p.residence })),
+      records,
     }),
-    [rates, props.residence, props.residenceCurrency, feePct],
+    [props.defaultProfile, props.profiles, records],
+  );
+  const verdict = useMemo(
+    () => verdictLookup(source, state.profile, state.pending),
+    [source, state.profile, state.pending],
+  );
+  // offers.json already carries the default profile's verdicts without pending findings.
+  const relabelled = useMemo(
+    () =>
+      offers && (state.profile !== null || state.pending)
+        ? relabelOffers(offers, source, state.profile, state.pending)
+        : offers,
+    [offers, source, state.profile, state.pending],
+  );
+
+  const ctx: CompareContext = useMemo(
+    () => ({ rates, residence, residenceCurrency, feePct }),
+    [rates, residence, residenceCurrency, feePct],
   );
 
   const rows = useMemo(
     () =>
-      offers ? state.services.map((id) => cheapestFor(id, state.plans[id] ?? "", offers, ctx)) : [],
-    [offers, state.services, state.plans, ctx],
+      relabelled
+        ? state.services.map((id) => cheapestFor(id, state.plans[id] ?? "", relabelled, ctx))
+        : [],
+    [relabelled, state.services, state.plans, ctx],
   );
   const display = useMemo(
     () => ({ currency: state.currency, rates, feePct }),
@@ -146,6 +205,9 @@ export default function Comparador(props: ComparadorProps) {
     setState((s) => ({ ...s, plans: { ...s.plans, [id]: plan } }));
   const setRisk = (risk: RiskLevel) => setState((s) => ({ ...s, risk }));
   const setCurrency = (currency: string) => setState((s) => ({ ...s, currency }));
+  const setProfile = (id: string) =>
+    setState((s) => ({ ...s, profile: id === props.defaultProfile ? null : id }));
+  const setPending = (pending: boolean) => setState((s) => ({ ...s, pending }));
 
   const planLabel = (serviceId: string, planId: string) =>
     serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label_es ?? planId;
@@ -202,6 +264,58 @@ export default function Comparador(props: ComparadorProps) {
         </fieldset>
 
         <div class="side">
+          {(showProfiles || props.hasPending) && (
+            <fieldset>
+              <legend>{t.profileLegend}</legend>
+              <p class="fieldset-help">{t.profileHelp}</p>
+              {showProfiles ? (
+                <>
+                  <label class="visually-hidden" for="perfil">
+                    {t.profileLabel}
+                  </label>
+                  <select
+                    id="perfil"
+                    value={profile?.id ?? props.defaultProfile}
+                    aria-describedby="perfil-descripcion"
+                    onChange={(e) => setProfile(e.currentTarget.value)}
+                  >
+                    {props.profiles.map((p) => (
+                      <option value={p.id} key={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="perfil-descripcion" class="profile-desc">
+                    {profile?.description}
+                  </p>
+                </>
+              ) : (
+                profile && (
+                  <p class="profile-desc">
+                    <strong>{profile.name}.</strong> {profile.description}
+                  </p>
+                )
+              )}
+              {props.hasPending && (
+                <>
+                  <label class="check" for="pendientes">
+                    <input
+                      type="checkbox"
+                      id="pendientes"
+                      checked={state.pending}
+                      aria-describedby="pendientes-ayuda"
+                      onChange={(e) => setPending(e.currentTarget.checked)}
+                    />
+                    {t.pendingLabel}
+                  </label>
+                  <p id="pendientes-ayuda" class="fieldset-help">
+                    {t.pendingHelp}
+                  </p>
+                </>
+              )}
+            </fieldset>
+          )}
+
           <fieldset>
             <legend>{t.riskLegend}</legend>
             <p class="fieldset-help">{t.riskHelp}</p>
@@ -249,7 +363,7 @@ export default function Comparador(props: ComparadorProps) {
 
       <section aria-labelledby="resultado-titulo">
         <h2 id="resultado-titulo">{t.resultsTitle}</h2>
-        {offers === null ? (
+        {relabelled === null ? (
           <p class="loading">{t.loading}</p>
         ) : state.services.length === 0 ? (
           <p class="callout">{t.noneSelected}</p>
@@ -271,12 +385,12 @@ export default function Comparador(props: ComparadorProps) {
 
             <div class="table-wrap" role="region" aria-labelledby="cmp-caption" tabIndex={0}>
               <table>
-                <caption id="cmp-caption">{t.tableCaption(props.residenceName, riskName)}</caption>
+                <caption id="cmp-caption">{t.tableCaption(residenceName, riskName)}</caption>
                 <thead>
                   <tr>
                     <th scope="col">{t.colService}</th>
                     <th scope="col" class="num">
-                      {t.colHome(props.residenceName)}
+                      {t.colHome(residenceName)}
                     </th>
                     <th scope="col">{t.colBest}</th>
                     <th scope="col" class="num">
@@ -318,7 +432,12 @@ export default function Comparador(props: ComparadorProps) {
                               isHome={r.home?.obs_key === r.best.obs_key}
                               countryName={props.countryNames[r.best.country] ?? r.best.country}
                               label={props.labels[r.best.label]}
-                              residenceName={props.residenceName}
+                              residenceName={residenceName}
+                              pending={
+                                state.pending &&
+                                verdict(r.best.service_id, r.best.country).provenance ===
+                                  "agent_pending"
+                              }
                             />
                           ) : (
                             <span class="muted">{t.noOffer}</span>
@@ -345,7 +464,7 @@ export default function Comparador(props: ComparadorProps) {
                   <tr>
                     <td />
                     <th scope="col" class="num">
-                      {t.colPayHome(props.residenceName)}
+                      {t.colPayHome(residenceName)}
                     </th>
                     <th scope="col" class="num">
                       {t.colOptimized}
@@ -383,6 +502,7 @@ export default function Comparador(props: ComparadorProps) {
             {totals.withoutOffers.length > 0 && (
               <p class="note">{t.noOfferNote(names(totals.withoutOffers))}</p>
             )}
+            {state.pending && <p class="note">{t.pendingNote}</p>}
             <p class="note">
               {t.fxNote(formatDate(props.fxAsOf))} {t.shareNote}
             </p>
@@ -402,6 +522,8 @@ function OfferCell(props: {
   countryName: string;
   label: ComparadorLabel | undefined;
   residenceName: string;
+  /** The verdict comes from findings still pending review. */
+  pending: boolean;
 }) {
   const { offer, label } = props;
   return (
@@ -422,6 +544,11 @@ function OfferCell(props: {
         {offer.eu_badge && (
           <span class="badge badge-eu" title={es.euBadgeTitle(props.residenceName)}>
             {es.euBadge}
+          </span>
+        )}
+        {props.pending && (
+          <span class="badge provenance-agent_pending" title={es.provenanceTitles.agent_pending}>
+            {es.provenance.agent_pending}
           </span>
         )}
       </span>

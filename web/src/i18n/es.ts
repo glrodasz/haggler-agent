@@ -157,6 +157,7 @@ export const es = {
         lawful: "Legal",
         contestable_eu_right: "Derecho UE discutible",
         requires_misrepresentation: "Requiere declarar datos falsos",
+        unknown: "Sin datos",
       },
     },
     tos: {
@@ -166,6 +167,7 @@ export const es = {
         compliant: "Cumple",
         breach_unenforced: "Incumple, sin control conocido",
         breach_enforced: "Incumple, con control activo",
+        unknown: "Sin datos",
       },
     },
     practical: {
@@ -176,6 +178,7 @@ export const es = {
         presence_once: "Presencia en el país una vez",
         presence_periodic: "Presencia periódica",
         impossible: "Imposible",
+        unknown: "Sin datos",
       },
     },
   } as Record<
@@ -189,6 +192,43 @@ export const es = {
     unverified: "Sin verificar",
     expired: "Caducado",
   } as Record<string, string>,
+
+  /** Where a feasibility record comes from (feasibility.json records[].provenance). */
+  provenance: {
+    curated: "Curado",
+    agent_reviewed: "Revisado",
+    agent_pending: "Pendiente de revisión",
+  } as Record<string, string>,
+  provenanceTitles: {
+    curated: "Ficha escrita a mano; siempre prevalece sobre la investigación automática.",
+    agent_reviewed:
+      "Calculada a partir de hallazgos del agente de investigación que una persona aceptó.",
+    agent_pending:
+      "Calculada con hallazgos del agente que nadie ha revisado todavía. El comparador no la usa salvo que marques «Incluir hallazgos pendientes de revisión».",
+  } as Record<string, string>,
+  /** Source class of a cited page (records[].evidence[].kind). */
+  evidenceKinds: {
+    official: "oficial",
+    press: "prensa",
+    forum: "foro",
+    aggregator: "agregador",
+    user_report: "reporte de usuario",
+  } as Record<string, string>,
+
+  /** The evidence block of a feasibility record (FeasibilityTable). */
+  feasibility: {
+    colSource: "Fuente",
+    researchedOn: (date: string) => `Datos del ${date}`,
+    evidenceSummary: (count: number) => `Evidencia (${count})`,
+    noEvidence: "Sin citas.",
+    sourceKind: (kind: string) => `fuente ${kind}`,
+    retrievedOn: (date: string) => `consultado el ${date}`,
+    verifiedQuote: "cita verificada",
+    unverifiedQuote: "cita sin verificar",
+    evidenceLinkLabel: (host: string, kind: string) => `${host} (fuente ${kind})`,
+    assumptionsTitle: "Supuestos",
+    reasonsTitle: "Motivos",
+  },
 
   coverageStatus: {
     ok: "OK",
@@ -298,6 +338,15 @@ export const es = {
     riskHelp:
       "Solo se eligen ofertas con un nivel de riesgo igual o menor. Las ofertas sin evaluar nunca se eligen.",
     currencyLegend: "Moneda",
+    profileLegend: "Perfil",
+    profileHelp:
+      "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes.",
+    profileLabel: "Perfil de factibilidad",
+    pendingLabel: "Incluir hallazgos pendientes de revisión",
+    pendingHelp:
+      "Hallazgos del agente de investigación que nadie ha revisado todavía. Sin marcar, solo cuentan las fichas curadas o revisadas.",
+    pendingNote:
+      "El resultado incluye hallazgos pendientes de revisión: todavía nadie los ha comprobado.",
     loading: "Cargando precios…",
     noscript:
       "El comparador necesita JavaScript. Sin él puedes consultar los precios por servicio o por país.",
@@ -379,8 +428,8 @@ export const es = {
     bundlesTitle: "Paquetes que lo incluyen",
     noBundles: "No hay paquetes registrados que incluyan este servicio.",
     feasibilityTitle: (residence: string) => `Factibilidad desde ${residence}`,
-    feasibilityLead: (residence: string) =>
-      `Fichas curadas a mano para quien vive en ${residence}. Son semillas conservadoras y casi todas están sin verificar.`,
+    feasibilityLead: (residence: string, profile?: string) =>
+      `Fichas para quien vive en ${residence}${profile ? ` (perfil «${profile}»)` : ""}. Las curadas a mano son semillas conservadoras, casi todas sin verificar; las del agente de investigación citan sus fuentes y, hasta que una persona las revisa, figuran como «Pendiente de revisión» y el comparador no las usa.`,
     noFeasibility: (residence: string) =>
       `No hay fichas de factibilidad para este servicio: fuera de ${residence} sus ofertas figuran como «Sin evaluar».`,
     colTarget: "País objetivo",
@@ -471,6 +520,7 @@ export const es = {
       "Los precios de tu país de residencia son siempre «Oficial» (nivel 0).",
       "Sin ficha, la oferta queda «Sin evaluar» y el comparador nunca la elige.",
       "El distintivo «UE» es secundario: indica que podría existir un derecho bajo el Reglamento (UE) 2018/302, no que sea seguro.",
+      "Un eje «Sin datos» significa que faltan hechos con fuente: la oferta queda «Sin evaluar».",
     ],
     axisValueCaption: (axis: string) => `Valores del eje ${axis}`,
     labelsTitle: "Etiquetas",
@@ -478,6 +528,45 @@ export const es = {
     colLevel: "Nivel",
     colLabel: "Etiqueta",
     colDescription: "Qué significa",
+    researchTitle: "Investigación de factibilidad",
+    researchLead:
+      "Además de las fichas escritas a mano, un agente investiga qué exige cada servicio para contratar la oferta de otro país.",
+    research: [
+      {
+        title: "El agente solo descubre",
+        text: "Cada semana un agente busca con Google Search páginas oficiales, prensa y foros sobre las reglas de cada servicio: país de la cuenta, medio de pago, dirección, controles. Solo propone hallazgos; nada de lo que dice cuenta por sí mismo.",
+      },
+      {
+        title: "Cada dato necesita una cita literal comprobada",
+        text: "Un hallazgo solo cuenta si nuestra propia descarga de la página citada encuentra la cita literal. Esa descarga respeta robots.txt y nunca intenta saltarse un bloqueo, un inicio de sesión ni un CAPTCHA: si la página no se puede leer, el dato no cuenta. Los foros nunca cuentan y la prensa solo para restricciones.",
+      },
+      {
+        title: "Hechos comunes, veredictos por perfil",
+        text: "Los hechos no dependen de quién compra; el veredicto sí. Un evaluador determinista cruza los hechos con lo que cada perfil puede demostrar honestamente y calcula los tres ejes. Si falta un dato, el eje queda «Sin datos» y la oferta, «Sin evaluar».",
+      },
+      {
+        title: "Lo curado a mano manda",
+        text: "Si existe una ficha escrita a mano para un servicio, un país y un perfil, se usa esa y no la del agente.",
+      },
+      {
+        title: "Revisión humana",
+        text: "Los hallazgos nuevos figuran como «Pendiente de revisión» hasta que una persona los acepta. El comparador no los usa salvo que marques «Incluir hallazgos pendientes de revisión»; en las fichas se ven con su distintivo y sus citas.",
+      },
+      {
+        title: "Nunca datos falsos",
+        text: "Una vía que exigiría declarar algo falso, como una dirección o un país que no son los tuyos, se muestra como «No factible». El sitio nunca sugiere usar una VPN ni dar datos falsos.",
+      },
+    ],
+    researchRun: (date: string, run: string | null) =>
+      run
+        ? `Última investigación publicada: ${date} (ejecución ${run}).`
+        : "Todavía no se ha publicado ninguna investigación: solo hay fichas escritas a mano.",
+    profilesTitle: "Perfiles",
+    profilesLead:
+      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto; cuando hay más de uno, el comparador tiene un selector de perfil.",
+    defaultProfileTag: "Por defecto",
+    researchNotLegal:
+      "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",
     assumptionsTitle: "Cinco supuestos arriesgados",
     assumptionsLead: "Errores frecuentes al razonar sobre precios de otros países:",
     assumptions: (residence: string) => [

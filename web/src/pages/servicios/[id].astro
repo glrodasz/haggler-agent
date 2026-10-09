@@ -128,7 +128,9 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
         <p>{t.noFeasibility(site.residenceName)}</p>
       ) : (
         <>
-          <p class="note">{t.feasibilityLead(site.residenceName)}</p>
+          <p class="note">
+            {t.feasibilityLead(site.residenceName, site.defaultProfile?.name_es)}
+          </p>
           <FeasibilityTable
             records={records}
             mode="service"

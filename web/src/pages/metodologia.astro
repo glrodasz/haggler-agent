@@ -47,10 +47,14 @@ const attributions = [...(site.meta.attributions ?? [])];
 if (!attributions.some((a) => a.url.includes("tompec"))) attributions.push(t.tompecFallback);
 
 const disclaimer = t.disclaimer(profileDescription(site.meta.profile, site.residenceName));
+const research = site.meta.research_run_id
+  ? t.researchRun(formatDate(site.meta.research_as_of), site.meta.research_run_id)
+  : t.researchRun("", null);
 
 const toc = [
   ["recogida", t.collectTitle],
   ["ejes", t.axesTitle],
+  ["investigacion", t.researchTitle],
   ["supuestos", t.assumptionsTitle],
   ["cobertura", t.coverageTitle],
   ["atribuciones", t.attributionsTitle],
@@ -144,6 +148,40 @@ const toc = [
         </tbody>
       </table>
     </TableWrap>
+  </section>
+
+  <section aria-labelledby="investigacion">
+    <h2 id="investigacion">{t.researchTitle}</h2>
+    <p>{t.researchLead}</p>
+    {
+      t.research.map((item) => (
+        <>
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+        </>
+      ))
+    }
+    <p class="note">{research}</p>
+
+    <h3>{t.profilesTitle}</h3>
+    <p>{t.profilesLead}</p>
+    <ul>
+      {
+        site.feasibility.profiles.map((p) => (
+          <li>
+            <strong>{p.name_es}</strong>
+            {p.id === site.feasibility.default_profile && (
+              <>
+                {" "}
+                <span class="badge badge-neutral">{t.defaultProfileTag}</span>
+              </>
+            )}
+            {p.description_es && <div class="small muted">{p.description_es}</div>}
+          </li>
+        ))
+      }
+    </ul>
+    <p class="callout warning">{t.researchNotLegal}</p>
   </section>
 
   <section aria-labelledby="supuestos">

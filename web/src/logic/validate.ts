@@ -6,10 +6,12 @@
  * CI's contract job all fail on that drift with the file, record and field at fault.
  *
  * It checks presence, JSON type and nullability of every field types.ts declares, not enum
- * values: the pages fall back to the raw value for an id they do not know.
+ * values: the pages fall back to the raw value for an id they do not know. Two exceptions decide
+ * what the comparator computes, so they are checked exactly: a record's provenance (pending
+ * findings are only used on request) and the profile ids feasibility.json and meta.json refer to.
  */
 
-import type { DATA_FILES } from "./types";
+import { type DATA_FILES, PROVENANCES } from "./types";
 
 type DataFile = (typeof DATA_FILES)[number];
 type Check = (value: unknown, path: string, problems: string[]) => void;
@@ -85,6 +87,22 @@ function shape(required: Record<string, Check>, optional: Record<string, Check> 
   };
 }
 
+/** A string from a closed set. */
+function oneOf(values: readonly string[]): Check {
+  return (value, path, problems) => {
+    if (typeof value !== "string" || !values.includes(value)) {
+      problems.push(`${path}: se esperaba ${values.join(" | ")}, hay ${kindOf(value)}`);
+    }
+  };
+}
+
+/** Every check in order (e.g. a shape, then a rule across its fields). */
+function allOf(...checks: Check[]): Check {
+  return (value, path, problems) => {
+    for (const check of checks) check(value, path, problems);
+  };
+}
+
 function anyOf(label: string, ...checks: Check[]): Check {
   return (value, path, problems) => {
     const ok = checks.some((check) => {
@@ -116,6 +134,26 @@ function byRisk(item: Check): Check {
   return shape({ "0": item, "1": item, "2": item, "3": item });
 }
 
+/**
+ * feasibility.json: default_profile and every record's profile must be one of `profiles` (the
+ * comparator and the pages pick records by profile id). Runs after the shape check, so it only
+ * looks at fields that already have the right type.
+ */
+const profileRefs: Check = (value, path, problems) => {
+  if (!isObject(value) || !Array.isArray(value.profiles)) return;
+  const ids = new Set(value.profiles.map((p) => (isObject(p) ? p.id : undefined)));
+  const unknown = (id: unknown) => typeof id === "string" && !ids.has(id);
+  if (unknown(value.default_profile)) {
+    problems.push(`${path}.default_profile: "${value.default_profile}" no está en profiles`);
+  }
+  if (!Array.isArray(value.records)) return;
+  value.records.forEach((r, i) => {
+    if (problems.length < MAX_PROBLEMS && isObject(r) && unknown(r.profile)) {
+      problems.push(`${path}.records[${i}].profile: "${r.profile}" no está en profiles`);
+    }
+  });
+};
+
 const changeValue = anyOf(
   "número, texto, {amount, currency} o null",
   nullable(num),
@@ -131,6 +169,8 @@ export const SITE_DATA_SCHEMA = {
     as_of: nullable(str),
     residence: str,
     profile: str,
+    research_run_id: nullable(str),
+    research_as_of: nullable(str),
     fx_fee_pct: num,
     display_currencies: list(str),
     attributions: list(shape({ name: str, url: str, license: str })),
@@ -174,25 +214,52 @@ export const SITE_DATA_SCHEMA = {
       eu_badge: bool,
     }),
   ),
-  feasibility: shape({
-    labels: list(shape({ id: str, rank: num, name_es: str, description_es: str })),
-    records: list(
-      shape({
-        service_id: str,
-        target_country: str,
-        label: str,
-        rank: num,
-        eu_badge: bool,
-        legality: str,
-        tos: str,
-        practical: str,
-        confidence: str,
-        status: str,
-        notes_es: str,
-        tos_clause_url: nullable(str),
-      }),
-    ),
-  }),
+  feasibility: allOf(
+    shape({
+      labels: list(shape({ id: str, rank: num, name_es: str, description_es: str })),
+      default_profile: str,
+      profiles: list(shape({ id: str, name_es: str, description_es: str, residence_country: str })),
+      records: list(
+        shape({
+          profile: str,
+          service_id: str,
+          target_country: str,
+          label: str,
+          rank: num,
+          eu_badge: bool,
+          legality: str,
+          tos: str,
+          practical: str,
+          confidence: str,
+          status: str,
+          provenance: oneOf(PROVENANCES),
+          notes_es: str,
+          tos_clause_url: nullable(str),
+          steps: list(
+            shape({
+              type: str,
+              value: str,
+              requires_presence: bool,
+              requires_false_declaration: bool,
+            }),
+          ),
+          evidence: list(
+            shape({
+              url: str,
+              kind: str,
+              quote: str,
+              retrieved_at: nullable(str),
+              verified: bool,
+            }),
+          ),
+          assumptions_es: list(str),
+          reasons_es: list(str),
+          researched_on: nullable(str),
+        }),
+      ),
+    }),
+    profileRefs,
+  ),
   cheapest: list(
     shape({
       service_id: str,
@@ -273,6 +340,22 @@ export const SITE_DATA_SCHEMA = {
     }),
   ),
 } satisfies Record<DataFile, Check>;
+
+/**
+ * Rules across files: offers.json and cheapest.json carry meta.profile's verdicts, which must be
+ * the default profile of feasibility.json. Only checked once both fields are strings.
+ */
+export function validateReferences(raw: Partial<Record<DataFile, unknown>>): string[] {
+  const { meta, feasibility } = raw;
+  if (!isObject(meta) || !isObject(feasibility)) return [];
+  const profile = meta.profile;
+  const defaultProfile = feasibility.default_profile;
+  if (typeof profile !== "string" || typeof defaultProfile !== "string") return [];
+  if (profile === defaultProfile) return [];
+  return [
+    `meta.json.profile: "${profile}" no coincide con feasibility.json.default_profile "${defaultProfile}"`,
+  ];
+}
 
 /** Contract violations of one file's content, as "offers.json[3].source_url: ..." lines. */
 export function validateFile(name: DataFile, value: unknown): string[] {

@@ -46,7 +46,12 @@ export interface Meta {
   /** Date of the run (YYYY-MM-DD); null before the first completed run. */
   as_of: string | null;
   residence: string;
+  /** The site's default feasibility profile (== feasibility.default_profile). */
   profile: string;
+  /** Last feasibility research run; null before the first one. */
+  research_run_id: string | null;
+  /** Date of that research run (YYYY-MM-DD); null before the first one. */
+  research_as_of: string | null;
   /** Percent, e.g. 2 means 2 %. */
   fx_fee_pct: number;
   display_currencies: string[];
@@ -120,23 +125,83 @@ export interface RiskLabel {
   description_es: string;
 }
 
+/**
+ * Where a feasibility record comes from: written by hand ("curated", always wins), derived by the
+ * research evaluator from findings a person accepted ("agent_reviewed"), or derived including
+ * findings still pending review ("agent_pending": never used unless the visitor opts in).
+ */
+export const PROVENANCES = ["curated", "agent_reviewed", "agent_pending"] as const;
+export type Provenance = (typeof PROVENANCES)[number];
+
+/** Axis value of a research-derived record whose facts are missing (its rank is then 99). */
+export const UNKNOWN_AXIS = "unknown";
+
+export type KnownEvidenceKind = "official" | "press" | "forum" | "aggregator" | "user_report";
+/** Unknown future source classes must still render, so the type stays open. */
+export type EvidenceKind = KnownEvidenceKind | (string & {});
+
+/** A public profile: who the verdicts are computed for (default profile first). */
+export interface Profile {
+  id: string;
+  name_es: string;
+  description_es: string;
+  residence_country: string;
+}
+
+/** One step of the route to the foreign offer (e.g. a payment card or a trip to the country). */
+export interface Step {
+  type: string;
+  value: string;
+  requires_presence: boolean;
+  requires_false_declaration: boolean;
+}
+
+/** A cited source: the literal quote, and whether our own fetch of the page found it. */
+export interface Evidence {
+  url: string;
+  kind: EvidenceKind;
+  quote: string;
+  /** Date of our fetch (YYYY-MM-DD); null for hand-curated citations. */
+  retrieved_at: string | null;
+  verified: boolean;
+}
+
 export interface FeasibilityView {
+  /** Profile id (one of FeasibilityData.profiles). */
+  profile: string;
   service_id: string;
   target_country: string;
   label: LabelId;
   rank: number;
   eu_badge: boolean;
+  /** Axis values; any of them may be "unknown" (UNKNOWN_AXIS) for research-derived records. */
   legality: string;
   tos: string;
   practical: string;
   confidence: Confidence;
   status: CuratedStatus;
+  provenance: Provenance;
   notes_es: string;
   tos_clause_url: string | null;
+  steps: Step[];
+  evidence: Evidence[];
+  assumptions_es: string[];
+  reasons_es: string[];
+  /** YYYY-MM-DD; null when unknown. */
+  researched_on: string | null;
 }
 
+/**
+ * Every public profile's records. A (profile, service, country) has at most one non-pending
+ * record (curated or agent_reviewed) and one agent_pending record (the verdict when pending
+ * findings are included, listed only when it differs). Order: default profile first, then by
+ * profile, service_id, target_country, non-pending before pending. offers.json and
+ * cheapest.json carry the default profile's verdicts with pending findings excluded.
+ */
 export interface FeasibilityData {
   labels: RiskLabel[];
+  default_profile: string;
+  profiles: Profile[];
   records: FeasibilityView[];
 }
 
