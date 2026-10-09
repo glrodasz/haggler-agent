@@ -12,8 +12,8 @@
 * Instruments: due instruments with official domains that some public profile does not hold
   yet, never-researched first.
 * Caps per run: Limits.max_pairs, max_services, max_instruments.
-* Monthly guard: nothing is planned once the month's reported search queries reach
-  Limits.max_month_queries.
+* Monthly guard: nothing is planned once the search queries spent in the current calendar month
+  (research/usage/, real clock, dry runs included) reach Limits.max_month_queries.
 * An explicit request (CLI filters) replaces the automatic choice and ignores freshness and
   pauses, but not the monthly guard.
 """
@@ -112,10 +112,6 @@ def month_of(day: date) -> str:
     return day.strftime("%Y-%m")
 
 
-def month_queries(state: ResearchState, today: date) -> int:
-    return state.month_queries if state.month == month_of(today) else 0
-
-
 def due(key: str, facts: dict[str, SubjectFacts], state: ResearchState, today: date) -> str | None:
     """Why the subject is due ("new", "stale"), or None when it is fresh or paused."""
     st = state.subjects.get(key)
@@ -207,14 +203,16 @@ def select(
     limits: Limits | None = None,
     request: Request | None = None,
     fx_fee_pct: float = 2.0,
+    month_queries_used: int = 0,
+    month: str | None = None,
 ) -> Selection:
     limits = limits or Limits()
     request = request or Request()
     sel = Selection()
-    used = month_queries(state, today)
+    used = month_queries_used
     if used >= limits.max_month_queries:
         sel.skipped["*"] = (
-            f"monthly guard: {used} search queries in {month_of(today)} "
+            f"monthly guard: {used} search queries in {month or month_of(today)} "
             f"(>= {limits.max_month_queries})"
         )
         return sel

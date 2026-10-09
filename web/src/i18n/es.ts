@@ -516,7 +516,7 @@ export const es = {
     axesLead:
       "Cada ficha de factibilidad evalúa por separado tres ejes. La etiqueta final es la del peor eje: un nivel alto en cualquiera de ellos no se compensa con los otros dos.",
     axesRules: [
-      "Si algún paso exige declarar datos falsos (por ejemplo, una dirección de otro país), la etiqueta es como mínimo de nivel 2.",
+      "En las fichas curadas a mano, si algún paso exige declarar datos falsos (por ejemplo, una dirección de otro país), la etiqueta es como mínimo de nivel 2 y el eje de legalidad lo indica; en las fichas derivadas por el agente de investigación, esa vía es «No factible».",
       "Los precios de tu país de residencia son siempre «Oficial» (nivel 0).",
       "Sin ficha, la oferta queda «Sin evaluar» y el comparador nunca la elige.",
       "El distintivo «UE» es secundario: indica que podría existir un derecho bajo el Reglamento (UE) 2018/302, no que sea seguro.",
@@ -554,7 +554,7 @@ export const es = {
       },
       {
         title: "Nunca datos falsos",
-        text: "Una vía que exigiría declarar algo falso, como una dirección o un país que no son los tuyos, se muestra como «No factible». El sitio nunca sugiere usar una VPN ni dar datos falsos.",
+        text: "En las fichas derivadas por el agente, una vía que exigiría declarar algo falso, como una dirección o un país que no son los tuyos, se muestra como «No factible». Las fichas curadas a mano marcan ese paso y su eje de legalidad dice «Requiere declarar datos falsos». El sitio nunca sugiere usar una VPN ni dar datos falsos.",
       },
     ],
     researchRun: (date: string, run: string | null) =>

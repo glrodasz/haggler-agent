@@ -194,9 +194,6 @@ class ResearchState(_Strict):
     run_id: str | None = None
     as_of: date | None = None
     subjects: dict[str, SubjectState] = Field(default_factory=dict)
-    # Search queries reported in the calendar month `month` ("YYYY-MM"): the monthly guard.
-    month: str | None = None
-    month_queries: int = 0
 
 
 class BudgetUsage(_Strict):

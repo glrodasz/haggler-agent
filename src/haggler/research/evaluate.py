@@ -227,6 +227,9 @@ class _Facts:
             status = self.ctx.review.status(c)
             if status == "rejected" or (status == "pending" and not self.include_pending):
                 continue
+            seen = c.check.retrieved_at.date() if c.check.retrieved_at else c.first_seen
+            if (self.ctx.today - seen).days > STALE_AFTER_DAYS:
+                continue  # its page has not confirmed it for a year (e.g. no longer loads)
             cls = c.check.source_class
             if cls == "forum":
                 continue
@@ -242,6 +245,8 @@ class _Facts:
         if not claims:
             return None
         spec = FIELD_SPECS[field_name]
+        if not spec.values and len({c.value for c in claims}) > 1:
+            return None  # e.g. two card issuing countries: no order to pick one, so unknown
         worst = max(claims, key=lambda c: severity(spec, c.value)).value
         return _Resolved(worst, [c for c in claims if c.value == worst])
 
@@ -277,16 +282,30 @@ def _card_country(inst: PaymentInstrument, facts: _Facts, w: _Work) -> str | Non
 
 
 def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Work) -> bool:
+    """Curated values first; a verified official claim can only make an instrument harder to
+    obtain (negative facts), and every fact it rests on without a claim is an assumption."""
     ctx = facts.ctx
+    key = subject_key("instrument", inst.id)
+    remote = facts.resolve(key, "onboarding_remote")
     if not (profile.obtain_remote_instruments and inst.onboarding_remote):
         return False
+    if remote is not None and remote.value == "false":
+        w.use(remote.claims, key)
+        return False
     r = profile.residence_country
-    if not any(e in ("ANY", r) or (e == "EEA" and _eea(ctx, r)) for e in inst.eligible_residence):
+
+    def eligible(codes: Iterable[str]) -> bool:
+        return any(e in ("ANY", r) or (e == "EEA" and _eea(ctx, r)) for e in codes)
+
+    if not eligible(inst.eligible_residence):
+        return False
+    claimed = facts.values(key, "eligible_residence")
+    if claimed and not eligible(claimed):
+        w.use([c for cs in claimed.values() for c in cs], key)
         return False
     docs = profile.documents()
     if inst.required_id_countries and not set(inst.required_id_countries) & docs:
         return False
-    key = subject_key("instrument", inst.id)
     accepted_docs = facts.values(key, "id_documents")
     if accepted_docs:
         ok = {
@@ -299,8 +318,12 @@ def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Wo
         if not usable:
             return False
         w.use(accepted_docs[usable[0]], key)
+    elif not inst.required_id_countries:
+        w.assumptions.append(f"se asume que {inst.name} acepta los documentos del perfil")
     local = facts.resolve(key, "requires_local_address")
-    if local is not None and local.value == "true":
+    if local is None:
+        w.assumptions.append(f"se asume que {inst.name} no exige una dirección en su país")
+    elif local.value == "true":
         w.use(local.claims, key)
         if inst.issuer_country not in profile.addresses():
             return False
@@ -325,6 +348,7 @@ def _obtainable_card(target: str, profile: Profile, facts: _Facts, w: _Work) -> 
         probe = _Work()
         if _card_country(inst, facts, probe) == target and _obtainable(inst, profile, facts, probe):
             w.use(probe.claims.values(), subject_key("instrument", inst.id))
+            w.assumptions.extend(probe.assumptions)
             return inst.id
     return None
 
@@ -515,11 +539,13 @@ def _practical(
 def _tos(facts: _Facts, w: _Work, svc_key: str) -> tuple[str, list[Claim]]:
     clause = facts.resolve(svc_key, "residence_clause")
     today = facts.ctx.today
+    # Any documented event shows the rule exists; only recent ones make it "enforced".
     events = [
         c
         for c in facts.usable(svc_key, "enforcement_event")
-        if c.event_date is not None and 0 <= (today - c.event_date).days <= ENFORCEMENT_WINDOW_DAYS
+        if c.event_date is not None and c.event_date <= today
     ]
+    recent = [c for c in events if (today - c.event_date).days <= ENFORCEMENT_WINDOW_DAYS]  # type: ignore[operator]
     if clause is not None or events:
         used = [*(clause.claims if clause else []), *events]
         w.use(used, svc_key)
@@ -527,10 +553,12 @@ def _tos(facts: _Facts, w: _Work, svc_key: str) -> tuple[str, list[Claim]]:
             w.reasons.append(
                 "los términos exigen: " + value_label_es("residence_clause", clause.value)
             )
-        if events:
-            kinds = sorted({value_label_es("enforcement_event", c.value) for c in events})
+        if recent:
+            kinds = sorted({value_label_es("enforcement_event", c.value) for c in recent})
             w.reasons.append("control documentado: " + ", ".join(kinds))
             return "breach_enforced", used
+        if events:
+            w.reasons.append("hubo controles, pero hace más de dos años")
         return "breach_unenforced", used
     allowed = facts.resolve(svc_key, "foreign_offer_allowed")
     if allowed is not None:

@@ -88,8 +88,10 @@ def build_parser() -> argparse.ArgumentParser:
     site = sub.add_parser("site-data", help="genera web/src/data/*.json desde data/")
     site.add_argument("--data-dir", type=Path, default=Path("data"))
     site.add_argument("--out", type=Path, default=Path("web/src/data"))
-    site.add_argument("--residence", default=DEFAULT_RESIDENCE)
-    site.add_argument("--profile", default=DEFAULT_PROFILE)
+    # Defaults: the `default` profile of data/curated/profiles.yaml and its residence (without
+    # that file: DEFAULT_PROFILE in DEFAULT_RESIDENCE).
+    site.add_argument("--residence", default=None)
+    site.add_argument("--profile", default=None)
     site.add_argument("--catalog-dir", type=Path, default=None, help=argparse.SUPPRESS)
     site.add_argument("--curated-dir", type=Path, default=None, help=argparse.SUPPRESS)
 
@@ -202,11 +204,14 @@ def cmd_site_data(args: argparse.Namespace) -> int:
         profiles = load_profiles(args.curated_dir)
         instruments = load_payment_instruments(args.curated_dir, missing_ok=True)
         review = load_review(args.curated_dir)
+        profile = args.profile or (profiles.default if profiles else DEFAULT_PROFILE)
+        chosen = profiles.get(profile) if profiles else None
+        residence = args.residence or (chosen.residence_country if chosen else DEFAULT_RESIDENCE)
         written = site_data(
             args.data_dir,
             args.out,
-            residence=args.residence,
-            profile=args.profile,
+            residence=residence,
+            profile=profile,
             catalog=catalog,
             feasibility=feasibility,
             bundles=bundles,

@@ -89,10 +89,13 @@ def test_integrity_catches_profile_mismatches():
     assert any("differs from profile" in e for e in errors)
 
 
-def test_integrity_catches_duplicate_review_lines():
+def test_repeated_review_lines_are_valid():
+    """accept, reject, accept on one day repeats a line: the log is append-only, last wins."""
     d = ReviewDecision(id="x", hash="0123456789ab", decision="accept", decided_on=date(2026, 10, 9))
-    errors = integrity_errors(load_catalog(), review=ReviewFile(decisions=[d, d]))
-    assert errors == ["research_review: duplicate decision accept x"]
+    r = d.model_copy(update={"decision": "reject"})
+    review = ReviewFile(decisions=[d, r, d])
+    assert integrity_errors(load_catalog(), review=review) == []
+    assert review.latest()[("x", "0123456789ab")].decision == "accept"
 
 
 def test_review_latest_entry_wins():

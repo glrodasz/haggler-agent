@@ -546,3 +546,72 @@ def test_evaluate_does_not_import_adk():
     code = "import sys, haggler.research.evaluate; print('google.adk' in sys.modules)"
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert out.stdout.strip() == "False"
+
+
+# ------------------------------------------------------- review findings (regressions)
+
+
+def test_instrument_facts_without_claims_are_assumptions():
+    """Rank 0 must not rest on an instrument the profile might not be able to open."""
+    key = subject_key("instrument", "revolut_eea")
+    lt = subject_key("pair", "netflix", "LT")
+    svc = subject(SVC, claim(SVC, "foreign_offer_allowed", "true"))
+    facts = (svc, pair(lt, ("payment_card_country", "must_match")))
+    inst = subject(key, claim(key, "card_issuing_country", "LT"))
+    a = assess("netflix", "LT", GENERIC, ctx(*facts, inst))
+    assert a.rank == 99 and any("Revolut" in x for x in a.assumptions_es)
+    full = subject(
+        key,
+        claim(key, "card_issuing_country", "LT"),
+        claim(key, "id_documents", "eea_id"),
+        claim(key, "requires_local_address", "false"),
+    )
+    b = assess("netflix", "LT", GENERIC, ctx(*facts, full))
+    assert (b.rank, b.label) == (0, "official_home") and not b.assumptions_es
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("onboarding_remote", "false"), ("eligible_residence", "LT")],
+)
+def test_official_negative_instrument_claims_win_over_curated(field, value):
+    key = subject_key("instrument", "revolut_eea")
+    lt = subject_key("pair", "netflix", "LT")
+    facts = (_svc_breach(), pair(lt, ("payment_card_country", "must_match")))
+    inst = subject(key, claim(key, "card_issuing_country", "LT"), claim(key, field, value))
+    assert assess("netflix", "LT", GENERIC, ctx(*facts, inst)).practical == "impossible"
+
+
+def test_old_enforcement_events_still_show_a_breach():
+    svc = subject(
+        SVC,
+        claim(SVC, "foreign_offer_allowed", "true"),
+        claim(SVC, "enforcement_event", "cancellation", cls="press", event=date(2020, 1, 1)),
+    )
+    a = assess("netflix", "CO", CO_USER, ctx(svc, pair(PAIR_CO)))
+    assert a.tos == "breach_unenforced" and a.rank >= 2
+
+
+def test_claims_not_confirmed_for_a_year_are_ignored():
+    old = claim(SVC, "residence_clause", "must_reside")
+    old = old.model_copy(
+        update={
+            "check": old.check.model_copy(update={"retrieved_at": datetime(2025, 6, 1, tzinfo=UTC)})
+        }
+    )
+    svc = subject(SVC, old)  # researched today: the subject itself is fresh
+    assert assess("netflix", "CO", CO_USER, ctx(svc, pair(PAIR_CO))).tos == "unknown"
+
+
+def test_conflicting_card_countries_are_unknown():
+    key = subject_key("instrument", "revolut_eea")
+    ie = subject_key("pair", "netflix", "IE")
+    inst = subject(
+        key,
+        claim(key, "card_issuing_country", "IE"),
+        claim(key, "card_issuing_country", "LT"),
+        claim(key, "id_documents", "eea_id"),
+        claim(key, "requires_local_address", "false"),
+    )
+    facts = (_svc_breach(), pair(ie, ("payment_card_country", "must_match")), inst)
+    assert assess("netflix", "IE", GENERIC, ctx(*facts)).practical == "impossible"

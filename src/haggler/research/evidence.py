@@ -12,8 +12,10 @@ For each ClaimDraft of a subject:
 3. The quote must appear (text.contains_normalized) in the page's block-aware text
    (text.html_to_lines), or in its raw text nodes (text.text_node_lines) as a fallback for
    script-heavy pages. Non-HTML content (PDF...) is "unsupported_content".
-4. Source class of the page that verified: forum first (community.*, reddit...), official when
-   the host is one of the subject's official domains (or europa.eu), press otherwise.
+4. Source class of the page that verified: forum first (community.*, reddit..., and user or
+   third-party content on official domains: groups/sites/docs.google.com, youtube.com/watch,
+   apps.apple.com...), official when the host is one of the subject's official domains, press
+   otherwise. Model-chosen URLs must name a public host (no IP literal or internal name).
 
 Fetched pages are never sent back to the model. Raw pages can be kept (store_raw) for audits.
 """
@@ -21,6 +23,7 @@ Fetched pages are never sent back to the model. Raw pages can be kept (store_raw
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import re
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
@@ -50,18 +53,32 @@ MIN_QUOTE = 20
 MAX_GROUNDING_TRIES = 3
 # Search redirect hosts: their robots.txt disallows crawlers, and they are not the page itself.
 REDIRECT_HOSTS = ("vertexaisearch.cloud.google.com",)
-ALWAYS_OFFICIAL = ("europa.eu",)
+# Pages written by users or third parties, even on a service's own domain: never "official".
 FORUM_HOSTS = (
     "reddit.com",
     "quora.com",
     "stackexchange.com",
-    "discussions.apple.com",
-    "answers.microsoft.com",
     "tripadvisor.com",
+    "discussions.apple.com",
+    "apps.apple.com",
+    "podcasts.apple.com",
+    "answers.microsoft.com",
+    "techcommunity.microsoft.com",
+    "groups.google.com",
+    "sites.google.com",
+    "docs.google.com",
+    "drive.google.com",
+    "play.google.com",
 )
 FORUM_PREFIXES = ("community.", "communities.", "forum.", "forums.")
-# Paths of community threads hosted on an official domain (e.g. support.google.com/.../thread/).
-FORUM_PATHS = re.compile(r"/(thread|threads|community|discussions?)/", re.I)
+# Community threads and user content hosted on an official domain
+# (support.google.com/.../thread/..., learn.microsoft.com/.../answers/..., youtube.com/watch...).
+FORUM_PATHS = re.compile(
+    r"/(thread|threads|community|discussions?|answers|questions)(/|$)"
+    r"|^/(watch|shorts|channel|c|user|post|playlist)(/|$)|^/@",
+    re.I,
+)
+_SOURCE_ORDER = {"forum": 0, "press": 1, "official": 2}
 TEXT_TYPES = ("text/html", "application/xhtml+xml", "text/plain")
 _ELLIPSIS = re.compile(r"\.\.\.|…|\[\s*\.\.\.\s*\]")
 
@@ -93,9 +110,23 @@ def source_class(url: str, official_domains: Iterable[str]) -> SourceClass:
         or FORUM_PATHS.search(path)
     ):
         return "forum"
-    if host_matches(host, [*official_domains, *ALWAYS_OFFICIAL]):
+    if host_matches(host, official_domains):
         return "official"
     return "press"
+
+
+def public_host(host: str) -> bool:
+    """A public DNS name: never an IP literal, localhost or an internal name (the URLs come from
+    the model, and the job runs inside a cloud project)."""
+    host = host.lower().rstrip(".")
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+        return False
+    except ValueError:
+        pass
+    if "." not in host or host == "localhost":
+        return False
+    return not host.endswith((".internal", ".local", ".localhost", ".lan", ".home.arpa"))
 
 
 def canonical_url(url: str) -> str:
@@ -138,6 +169,8 @@ def validate_draft(draft: ClaimDraft, kind: SubjectKind, *, today: date) -> Vali
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.hostname:
         return "url is not https"
+    if not public_host(parts.hostname):
+        return "url host is not a public domain"
     return ValidDraft(name, value, event if spec.needs_date else None, quote, url)
 
 
@@ -343,42 +376,53 @@ async def verify_subject(
             ),
             first_seen=first_seen.get(cid, today),
         )
-        # One claim per id: an official source beats a press one, the first one wins ties.
+        # One claim per id: official beats press beats forum; the first one wins ties.
         prev = kept.get(cid)
-        if prev is None or (not prev.official and claim.official):
+        rank = _SOURCE_ORDER[claim.check.source_class]
+        if prev is None or rank > _SOURCE_ORDER[prev.check.source_class]:
             kept[cid] = claim
     out.claims = sorted(kept.values(), key=lambda c: c.id)
     return out
+
+
+async def reverify(
+    c: Claim, *, pages: PageCache, official_domains: list[str]
+) -> tuple[str, Claim | None]:
+    """Re-fetch a stored claim's page: ("verified", refreshed claim), ("unchecked", claim) when
+    the page could not be read today, ("gone", None) for 404/410, ("changed", None) when the
+    page loaded without the quote (or now redirects elsewhere)."""
+    page = await pages.get(c.url)
+    if page.status == "not_found":
+        return "gone", None
+    if page.status is not None:
+        return "unchecked", c
+    if not (page.contains(c.quote) and canonical_url(page.final_url or c.url) == c.url):
+        return "changed", None
+    check = c.check.model_copy(
+        update={
+            "retrieved_at": page.retrieved_at,
+            "page_hash": page.page_hash,
+            "http_status": page.http_status,
+            "source_class": source_class(c.url, official_domains),
+        }
+    )
+    return "verified", c.model_copy(update={"check": check})
 
 
 async def recheck_claims(
     claims: list[Claim], *, pages: PageCache, official_domains: list[str]
 ) -> tuple[list[Claim], list[UnverifiedClaim]]:
     """Previous facts the agent did not report again: re-fetch their page. A quote that is gone
-    from a page that loaded drops the fact; a page that failed to load keeps it as it was."""
+    from a page that loaded, or a page that no longer exists, drops the fact; a page that could
+    not be read keeps it as it was (the evaluator ignores it once it is a year old)."""
     kept: list[Claim] = []
     dropped: list[UnverifiedClaim] = []
     for c in claims:
-        page = await pages.get(c.url)
-        if page.status is not None:
-            kept.append(c)
+        status, again = await reverify(c, pages=pages, official_domains=official_domains)
+        if again is not None:
+            kept.append(again)
             continue
-        if page.contains(c.quote) and canonical_url(page.final_url or c.url) == c.url:
-            kept.append(
-                c.model_copy(
-                    update={
-                        "check": c.check.model_copy(
-                            update={
-                                "retrieved_at": page.retrieved_at,
-                                "page_hash": page.page_hash,
-                                "http_status": page.http_status,
-                                "source_class": source_class(c.url, official_domains),
-                            }
-                        )
-                    }
-                )
-            )
-            continue
+        gone = status == "gone"
         dropped.append(
             UnverifiedClaim(
                 field=c.field,
@@ -386,8 +430,8 @@ async def recheck_claims(
                 event_date=c.event_date.isoformat() if c.event_date else "",
                 quote=c.quote,
                 cited_url=c.url,
-                status="quote_not_found",
-                detail="no longer on the page",
+                status="not_found" if gone else "quote_not_found",
+                detail="the page no longer exists" if gone else "no longer on the page",
             )
         )
     return kept, dropped

@@ -5,6 +5,8 @@ Store (GCS or local, written by the research job):
     research/latest/{services,pairs,instruments}.json   SubjectFacts lists (one per line)
     research/latest/state.json                      ResearchState
     research/latest/run.json                        written LAST; sha256 of every latest file
+    research/usage/{YYYY-MM}.json                   calls and search queries spent in the month
+                                                    (dry runs included): the monthly guard
     raw/research/{date}/{sha}.html.gz               fetched pages (30-day lifecycle)
 
 Repo (written by `haggler sync`, read by `haggler site-data`):
@@ -34,6 +36,39 @@ DATA_FILES = tuple(KIND_FILES.values())
 RUN_SCHEMA_VERSION = 1
 
 _SUBJECTS = TypeAdapter(list[SubjectFacts])
+
+
+def usage_key(month: str) -> str:
+    return f"{PREFIX}/usage/{month}.json"
+
+
+def read_usage(store: Store, month: str) -> dict[str, int]:
+    """{"calls", "queries", "runs"} spent in `month` ("YYYY-MM"); zeros when unknown."""
+    out = {"calls": 0, "queries": 0, "runs": 0}
+    data = store.read_bytes(usage_key(month))
+    if data is None:
+        return out
+    try:
+        raw = json.loads(data)
+    except ValueError:
+        return out
+    if isinstance(raw, dict):
+        for k in out:
+            v = raw.get(k)
+            if isinstance(v, int) and v >= 0:
+                out[k] = v
+    return out
+
+
+def add_usage(store: Store, month: str, *, calls: int, queries: int) -> dict[str, int]:
+    """Add one run's spending to the month (written by every run that called the model, dry
+    runs included: the queries are spent either way)."""
+    usage = read_usage(store, month)
+    usage["calls"] += calls
+    usage["queries"] += queries
+    usage["runs"] += 1
+    store.write_bytes(usage_key(month), dumps({"month": month, **usage}))
+    return usage
 
 
 def sha256_hex(data: bytes) -> str:

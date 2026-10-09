@@ -74,11 +74,9 @@ def test_unpriced_services_and_held_instruments_are_not_planned():
 
 
 def test_monthly_guard():
-    s = sel(state=ResearchState(month="2026-10", month_queries=1500))
-    assert s.subjects == [] and "monthly guard" in s.skipped["*"]
-    # Last month's queries do not count.
-    s = sel(state=ResearchState(month="2026-09", month_queries=5000))
-    assert s.subjects
+    s = sel(month_queries_used=1500, month="2026-10")
+    assert s.subjects == [] and "monthly guard: 1500 search queries in 2026-10" in s.skipped["*"]
+    assert sel(month_queries_used=1499).subjects
 
 
 def test_explicit_request():

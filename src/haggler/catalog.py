@@ -128,7 +128,8 @@ def integrity_errors(
     profiles: ProfilesFile | None = None,
     review: ReviewFile | None = None,
 ) -> list[str]:
-    """Cross-file referential checks that pydantic validation cannot express."""
+    """Cross-file referential checks that pydantic validation cannot express. (The review log is
+    append-only and the last line per claim and hash wins, so repeated lines are valid.)"""
     errors: list[str] = []
     service_ids = {s.id for s in cat.services}
     ccs = set(cat.country_codes())
@@ -232,13 +233,5 @@ def integrity_errors(
                         f"feasibility {r.id}: residence {r.residence_country} differs from "
                         f"profile {p.id} ({p.residence_country})"
                     )
-
-    if review:
-        seen_decisions: set[tuple[str, str, str, str]] = set()
-        for d in review.decisions:
-            key = (d.id, d.hash, d.decision, d.decided_on.isoformat())
-            if key in seen_decisions:
-                errors.append(f"research_review: duplicate decision {d.decision} {d.id}")
-            seen_decisions.add(key)
 
     return errors

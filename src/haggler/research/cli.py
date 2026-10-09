@@ -15,6 +15,7 @@ SELECTOR: a claim id, a subject key ("pair:netflix:CO"), or a bare service/instr
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -145,14 +146,18 @@ def cmd_review(args: argparse.Namespace) -> int:
     return 0
 
 
-def _yaml_item(decision: ReviewDecision) -> str:
+_EMPTY_LIST = re.compile(r"^decisions:\s*\[\s*\]\s*(#.*)?$")
+_ITEM = re.compile(r"^(\s*)- ")
+
+
+def _yaml_item(decision: ReviewDecision, indent: str = "  ") -> str:
     item = decision.model_dump(mode="json")
     if not item.get("by"):
         item.pop("by")
     if not item.get("note"):
         item.pop("note")
     dumped = yaml.safe_dump([item], sort_keys=False, allow_unicode=True, width=1000)
-    return "".join(f"  {line}\n" for line in dumped.splitlines())
+    return "".join(f"{indent}{line}\n" for line in dumped.splitlines())
 
 
 def append_decisions(path: Path, decisions: list[ReviewDecision]) -> None:
@@ -161,12 +166,19 @@ def append_decisions(path: Path, decisions: list[ReviewDecision]) -> None:
     original = path.read_text(encoding="utf-8") if path.exists() else "decisions: []\n"
     lines = original.splitlines()
     for i, line in enumerate(lines):
-        if line.strip() in ("decisions: []", "decisions:[]"):
-            lines[i] = "decisions:"
+        m = _EMPTY_LIST.match(line.strip())
+        if m:
+            lines[i] = "decisions:" + (f"  {m.group(1)}" if m.group(1) else "")
     text = "\n".join(lines).rstrip("\n") + "\n"
     if not any(line.startswith("decisions:") for line in lines):
         text += "decisions:\n"
-    text += "".join(_yaml_item(d) for d in decisions)
+    # Follow the file's own list layout ("  - id:" or PyYAML's unindented "- id:").
+    start = next(i for i, line in enumerate(text.splitlines()) if line.startswith("decisions:"))
+    indent = next(
+        (m.group(1) for line in text.splitlines()[start + 1 :] if (m := _ITEM.match(line))),
+        "  ",
+    )
+    text += "".join(_yaml_item(d, indent) for d in decisions)
     path.write_text(text, encoding="utf-8")
     try:
         loaded = ReviewFile.model_validate(yaml.safe_load(text) or {})
@@ -201,6 +213,11 @@ def cmd_decide(args: argparse.Namespace, choice: str) -> int:
             current = index.decision(claim)
             if current is not None and current.decision == choice:
                 print(f"ya estaba: {choice} {claim.id}")
+                continue
+            if current is not None and selector != claim.id:
+                # A subject-wide selector only decides pending findings; changing an earlier
+                # decision takes the exact claim id.
+                print(f"ya revisado ({current.decision}), se deja igual: {claim.id}")
                 continue
             decisions.append(
                 ReviewDecision(

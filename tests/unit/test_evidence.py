@@ -104,11 +104,49 @@ def test_valid_draft_is_normalized():
         ("https://community.netflix.com/t/1", "forum"),
         ("https://www.reddit.com/r/netflix", "forum"),
         ("https://help.netflix.com/thread/123/", "forum"),
-        ("https://eur-lex.europa.eu/eli/reg/2018/302/oj", "official"),
+        # No legal facts in the vocabulary: EU law text is not a service's own statement.
+        ("https://eur-lex.europa.eu/eli/reg/2018/302/oj", "press"),
     ],
 )
 def test_source_class(url, cls):
     assert source_class(url, NETFLIX) == cls
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://groups.google.com/g/youtube/c/abc",
+        "https://sites.google.com/view/premium-tricks",
+        "https://docs.google.com/document/d/1",
+        "https://www.youtube.com/watch?v=abc",
+        "https://www.youtube.com/@someone/community",
+        "https://apps.apple.com/us/app/disney/id1446075923",
+        "https://techcommunity.microsoft.com/t5/x/y",
+        "https://learn.microsoft.com/en-us/answers/questions/123/foo",
+        "https://support.google.com/youtube/thread/123",
+    ],
+)
+def test_user_content_on_official_domains_is_forum(url):
+    domains = ["google.com", "youtube.com", "apple.com", "microsoft.com"]
+    assert source_class(url, domains) == "forum"
+    assert source_class("https://support.google.com/youtube/answer/6307365", domains) == (
+        "official"
+    )
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://169.254.169.254/computeMetadata/v1/",
+        "https://[::1]/x",
+        "https://localhost/terms",
+        "https://metadata.google.internal/computeMetadata/v1/",
+        "https://intranet/terms",
+    ],
+)
+def test_non_public_hosts_are_invalid(url):
+    result = validate_draft(draft(url=url), "service", today=TODAY)
+    assert result == "url host is not a public domain"
 
 
 def test_site_and_canonical_url():
@@ -247,6 +285,25 @@ async def verify_known(drafts):
         known_pages=[TERMS],
     )
     return out, fetcher
+
+
+async def test_press_beats_forum_for_the_same_claim():
+    forum = "https://www.reddit.com/r/netflix/x"
+    press = "https://www.techradar.com/news/netflix"
+    out, _ = await verify([draft(url=forum), draft(url=press)], {forum: PAGE, press: PAGE})
+    assert [c.check.source_class for c in out.claims] == ["press"]
+
+
+async def test_recheck_drops_facts_whose_page_is_gone():
+    from haggler.research.evidence import recheck_claims
+
+    first, _ = await verify([draft()], {TERMS: PAGE})
+    pages = PageCache(FixtureFetcher({}))  # 404 for everything
+    kept, dropped = await recheck_claims(first.claims, pages=pages, official_domains=NETFLIX)
+    assert kept == [] and dropped[0].status == "not_found"
+    blocked = PageCache(FixtureFetcher({TERMS: BlockedError("wall", status=403, url=TERMS)}))
+    kept, dropped = await recheck_claims(first.claims, pages=blocked, official_domains=NETFLIX)
+    assert kept == first.claims and dropped == []
 
 
 async def test_one_fetch_per_url_and_one_claim_per_id():

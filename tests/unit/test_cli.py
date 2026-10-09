@@ -99,11 +99,12 @@ def test_gcs_location() -> None:
 
 def test_site_data_defaults() -> None:
     args = cli.build_parser().parse_args(["site-data"])
+    # None = the default profile of data/curated/profiles.yaml and its residence.
     assert (args.data_dir, args.out, args.residence, args.profile) == (
         Path("data"),
         Path("web/src/data"),
-        "SE",
-        "se_resident_co_citizen",
+        None,
+        None,
     )
 
 

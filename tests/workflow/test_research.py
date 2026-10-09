@@ -22,7 +22,7 @@ from haggler.config import Settings
 from haggler.fetch.errors import BlockedError, RobotsDisallowedError
 from haggler.jobs.research import ResearchOptions, run_research
 from haggler.models.observations import PublishedPrice
-from haggler.models.research import ResearchState, SubjectFacts
+from haggler.models.research import SubjectFacts
 from haggler.research import io
 from haggler.research.deps import ResearchDeps
 from haggler.store import dumps, dumps_lines
@@ -234,7 +234,8 @@ async def test_full_run_persists_only_verified_claims():
     pair = facts["pair:netflix:CO"]
     assert pair.claims[0].value == "must_match" and pair.claims[0].check.source_class == "official"
     state = io.load_latest(store).state
-    assert state.month == "2026-10" and state.month_queries == 4
+    assert io.read_usage(store, "2026-10") == {"calls": 2, "queries": 4, "runs": 1}
+    assert report.budget.month == "2026-10" and report.budget.month_queries == 4
     assert state.subjects["service:netflix"].last_success == TODAY
     # Raw pages are kept for audits.
     assert any(k.startswith("raw/research/2026-10-09/") for k in store.blobs)
@@ -273,13 +274,27 @@ async def test_query_budget_skips_later_subjects():
 
 async def test_monthly_guard_plans_nothing():
     store = prices_store()
-    store.blobs["research/latest/state.json"] = dumps(
-        ResearchState(month="2026-10", month_queries=1500)
-    )
+    io.add_usage(store, "2026-10", calls=300, queries=1500)
     llm = GroundedGemini(responder=default_responder)
     report = await run(make_deps(model=llm, store=store))
     assert report.planned == [] and "monthly guard" in report.skipped_reasons["*"]
     assert llm.requests == []
+    # A backdated run is still counted against the real month (and cannot reset it).
+    late = await run(make_deps(model=llm, store=store), date=date(2026, 9, 30))
+    assert late.planned == [] and llm.requests == []
+    assert io.read_usage(store, "2026-09")["queries"] == 0
+
+
+async def test_dry_runs_count_against_the_monthly_guard():
+    store = prices_store()
+    llm = GroundedGemini(responder=default_responder)
+    for _ in range(2):
+        await run(make_deps(model=llm, store=store), dry_run=True)
+    assert io.read_usage(store, "2026-10") == {"calls": 4, "queries": 8, "runs": 2}
+    small = make_deps(model=llm, store=store, research_max_month_queries=10)
+    report = await run(small)
+    # Only 2 queries were left: the first answer exhausts them, the second subject is skipped.
+    assert report.budget.max_queries == 2 and report.by_status.get("skipped") == 1
 
 
 @pytest.mark.parametrize(
@@ -360,7 +375,9 @@ async def test_no_llm_and_dry_run():
     store = prices_store()
     dry = await run(make_deps(model=llm, store=store), dry_run=True)
     assert dry.by_status == {"researched": 2} and dry.outputs == []
-    assert not any(k.startswith(("research/", "raw/")) for k in store.blobs)
+    # Only the month's spending is recorded (research/usage/): no facts, state or raw pages.
+    written = [k for k in store.blobs if k.startswith(("research/", "raw/"))]
+    assert written == ["research/usage/2026-10.json"]
 
 
 async def test_research_app_is_offline_safe():
@@ -390,3 +407,36 @@ def test_savings_threshold_selects_pairs():
     )
     assert set(savings) == {("netflix", "CO")}
     assert savings[("netflix", "CO")] > Decimal("5")
+
+
+async def test_previous_claim_is_kept_while_its_quote_still_verifies():
+    """Same fact, differently quoted: the stored claim (and its review hash) stays."""
+    llm = GroundedGemini(responder=default_responder)
+    deps = make_deps(model=llm)
+    await run(deps)
+    before = latest(deps.store)["service:netflix"].claim(
+        "service:netflix:residence_clause:primary_use_in_account_country"
+    )
+    other = "You may use the Netflix service primarily within the country"
+    llm.responder = lambda subject: answer(
+        claim("residence_clause", "primary_use_in_account_country", other, TERMS)
+    )
+    d = dataclasses.replace(deps, model=llm)
+    await run(d, services=["netflix"])
+    after = latest(deps.store)["service:netflix"].claim(before.id)
+    assert after.hash == before.hash and after.quote == before.quote
+
+
+async def test_an_unknown_pair_is_reported_and_the_rest_researched():
+    llm = GroundedGemini(responder=default_responder)
+    deps = make_deps(model=llm)
+    from haggler.models.catalog import Catalog
+
+    cat = deps.catalog
+    # The requested pair's country is not in the catalog.
+    deps.catalog = Catalog(
+        services=cat.services, countries=[c for c in cat.countries if c.cc != "CO"]
+    )
+    report = await run(deps, pairs=["netflix:CO"], services=["netflix"])
+    assert report.by_status == {"researched": 1}
+    assert "request: unknown pair netflix:CO" in report.errors

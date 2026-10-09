@@ -40,14 +40,13 @@ from haggler.models.research import (
 from haggler.research import io
 from haggler.research.agents import build_researcher
 from haggler.research.deps import ResearchDeps, research_budget
-from haggler.research.evidence import PageCache, recheck_claims, verify_subject
+from haggler.research.evidence import PageCache, recheck_claims, reverify, verify_subject
 from haggler.research.plan import (
     PAUSE_AFTER_FAILURES,
     Limits,
     PlannedSubject,
     Request,
     month_of,
-    month_queries,
     parse_pairs,
     pause_after,
     select,
@@ -219,7 +218,9 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         buf.run_id = run_id
         buf.latest = io.load_latest(deps.store)
         buf.errors.extend(buf.latest.errors)
-        used = month_queries(buf.latest.state, run_date)
+        # The guard follows the real clock: a backdated --date run spends this month's queries.
+        usage_month = month_of(started.date())
+        used = io.read_usage(deps.store, usage_month)["queries"]
         buf.budget = research_budget(settings, month_queries_used=used)
         prices, fx = load_prices(deps, buf.errors)
         selection = select(
@@ -244,6 +245,8 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 instruments=tuple(request["instruments"]),
             ),
             fx_fee_pct=settings.fx_fee_pct,
+            month_queries_used=used,
+            month=usage_month,
         )
         buf.errors.extend(selection.errors)
         subjects = selection.subjects
@@ -258,6 +261,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             "run_date": run_date.isoformat(),
             "started_at": started.isoformat(),
             "dry_run": request["dry_run"],
+            "usage_month": usage_month,
         }
         log.info("research run %s: %d subject(s) planned", run_id, len(subjects))
         return {"subjects": [s.as_dict() for s in subjects], "skipped": skipped}
@@ -272,16 +276,21 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             return {**node_input, "answers": answers}
         budget = deps.buffer.budget
         for kind in KIND_ORDER:
-            batch = [s for s in subjects if s.kind == kind]
+            batch: list[PlannedSubject] = []
+            jobs: list[AgentJob] = []
+            for s in (s for s in subjects if s.kind == kind):
+                try:
+                    jobs.append(AgentJob(key=f"{kind}_{safe_key(s.key)}", payload=payload(deps, s)))
+                except Exception as exc:  # e.g. a subject the catalog no longer knows
+                    answers[s.key] = {"error": f"payload: {type(exc).__name__}: {exc}"[:300]}
+                    continue
+                batch.append(s)
             if not batch:
                 continue
             calls = await run_agent_jobs(
                 ctx,
                 agents[kind],
-                [
-                    AgentJob(key=f"{kind}_{safe_key(s.key)}", payload=payload(deps, s))
-                    for s in batch
-                ],
+                jobs,
                 budget=budget,
                 concurrency=settings.research_concurrency,
                 timeout_s=settings.research_job_timeout_s,
@@ -345,8 +354,23 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                         previous=previous,
                         known_pages=known_pages(deps, s),
                     )
+                    prev_by_id = {c.id: c for c in (previous.claims if previous else [])}
+                    # Same fact, new evidence: keep the previous claim (and its review decision)
+                    # while its own quote still verifies on its page.
+                    fresh: list = []
+                    for c in v.claims:
+                        before = prev_by_id.get(c.id)
+                        if before is not None and before.hash != c.hash:
+                            status, again = await reverify(
+                                before, pages=pages, official_domains=domains
+                            )
+                            if status == "verified" and again is not None:
+                                fresh.append(again)
+                                continue
+                        fresh.append(c)
+                    v.claims = fresh
                     new_ids = {c.id for c in v.claims}
-                    old = [c for c in (previous.claims if previous else []) if c.id not in new_ids]
+                    old = [c for c in prev_by_id.values() if c.id not in new_ids]
                     kept, dropped = await recheck_claims(old, pages=pages, official_domains=domains)
                 except Exception as exc:  # a verification bug fails this subject only
                     return {
@@ -417,10 +441,11 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         verified = sum(c.get("verified", 0) for c in checks.values())
         unverified = sum(n for c in checks.values() for n in c.values()) - verified
         budget = buf.budget
-        month = month_of(run_date)
-        if state.month != month:
-            state.month, state.month_queries = month, 0
-        state.month_queries += budget.queries
+        month = run.get("usage_month") or month_of(run_date)
+        if budget.calls:
+            usage = io.add_usage(deps.store, month, calls=budget.calls, queries=budget.queries)
+        else:
+            usage = io.read_usage(deps.store, month)
         state.run_id, state.as_of = run_id, run_date
         records = [rec for recs in budget.grounding.values() for rec in recs]
         prefix = io.run_prefix(run["run_date"], run_id)
@@ -443,8 +468,8 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 max_queries=budget.max_queries or 0,
                 calls=budget.calls,
                 queries=budget.queries,
-                month=state.month,
-                month_queries=state.month_queries,
+                month=month,
+                month_queries=usage["queries"],
                 max_month_queries=settings.research_max_month_queries,
                 prompt_tokens=sum(r.prompt_tokens for r in records),
                 output_tokens=sum(r.output_tokens for r in records),

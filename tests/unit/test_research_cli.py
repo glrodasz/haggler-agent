@@ -152,3 +152,39 @@ def test_unknown_selector_fails(dirs, capsys):
 def test_review_without_research(tmp_path, capsys):
     assert cli.main(["research", "review", "--data-dir", str(tmp_path)]) == 0
     assert "No hay hallazgos" in capsys.readouterr().out
+
+
+def test_bulk_accept_never_overrides_an_explicit_decision(dirs, capsys):
+    _data, curated = dirs
+    clause = subjects()[0].claims[0]
+    assert run("reject", clause.id, dirs=dirs) == 0
+    assert run("accept", "netflix", dirs=dirs) == 0
+    assert "ya revisado (reject)" in capsys.readouterr().out
+    latest = load_review(curated).latest()
+    assert latest[(clause.id, clause.hash)].decision == "reject"
+    # The exact claim id may flip it.
+    assert run("accept", clause.id, dirs=dirs) == 0
+    assert load_review(curated).latest()[(clause.id, clause.hash)].decision == "accept"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "decisions: []  # empty for now\n",
+        "# header\ndecisions:\n- id: x\n  hash: 0123456789ab\n  decision: accept\n"
+        "  decided_on: '2026-10-01'\n",
+        "decisions:\n  - id: x\n    hash: 0123456789ab\n    decision: reject\n"
+        "    decided_on: '2026-10-01'\n",
+    ],
+)
+def test_append_follows_the_file_layout(dirs, content):
+    from haggler.catalog import integrity_errors, load_catalog
+
+    _data, curated = dirs
+    (curated / "research_review.yaml").write_text(content, encoding="utf-8")
+    assert run("accept", "pair:netflix:CO", dirs=dirs) == 0
+    review = load_review(curated)
+    assert review.decisions[-1].id == "pair:netflix:CO:payment_card_country:must_match"
+    assert integrity_errors(load_catalog(), review=review) == []
+    text = (curated / "research_review.yaml").read_text(encoding="utf-8")
+    assert text.startswith(content.split("decisions:")[0])
