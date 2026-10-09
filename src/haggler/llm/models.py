@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from google.adk.models import Gemini, LlmCapabilities
 from google.adk.models.base_llm import BaseLlm
 from google.genai import types
@@ -15,18 +17,28 @@ LLM_HTTP_TIMEOUT_MS = 60_000
 LLM_RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504]
 
 
+_GEMINI_MAJOR = re.compile(r"^gemini-(\d+)")
+
+
+def schema_with_tools(model: str) -> bool:
+    """Gemini 3 and later accept a response schema next to built-in tools on every backend."""
+    m = _GEMINI_MAJOR.match(model_name(model))
+    return bool(m) and int(m.group(1)) >= 3
+
+
 class HagglerGemini(Gemini):
-    """Gemini that pairs an output schema with tools on every backend.
+    """Gemini that pairs an output schema with tools on AI Studio too (Gemini 3+).
 
     ADK only grants that capability on Vertex AI; Gemini 3 accepts a response schema next to the
-    built-in google_search tool on AI Studio too, and without the capability ADK moves the schema
-    into a prompt workaround whose answer it never validates."""
+    built-in google_search tool on AI Studio as well, and without the capability ADK moves the
+    schema into a prompt workaround whose answer it never validates."""
 
     @property
     def capabilities(self) -> LlmCapabilities:
-        return LlmCapabilities(
-            **super().capabilities.model_dump() | {"output_schema_and_tools": True}
-        )
+        base = super().capabilities
+        if not schema_with_tools(self.model):
+            return base
+        return LlmCapabilities(**base.model_dump() | {"output_schema_and_tools": True})
 
 
 def model_name(model: str | BaseLlm) -> str:

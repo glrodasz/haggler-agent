@@ -316,10 +316,12 @@ def test_build_model_needs_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     model = build_model(Settings(extract_model="gemini-test"))
     assert isinstance(model, HagglerGemini) and model.model == "gemini-test"
-    # Gemini 3 takes a response schema next to google_search on AI Studio too.
-    assert model.capabilities.output_schema_and_tools is True
     other = build_model(Settings(), "gemini-research-test", max_calls=5)
     assert other is not None and other.model == "gemini-research-test"
+    three = build_model(Settings(), "gemini-3-flash-preview", max_calls=5)
+    assert three.capabilities.output_schema_and_tools is True
+    old = build_model(Settings(), "gemini-2.5-flash", max_calls=5)
+    assert old.capabilities.output_schema_and_tools is False  # AI Studio: prompt workaround
     assert build_model(Settings(), "gemini-research-test", max_calls=0) is None
     assert model.retry_options.attempts == 4
     # genai's default retryable set: gateway timeouts (408/502/504) are retried too.
