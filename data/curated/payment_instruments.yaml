@@ -21,6 +21,7 @@ instruments:
     iban_country: LT
     eligible_residence: [EEA]
     onboarding_remote: true
+    official_domains: [revolut.com]
     currencies: [EUR, SEK, USD]
     evidence:
       - {url: "https://community.revolut.com/t/living-in-sweden-with-revolut/162181", kind: forum}
@@ -35,6 +36,7 @@ instruments:
     iban_country: BE
     eligible_residence: [EEA]
     onboarding_remote: true
+    official_domains: [wise.com]
     currencies: [EUR, SEK, USD, GBP]
     evidence:
       - {url: "https://wise.com/help/articles/2968915", kind: official}
@@ -46,6 +48,7 @@ instruments:
     iban_country: DE
     eligible_residence: [SE, EEA]
     onboarding_remote: true
+    official_domains: [n26.com]
     currencies: [EUR]
     evidence:
       - {url: "https://support.n26.com/en-eu/account-and-personal-details/opening-an-account/can-i-open-an-account-if-i-live-outside-the-eurozone", kind: official}
@@ -57,6 +60,7 @@ instruments:
     iban_country: NL
     eligible_residence: [EEA]
     onboarding_remote: true
+    official_domains: [bunq.com]
     currencies: [EUR]
 
   - id: paysera
@@ -66,6 +70,7 @@ instruments:
     iban_country: LT
     eligible_residence: [EEA]
     onboarding_remote: true
+    official_domains: [paysera.com, paysera.lt]
     currencies: [EUR]
     evidence:
       - {url: "https://www.paysera.lt/v2/en-LT/faq/where-paysera-works", kind: official}
@@ -78,6 +83,8 @@ instruments:
     iban_country: null
     eligible_residence: [ANY]
     onboarding_remote: true
+    official_domains: [bancolombia.com]
+    required_id_countries: [CO]
     currencies: [COP]
     evidence:
       - {url: "https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior", kind: official}

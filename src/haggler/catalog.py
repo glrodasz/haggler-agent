@@ -12,6 +12,8 @@ from babel.numbers import list_currencies
 from haggler.config import repo_root
 from haggler.models.catalog import Catalog
 from haggler.models.curated import BundlesFile, FeasibilityFile, PaymentInstrumentsFile
+from haggler.models.profiles import Profile, ProfilesFile
+from haggler.models.research import ReviewFile
 
 KNOWN_ADAPTERS = {
     "netflix_help",
@@ -61,11 +63,59 @@ def load_bundles(curated_dir: Path | None = None) -> BundlesFile:
     return BundlesFile.model_validate(_read_yaml(base / "bundles.yaml"))
 
 
+def _curated_dir(curated_dir: Path | None) -> Path:
+    return curated_dir or repo_root() / "data" / "curated"
+
+
+def load_profiles(curated_dir: Path | None = None) -> ProfilesFile | None:
+    """data/curated/profiles.yaml, or None when the file does not exist."""
+    path = _curated_dir(curated_dir) / "profiles.yaml"
+    if not path.exists():
+        return None
+    return ProfilesFile.model_validate(_read_yaml(path))
+
+
+def synthesize_profiles(
+    feasibility: FeasibilityFile, *, residence: str, profile: str
+) -> ProfilesFile:
+    """Fallback without profiles.yaml: one profile from feasibility.yaml's description, with no
+    capabilities beyond living in `residence` (research verdicts stay conservative)."""
+    return ProfilesFile(
+        default=profile,
+        profiles=[
+            Profile(
+                id=profile,
+                name_es=profile,
+                description_es=" ".join(feasibility.profiles.get(profile, "").split()),
+                residence_country=residence,
+                address_countries=[residence],
+            )
+        ],
+    )
+
+
+def load_review(curated_dir: Path | None = None) -> ReviewFile:
+    """data/curated/research_review.yaml (empty when the file does not exist)."""
+    path = _curated_dir(curated_dir) / "research_review.yaml"
+    if not path.exists():
+        return ReviewFile()
+    return ReviewFile.model_validate(_read_yaml(path))
+
+
+_DOMAIN = re.compile(r"^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$")
+
+
+def _domain_errors(owner: str, domains: list[str]) -> list[str]:
+    return [f"{owner}: bad official domain {d!r}" for d in domains if not _DOMAIN.fullmatch(d)]
+
+
 def integrity_errors(
     cat: Catalog,
     feasibility: FeasibilityFile | None = None,
     bundles: BundlesFile | None = None,
     instruments: PaymentInstrumentsFile | None = None,
+    profiles: ProfilesFile | None = None,
+    review: ReviewFile | None = None,
 ) -> list[str]:
     """Cross-file referential checks that pydantic validation cannot express."""
     errors: list[str] = []
@@ -82,6 +132,7 @@ def integrity_errors(
             errors.append(f"fx_pins: {cur} ({provider}) is not used by any country")
 
     for s in cat.services:
+        errors.extend(_domain_errors(s.id, s.official_domains))
         for src in s.sources:
             if src.adapter not in KNOWN_ADAPTERS:
                 errors.append(f"{s.id}: unknown adapter {src.adapter}")
@@ -139,9 +190,44 @@ def integrity_errors(
             if b.price.source == "curated" and b.price.amount is None:
                 errors.append(f"bundle {b.bundle_id}: curated price needs an amount")
 
+    instrument_ids: set[str] = set()
     if instruments:
         ids = [i.id for i in instruments.instruments]
+        instrument_ids = set(ids)
         if len(ids) != len(set(ids)):
             errors.append("payment_instruments: duplicate id")
+        for i in instruments.instruments:
+            errors.extend(_domain_errors(f"instrument {i.id}", i.official_domains))
+            for cc in i.required_id_countries:
+                if cc not in ccs:
+                    errors.append(f"instrument {i.id}: unknown country {cc}")
+
+    if profiles:
+        for p in profiles.profiles:
+            for cc in sorted(p.countries() - ccs):
+                errors.append(f"profile {p.id}: unknown country {cc}")
+            if instruments:
+                for iid in p.instruments_held:
+                    if iid not in instrument_ids:
+                        errors.append(f"profile {p.id}: unknown instrument {iid}")
+        if feasibility:
+            for pid in feasibility.profiles:
+                if profiles.get(pid) is None:
+                    errors.append(f"feasibility profile {pid} is not in profiles.yaml")
+            for r in feasibility.records:
+                p = profiles.get(r.profile)
+                if p is not None and p.residence_country != r.residence_country:
+                    errors.append(
+                        f"feasibility {r.id}: residence {r.residence_country} differs from "
+                        f"profile {p.id} ({p.residence_country})"
+                    )
+
+    if review:
+        seen_decisions: set[tuple[str, str, str, str]] = set()
+        for d in review.decisions:
+            key = (d.id, d.hash, d.decision, d.on.isoformat())
+            if key in seen_decisions:
+                errors.append(f"research_review: duplicate decision {d.decision} {d.id}")
+            seen_decisions.add(key)
 
     return errors

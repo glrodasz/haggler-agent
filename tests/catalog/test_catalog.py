@@ -4,14 +4,32 @@ from haggler.catalog import (
     load_catalog,
     load_feasibility,
     load_payment_instruments,
+    load_profiles,
+    load_review,
 )
 from haggler.sources.base import match_iap_plan, match_plan
 
 
 def test_catalog_and_curated_files_are_consistent():
     cat = load_catalog()
-    errors = integrity_errors(cat, load_feasibility(), load_bundles(), load_payment_instruments())
+    errors = integrity_errors(
+        cat,
+        load_feasibility(),
+        load_bundles(),
+        load_payment_instruments(),
+        load_profiles(),
+        load_review(),
+    )
     assert errors == []
+
+
+def test_every_researchable_subject_has_official_domains():
+    cat = load_catalog()
+    assert all(s.official_domains for s in cat.services)
+    held = {i for p in load_profiles().profiles for i in p.instruments_held}
+    for inst in load_payment_instruments().instruments:
+        # Instruments the user already holds are not researched.
+        assert inst.official_domains or inst.id in held, inst.id
 
 
 def test_catalog_shape():

@@ -69,6 +69,8 @@ class ServiceDef(_Strict):
     homepage: str
     plans: list[PlanDef]
     sources: list[SourceDef] = Field(default_factory=list)
+    # Hosts (and their subdomains) whose pages count as the service's own sources for research.
+    official_domains: list[str] = Field(default_factory=list)
     notes_es: str = ""
 
     @model_validator(mode="after")

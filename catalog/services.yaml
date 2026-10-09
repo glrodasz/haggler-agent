@@ -13,6 +13,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.netflix.com
+    official_domains: [netflix.com]
     default_plan: standard
     plans:
       - {id: mobile, label_es: Móvil, label_en: Mobile, rank: 0, plausible_monthly_eur: [0.5, 15],
@@ -45,6 +46,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.youtube.com/premium
+    official_domains: [youtube.com, google.com]
     default_plan: individual
     notes_es: >-
       La web oficial muestra el precio según la IP del visitante; en v1 se usa el listado de compras
@@ -70,6 +72,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.disneyplus.com
+    official_domains: [disneyplus.com, disneytermsofuse.com]
     default_plan: standard
     notes_es: >-
       Los precios salen del listado de compras in-app del App Store (app 1446075923), no de la
@@ -105,6 +108,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.hbomax.com
+    official_domains: [hbomax.com, max.com]
     default_plan: standard
     plans:
       - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
@@ -125,6 +129,7 @@ services:
     category: music
     eu_geo_class: copyright_art3_5_only
     homepage: https://www.spotify.com
+    official_domains: [spotify.com]
     default_plan: individual
     plans:
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 20],
@@ -146,6 +151,7 @@ services:
     category: cloud
     eu_geo_class: eservice_art4_1b
     homepage: https://www.apple.com/icloud/
+    official_domains: [apple.com]
     default_plan: 200gb
     plans:
       - {id: 50gb, label_es: 50 GB, label_en: 50 GB, rank: 0, plausible_monthly_eur: [0.2, 4], aliases: [50gb]}
@@ -162,6 +168,7 @@ services:
     category: cloud
     eu_geo_class: eservice_art4_1b
     homepage: https://one.google.com
+    official_domains: [google.com]
     default_plan: 100gb
     notes_es: >-
       La web oficial muestra el precio según la IP; en v1 se usa el listado de compras in-app del App Store.
@@ -186,6 +193,7 @@ services:
     category: bundle
     eu_geo_class: software_unclear
     homepage: https://www.apple.com/apple-one/
+    official_domains: [apple.com]
     default_plan: individual
     plans:
       # Swedish apple.com calls the individual plan "Personligt".
@@ -206,6 +214,7 @@ services:
     category: music
     eu_geo_class: copyright_art3_5_only
     homepage: https://www.apple.com/apple-music/
+    official_domains: [apple.com]
     default_plan: individual
     plans:
       - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
@@ -227,6 +236,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.apple.com/apple-tv/
+    official_domains: [apple.com]
     default_plan: standard
     plans:
       - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 25],
@@ -240,6 +250,7 @@ services:
     category: productivity
     eu_geo_class: software_unclear
     homepage: https://www.microsoft.com/microsoft-365
+    official_domains: [microsoft.com]
     default_plan: family
     plans:
       - {id: personal, label_es: Personal, label_en: Personal, rank: 0, plausible_monthly_eur: [0.8, 15]}
@@ -257,6 +268,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://www.paramountplus.com
+    official_domains: [paramountplus.com, paramount.com]
     default_plan: standard
     plans:
       - {id: standard, label_es: Estándar, label_en: Standard, rank: 1, plausible_monthly_eur: [1, 25]}
@@ -266,6 +278,7 @@ services:
     category: video
     eu_geo_class: audiovisual_excluded
     homepage: https://vix.com
+    official_domains: [vix.com]
     default_plan: premium
     plans:
       - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [0.5, 20]}
@@ -275,6 +288,7 @@ services:
     category: gaming
     eu_geo_class: copyright_art3_5_only
     homepage: https://www.apple.com/apple-arcade/
+    official_domains: [apple.com]
     default_plan: standard
     plans:
       - {id: standard, label_es: Suscripción, label_en: Subscription, rank: 1, plausible_monthly_eur: [1, 15]}

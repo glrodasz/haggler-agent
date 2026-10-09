@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 CuratedStatus = Literal["verified", "unverified", "expired"]
 Confidence = Literal["low", "medium", "high"]
-VerifiedBy = Literal["official_fetch", "search_summary", "user_report"]
+VerifiedBy = Literal["official_fetch", "search_summary", "user_report", "agent_research"]
 
 
 class _Strict(BaseModel):
@@ -26,6 +26,9 @@ class Evidence(_Strict):
     kind: Literal["official", "press", "aggregator", "forum", "user_report"]
     retrieved_at: date | None = None
     note: str = ""
+    # Literal excerpt of the page, and whether our own fetch found it there.
+    quote: str = ""
+    verified: bool = False
 
 
 # ---------------------------------------------------------------- feasibility
@@ -43,6 +46,8 @@ StepType = Literal[
     "local_id",
     "local_phone",
     "cancel_and_resubscribe",
+    "obtain_instrument",
+    "declare_country",
 ]
 
 
@@ -103,6 +108,7 @@ class FeasibilityRecord(_Strict):
     verified_by: VerifiedBy = "search_summary"
     last_verified: date
     notes_es: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
 
 
 class FeasibilityFile(_Strict):
@@ -127,6 +133,10 @@ class PaymentInstrument(_Strict):
     iban_country: str | None = None
     eligible_residence: list[str]
     onboarding_remote: bool
+    # Countries whose ID documents the issuer accepts ([] = no restriction recorded).
+    required_id_countries: list[str] = Field(default_factory=list)
+    # Hosts whose pages count as the issuer's own (official) sources for research.
+    official_domains: list[str] = Field(default_factory=list)
     currencies: list[str] = Field(default_factory=list)
     # Never inferred: only filled from real observations of issued cards.
     card_bin_country_observed: ObservedBin = ObservedBin()

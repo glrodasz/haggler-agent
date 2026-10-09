@@ -182,6 +182,8 @@ def cmd_validate_catalog(args: argparse.Namespace) -> int:
         load_catalog,
         load_feasibility,
         load_payment_instruments,
+        load_profiles,
+        load_review,
     )
 
     try:
@@ -189,10 +191,12 @@ def cmd_validate_catalog(args: argparse.Namespace) -> int:
         feasibility = load_feasibility(args.curated_dir)
         bundles = load_bundles(args.curated_dir)
         instruments = load_payment_instruments(args.curated_dir)
+        profiles = load_profiles(args.curated_dir)
+        review = load_review(args.curated_dir)
     except (ValidationError, ValueError, OSError, KeyError, yaml.YAMLError) as exc:
         _err(f"no se pudo cargar el catálogo: {type(exc).__name__}: {exc}")
         return 1
-    errors = integrity_errors(catalog, feasibility, bundles, instruments)
+    errors = integrity_errors(catalog, feasibility, bundles, instruments, profiles, review)
     for error in errors:
         print(f"ERROR {error}")
     if errors:
@@ -201,7 +205,9 @@ def cmd_validate_catalog(args: argparse.Namespace) -> int:
     print(
         f"catálogo OK: {len(catalog.services)} servicios, {len(catalog.countries)} países, "
         f"{len(feasibility.records)} registros de factibilidad, {len(bundles.bundles)} bundles, "
-        f"{len(instruments.instruments)} medios de pago"
+        f"{len(instruments.instruments)} medios de pago, "
+        f"{len(profiles.profiles) if profiles else 0} perfiles, "
+        f"{len(review.decisions)} decisiones de revisión"
     )
     return 0
 
