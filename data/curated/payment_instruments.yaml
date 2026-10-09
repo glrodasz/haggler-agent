@@ -22,8 +22,6 @@ instruments:
     eligible_residence: [EEA]
     onboarding_remote: true
     official_domains: [revolut.com]
-    research_urls:
-      - https://help.revolut.com/help/profile-and-plan/opening-an-account/
     currencies: [EUR, SEK, USD]
     evidence:
       - {url: "https://community.revolut.com/t/living-in-sweden-with-revolut/162181", kind: forum}

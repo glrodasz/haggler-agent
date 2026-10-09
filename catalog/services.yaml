@@ -50,7 +50,6 @@ services:
     homepage: https://www.youtube.com/premium
     official_domains: [youtube.com, google.com]
     research_urls:
-      - https://www.youtube.com/t/terms_paidservice
       - https://support.google.com/youtube/answer/6307365
     default_plan: individual
     notes_es: >-
@@ -114,8 +113,6 @@ services:
     eu_geo_class: audiovisual_excluded
     homepage: https://www.hbomax.com
     official_domains: [hbomax.com, max.com]
-    research_urls:
-      - https://www.hbomax.com/terms-of-use
     default_plan: standard
     plans:
       - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
