@@ -3,7 +3,7 @@
   haggler daily [...]            daily job; arguments are parsed by haggler.jobs.daily.main
   haggler research run [...]     weekly feasibility research (haggler.jobs.research.main)
   haggler research review|accept|reject [...]   review research findings (haggler.research.cli)
-  haggler probe --targets F --out D [--mode adapters|fx|full|research]
+  haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]
   haggler site-data [--data-dir data] [--out web/src/data] [--residence SE] [--profile P]
   haggler validate-catalog
@@ -72,7 +72,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     probe.add_argument("--targets", type=Path, default=Path("probe/targets.txt"))
     probe.add_argument("--out", type=Path, default=Path("probe-out"))
-    probe.add_argument("--mode", choices=("adapters", "fx", "full", "research"), default="adapters")
+    # Kept in step with haggler.probe.MODES (not imported: probe pulls in the HTML parser).
+    probe.add_argument(
+        "--mode", choices=("adapters", "fx", "full", "research", "bundles"), default="adapters"
+    )
 
     sync = sub.add_parser("sync", help="copia la última corrida del store a data/ (con changelog)")
     source = sync.add_mutually_exclusive_group(required=True)

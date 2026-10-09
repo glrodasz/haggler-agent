@@ -13,14 +13,18 @@ Modes:
   full      run the daily job (haggler.jobs.daily) against a LocalStore in <out>/raw/store, once
             per distinct country set of the targets, with the LLM only when credentials exist,
             and print the RunReports;
-  research  one real feasibility research run (haggler.probe_research; its own target format).
+  research  one real feasibility research run (haggler.probe_research; its own target format);
+  bundles   readability of the promotional bundles' official pages (haggler.probe_bundles; its
+            own target format, "<label> <CC> <url>"), fetched with HttpFetcher, LLM off.
 
-Targets file: one target per non-comment line, "service_id CC [CC ...]" ("*" = all countries).
+Targets file (adapters, fx, full): one target per non-comment line, "service_id CC [CC ...]"
+("*" = all countries).
 
 Output: everything that quotes vendor pages (raw pages, the full-mode store) goes under
-<out>/raw/ and is for local debugging only. <out>/summary.{json,md} quote at most
-PAGE_TEXT_BUDGET characters of page text per task (title, unmapped items, price lines) and are
-the only files meant to be published (CI artifact, job summary).
+<out>/raw/ and is for local debugging only. <out>/summary.{json,md} are the only files meant to
+be published (CI artifact, job summary); in adapters mode they quote at most PAGE_TEXT_BUDGET
+characters of page text per task (title, unmapped items, price lines), in bundles mode at most
+haggler.probe_bundles.QUOTE_BUDGET per target.
 """
 
 from __future__ import annotations
@@ -59,8 +63,8 @@ from haggler.money import find_prices
 from haggler.sources.base import Adapter, ParseResult
 from haggler.sources.registry import get_adapter
 
-Mode = Literal["adapters", "fx", "full"]
-MODES: tuple[str, ...] = ("adapters", "fx", "full", "research")
+Mode = Literal["adapters", "fx", "full", "research", "bundles"]
+MODES: tuple[str, ...] = ("adapters", "fx", "full", "research", "bundles")
 ALL_COUNTRIES = "*"
 TASK_TIMEOUT_S = 90.0
 TRANSIENT_ATTEMPTS = 2
@@ -329,13 +333,23 @@ def _apply_result(row: dict[str, Any], result: ParseResult) -> None:
 
 async def _fetch(fetcher: Fetcher, task: Task) -> RawResponse:
     accept = str(task.params.get("accept") or "text/html")
+    return await _fetch_url(fetcher, task.url, accept=accept, egress=task.egress)
+
+
+async def _fetch_url(
+    fetcher: Fetcher, url: str, *, accept: str = "text/html", egress: str = "default"
+) -> RawResponse:
+    """One fetch with a per-attempt timeout; transient failures (5xx, resets, timeouts) are
+    retried once. A 429 is not: the server asked us to slow down, and its Retry-After is longer
+    than the per-host interval a retry would wait. Walls, robots.txt and other permanent failures
+    are never retried."""
     for attempt in range(1, TRANSIENT_ATTEMPTS + 1):
         try:
             return await asyncio.wait_for(
-                fetcher.fetch(task.url, accept=accept, egress=task.egress), TASK_TIMEOUT_S
+                fetcher.fetch(url, accept=accept, egress=egress), TASK_TIMEOUT_S
             )
-        except TransientFetchError:
-            if attempt == TRANSIENT_ATTEMPTS:
+        except TransientFetchError as exc:
+            if attempt == TRANSIENT_ATTEMPTS or exc.status == 429:
                 raise
     raise AssertionError("unreachable")  # pragma: no cover
 
@@ -804,8 +818,9 @@ def run_probe(
 ) -> int:
     """Run one probe mode; writes <out>/summary.{json,md} and prints the markdown.
 
-    Returns 0 unless something unexpected happened (an adapter crashed, the daily job raised);
-    fetch failures, bot walls and empty pages are findings, not errors.
+    Returns 0 unless something unexpected happened (an adapter or the bundle page analysis
+    crashed, the daily job raised); fetch failures, bot walls and empty pages are findings, not
+    errors.
     """
     if mode not in MODES:
         raise ValueError(f"modo desconocido {mode!r} (opciones: {', '.join(MODES)})")
@@ -821,6 +836,14 @@ def run_probe(
         summary, md = probe_research.run(targets_file, out_dir, settings, today=today)
         _write_outputs(out_dir, summary, md, out)
         return 1 if summary.get("error") else 0
+    if mode == "bundles":
+        from haggler import probe_bundles
+
+        summary, md = probe_bundles.run(
+            targets_file, out_dir, settings, catalog=catalog, fetcher=fetcher, now=now
+        )
+        _write_outputs(out_dir, summary, md, out)
+        return 1 if any(r["unexpected"] for r in summary["targets"]) else 0
     targets = parse_targets(Path(targets_file).read_text(encoding="utf-8"), catalog)
 
     if mode == "fx":

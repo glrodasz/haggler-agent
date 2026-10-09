@@ -21,7 +21,7 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
-| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación (no usa GCP) |
+| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación y `mode=bundles` mide la legibilidad de las páginas de los paquetes (no usa GCP) |
 | `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
 | `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages |
 
@@ -258,9 +258,12 @@ dispara solo con push a `claude/**` que toque `src/haggler/sources/`, `fetch/`, 
 `catalog/` o `probe/targets.txt`, o a mano:
 
 - **Actions → probe → Run workflow**: `mode` = `adapters` (solo parsers), `fx` (tipos de cambio),
-  `full` (workflow completo con store local; LLM solo si existe el secreto `GEMINI_API_KEY`) o
-  `research` (ver §13; targets en `probe/research_targets.txt`).
-- `targets` reemplaza `probe/targets.txt` para ese run, separado por `;`:
+  `full` (workflow completo con store local; LLM solo si existe el secreto `GEMINI_API_KEY`),
+  `research` (ver §13; targets en `probe/research_targets.txt`) o `bundles` (legibilidad de las
+  páginas oficiales de los paquetes promocionales, sin LLM; targets `<etiqueta> <CC> <url>` en
+  `probe/bundle_targets.txt`: solo una página `readable` puede vigilarse en modo `auto`).
+- `targets` reemplaza `probe/targets.txt` para ese run (`probe/research_targets.txt` en
+  `mode=research`, `probe/bundle_targets.txt` en `mode=bundles`), separado por `;`:
   `netflix SE CO; spotify *`.
 
 Los targets que fallan no hacen fallar el job; solo un crash del CLI lo hace.

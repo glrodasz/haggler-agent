@@ -67,6 +67,19 @@ def test_probe_defaults_and_options() -> None:
         parser.parse_args(["probe", "--mode", "everything"])
 
 
+def test_probe_mode_choices_follow_the_probe_modes() -> None:
+    from haggler.probe import MODES
+
+    probe = next(
+        a.choices["probe"]
+        for a in cli.build_parser()._actions
+        if getattr(a, "choices", None) and "probe" in a.choices
+    )
+    mode = next(a for a in probe._actions if a.dest == "mode")
+    assert tuple(mode.choices) == MODES
+    assert "bundles" in MODES
+
+
 def test_sync_source_is_required_and_exclusive() -> None:
     parser = cli.build_parser()
     args = parser.parse_args(["sync", "--from", "gs://bucket/some/prefix/"])
@@ -223,6 +236,10 @@ def test_probe_missing_targets_or_bad_targets(tmp_path: Path, capsys) -> None:
     bad.write_text("not_a_service SE\n")
     assert cli.main(["probe", "--targets", str(bad), "--out", str(tmp_path / "o")]) == 2
     assert "servicio desconocido" in capsys.readouterr().err
+    bad.write_text("meli_plus_co_total CO http://www.mercadolibre.com.co/x\n")
+    args = ["probe", "--targets", str(bad), "--out", str(tmp_path / "o"), "--mode", "bundles"]
+    assert cli.main(args) == 2
+    assert "línea 1: la URL debe ser https://" in capsys.readouterr().err
 
 
 # --------------------------------------------------------------------------- sync

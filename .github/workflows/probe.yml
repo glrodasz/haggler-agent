@@ -1,6 +1,7 @@
 # Fetches the real vendor pages from a GitHub runner (the dev container cannot reach them) and
-# reports, per target, what the adapters extracted. Read the job summary or the probe-summary
-# artifact to tune parsers. Failing targets never fail the job: only a crash of the CLI does.
+# reports, per target, what the adapters extracted (or, in mode=bundles, how readable each bundle
+# page is). Read the job summary or the probe-summary artifact to tune parsers. Failing targets
+# never fail the job: only a crash of the CLI does.
 # Never authenticates to GCP. The fetched pages (probe-out/raw/) stay on the runner: only the
 # summary, which quotes short snippets at most, is uploaded (raw HTML is never republished).
 name: probe
@@ -20,15 +21,17 @@ on:
       mode:
         description: >-
           adapters = solo parsers; fx = tipos de cambio; full = workflow completo (store local);
-          research = una corrida real de investigación de factibilidad (Google Search)
+          research = una corrida real de investigación de factibilidad (Google Search);
+          bundles = legibilidad de las páginas de paquetes promocionales (sin LLM)
         type: choice
-        options: [adapters, fx, full, research]
+        options: [adapters, fx, full, research, bundles]
         default: adapters
       targets:
         description: >-
-          Opcional: reemplaza probe/targets.txt (o probe/research_targets.txt en research).
-          Separados por ';', p. ej. "netflix SE CO; spotify *" o "netflix; spotify CO;
-          instrument revolut_eea"
+          Opcional: reemplaza probe/targets.txt (probe/research_targets.txt en research,
+          probe/bundle_targets.txt en bundles). Separados por ';', p. ej. "netflix SE CO;
+          spotify *", "netflix; spotify CO; instrument revolut_eea" o
+          "meli_plus_co_total CO https://www.mercadolibre.com.co/suscripciones/melimas/planes"
         type: string
         required: false
         default: ""
@@ -64,6 +67,7 @@ jobs:
         run: |
           targets=probe/targets.txt
           if [ "$MODE" = "research" ]; then targets=probe/research_targets.txt; fi
+          if [ "$MODE" = "bundles" ]; then targets=probe/bundle_targets.txt; fi
           if [ -n "$(printf '%s' "$TARGETS_OVERRIDE" | tr -d '[:space:];')" ]; then
             targets="$RUNNER_TEMP/targets.txt"
             printf '%s\n' "$TARGETS_OVERRIDE" | tr ';' '\n' | sed 's/^[[:space:]]*//' > "$targets"

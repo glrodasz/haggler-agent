@@ -71,6 +71,83 @@ def test_probe_uploads_only_the_summary() -> None:
     assert paths == ["probe-out/summary.md", "probe-out/summary.json"]
 
 
+def test_probe_dispatch_offers_every_probe_mode() -> None:
+    from haggler.probe import MODES
+
+    inputs = load("probe.yml")[True]["workflow_dispatch"]["inputs"]  # YAML 1.1: on -> True
+    assert inputs["mode"]["options"] == list(MODES)
+    assert "bundles" in inputs["mode"]["description"]
+    assert "probe/bundle_targets.txt" in inputs["targets"]["description"]
+
+
+def _run_probe_step(tmp_path: Path, mode: str, override: str = "", secret: str = "") -> str:
+    """Runs the real "Run probe" step script with a fake `uv` that records its call."""
+    script = next(
+        s for s in steps(load("probe.yml"), "probe") if s.get("name", "").startswith("Run probe")
+    )["run"]
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    uv = bin_dir / "uv"
+    uv.write_text(
+        '#!/bin/sh\n{ echo "args: $*"; echo "llm: ${HAGGLER_LLM:-}"; '
+        'echo "key: ${GOOGLE_API_KEY:+set}"; } > "$UV_RECORD"\n'
+    )
+    uv.chmod(0o755)
+    record = tmp_path / "uv-call.txt"
+    result = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=tmp_path,
+        env={
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+            "MODE": mode,
+            "TARGETS_OVERRIDE": override,
+            "GEMINI_SECRET": secret,
+            "RUNNER_TEMP": str(tmp_path),
+            "UV_RECORD": str(record),
+        },
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    return record.read_text()
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_probe_step_picks_the_targets_file_of_each_mode(tmp_path: Path) -> None:
+    for mode, targets in (
+        ("adapters", "probe/targets.txt"),
+        ("research", "probe/research_targets.txt"),
+        ("bundles", "probe/bundle_targets.txt"),
+    ):
+        call = _run_probe_step(tmp_path, mode, secret="s3cret")
+        assert f"args: run --frozen --no-dev haggler probe --targets {targets} --out probe-out " \
+               f"--mode {mode}\n" in call  # fmt: skip
+        # The LLM key only reaches full and research runs.
+        llm_on = mode == "research"
+        assert ("key: set" in call) is llm_on
+        assert ("llm: off" in call) is not llm_on
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_probe_bundles_override_is_parsed_by_the_bundle_targets_parser(
+    tmp_path: Path, catalog, bundles
+) -> None:
+    from haggler.probe_bundles import parse_bundle_targets
+
+    override = (
+        "meli_plus_co_total CO https://www.mercadolibre.com.co/suscripciones/melimas/planes;"
+        "  apple_one_co CO https://www.apple.com/co/apple-one/"
+    )
+    call = _run_probe_step(tmp_path, "bundles", override=override)
+    assert f"--targets {tmp_path / 'targets.txt'} --out probe-out --mode bundles" in call
+    targets = parse_bundle_targets((tmp_path / "targets.txt").read_text(), catalog, bundles)
+    assert [(t.label, t.country, t.line) for t in targets] == [
+        ("meli_plus_co_total", "CO", 1),
+        ("apple_one_co", "CO", 2),
+    ]
+
+
 def test_publish_builds_even_when_sync_fails() -> None:
     publish = load("publish.yml")
     sync = step(publish, "sync", "sync")

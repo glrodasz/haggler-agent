@@ -1,0 +1,66 @@
+# Targets for "haggler probe --mode bundles" (.github/workflows/probe.yml, mode=bundles): can our
+# fetcher read the official pages of the promotional bundles? The readability matrix it prints
+# decides each bundle's watch mode (only "readable" pages may be "auto") and the watcher's
+# anchors are copied from its quoted lines.
+#
+# Format: one target per line
+#     <label> <CC> <url>
+#   label  a bundle_id from data/curated/bundles.yaml, or a free snake_case label for a page that
+#          is not in that file yet (terms page, price list index, a new country's offer ...)
+#   CC     ISO 3166-1 alpha-2 code from catalog/countries.yaml: the country whose site and
+#          currency the page must show (for a known bundle_id, the bundle's own country)
+#   url    https:// on a public host
+# Lines starting with "#" and blank lines are ignored; "#" after a space starts a comment.
+#
+# Override for a single manual run: Actions > probe > Run workflow > mode "bundles" > "targets",
+# separated by ";" (e.g. "meli_plus_co_total CO https://...; apple_one_co CO https://...").
+# The workflow turns every ";" into a line break, so URLs containing ";" go in this file.
+#
+# Every target is one real request to the vendor (robots.txt is checked on every hop, 1 request
+# per 3 s per host). Walls, robots.txt and login pages are reported, never worked around.
+
+# URLs below come from web searches on the providers' official domains (2026-10-09); none had been
+# fetched before this probe. Pages that price by visitor IP will show the runner's (US) prices:
+# the probe reports them as wrong_country, which is the finding.
+
+# Mercado Libre Meli+ (CO = wave 1; MX/BR stay watch.mode off but are cheap to check)
+meli_plus_co_total CO https://www.mercadolibre.com.co/suscripciones/melimas/planes
+meli_plus_co_esencial CO https://www.mercadolibre.com.co/suscripciones/melimas
+meli_plus_co_total CO https://www.mercadolibre.com.co/blog/meli-streamings-disfruta-del-mejor-entretenimiento-con-mercado-libre
+meli_plus_co_terms CO https://www.mercadolibre.com.co/l/legalesloyalty
+meli_plus_co_terms_help CO https://www.mercadolibre.com.co/ayuda/Terminos-y-condiciones-de-Meli-mas_30487
+meli_plus_mx_mega MX https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+meli_plus_mx_terms MX https://www.mercadolibre.com.mx/ayuda/Terminos-y-condiciones-de-Meli-mas_30487
+meli_plus_br_mega BR https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos
+meli_plus_br_terms BR https://www.mercadolivre.com.br/ajuda/Termos-e-condicoes-do-Meli-mais_30487
+
+# Telia Sweden: the bundle page, the versioned price-list PDF and the index that links the PDFs
+telia_se_obegransad_streaming SE https://www.telia.se/mobilabonnemang/telia-mobil-obegraensad-netflix-max-disney-plus
+telia_se_obegransad_streaming SE https://www.telia.se/privat/mobilt/abonnemang
+# A PDF price list: reported as pdf_pending until text extraction exists (milestone H4).
+telia_se_obegransad_streaming SE https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf
+telia_se_prislistor_index SE https://www.telia.se/om/priser
+# Telia Play streaming packages (wave 2)
+telia_se_streaming_index SE https://www.telia.se/tv/streaming
+telia_se_streaming_mer SE https://www.telia.se/produkt/streaming-mer
+telia_se_streaming_maxad SE https://www.telia.se/produkt/streaming-maxad
+telia_se_streaming_mest SE https://www.telia.se/produkt/streaming-mest
+
+# Go3 Lithuania (watch.mode off): PDF price list and the help page that links it
+go3_lt_filmai_netflix LT https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf
+go3_lt_plans_help LT https://pagalba.go3.lt/en/article/go3-plans-and-pricing/
+
+# Apple One: SE (Individual/Familj) and CO (new rows; does /co/apple-one exist, in COP?)
+apple_one_individual_se SE https://www.apple.com/se/apple-one/
+apple_one_co CO https://www.apple.com/co/apple-one/
+apple_one_co_landing CO https://one.apple.com/co/
+apple_one_co_appstore CO https://apps.apple.com/co/iphone/story/id1536976120
+apple_one_availability_co CO https://support.apple.com/es-lamr/118205
+
+# Google AI Pro CO (new row): the /co/ subscriptions page fixes the market; the help pages give
+# the YouTube Premium Lite benefit and its country list
+google_ai_pro_co CO https://gemini.google/co/subscriptions/?hl=es-419
+google_ai_pro_co CO https://one.google.com/about/plans?hl=es_CO
+google_ai_pro_youtube_lite CO https://support.google.com/googleone/answer/17101453?hl=es
+google_ai_pro_eligibility CO https://support.google.com/googleone/answer/16476811?hl=es
+youtube_premium_lite_locations CO https://support.google.com/youtube/answer/6307365?hl=es

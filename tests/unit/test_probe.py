@@ -354,7 +354,8 @@ def test_transient_errors_are_retried_once(tmp_path: Path, catalog) -> None:
     assert rows["netflix_help:netflix:SE"]["status"] == "ok"
     assert rows["tompec_netflix:netflix:all"]["status"] == "failed"
     assert rows["tompec_netflix:netflix:all"]["http_status"] == 429
-    assert [u for u, _ in fetcher.calls].count(TOMPEC) == 2
+    # A 429 is not retried: the server asked us to slow down.
+    assert [u for u, _ in fetcher.calls].count(TOMPEC) == 1
     assert ("https://raw.githubusercontent.com/tompec/netflix-prices/main/data/latest.json",
             "application/json") in fetcher.calls  # fmt: skip
 
