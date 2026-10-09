@@ -1,6 +1,8 @@
 """`haggler` command line (console script).
 
   haggler daily [...]            daily job; arguments are parsed by haggler.jobs.daily.main
+  haggler research run [...]     weekly feasibility research (haggler.jobs.research.main)
+  haggler research review|accept|reject [...]   review research findings (haggler.research.cli)
   haggler probe --targets F --out D [--mode adapters|fx|full]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]
   haggler site-data [--data-dir data] [--out web/src/data] [--residence SE] [--profile P]
@@ -59,6 +61,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="corre el job diario (opciones: haggler daily --help)",
     ).add_argument("rest", nargs=argparse.REMAINDER)
 
+    sub.add_parser(
+        "research",
+        add_help=False,
+        help="investigación de factibilidad: run | review | accept | reject",
+    ).add_argument("rest", nargs=argparse.REMAINDER)
+
     probe = sub.add_parser(
         "probe", help="descarga páginas reales y reporta qué extrae cada adapter"
     )
@@ -101,6 +109,28 @@ def cmd_daily(argv: list[str]) -> int:
         _err(f"el job diario no está disponible (haggler.jobs.daily): {exc}")
         return 1
     return int(daily.main(argv) or 0)
+
+
+RESEARCH_USAGE = "uso: haggler research {run|review|accept|reject} [opciones]"
+
+
+def cmd_research(argv: list[str]) -> int:
+    if not argv or argv[0] in ("-h", "--help"):
+        print(RESEARCH_USAGE, file=sys.stderr)
+        return 0 if argv else 2
+    action, rest = argv[0], argv[1:]
+    if action == "run":
+        try:
+            job = importlib.import_module("haggler.jobs.research")
+        except ImportError as exc:
+            _err(f"el job de investigación no está disponible: {exc}")
+            return 1
+        return int(job.main(rest) or 0)
+    if action in ("review", "accept", "reject"):
+        review_cli = importlib.import_module("haggler.research.cli")
+        return int(review_cli.main(argv) or 0)
+    _err(f"acción desconocida {action!r}; {RESEARCH_USAGE}")
+    return 2
 
 
 def cmd_probe(args: argparse.Namespace) -> int:
@@ -236,6 +266,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     if args_list and args_list[0] == "daily":
         return cmd_daily(args_list[1:])
+    if args_list and args_list[0] == "research":
+        return cmd_research(args_list[1:])
     parser = build_parser()
     args = parser.parse_args(args_list)
     commands = {

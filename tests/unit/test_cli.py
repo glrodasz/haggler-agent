@@ -356,3 +356,17 @@ def test_validate_catalog_schema_errors(tmp_path: Path, capsys) -> None:
     (curated_dir / "bundles.yaml").write_text("bundles: [unclosed\n")
     assert cli.main(argv) == 1
     assert "no se pudo cargar" in capsys.readouterr().err
+
+
+def test_research_without_action_prints_usage(capsys) -> None:
+    assert cli.main(["research"]) == 2
+    assert "haggler research" in capsys.readouterr().err
+    assert cli.main(["research", "nope"]) == 2
+
+
+def test_research_run_plan_only(capsys, monkeypatch) -> None:
+    monkeypatch.setenv("HAGGLER_LLM", "off")
+    assert cli.main(["research", "run", "--store", "memory", "--no-llm", "--dry-run"]) == 0
+    out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert out["ok"] and out["dry_run"] and not out["persisted"]
+    assert out["planned"] and out["by_status"] == {"skipped": len(out["planned"])}

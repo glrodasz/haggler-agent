@@ -59,6 +59,38 @@ class Settings:
         default_factory=lambda: _env_float("HAGGLER_LLM_JOB_TIMEOUT_S", 120.0)
     )
 
+    # Feasibility research (Phase 2): Gemini with Google Search grounding, weekly.
+    research_model: str = field(
+        default_factory=lambda: os.getenv("HAGGLER_RESEARCH_MODEL", "gemini-3-flash-preview")
+    )
+    research_max_calls: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_CALLS", 40)
+    )
+    # Search queries per run, as reported by the grounding metadata.
+    research_max_queries: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_QUERIES", 200)
+    )
+    # Monthly guard: no new research once this many queries were reported in the month (Gemini 3
+    # grounding has 5,000 free queries a month, then it is billed per 1,000).
+    research_max_month_queries: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_MONTH_QUERIES", 1500)
+    )
+    research_concurrency: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_CONCURRENCY", 2)
+    )
+    research_job_timeout_s: float = field(
+        default_factory=lambda: _env_float("HAGGLER_RESEARCH_JOB_TIMEOUT_S", 240.0)
+    )
+    research_max_pairs: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_PAIRS", 6)
+    )
+    research_max_services: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_SERVICES", 3)
+    )
+    research_max_instruments: int = field(
+        default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_INSTRUMENTS", 2)
+    )
+
     # Fetching etiquette
     user_agent: str = field(
         default_factory=lambda: os.getenv(

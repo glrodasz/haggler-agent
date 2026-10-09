@@ -337,3 +337,45 @@ async def verify_subject(
             kept[cid] = claim
     out.claims = sorted(kept.values(), key=lambda c: c.id)
     return out
+
+
+async def recheck_claims(
+    claims: list[Claim], *, pages: PageCache, official_domains: list[str]
+) -> tuple[list[Claim], list[UnverifiedClaim]]:
+    """Previous facts the agent did not report again: re-fetch their page. A quote that is gone
+    from a page that loaded drops the fact; a page that failed to load keeps it as it was."""
+    kept: list[Claim] = []
+    dropped: list[UnverifiedClaim] = []
+    for c in claims:
+        page = await pages.get(c.url)
+        if page.status is not None:
+            kept.append(c)
+            continue
+        if page.contains(c.quote) and canonical_url(page.final_url or c.url) == c.url:
+            kept.append(
+                c.model_copy(
+                    update={
+                        "check": c.check.model_copy(
+                            update={
+                                "retrieved_at": page.retrieved_at,
+                                "page_hash": page.page_hash,
+                                "http_status": page.http_status,
+                                "source_class": source_class(c.url, official_domains),
+                            }
+                        )
+                    }
+                )
+            )
+            continue
+        dropped.append(
+            UnverifiedClaim(
+                field=c.field,
+                value=c.value,
+                event_date=c.event_date.isoformat() if c.event_date else "",
+                quote=c.quote,
+                cited_url=c.url,
+                status="quote_not_found",
+                detail="no longer on the page",
+            )
+        )
+    return kept, dropped
