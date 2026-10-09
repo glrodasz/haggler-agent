@@ -185,13 +185,23 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
 
 def cmd_site_data(args: argparse.Namespace) -> int:
-    from haggler.catalog import load_bundles, load_catalog, load_feasibility
+    from haggler.catalog import (
+        load_bundles,
+        load_catalog,
+        load_feasibility,
+        load_payment_instruments,
+        load_profiles,
+        load_review,
+    )
     from haggler.publish import site_data
 
     try:
         catalog = load_catalog(args.catalog_dir)
         feasibility = load_feasibility(args.curated_dir)
         bundles = load_bundles(args.curated_dir)
+        profiles = load_profiles(args.curated_dir)
+        instruments = load_payment_instruments(args.curated_dir, missing_ok=True)
+        review = load_review(args.curated_dir)
         written = site_data(
             args.data_dir,
             args.out,
@@ -200,6 +210,9 @@ def cmd_site_data(args: argparse.Namespace) -> int:
             catalog=catalog,
             feasibility=feasibility,
             bundles=bundles,
+            profiles=profiles,
+            instruments=instruments,
+            review=review,
         )
     except (ValueError, OSError, KeyError) as exc:  # pydantic ValidationError is a ValueError
         _err(f"site-data falló: {exc}")

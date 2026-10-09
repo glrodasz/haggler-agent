@@ -30,6 +30,8 @@
   "fx_fee_pct": 2.0,
   "generated_at": "2026-10-08T05:00:00Z",
   "profile": "se_resident_co_citizen",
+  "research_as_of": null,
+  "research_run_id": null,
   "residence": "SE",
   "run_id": "20261008T041700Z-ab12cd"
 }

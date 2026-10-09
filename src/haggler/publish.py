@@ -19,7 +19,7 @@ import hashlib
 import json
 import logging
 import re
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -36,16 +36,23 @@ from haggler.feasibility import (
     LABEL_RANKS,
     LABELS,
     UNKNOWN_LABEL,
-    eu_badge,
-    record_rank,
-    verdict,
+    Verdict,
 )
 from haggler.fx import ecb, frankfurter, open_er_api
 from haggler.models.catalog import Catalog
-from haggler.models.curated import Bundle, BundleComponent, BundlesFile, FeasibilityFile
+from haggler.models.curated import (
+    Bundle,
+    BundleComponent,
+    BundlesFile,
+    FeasibilityFile,
+    PaymentInstrumentsFile,
+)
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
+from haggler.models.profiles import Profile, ProfilesFile
+from haggler.models.research import ReviewFile
 from haggler.models.run import CoverageRow
+from haggler.research.evaluate import UNKNOWN_RANK, Assessment, EvalContext, assess
 from haggler.store import Store, dumps_lines
 
 log = logging.getLogger(__name__)
@@ -649,11 +656,9 @@ def _fx_json(fx: FxTable | None) -> dict[str, Any]:
 
 
 def _offer_json(
-    p: PublishedPrice, *, fx: FxTable | None, residence: str, profile: str, feas: FeasibilityFile
+    p: PublishedPrice, *, fx: FxTable | None, verdicts: Callable[[str, str], Verdict]
 ) -> dict[str, Any]:
-    v = verdict(
-        p.service_id, p.country, residence_country=residence, profile=profile, feasibility=feas
-    )
+    v = verdicts(p.service_id, p.country)
     return {
         "obs_key": p.obs_key,
         "service_id": p.service_id,
@@ -679,7 +684,95 @@ def _offer_json(
     }
 
 
-def _feasibility_json(feas: FeasibilityFile, *, residence: str, profile: str) -> dict[str, Any]:
+def _assessment_json(a: Assessment) -> dict[str, Any]:
+    tos_clause = next((e for e in a.evidence if a.provenance == "curated" and e.quote), None)
+    return {
+        "profile": a.profile,
+        "service_id": a.service_id,
+        "target_country": a.target_country,
+        "label": a.label,
+        "rank": a.rank,
+        "eu_badge": a.eu_badge,
+        "legality": a.legality,
+        "tos": a.tos,
+        "practical": a.practical,
+        "confidence": a.confidence,
+        "status": a.status,
+        "provenance": a.provenance,
+        "notes_es": a.notes_es,
+        "tos_clause_url": str(tos_clause.url) if tos_clause else None,
+        "steps": [s.model_dump(mode="json") for s in a.steps],
+        "evidence": [
+            {
+                "url": str(e.url),
+                "kind": e.kind,
+                "quote": e.quote,
+                "retrieved_at": e.retrieved_at.isoformat() if e.retrieved_at else None,
+                "verified": e.verified,
+            }
+            for e in a.evidence
+        ],
+        "assumptions_es": list(a.assumptions_es),
+        "reasons_es": list(a.reasons_es),
+        "researched_on": a.researched_on.isoformat() if a.researched_on else None,
+    }
+
+
+def _same_verdict(a: Assessment, b: Assessment) -> bool:
+    return (a.label, a.rank, a.legality, a.tos, a.practical, a.eu_badge) == (
+        b.label,
+        b.rank,
+        b.legality,
+        b.tos,
+        b.practical,
+        b.eu_badge,
+    )
+
+
+def _listed(a: Assessment, researched_pair: bool) -> bool:
+    return a.evaluated and (a.rank != UNKNOWN_RANK or a.provenance == "curated" or researched_pair)
+
+
+def _profile_assessments(
+    profile: Profile, ctx: EvalContext, rows: list[PublishedPrice]
+) -> list[Assessment]:
+    """Every record the site shows for one profile: curated ones, research-derived verdicts
+    without pending claims, and (when they differ) with them. Derived "unknown" verdicts are only
+    listed for researched pairs, so the table shows their evidence without listing every offer."""
+    r = profile.residence_country
+    keys = {(p.service_id, p.country) for p in rows if p.country != r}
+    keys |= {
+        (rec.service_id, rec.target_country)
+        for rec in ctx.feasibility.records
+        if rec.profile == profile.id and rec.residence_country == r
+    }
+    keys |= {
+        (k.split(":")[1], k.split(":")[2])
+        for k in ctx.facts
+        if k.startswith("pair:") and k.count(":") == 2
+    }
+    out: list[Assessment] = []
+    for service_id, cc in sorted(keys):
+        if cc == r:
+            continue
+        researched_pair = f"pair:{service_id}:{cc}" in ctx.facts
+        reviewed = assess(service_id, cc, profile, ctx)
+        pending = assess(service_id, cc, profile, ctx, include_pending=True)
+        show_reviewed = _listed(reviewed, researched_pair)
+        if show_reviewed:
+            out.append(reviewed)
+        if (
+            pending.provenance == "agent_pending"
+            and _listed(pending, researched_pair)
+            and (not show_reviewed or not _same_verdict(reviewed, pending))
+        ):
+            out.append(pending)
+    return out
+
+
+def _feasibility_json(
+    profiles: ProfilesFile, default: Profile, ctx: EvalContext, rows: list[PublishedPrice]
+) -> dict[str, Any]:
     labels = [
         {
             "id": label,
@@ -689,28 +782,31 @@ def _feasibility_json(feas: FeasibilityFile, *, residence: str, profile: str) ->
         }
         for label in (*LABELS, UNKNOWN_LABEL)
     ]
-    records = []
-    for r in sorted(feas.records, key=lambda r: (r.service_id, r.target_country, r.id)):
-        if r.residence_country != residence or r.profile != profile:
-            continue
-        rank = record_rank(r)
-        records.append(
-            {
-                "service_id": r.service_id,
-                "target_country": r.target_country,
-                "label": LABELS[rank],
-                "rank": rank,
-                "eu_badge": eu_badge(r),
-                "legality": r.legality,
-                "tos": r.tos,
-                "practical": r.practical,
-                "confidence": r.confidence,
-                "status": r.status,
-                "notes_es": r.notes_es.strip(),
-                "tos_clause_url": str(r.tos_clause.url) if r.tos_clause else None,
-            }
+    public = [default, *(p for p in profiles.public() if p.id != default.id)]
+    records = [_assessment_json(a) for p in public for a in _profile_assessments(p, ctx, rows)]
+    records.sort(
+        key=lambda r: (
+            r["profile"] != default.id,
+            r["profile"],
+            r["service_id"],
+            r["target_country"],
+            r["provenance"] == "agent_pending",
         )
-    return {"labels": labels, "records": records}
+    )
+    return {
+        "labels": labels,
+        "default_profile": default.id,
+        "profiles": [
+            {
+                "id": p.id,
+                "name_es": p.name_es,
+                "description_es": " ".join(p.description_es.split()),
+                "residence_country": p.residence_country,
+            }
+            for p in public
+        ],
+        "records": records,
+    }
 
 
 def _ref_json(ref: OfferRef | None) -> dict[str, Any] | None:
@@ -741,6 +837,7 @@ def _cheapest_json(
     residence: str,
     profile: str,
     fx_fee_pct: float,
+    verdicts: Callable[[str, str], Verdict],
 ) -> list[dict[str, Any]]:
     if fx is None:
         return []
@@ -752,6 +849,7 @@ def _cheapest_json(
         residence=residence,
         profile=profile,
         fx_fee_pct=fx_fee_pct,
+        verdicts=verdicts,
     )
     return [
         {
@@ -942,16 +1040,48 @@ def build_site_data(
     bundles: BundlesFile,
     fx_fee_pct: float | None = None,
     now: datetime | None = None,
+    profiles: ProfilesFile | None = None,
+    instruments: PaymentInstrumentsFile | None = None,
+    review: ReviewFile | None = None,
 ) -> dict[str, Any]:
-    """The site data contract as Python objects ({file name without .json: content})."""
+    """The site data contract as Python objects ({file name without .json: content}).
+
+    `profile` is the site's default profile: offers.json and cheapest.json use its verdicts
+    (research findings still pending review excluded). Without profiles.yaml (profiles=None)
+    one profile is synthesized from feasibility.yaml for (residence, profile)."""
+    from haggler.catalog import synthesize_profiles
+    from haggler.research.evaluate import EvalContext, verdict_fn
+    from haggler.research.io import load_data_dir
+
     try:
         home_currency = catalog.country(residence).currency
     except KeyError:
         raise ValueError(f"país de residencia desconocido: {residence!r}") from None
-    if profile not in feasibility.profiles:
-        raise ValueError(f"perfil desconocido: {profile!r} (ver data/curated/feasibility.yaml)")
+    if profiles is None:
+        if profile not in feasibility.profiles:
+            raise ValueError(f"perfil desconocido: {profile!r} (ver data/curated/profiles.yaml)")
+        profiles = synthesize_profiles(feasibility, residence=residence, profile=profile)
+    default = profiles.get(profile)
+    if default is None:
+        raise ValueError(f"perfil desconocido: {profile!r} (ver data/curated/profiles.yaml)")
+    if default.residence_country != residence:
+        raise ValueError(
+            f"el perfil {profile!r} vive en {default.residence_country}, no en {residence}"
+        )
     fee = Settings().fx_fee_pct if fx_fee_pct is None else fx_fee_pct
     now = now or datetime.now(UTC)
+    subjects, research_run, research_errors = load_data_dir(data_dir)
+    for message in research_errors:
+        log.warning("site-data: %s", message)
+    ctx = EvalContext.build(
+        catalog=catalog,
+        feasibility=feasibility,
+        instruments=instruments or PaymentInstrumentsFile(instruments=[]),
+        subjects=subjects,
+        review=review,
+        today=now.date(),
+    )
+    verdicts = verdict_fn(default, ctx)
 
     latest = _load_latest(data_dir)
     known = {(s.id, p.id) for s in catalog.services for p in s.plans}
@@ -982,6 +1112,8 @@ def build_site_data(
             "as_of": as_of or None,
             "residence": residence,
             "profile": profile,
+            "research_run_id": research_run.get("run_id") or None,
+            "research_as_of": research_run.get("as_of") or None,
             "fx_fee_pct": float(fee),
             "display_currencies": display,
             "attributions": _attributions(catalog),
@@ -989,11 +1121,8 @@ def build_site_data(
         "services": _services_json(catalog, bundles),
         "countries": _countries_json(catalog),
         "fx": _fx_json(latest.fx),
-        "offers": [
-            _offer_json(p, fx=latest.fx, residence=residence, profile=profile, feas=feasibility)
-            for p in rows
-        ],
-        "feasibility": _feasibility_json(feasibility, residence=residence, profile=profile),
+        "offers": [_offer_json(p, fx=latest.fx, verdicts=verdicts) for p in rows],
+        "feasibility": _feasibility_json(profiles, default, ctx, rows),
         "cheapest": _cheapest_json(
             rows,
             fx=latest.fx,
@@ -1002,6 +1131,7 @@ def build_site_data(
             residence=residence,
             profile=profile,
             fx_fee_pct=fee,
+            verdicts=verdicts,
         ),
         "bundles": [
             _bundle_json(b, rows=rows, fx=latest.fx, residence=residence) for b in bundles.bundles
@@ -1024,6 +1154,9 @@ def site_data(
     bundles: BundlesFile,
     fx_fee_pct: float | None = None,
     now: datetime | None = None,
+    profiles: ProfilesFile | None = None,
+    instruments: PaymentInstrumentsFile | None = None,
+    review: ReviewFile | None = None,
 ) -> dict[str, Path]:
     """Write the site data contract files into out_dir (web/src/data). Works on an empty data/."""
     content = build_site_data(
@@ -1035,6 +1168,9 @@ def site_data(
         bundles=bundles,
         fx_fee_pct=fx_fee_pct,
         now=now,
+        profiles=profiles,
+        instruments=instruments,
+        review=review,
     )
     out_dir = Path(out_dir)
     written: dict[str, Path] = {}

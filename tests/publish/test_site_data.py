@@ -32,6 +32,8 @@ META_KEYS = {
     "as_of",
     "residence",
     "profile",
+    "research_run_id",
+    "research_as_of",
     "fx_fee_pct",
     "display_currencies",
     "attributions",
@@ -73,7 +75,11 @@ OFFER_KEYS = {
     "rank",
     "eu_badge",
 }
-FEASIBILITY_KEYS = {"labels", "records"}
+FEASIBILITY_KEYS = {"labels", "records", "profiles", "default_profile"}
+PROFILE_KEYS = {"id", "name_es", "description_es", "residence_country"}
+STEP_KEYS = {"type", "value", "requires_presence", "requires_false_declaration"}
+EVIDENCE_KEYS = {"url", "kind", "quote", "retrieved_at", "verified"}
+PROVENANCES = {"curated", "agent_reviewed", "agent_pending"}
 LABEL_KEYS = {"id", "rank", "name_es", "description_es"}
 RECORD_KEYS = {
     "service_id",
@@ -88,6 +94,13 @@ RECORD_KEYS = {
     "status",
     "notes_es",
     "tos_clause_url",
+    "profile",
+    "provenance",
+    "steps",
+    "evidence",
+    "assumptions_es",
+    "reasons_es",
+    "researched_on",
 }
 CHEAPEST_KEYS = {"service_id", "plan_id", "home", "best_by_risk", "savings_month_eur"}
 REF_KEYS = {
@@ -214,9 +227,21 @@ def check_contract(site: dict[str, Any]) -> None:
     assert set(feas) == FEASIBILITY_KEYS
     for label in feas["labels"]:
         assert set(label) == LABEL_KEYS
+    profile_ids = [p["id"] for p in feas["profiles"]]
+    assert feas["default_profile"] == profile_ids[0] == site["meta"]["profile"]
+    for p in feas["profiles"]:
+        assert set(p) == PROFILE_KEYS
     for r in feas["records"]:
         assert set(r) == RECORD_KEYS
         assert isinstance(r["rank"], int)
+        assert r["profile"] in profile_ids and r["provenance"] in PROVENANCES
+        assert all(set(st) == STEP_KEYS for st in r["steps"])
+        assert all(set(e) == EVIDENCE_KEYS for e in r["evidence"])
+        assert all(isinstance(x, str) for x in [*r["assumptions_es"], *r["reasons_es"]])
+        assert is_date(r["researched_on"], nullable=True)
+    assert site["meta"]["research_run_id"] is None or isinstance(
+        site["meta"]["research_run_id"], str
+    )
 
     for row in site["cheapest"]:
         assert set(row) == CHEAPEST_KEYS
@@ -647,3 +672,123 @@ def test_unknown_residence_or_profile(fx_catalog, fx_feasibility, fx_bundles) ->
         build_site_data(FIXTURES / "data", residence="XX", profile=PROFILE, **kwargs)
     with pytest.raises(ValueError, match="perfil"):
         build_site_data(FIXTURES / "data", residence="SE", profile="nobody", **kwargs)
+
+
+# ------------------------------------------------------------------ research + profiles
+
+
+def _research_data(data: Path) -> None:
+    """data/research as `haggler sync` writes it: Netflix's residence clause (reviewed) and the
+    CO card rule (pending review)."""
+    from haggler.models.research import (
+        Claim,
+        SourceCheck,
+        SubjectFacts,
+        claim_hash,
+        claim_id,
+    )
+    from haggler.research import io as rio
+
+    def claim(key: str, field: str, value: str) -> Claim:
+        url = "https://help.netflix.com/legal/termsofuse"
+        quote = f"Literal quote stating {field} {value} on the page."
+        return Claim(
+            id=claim_id(key, field, value),
+            hash=claim_hash(field, value, None, quote, url),
+            field=field,
+            value=value,
+            quote=quote,
+            check=SourceCheck(
+                cited_url=url,
+                final_url=url,
+                source_class="official",
+                status="verified",
+                retrieved_at=NOW,
+            ),
+            first_seen=NOW.date(),
+        )
+
+    svc = SubjectFacts(
+        key="service:netflix",
+        kind="service",
+        researched_on=NOW.date(),
+        run_id="r1",
+        status="researched",
+        claims=[claim("service:netflix", "residence_clause", "primary_use_in_account_country")],
+    )
+    pair = SubjectFacts(
+        key="pair:netflix:CO",
+        kind="pair",
+        researched_on=NOW.date(),
+        run_id="r1",
+        status="researched",
+        claims=[claim("pair:netflix:CO", "payment_card_country", "must_match")],
+    )
+    target = data / "research"
+    target.mkdir(parents=True, exist_ok=True)
+    for name, blob in rio.subject_files([svc, pair]).items():
+        (target / name).write_bytes(blob)
+    (target / "run.json").write_text(
+        json.dumps({"schema_version": 1, "run_id": "r1", "as_of": "2026-10-08", "files": {}})
+    )
+    return svc
+
+
+def test_research_records_per_profile(tmp_path: Path, catalog, feasibility, bundles) -> None:
+    import shutil
+
+    from haggler.catalog import load_payment_instruments, load_profiles
+    from haggler.models.research import ReviewDecision, ReviewFile
+
+    data = tmp_path / "data"
+    shutil.copytree(FIXTURES / "data", data)
+    svc = _research_data(data)
+    clause = svc.claims[0]
+    review = ReviewFile(
+        decisions=[
+            ReviewDecision(id=clause.id, hash=clause.hash, decision="accept", decided_on=NOW.date())
+        ]
+    )
+    site = build_site_data(
+        data,
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=catalog,
+        feasibility=feasibility,
+        bundles=bundles,
+        now=NOW,
+        profiles=load_profiles(),
+        instruments=load_payment_instruments(),
+        review=review,
+    )
+    check_contract(site)
+    assert site["meta"]["research_run_id"] == "r1"
+    feas = site["feasibility"]
+    assert [p["id"] for p in feas["profiles"]] == [PROFILE, "se_resident_eu_generic"]
+    recs = feas["records"]
+    # The default profile keeps its curated Netflix CO record.
+    mine = [r for r in recs if r["profile"] == PROFILE and r["service_id"] == "netflix"]
+    co = [r for r in mine if r["target_country"] == "CO"]
+    assert [r["provenance"] for r in co] == ["curated"]
+    # The generic profile: the reviewed clause alone leaves practicality unknown (no CO card);
+    # with the pending card rule the route is not feasible.
+    generic = [
+        r
+        for r in recs
+        if r["profile"] == "se_resident_eu_generic"
+        and r["service_id"] == "netflix"
+        and r["target_country"] == "CO"
+    ]
+    assert [(r["provenance"], r["label"]) for r in generic] == [
+        ("agent_reviewed", "unknown"),
+        ("agent_pending", "not_feasible"),
+    ]
+    pending = generic[1]
+    assert pending["evidence"] and pending["evidence"][0]["verified"]
+    assert pending["tos"] == "breach_unenforced" and pending["practical"] == "impossible"
+    # Other Netflix countries of the generic profile: the clause applies, but without pair
+    # research they stay unlisted (unknown).
+    assert {r["target_country"] for r in generic} == {"CO"}
+    # offers.json keeps the default profile's verdicts (pending findings excluded).
+    offers = by(site["offers"], "obs_key")
+    assert offers["netflix:standard:CO:web:month"]["label"] == "tos_breach_low_enforcement"
