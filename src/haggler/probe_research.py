@@ -123,6 +123,48 @@ async def redirect_robots(settings: Settings) -> str:
         await fetcher.aclose()
 
 
+async def known_pages(settings: Settings) -> list[dict[str, Any]]:
+    """Fetch every research_url of the catalog and the instruments (no LLM needed): can our
+    fetcher read the pages the quotes are checked against?"""
+    from haggler.research.evidence import PageCache
+
+    owners: dict[str, list[str]] = {}
+    for svc in load_catalog().services:
+        for url in svc.research_urls:
+            owners.setdefault(url, []).append(svc.id)
+    for inst in load_payment_instruments().instruments:
+        for url in inst.research_urls:
+            owners.setdefault(url, []).append(inst.id)
+    from haggler.fetch.client import HttpFetcher
+
+    fetcher = HttpFetcher(settings)
+    pages = PageCache(fetcher)
+    rows: list[dict[str, Any]] = []
+    try:
+        for url, who in owners.items():
+            page = await pages.get(url)
+            text_chars = 0
+            if page.status is None:
+                from haggler.text import html_to_lines
+
+                text_chars = len(" ".join(html_to_lines(page.text)))
+            rows.append(
+                {
+                    "url": url,
+                    "subjects": who,
+                    "status": page.status or "ok",
+                    "http": page.http_status,
+                    "final_url": page.final_url,
+                    "content_type": page.content_type,
+                    "text_chars": text_chars,
+                    "detail": page.detail[:160],
+                }
+            )
+    finally:
+        await fetcher.aclose()
+    return rows
+
+
 async def _run(settings: Settings, targets: ResearchTargets, store_dir: Path, today: date):
     from haggler.fetch.client import HttpFetcher
     from haggler.jobs._runner import run_workflow_once
@@ -183,7 +225,7 @@ def _subject_rows(store_dir: Path, planned: list[str]) -> list[dict[str, Any]]:
                         "value": c.value,
                         "class": c.check.source_class,
                         "host": host_of(c.url),
-                        "via_grounding": c.check.via_grounding,
+                        "via": c.check.via,
                         "quote": c.quote[:QUOTE_CHARS],
                     }
                     for c in s.claims
@@ -222,6 +264,7 @@ def probe_research(
         research_max_queries=min(settings.research_max_queries, 120),
     )
     robots = asyncio.run(redirect_robots(settings))
+    pages = asyncio.run(known_pages(settings))
     store_dir = out_dir / "raw" / "store"
     report: dict[str, Any] | None = None
     error: str | None = None
@@ -256,6 +299,7 @@ def probe_research(
         "flash_models": flash[:8],
         "models_error": models_error,
         "redirect_robots": robots,
+        "known_pages": pages,
         "targets": dataclasses.asdict(targets),
         "error": error,
         "official_verified_ratio": ratio,
@@ -309,7 +353,7 @@ def render_md(summary: dict[str, Any], today: date) -> str:
     for row in summary["subjects"]:
         lines += ["", f"## {row['key']} — {row['status']}", ""]
         for c in row.get("verified", []):
-            via = " vía grounding" if c["via_grounding"] else ""
+            via = "" if c["via"] == "cited" else f" vía {c['via']}"
             lines.append(
                 f"- ✅ `{c['field']}={c['value']}` [{c['class']}] {c['host']}{via}: “{c['quote']}”"
             )
@@ -319,6 +363,21 @@ def render_md(summary: dict[str, Any], today: date) -> str:
             )
         for q in row.get("open_questions", []):
             lines.append(f"- ❓ {q}")
+    if summary.get("known_pages"):
+        ok = sum(1 for p in summary["known_pages"] if p["status"] == "ok")
+        lines += [
+            "",
+            f"## Páginas oficiales conocidas ({ok}/{len(summary['known_pages'])} legibles)",
+            "",
+            "| URL | Sujetos | Estado | HTTP | Texto | Detalle |",
+            "|---|---|---|---|---|---|",
+        ]
+        for p in summary["known_pages"]:
+            final = p["final_url"] if p["final_url"] and p["final_url"] != p["url"] else ""
+            lines.append(
+                f"| {p['url']}{' → ' + final if final else ''} | {', '.join(p['subjects'])} | "
+                f"{p['status']} | {p['http'] or '—'} | {p['text_chars']} | {p['detail']} |"
+            )
     if summary["grounding"]:
         lines += ["", "## Grounding por agente", ""]
         for run_id, g in summary["grounding"].items():

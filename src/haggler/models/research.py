@@ -105,8 +105,9 @@ class SourceCheck(_Strict):
     http_status: int | None = None
     page_hash: str | None = None
     retrieved_at: datetime | None = None
-    # The quote was found on a grounding source of the same domain, not on the cited URL.
-    via_grounding: bool = False
+    # Where the quote was found: the cited URL, a grounding source of the same site, or one of
+    # the subject's known official pages (catalog research_urls).
+    via: Literal["cited", "grounding", "known_page"] = "cited"
     detail: str = ""
 
 

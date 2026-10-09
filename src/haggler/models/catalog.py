@@ -71,6 +71,8 @@ class ServiceDef(_Strict):
     sources: list[SourceDef] = Field(default_factory=list)
     # Hosts (and their subdomains) whose pages count as the service's own sources for research.
     official_domains: list[str] = Field(default_factory=list)
+    # Known official pages (terms, help) where research quotes are also looked for.
+    research_urls: list[str] = Field(default_factory=list)
     notes_es: str = ""
 
     @model_validator(mode="after")

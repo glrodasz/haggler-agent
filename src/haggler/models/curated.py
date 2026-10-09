@@ -137,6 +137,8 @@ class PaymentInstrument(_Strict):
     required_id_countries: list[str] = Field(default_factory=list)
     # Hosts whose pages count as the issuer's own (official) sources for research.
     official_domains: list[str] = Field(default_factory=list)
+    # Known official pages where research quotes are also looked for.
+    research_urls: list[str] = Field(default_factory=list)
     currencies: list[str] = Field(default_factory=list)
     # Never inferred: only filled from real observations of issued cards.
     card_bin_country_observed: ObservedBin = ObservedBin()

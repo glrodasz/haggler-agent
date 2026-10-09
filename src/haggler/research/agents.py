@@ -35,7 +35,8 @@ Rules (all mandatory):
 1. Use Google Search. Prefer pages on the official domains listed in the job (terms of use,
    help center, legal pages), then reputable press. Forums only when nothing else exists.
 2. Report a fact only when a page states it. Each claim: one field and one allowed value from
-   the vocabulary below, the exact https URL of the page, and `quote`: a CONTIGUOUS verbatim
+   the vocabulary below, the exact https URL of the page itself (its own address, never a
+   vertexaisearch.cloud.google.com link), and `quote`: a CONTIGUOUS verbatim
    excerpt of that page (20-300 characters, original language, copied character for character,
    no ellipsis, no paraphrase, no translation) that states the fact.
 3. Never infer, generalize from other countries, or use memory without a source. If sources

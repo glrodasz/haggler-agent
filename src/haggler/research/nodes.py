@@ -163,6 +163,17 @@ def payload(deps: ResearchDeps, subject: PlannedSubject) -> str:
     return json.dumps(job, ensure_ascii=False)
 
 
+def known_pages(deps: ResearchDeps, subject: PlannedSubject) -> list[str]:
+    """The subject's known official pages (catalog / instrument research_urls)."""
+    if subject.service_id:
+        try:
+            return list(deps.catalog.service(subject.service_id).research_urls)
+        except KeyError:
+            return []
+    inst = next((i for i in deps.instruments.instruments if i.id == subject.instrument_id), None)
+    return list(inst.research_urls) if inst else []
+
+
 def official_domains(deps: ResearchDeps, subject: PlannedSubject) -> list[str]:
     if subject.service_id:
         try:
@@ -332,6 +343,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                         pages=pages,
                         today=run_date,
                         previous=previous,
+                        known_pages=known_pages(deps, s),
                     )
                     new_ids = {c.id for c in v.claims}
                     old = [c for c in (previous.claims if previous else []) if c.id not in new_ids]

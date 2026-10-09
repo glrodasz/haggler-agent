@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from functools import cache
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 from babel.numbers import list_currencies
@@ -105,8 +106,14 @@ def load_review(curated_dir: Path | None = None) -> ReviewFile:
 _DOMAIN = re.compile(r"^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$")
 
 
-def _domain_errors(owner: str, domains: list[str]) -> list[str]:
-    return [f"{owner}: bad official domain {d!r}" for d in domains if not _DOMAIN.fullmatch(d)]
+def _domain_errors(owner: str, domains: list[str], urls: list[str] = ()) -> list[str]:
+    errors = [f"{owner}: bad official domain {d!r}" for d in domains if not _DOMAIN.fullmatch(d)]
+    for url in urls:
+        parts = urlsplit(url)
+        host = (parts.hostname or "").lower()
+        if parts.scheme != "https" or not any(host == d or host.endswith("." + d) for d in domains):
+            errors.append(f"{owner}: research url {url!r} is not https on an official domain")
+    return errors
 
 
 def integrity_errors(
@@ -132,7 +139,7 @@ def integrity_errors(
             errors.append(f"fx_pins: {cur} ({provider}) is not used by any country")
 
     for s in cat.services:
-        errors.extend(_domain_errors(s.id, s.official_domains))
+        errors.extend(_domain_errors(s.id, s.official_domains, s.research_urls))
         for src in s.sources:
             if src.adapter not in KNOWN_ADAPTERS:
                 errors.append(f"{s.id}: unknown adapter {src.adapter}")
@@ -197,7 +204,7 @@ def integrity_errors(
         if len(ids) != len(set(ids)):
             errors.append("payment_instruments: duplicate id")
         for i in instruments.instruments:
-            errors.extend(_domain_errors(f"instrument {i.id}", i.official_domains))
+            errors.extend(_domain_errors(f"instrument {i.id}", i.official_domains, i.research_urls))
             for cc in i.required_id_countries:
                 if cc not in ccs:
                     errors.append(f"instrument {i.id}: unknown country {cc}")

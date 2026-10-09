@@ -730,13 +730,29 @@ def test_research_probe_without_llm(tmp_path, monkeypatch):
     async def robots(settings):
         return "allowed"
 
+    async def pages(settings):
+        return [
+            {
+                "url": "https://help.netflix.com/legal/termsofuse",
+                "subjects": ["netflix"],
+                "status": "ok",
+                "http": 200,
+                "final_url": "https://help.netflix.com/legal/termsofuse",
+                "content_type": "text/html",
+                "text_chars": 5000,
+                "detail": "",
+            }
+        ]
+
     monkeypatch.setattr(probe_research, "redirect_robots", robots)
+    monkeypatch.setattr(probe_research, "known_pages", pages)
     monkeypatch.setenv("HAGGLER_LLM", "off")
     targets = tmp_path / "t.txt"
     targets.write_text("netflix\n", encoding="utf-8")
     summary, md = probe_research.run(targets, tmp_path / "out", Settings(), today=date(2026, 10, 9))
     assert summary["llm"] is False and summary["report"] is None and summary["gate"] is None
     assert "robots.txt de las redirecciones de grounding: allowed" in md
+    assert "Páginas oficiales conocidas (1/1 legibles)" in md
 
 
 def test_research_probe_markdown_reports_the_gate():
@@ -774,7 +790,7 @@ def test_research_probe_markdown_reports_the_gate():
                         "value": "must_reside",
                         "class": "official",
                         "host": "help.netflix.com",
-                        "via_grounding": False,
+                        "via": "cited",
                         "quote": "Only residents",
                     }
                 ],

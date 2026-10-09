@@ -4,9 +4,11 @@ For each ClaimDraft of a subject:
 1. The draft must fit the vocabulary (research.fields) and the quote rules: 20..400 characters,
    no ellipsis, an https URL.
 2. The cited URL is fetched with the project's Fetcher (robots.txt, per-host politeness, bot
-   walls are never evaded). Only when that does not verify, up to MAX_GROUNDING_TRIES grounding
-   sources of the same site are tried (they are vertexaisearch redirects; the fetcher follows
-   them and checks robots.txt on every hop).
+   walls are never evaded). Only when that does not verify: up to MAX_GROUNDING_TRIES grounding
+   sources of the same site that are direct links, then the subject's known official pages
+   (catalog research_urls). Grounding sources are usually vertexaisearch.cloud.google.com
+   redirects, whose robots.txt disallows our user agent (probe, 2026-10-09): they are never
+   fetched, and a claim citing one is checked against the fallbacks only.
 3. The quote must appear (text.contains_normalized) in the page's block-aware text
    (text.html_to_lines), or in its raw text nodes (text.text_node_lines) as a fallback for
    script-heavy pages. Non-HTML content (PDF...) is "unsupported_content".
@@ -46,6 +48,8 @@ from haggler.text import contains_normalized, html_to_lines, text_hash, text_nod
 
 MIN_QUOTE = 20
 MAX_GROUNDING_TRIES = 3
+# Search redirect hosts: their robots.txt disallows crawlers, and they are not the page itself.
+REDIRECT_HOSTS = ("vertexaisearch.cloud.google.com",)
 ALWAYS_OFFICIAL = ("europa.eu",)
 FORUM_HOSTS = (
     "reddit.com",
@@ -260,6 +264,7 @@ async def verify_subject(
     pages: PageCache,
     today: date,
     previous: SubjectFacts | None = None,
+    known_pages: list[str] | None = None,
 ) -> Verification:
     out = Verification()
     first_seen = {c.id: c.first_seen for c in (previous.claims if previous else [])}
@@ -280,27 +285,34 @@ async def verify_subject(
             )
             out.checks.append((source_class(draft.url, official_domains), "invalid"))
             continue
-        page = await pages.get(valid.url)
+        if host_matches(host_of(valid.url), REDIRECT_HOSTS):
+            page = Page(
+                url=valid.url, status="invalid", detail="search redirect link, not the page"
+            )
+        else:
+            page = await pages.get(valid.url)
         status: CheckStatus = page.status or (
             "verified" if page.contains(valid.quote) else "quote_not_found"
         )
-        via_grounding = False
+        via = "cited"
         if status != "verified":
             site = site_of(host_of(valid.url))
-            tries = [
-                g.uri
+            fallbacks = [
+                ("grounding", g.uri)
                 for g in grounding
-                if site and site_of((g.domain or g.title or host_of(g.uri)).lower()) == site
+                if site
+                and not host_matches(host_of(g.uri), REDIRECT_HOSTS)
+                and site_of((g.domain or g.title or host_of(g.uri)).lower()) == site
             ][:MAX_GROUNDING_TRIES]
-            for uri in tries:
+            fallbacks += [("known_page", u) for u in known_pages or [] if u != valid.url]
+            for kind_, uri in fallbacks:
                 alt = await pages.get(uri)
-                if (
-                    alt.status is None
-                    and site_of(host_of(alt.final_url or "")) == site
-                    and (alt.contains(valid.quote))
-                ):
-                    page, status, via_grounding = alt, "verified", True
-                    break
+                if alt.status is not None or not alt.contains(valid.quote):
+                    continue
+                if kind_ == "grounding" and site_of(host_of(alt.final_url or "")) != site:
+                    continue
+                page, status, via = alt, "verified", kind_
+                break
         final = page.final_url or valid.url
         cls = source_class(final if status == "verified" else valid.url, official_domains)
         out.checks.append((cls, status))
@@ -326,7 +338,7 @@ async def verify_subject(
             value=valid.value,
             event_date=valid.event_date,
             quote=valid.quote,
-            check=_check(page, valid.url, cls, "verified", via_grounding=via_grounding).model_copy(
+            check=_check(page, valid.url, cls, "verified", via=via).model_copy(
                 update={"final_url": url}
             ),
             first_seen=first_seen.get(cid, today),

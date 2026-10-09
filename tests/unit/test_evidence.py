@@ -163,35 +163,37 @@ async def test_pdf_is_unsupported():
 
 
 async def test_grounding_source_of_the_same_site_can_verify():
+    direct = "https://help.netflix.com/legal/termsofuse?lang=en"
+    other = "https://www.techradar.com/news/netflix"
     redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc"
-    other = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/zzz"
-    canonical = "https://help.netflix.com/legal/termsofuse?lang=en"
     page = RawResponse(
-        url=redirect,
-        final_url=canonical,
+        url=direct,
+        final_url=direct,
         status_code=200,
         text=PAGE,
         content_type="text/html",
         fetched_at=datetime(2026, 10, 9, tzinfo=UTC),
     )
     grounding = [
-        GroundingSource(uri=other, title="techradar.com", domain="techradar.com"),
-        GroundingSource(uri=redirect, title="netflix.com", domain="netflix.com"),
+        GroundingSource(uri=other, domain="techradar.com"),
+        GroundingSource(uri=redirect, domain="netflix.com"),
+        GroundingSource(uri=direct, domain="netflix.com"),
     ]
     out, fetcher = await verify(
         [draft(url="https://help.netflix.com/legal/termsofuse-old")],
-        {redirect: page},
+        {direct: page},
         grounding=grounding,
     )
-    assert out.claims and out.claims[0].check.via_grounding
-    assert out.claims[0].check.final_url == canonical
-    assert other not in fetcher.calls  # other sites are never tried
+    assert out.claims and out.claims[0].check.via == "grounding"
+    assert out.claims[0].check.final_url == direct
+    # Other sites and search redirects (robots.txt disallows them) are never fetched.
+    assert other not in fetcher.calls and redirect not in fetcher.calls
 
 
 async def test_grounding_page_of_another_site_does_not_verify():
-    redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc"
+    direct = "https://help.netflix.com/legal/moved"
     page = RawResponse(
-        url=redirect,
+        url=direct,
         final_url="https://copycat.example.com/netflix-terms",
         status_code=200,
         text=PAGE,
@@ -199,10 +201,52 @@ async def test_grounding_page_of_another_site_does_not_verify():
     )
     out, _ = await verify(
         [draft(url="https://help.netflix.com/missing")],
-        {redirect: page},
-        grounding=[GroundingSource(uri=redirect, domain="netflix.com")],
+        {direct: page},
+        grounding=[GroundingSource(uri=direct, domain="netflix.com")],
     )
     assert out.claims == [] and out.unverified[0].status == "not_found"
+
+
+async def test_redirect_citations_are_checked_on_known_pages_only():
+    redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc"
+    fetcher = FixtureFetcher({TERMS: PAGE})
+    out = await verify_subject(
+        [draft(url=redirect), draft(value="must_reside", url=redirect)],
+        key="service:netflix",
+        kind="service",
+        official_domains=NETFLIX,
+        grounding=[],
+        pages=PageCache(fetcher),
+        today=TODAY,
+        known_pages=[TERMS],
+    )
+    assert redirect not in fetcher.calls and fetcher.calls == [TERMS]
+    c = out.claims[0]
+    assert c.check.via == "known_page" and c.check.final_url == TERMS
+    assert c.check.cited_url == redirect and c.check.source_class == "official"
+    # The second draft's quote is on the page too, but its value is the agent's: still verified
+    # against the quote only (the vocabulary value is reviewed by a person).
+    assert len(out.claims) == 2
+
+
+async def test_known_pages_without_the_quote_do_not_verify():
+    out, _ = await verify_known([draft(url="https://help.netflix.com/missing")])
+    assert out.claims == [] and out.unverified[0].status == "not_found"
+
+
+async def verify_known(drafts):
+    fetcher = FixtureFetcher({TERMS: "<p>Nothing relevant here.</p>"})
+    out = await verify_subject(
+        drafts,
+        key="service:netflix",
+        kind="service",
+        official_domains=NETFLIX,
+        grounding=[],
+        pages=PageCache(fetcher),
+        today=TODAY,
+        known_pages=[TERMS],
+    )
+    return out, fetcher
 
 
 async def test_one_fetch_per_url_and_one_claim_per_id():
