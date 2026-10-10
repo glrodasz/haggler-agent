@@ -556,7 +556,7 @@ def test_bundle_requirements_keep_the_v1_keys(fx_catalog, fx_feasibility, fx_bun
         residency="required",
         local_id="cedula",
         billing_address="required",
-        signup_presence="not_required",
+        signup_presence="checked",
         new_customers_only=True,
     )
     bundles = fx_bundles.model_copy(

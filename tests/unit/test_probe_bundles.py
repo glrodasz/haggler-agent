@@ -304,6 +304,28 @@ def test_walls_on_a_200_page(catalog, bundles, tmp_path: Path) -> None:
     assert "muro (cloudflare): no se evade" in apple["mode_reason"]
 
 
+def test_account_verification_is_a_login_wall(catalog, bundles, tmp_path: Path) -> None:
+    """Mercado Libre sends its blog and /l/legalesloyalty to an account-verification page (H0
+    probe, 2026-10-09): a wall, never a readable page without amounts."""
+    blog = "https://www.mercadolibre.com.co/blog/meli-streamings"
+    terms = "https://www.mercadolibre.com.co/l/legalesloyalty"
+    verify = "https://www.mercadolibre.com.co/gz/account-verification?go=https%3A%2F%2Fx"
+    page = "<html><head><title>Mercado Libre</title></head><body><p>Verifica tu cuenta</p>"
+    text = f"meli_plus_co_total CO {blog}\nmeli_plus_co_terms CO {terms}"
+    routes = {
+        blog: html(blog, page, final_url=verify),
+        terms: html(terms, page, final_url=verify.replace("?go=", "/?go=")),
+    }
+    for row in report(text, routes, catalog, bundles, tmp_path):
+        assert (row["status"], row["wall"], row["readability"], row["suggested_mode"]) == (
+            "ok",
+            "login",
+            "blocked",
+            "manual",
+        )
+        assert row["mode_reason"] == "muro (login): no se evade; comprobación manual"
+
+
 def test_a_wall_decides_even_with_amounts_or_on_another_host(
     catalog, bundles, tmp_path: Path
 ) -> None:

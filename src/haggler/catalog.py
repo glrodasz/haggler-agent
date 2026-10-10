@@ -118,11 +118,30 @@ def load_review(curated_dir: Path | None = None) -> ReviewFile:
 _DOMAIN = re.compile(r"^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$")
 
 
+# The path part of a provider domain entry ("www.apple.com/se/"): plain segments, ending in "/".
+_PATH_PREFIX = re.compile(r"^(?:/[A-Za-z0-9._~%-]+)+/$")
+
+
+def _split_domain(entry: str) -> tuple[str, str | None]:
+    """A domain entry is a host, or a host followed by a path prefix ("www.apple.com/se/")."""
+    host, slash, path = entry.partition("/")
+    return host, (slash + path if slash else None)
+
+
 def _on_domains(url: str, domains: Iterable[str]) -> bool:
-    """https on one of `domains` or a subdomain of one."""
+    """https on one of `domains` or a subdomain of one; an entry with a path prefix also needs
+    the URL's path under that prefix (one host serving several countries)."""
     parts = urlsplit(url)
+    if parts.scheme != "https":
+        return False
     host = (parts.hostname or "").lower()
-    return parts.scheme == "https" and any(host == d or host.endswith("." + d) for d in domains)
+    for entry in domains:
+        d, prefix = _split_domain(entry)
+        if not (host == d or host.endswith("." + d)):
+            continue
+        if prefix is None or parts.path == prefix[:-1] or parts.path.startswith(prefix):
+            return True
+    return False
 
 
 def _domain_errors(owner: str, domains: list[str], urls: list[str] = ()) -> list[str]:
@@ -152,10 +171,16 @@ def _provider_errors(bundles: BundlesFile, ccs: set[str]) -> list[str]:
                 errors.append(f"provider {p.id}: unknown country {cc}")
             if not domains:
                 errors.append(f"{owner}: no domains")
-            errors.extend(_domain_errors(owner, domains))
-            errors.extend(
-                f"{owner}: {d!r} is not a public host" for d in domains if not public_host(d)
-            )
+            for entry in domains:
+                host, prefix = _split_domain(entry)
+                errors.extend(_domain_errors(owner, [host]))
+                if not public_host(host):
+                    errors.append(f"{owner}: {host!r} is not a public host")
+                if prefix is not None and not _PATH_PREFIX.fullmatch(prefix):
+                    errors.append(
+                        f"{owner}: bad path prefix {prefix!r} in {entry!r} (plain segments "
+                        "ending in '/')"
+                    )
     return errors
 
 
@@ -193,6 +218,9 @@ def _watch_errors(who: str, b: Bundle) -> list[str]:
             continue
         if "edition" not in pattern.groupindex:
             errors.append(f"{who}: link_pattern {page.link_pattern!r} has no group 'edition'")
+        elif not pattern.search(str(page.url)):
+            # The page url is the curated edition the watcher compares the newest one with.
+            errors.append(f"{who}: link_pattern does not match its own url {page.url}")
     # An anchor quotes a watch page, or the index page of a versioned PDF.
     pages = {str(p.url) for p in watch.pages}
     pages |= {str(p.index_url) for p in watch.pages if p.index_url is not None}
@@ -225,6 +253,10 @@ def _price_errors(who: str, b: Bundle, cat: Catalog) -> list[str]:
     if price.source == "observed" and price.amount is not None:
         errors.append(f"{who}: observed price takes its amount from the daily data, not the YAML")
     amount, base, marginal = price.amount, price.base_plan_amount, price.marginal_amount
+    if marginal is not None and base is None:
+        errors.append(f"{who}: marginal_amount needs the base_plan_amount it is computed from")
+    if base is not None and not price.base_plan_name:
+        errors.append(f"{who}: base_plan_amount needs the base_plan_name the page prints")
     if (
         amount is not None
         and base is not None

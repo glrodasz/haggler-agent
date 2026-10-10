@@ -1,5 +1,6 @@
-# Promotional bundles. Every row is unverified until an official page is re-fetched with a
-# retrieval date. Savings are computed from the daily price data, never typed here.
+# Promotional bundles. Every row is unverified until the watcher confirms its anchors on our own
+# fetch of an official page; the retrieval date comes from the watcher's evidence and is never
+# typed here. Savings are computed from the daily price data, never typed here either.
 #
 # This file is the ONLY source of a bundle's values (price, base plan, components, dates,
 # requirements); no job writes it. A value counts as confirmed only through the watcher's
@@ -13,9 +14,10 @@
 # when bundles.json v2 ships (milestone H2).
 
 # Providers: the official domains of each provider PER COUNTRY (a domain also covers its
-# subdomains). Every URL of a bundle (official_url, watch pages, anchors) must be https on its
-# provider's domains for the bundle's country. automated_access: forbidden (the provider's terms
-# forbid automated access) forces watch.mode off.
+# subdomains; "host/path/" also needs the URL's path under that prefix). Every URL of a bundle
+# (official_url, watch pages, anchors) must be https on its provider's domains for the bundle's
+# country. automated_access: forbidden (the provider's terms forbid automated access) forces
+# watch.mode off.
 providers:
   - id: mercado_libre
     name: Mercado Libre
@@ -41,10 +43,10 @@ providers:
   - id: apple
     name: Apple
     domains:
-      # apple.com serves every country under a path (/se/, /co/): the host cannot tell the
-      # countries apart, the page's currency does (the watcher reports wrong_country).
-      SE: [www.apple.com]
-      CO: [www.apple.com, one.apple.com]
+      # apple.com serves every country under a path (/se/, /co/), so the entries carry the
+      # country's path prefix: a /co/ or /us/ page never confirms a Swedish bundle.
+      SE: [www.apple.com/se/]
+      CO: [www.apple.com/co/, one.apple.com/co/]
     automated_access: allowed
 
 bundles:
@@ -182,7 +184,8 @@ bundles:
     country: SE
     name: Telia Obegränsad Plus + Netflix, HBO Max y Disney+
     tier: obegransad_plus_all_streaming
-    official_url: https://www.telia.se/privat/mobilt/abonnemang
+    # /privat/mobilt/abonnemang gives 404 since 2026-10-09 (H0 probe); it redirected here.
+    official_url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
     price:
       amount: "699"
       currency: SEK
@@ -200,14 +203,21 @@ bundles:
     feasibility_from:
       SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
     evidence:
-      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official}
+      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
+         note: "edición 18 de la lista de precios; da 404 desde 2026-10-09 (reemplazada)"}
     status: unverified
     verified_by: search_summary
     watch:
       mode: manual
       pages:
-        - {url: "https://www.telia.se/privat/mobilt/abonnemang", kind: html}
-        - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: pdf}
+        - {url: "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney", kind: html}
+        # The price list is versioned: the current edition is the newest link on the index page
+        # that matches link_pattern. url is the last edition we know (18, superseded: 404 since
+        # 2026-10-09); the pattern must match it.
+        - url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+          kind: pdf
+          index_url: "https://www.telia.se/om/priser"
+          link_pattern: 'TSP-4667_(?P<edition>\d+)_\d{4}_Prislista-Telia-Mobil_B2C\.pdf'
     last_verified: 2026-10-08
     notes_es: >-
       Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres

@@ -18,8 +18,9 @@ providers:
   - id: apple
     name: Apple
     domains:
-      SE: [www.apple.com]
-      CO: [www.apple.com, one.apple.com]
+      # One host for every country: the entries carry the country's path prefix.
+      SE: [www.apple.com/se/]
+      CO: [www.apple.com/co/, one.apple.com/co/]
 
 bundles:
   # Price observed from the daily data; one component (Apple Arcade) has no price source.

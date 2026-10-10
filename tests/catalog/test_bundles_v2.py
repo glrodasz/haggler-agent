@@ -8,6 +8,7 @@ checked as they are.
 from __future__ import annotations
 
 import copy
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -25,7 +26,12 @@ from haggler.catalog import (
     load_profiles,
 )
 from haggler.feasibility import axes_rank, record_rank
-from haggler.models.curated import BundlesFile
+from haggler.models.curated import (
+    BundleFeasibility,
+    BundleRequirements,
+    BundlesFile,
+    FeasibilityStep,
+)
 
 PUBLISH_FIXTURES = Path(__file__).parents[1] / "publish" / "fixtures"
 PAGE = "https://www.acme.com.co/planes"
@@ -199,6 +205,38 @@ def _duplicate_provider(data: dict, _b: dict) -> None:
     data["providers"].append(copy.deepcopy(data["providers"][0]))
 
 
+def _on_shared_host(data: dict, b: dict) -> None:
+    """Acme serves CO and MX from one host under /co/ and /mx/ (as apple.com does), so its CO
+    domains carry the path prefix."""
+    data["providers"][0]["domains"] = {
+        "CO": ["www.acme.com/co/", "cdn.acme.com.co"],
+        "MX": ["www.acme.com/mx/"],
+    }
+    shared = {PAGE: "https://www.acme.com/co/planes", INDEX: "https://www.acme.com/co/precios"}
+    b["official_url"] = shared[PAGE]
+    for item in [*b["watch"]["pages"], *b["watch"]["anchors"]]:
+        for key in ("url", "index_url"):
+            if item.get(key) in shared:
+                item[key] = shared[item[key]]
+
+
+def _then(*mutations: Callable[[dict, dict], Any]) -> Callable[[dict, dict], None]:
+    def mutate(data: dict, b: dict) -> None:
+        for m in mutations:
+            m(data, b)
+
+    return mutate
+
+
+def _observed_price(plan_id: str) -> dict:
+    return {
+        "currency": "COP",
+        "source": "observed",
+        "observed_service_id": "apple_one",
+        "observed_plan_id": plan_id,
+    }
+
+
 def _in_sweden(data: dict, b: dict) -> None:
     """The same bundle sold in SE, where the verdict's profile lives."""
     data["providers"][0]["domains"]["SE"] = ["acme.se"]
@@ -230,9 +268,30 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
         _set("watch.anchors.0.url", "https://www.acme.com.mx/planes"),
         "anchor url 'https://www.acme.com.mx/planes' is not https on a CO domain",
     ),
+    (
+        "page of another country on a shared host",
+        _then(_on_shared_host, _set("watch.pages.0.url", "https://www.acme.com/mx/planes")),
+        "watch page 'https://www.acme.com/mx/planes' is not https on a CO domain",
+    ),
+    (
+        "page outside every country path on a shared host",
+        _then(_on_shared_host, _set("official_url", "https://www.acme.com/planes")),
+        "official_url 'https://www.acme.com/planes' is not https on a CO domain",
+    ),
+    (
+        "path prefix that is only a string prefix",
+        _then(_on_shared_host, _set("official_url", "https://www.acme.com/colombia/planes")),
+        "official_url 'https://www.acme.com/colombia/planes' is not https on a CO domain",
+    ),
     ("provider country unknown", _provider_domain("XX", ["acme.xx"]), "unknown country XX"),
     ("provider bad domain", _provider_domain("MX", ["https://acme.mx"]), "bad official domain"),
     ("provider IP host", _provider_domain("MX", ["10.0.0.1"]), "is not a public host"),
+    ("provider IP host with a path", _provider_domain("MX", ["10.0.0.1/mx/"]), "public host"),
+    (
+        "path prefix without the closing slash",
+        _provider_domain("MX", ["www.acme.com/mx"]),
+        "bad path prefix '/mx'",
+    ),
     ("provider without domains", _provider_domain("MX", []), "provider acme/MX: no domains"),
     ("duplicate provider", _duplicate_provider, "duplicate provider id"),
     ("link_pattern does not compile", _set("watch.pages.1.link_pattern", "(?P<edition"), "bad"),
@@ -240,6 +299,11 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
         "link_pattern without the edition group",
         _set("watch.pages.1.link_pattern", r"precios_(\d+)\.pdf"),
         "has no group 'edition'",
+    ),
+    (
+        "link_pattern that does not match its own url",
+        _set("watch.pages.1.link_pattern", r"tarifas_(?P<edition>\d+)\.pdf"),
+        f"link_pattern does not match its own url {PDF}",
     ),
     (
         "link_pattern without index_url",
@@ -279,11 +343,30 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
             {
                 "amount": "699",
                 "currency": "COP",
+                "base_plan_name": "Acme Base",
                 "base_plan_amount": "569",
                 "marginal_amount": "120",
             },
         ),
         "marginal_amount 120 is not amount 699 - base_plan_amount 569",
+    ),
+    (
+        "marginal without a base plan amount",
+        _set("price", {"amount": "699", "currency": "COP", "marginal_amount": "130"}),
+        "marginal_amount needs the base_plan_amount",
+    ),
+    (
+        "base plan amount without its name",
+        _set(
+            "price",
+            {
+                "amount": "699",
+                "currency": "COP",
+                "base_plan_amount": "569",
+                "marginal_amount": "130",
+            },
+        ),
+        "base_plan_amount needs the base_plan_name",
     ),
     (
         "observed price with an amount",
@@ -299,8 +382,18 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
         ),
         "observed price takes its amount from the daily data",
     ),
+    (
+        "observed price of an unknown plan",
+        _set("price", _observed_price("nope")),
+        "observed price points to unknown plan",
+    ),
     ("curated price without amount", _set("price.amount", None), "curated price needs an amount"),
     ("price in another currency", _set("price.currency", "USD"), "USD is not CO's COP"),
+    (
+        "component of an unknown plan",
+        _set("components.0.plan_id", "nope"),
+        "unknown component netflix.nope",
+    ),
     ("discount without value", _set("components.1.value", None), "needs a value > 0"),
     (
         "free months without value",
@@ -330,6 +423,12 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
     ),
     ("covers an unknown service", _set("covers", ["nope"]), "covers unknown service nope"),
     # identity
+    (
+        "duplicate bundle_id",
+        lambda data, _b: _second_bundle(data, bundle_id="acme_co_total"),
+        "duplicate bundle_id",
+    ),
+    ("unknown bundle country", _set("country", "XX"), "acme_co_total: unknown country XX"),
     ("bundle id is a service id", _set("bundle_id", "netflix"), "is also a service id"),
     (
         "bundle id is an instrument id",
@@ -356,14 +455,18 @@ def test_anchor_may_quote_the_index_page(cat, profiles, instruments) -> None:
     assert _errors(data, cat, profiles, instruments) == []
 
 
+@pytest.mark.parametrize(
+    "url",
+    ["https://www.acme.com/co/planes", "https://www.acme.com/co", "https://cdn.acme.com.co/x.pdf"],
+)
+def test_path_prefixed_domains_accept_the_country_path(url, cat, profiles, instruments) -> None:
+    data = _mutated(_then(_on_shared_host, _set("official_url", url)))
+    assert _errors(data, cat, profiles, instruments) == []
+
+
 def test_observed_price_needs_no_price_anchor(cat, profiles, instruments) -> None:
     def observed(_data: dict, b: dict) -> None:
-        b["price"] = {
-            "currency": "COP",
-            "source": "observed",
-            "observed_service_id": "apple_one",
-            "observed_plan_id": "individual",
-        }
+        b["price"] = _observed_price("individual")
         b["watch"]["anchors"] = b["watch"]["anchors"][1:]
 
     assert _errors(_mutated(observed), cat, profiles, instruments) == []
@@ -388,6 +491,7 @@ def test_user_report_with_a_date_is_valid(cat, profiles, instruments) -> None:
         _set("evidence", [{"url": PAGE, "kind": "official", "retrieved_at": "2026-10-08"}]),
         _set("requirements", {"residency": "yes"}),
         _set("price.requires_base_plan_id", "telia_obegransad_plus"),
+        _set("requirements", {"signup_presence": "required"}),
         _set("price.promo_valid_until", "2026-12-31"),
         _set("watch.mode", False),  # what a bare `mode: off` reads as in YAML
         _set("verdicts.0.rank", 2),
@@ -398,6 +502,7 @@ def test_user_report_with_a_date_is_valid(cat, profiles, instruments) -> None:
         "evidence retrieved_at",
         "residency enum",
         "requires_base_plan_id removed",
+        "signup_presence enum",
         "promo_valid_until renamed",
         "unquoted off",
         "typed rank",
@@ -428,6 +533,150 @@ def test_publish_fixture_passes_integrity() -> None:
     assert integrity_errors(fixture_catalog, bundles=bundles) == []
 
 
+TELIA_PDF = (
+    "https://www.telia.se/assets/m/3bb36ae829ef848f/original/"
+    "TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+)
+
+# The value-bearing fields of every row as they were before the migration (commit 19d05c8):
+# (country, amount, currency, period, tax_included, marginal_amount, observed plan,
+#  [(service, plan, inclusion, value, ads)], valid_from, valid_until, last_verified,
+#  requirements, feasibility_from). The migration adds structure only.
+_YES_YES = {"purchasable_remotely": "yes", "usable_abroad": "yes"}
+_HIGH_NONE = {"tos_risk": "high", "evidence": "none"}
+_STREAMING_ADS = [
+    ("netflix", "standard_with_ads", "included", None, True),
+    ("disney_plus", "standard_with_ads", "included", None, True),
+    ("hbo_max", "basic_with_ads", "included", None, True),
+    ("apple_tv", "standard", "included", None, None),
+]
+_APPLE_ONE = [
+    ("apple_tv", "standard", "included", None, None),
+    ("apple_arcade", "standard", "included", None, None),
+]
+PRE_MIGRATION: dict[str, tuple] = {
+    "meli_plus_co_total": (
+        "CO", "24900", "COP", "month", True, None, None,
+        [
+            ("disney_plus", "standard_with_ads", "included", None, True),
+            ("hbo_max", None, "discount_pct", "30", None),
+            ("paramount_plus", None, "discount_pct", "30", None),
+            ("vix", None, "discount_pct", "30", None),
+        ],
+        None, None, "2026-10-08",
+        {"local_id": "cedula", "local_line": "unknown", "local_payment": "any_card"},
+        {"SE": {**_YES_YES, "tos_risk": "medium", "evidence": "user_report"}},
+    ),
+    "meli_plus_co_esencial": (
+        "CO", "9900", "COP", "month", True, None, None,
+        [("hbo_max", None, "discount_pct", "30", None)],
+        None, None, "2026-10-08",
+        {"local_id": "cedula", "local_payment": "any_card"},
+        {},
+    ),
+    "meli_plus_mx_mega": (
+        "MX", "399", "MXN", "month", True, None, None, _STREAMING_ADS,
+        "2026-02-11", None, "2026-10-08",
+        {"local_id": "CURP", "local_payment": "unknown"},
+        {"SE": {"purchasable_remotely": "unknown", "usable_abroad": "unknown", **_HIGH_NONE}},
+    ),
+    "meli_plus_br_mega": (
+        "BR", "74.90", "BRL", "month", True, None, None, _STREAMING_ADS,
+        "2025-10-07", None, "2026-10-08",
+        {"local_id": "CPF", "local_payment": "unknown"},
+        {"SE": {"purchasable_remotely": "no", "usable_abroad": "unknown", **_HIGH_NONE}},
+    ),
+    "telia_se_obegransad_streaming": (
+        "SE", "699", "SEK", "month", True, "130", None,
+        [
+            ("netflix", "standard", "included", None, None),
+            ("hbo_max", "basic_with_ads", "included", None, True),
+            ("disney_plus", "standard_with_ads", "included", None, True),
+        ],
+        None, None, "2026-10-08",
+        {
+            "local_id": "personnummer",
+            "local_line": "mobile",
+            "local_payment": "local_bank",
+            "credit_check": True,
+        },
+        {
+            "SE": {
+                "purchasable_remotely": "yes",
+                "usable_abroad": "travel_only",
+                "tos_risk": "low",
+                "evidence": "terms",
+            }
+        },
+    ),
+    "go3_lt_filmai_netflix": (
+        "LT", "17.99", "EUR", "month", True, None, None,
+        [("netflix", None, "included", None, None)],
+        "2026-09-04", None, "2026-10-08",
+        {"local_line": "none", "local_payment": "unknown"},
+        {
+            "SE": {
+                "purchasable_remotely": "unknown",
+                "usable_abroad": "travel_only",
+                "tos_risk": "medium",
+                "evidence": "none",
+            }
+        },
+    ),
+    "apple_one_individual_se": (
+        "SE", None, "SEK", "month", True, None, "individual",
+        [
+            ("apple_music", "individual", "included", None, None),
+            *_APPLE_ONE,
+            ("icloud_plus", "50gb", "included", None, None),
+        ],
+        None, None, "2026-10-08",
+        {"local_payment": "any_card"},
+        {"SE": {**_YES_YES, "tos_risk": "low", "evidence": "terms"}},
+    ),
+    "apple_one_family_se": (
+        "SE", None, "SEK", "month", True, None, "family",
+        [
+            ("apple_music", "family", "included", None, None),
+            *_APPLE_ONE,
+            ("icloud_plus", "200gb", "included", None, None),
+        ],
+        None, None, "2026-10-08",
+        {"local_payment": "any_card"},
+        {"SE": {**_YES_YES, "tos_risk": "low", "evidence": "terms"}},
+    ),
+}  # fmt: skip
+
+
+def _str(value: Any) -> str | None:
+    return None if value is None else str(value)
+
+
+def test_migration_keeps_every_value() -> None:
+    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    assert set(rows) == set(PRE_MIGRATION)
+    for bundle_id, expected in PRE_MIGRATION.items():
+        b, p = rows[bundle_id], rows[bundle_id].price
+        *head, requirements, feasibility_from = expected
+        assert [
+            b.country,
+            _str(p.amount),
+            p.currency,
+            p.period,
+            p.tax_included,
+            _str(p.marginal_amount),
+            p.observed_plan_id,
+            [(c.service_id, c.plan_id, c.inclusion, _str(c.value), c.ads) for c in b.components],
+            _str(b.valid_from),
+            _str(b.valid_until),
+            _str(b.last_verified),
+        ] == head, bundle_id
+        assert b.requirements == BundleRequirements(**requirements), bundle_id
+        assert b.feasibility_from == {
+            cc: BundleFeasibility(**f) for cc, f in feasibility_from.items()
+        }, bundle_id
+
+
 def test_migration_adds_structure_but_no_values() -> None:
     bundles = load_bundles()
     rows = {b.bundle_id: b for b in bundles.bundles}
@@ -441,8 +690,17 @@ def test_migration_adds_structure_but_no_values() -> None:
     for bundle_id in WAVE_1:
         assert str(rows[bundle_id].watch.pages[0].url) == str(rows[bundle_id].official_url)
     telia = rows["telia_se_obegransad_streaming"]
-    assert [p.kind for p in telia.watch.pages] == ["html", "pdf"]
-    assert str(telia.watch.pages[1].url) == str(telia.evidence[0].url)
+    # H0 probe (2026-10-09): the old bundle page and the edition-18 PDF give 404. The page is
+    # the redirect target; the current PDF is found on the price-list index.
+    assert str(telia.official_url) == (
+        "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney"
+    )
+    html_page, pdf_page = telia.watch.pages
+    assert (html_page.kind, pdf_page.kind) == ("html", "pdf")
+    assert str(pdf_page.url) == str(telia.evidence[0].url) == TELIA_PDF
+    assert str(pdf_page.index_url) == "https://www.telia.se/om/priser"
+    match = re.search(pdf_page.link_pattern, TELIA_PDF)
+    assert match is not None and match["edition"] == "18"
     price = telia.price
     assert (price.base_plan_name, price.amount, price.base_plan_amount, price.marginal_amount) == (
         "Telia Obegränsad Plus",
@@ -452,6 +710,18 @@ def test_migration_adds_structure_but_no_values() -> None:
     )
     go3 = bundles.provider("go3")
     assert "static3.go3.tv" in go3.domains["LT"]
+    # One host for every Apple country: the domains carry the country's path.
+    assert bundles.provider("apple").domains["SE"] == ["www.apple.com/se/"]
+
+
+def test_apple_pages_of_another_country_fail(cat, profiles, instruments) -> None:
+    """apple.com serves every country: a /co/ or /us/ page never confirms a Swedish bundle."""
+    data = load_bundles().model_dump(mode="json")
+    (apple,) = [b for b in data["bundles"] if b["bundle_id"] == "apple_one_individual_se"]
+    apple["official_url"] = "https://www.apple.com/co/apple-one/"
+    apple["watch"]["pages"][0]["url"] = "https://www.apple.com/us/apple-one/"
+    errors = _errors(data, cat, profiles, instruments)
+    assert len(errors) == 2 and all("is not https on a SE domain" in e for e in errors), errors
 
 
 def test_meli_co_curated_verdicts_rank_2() -> None:
@@ -489,11 +759,56 @@ def test_service_aliases() -> None:
 # ------------------------------------------------------------------- axes_rank
 
 
-@pytest.mark.parametrize(
-    "curated_dir", [None, PUBLISH_FIXTURES / "curated"], ids=["real", "fixture"]
-)
-def test_axes_rank_matches_record_rank(curated_dir) -> None:
+# The ranks record_rank gave before axes_rank was extracted (commit 19d05c8), as literals: the
+# guard is these values, not a comparison of axes_rank with itself.
+PRE_H1_RANKS = {
+    None: {
+        "netflix_co_from_se": 2,
+        "youtube_premium_co_from_se": 3,
+        "youtube_premium_us_from_se": 4,
+        "spotify_co_from_se": 3,
+        "disney_plus_co_from_se": 2,
+        "hbo_max_co_from_se": 2,
+        "icloud_plus_co_from_se": 2,
+        "icloud_plus_lt_from_se": 2,
+        "google_one_lt_from_se": 2,
+        "apple_one_co_from_se": 2,
+        "apple_music_co_from_se": 2,
+        "apple_tv_co_from_se": 2,
+        "microsoft_365_co_from_se": 2,
+    },
+    PUBLISH_FIXTURES / "curated": {
+        "netflix_co_from_se": 2,
+        "netflix_us_from_se": 4,
+        "spotify_co_from_se": 3,
+        "icloud_lt_from_se": 1,
+        "apple_one_co_from_se": 2,
+        "netflix_co_from_lt": 0,
+    },
+}
+
+
+@pytest.mark.parametrize("curated_dir", list(PRE_H1_RANKS), ids=["real", "fixture"])
+def test_record_rank_is_unchanged(curated_dir) -> None:
     records = load_feasibility(curated_dir).records
-    assert records
-    for r in records:
-        assert axes_rank(r.legality, r.tos, r.practical, r.steps) == record_rank(r), r.id
+    assert {r.id: record_rank(r) for r in records} == PRE_H1_RANKS[curated_dir]
+
+
+FALSE_DECLARATION = FeasibilityStep(
+    type="billing_address", value="CO", requires_false_declaration=True
+)
+
+
+@pytest.mark.parametrize(
+    ("axes", "steps", "expected"),
+    [
+        (("lawful", "compliant", "remote"), [], 0),
+        (("lawful", "compliant", "remote"), [FALSE_DECLARATION], 2),
+        (("contestable_eu_right", "compliant", "remote"), [FALSE_DECLARATION], 2),
+        (("lawful", "breach_enforced", "remote"), [FALSE_DECLARATION], 3),
+        (("contestable_eu_right", "compliant", "presence_once"), [], 1),
+        (("lawful", "compliant", "impossible"), [], 4),
+    ],
+)
+def test_axes_rank(axes, steps, expected) -> None:
+    assert axes_rank(*axes, steps) == expected

@@ -223,8 +223,10 @@ class BundleRequirements(_Strict):
     credit_check: bool | None = None
     # A billing address in the bundle's country.
     billing_address: Requirement = "unknown"
-    # Being in the bundle's country when signing up (the provider checks the location then).
-    signup_presence: Requirement = "unknown"
+    # Whether the provider checks that the subscriber is IN the bundle's country when signing
+    # up. Same values as the research field signup_location (and its bundle_ twin), so curated
+    # and researched requirements compare without a translation.
+    signup_presence: Literal["not_checked", "checked", "unknown"] = "unknown"
     # The offer is only for new customers of the provider (None = unknown).
     new_customers_only: bool | None = None
 
@@ -240,7 +242,9 @@ class Provider(_Strict):
     id: str
     name: str
     # Country -> registrable domains or exact hosts (subdomains included) of the provider's
-    # official site FOR THAT COUNTRY. A bundle's pages must be on its own country's domains.
+    # official site FOR THAT COUNTRY. A bundle's pages must be on its own country's domains. When
+    # one host serves several countries under a path, the entry carries that path prefix
+    # ("www.apple.com/se/"): a URL then needs the host AND a path under the prefix.
     domains: dict[str, list[str]]
     # "forbidden" when the provider's terms forbid automated access: its bundles stay watch.mode
     # off and are only checked by hand.

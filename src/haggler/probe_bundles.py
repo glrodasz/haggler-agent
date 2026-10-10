@@ -101,9 +101,11 @@ READABILITY = (
 _LABEL = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 _COMMENT = re.compile(r"(?:^|\s)#.*$")
 _SEPARATOR = re.compile(r"(?:^|(?<=\s));|;(?=\s|$)")
+# Sign-in paths, and account-verification walls (Mercado Libre sends some pages to
+# /gz/account-verification?go=...): either way the page is behind the provider's account.
 _LOGIN_PATH = re.compile(
     r"(?:^|/)(?:login|log-in|signin|sign-in|sign_in|logon|auth|authorize|oauth2?|sso|servicelogin"
-    r"|lgz)(?:$|[/?._-])",
+    r"|lgz|account-verification)(?:$|[/?._-])",
     re.IGNORECASE,
 )
 # Hosts that only serve sign-in (accounts.google.com, idmsa.apple.com, login.microsoftonline...).

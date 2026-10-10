@@ -36,9 +36,8 @@ meli_plus_br_terms BR https://www.mercadolivre.com.br/ajuda/Termos-e-condicoes-d
 
 # Telia Sweden: the bundle page, the versioned price-list PDF and the index that links the PDFs
 telia_se_obegransad_streaming SE https://www.telia.se/mobilabonnemang/telia-mobil-obegraensad-netflix-max-disney-plus
-telia_se_obegransad_streaming SE https://www.telia.se/privat/mobilt/abonnemang
-# A PDF price list: reported as pdf_pending until text extraction exists (milestone H4).
-telia_se_obegransad_streaming SE https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf
+# The price-list PDFs are linked from the index below (the 2026-01 edition 18 is 404 since
+# 2026-10-09); a PDF is reported as pdf_pending until text extraction exists (milestone H4).
 telia_se_prislistor_index SE https://www.telia.se/om/priser
 # Telia Play streaming packages (wave 2)
 telia_se_streaming_index SE https://www.telia.se/tv/streaming
