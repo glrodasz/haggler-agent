@@ -6,9 +6,9 @@ import { es, lookup, profileDescription } from "../i18n/es";
 import Base from "../layouts/Base.astro";
 import { getSite } from "../logic/data";
 import { AXIS_RANKS, COVERAGE_ORDER } from "../logic/feasibility";
-import { formatDate, formatPercent } from "../logic/format";
+import { DASH, formatDate, formatPercent, hostOf, isPdfUrl } from "../logic/format";
 import { routes } from "../logic/paths";
-import { riskClass } from "../logic/site";
+import { bundleAnchors, riskClass } from "../logic/site";
 
 const site = getSite();
 const t = es.methodology;
@@ -51,10 +51,15 @@ const research = site.meta.research_run_id
   ? t.researchRun(formatDate(site.meta.research_as_of), site.meta.research_run_id)
   : t.researchRun("", null);
 
+// Bundles: every published one, with what the watcher found of its anchors.
+const watched = site.watchedBundles().map((b) => ({ bundle: b, anchors: bundleAnchors(b) }));
+const fee = formatPercent(site.meta.fx_fee_pct, { digits: 1 });
+
 const toc = [
   ["recogida", t.collectTitle],
   ["ejes", t.axesTitle],
   ["investigacion", t.researchTitle],
+  ["paquetes", t.bundlesTitle],
   ["supuestos", t.assumptionsTitle],
   ["cobertura", t.coverageTitle],
   ["atribuciones", t.attributionsTitle],
@@ -182,6 +187,96 @@ const toc = [
       }
     </ul>
     <p class="callout warning">{t.researchNotLegal}</p>
+  </section>
+
+  <section aria-labelledby="paquetes">
+    <h2 id="paquetes">{t.bundlesTitle}</h2>
+    <p>{t.bundlesLead}</p>
+    {
+      t.bundles(fee).map((item) => (
+        <>
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+        </>
+      ))
+    }
+    <p class="callout warning">{t.bundlesNotLegal}</p>
+
+    <h3 id="paquetes-vigilados">{t.watchedTitle}</h3>
+    <p>{t.watchedLead}</p>
+    {
+      watched.length === 0 ? (
+        <p>{t.watchedEmpty}</p>
+      ) : (
+        <TableWrap captionId="paquetes-vigilados-caption">
+          <table>
+            <caption id="paquetes-vigilados-caption">{t.watchedCaption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{t.colBundle}</th>
+                <th scope="col">{t.colCountry}</th>
+                <th scope="col">{t.colSource}</th>
+                <th scope="col">{t.colWatch}</th>
+                <th scope="col">{t.colStatus}</th>
+                <th scope="col">{t.colLastCheck}</th>
+                <th scope="col" class="num">
+                  {t.colAnchors}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {watched.map(({ bundle: b, anchors }) => (
+                <tr>
+                  <th scope="row">
+                    <a href={routes.bundle(b.country, b.bundle_id)}>{b.name}</a>
+                  </th>
+                  <td>
+                    <CountryLabel cc={b.country} />
+                  </td>
+                  <td>
+                    <a href={b.official_url} rel="nofollow noopener noreferrer external">
+                      {hostOf(b.official_url)}
+                    </a>
+                    {isPdfUrl(b.official_url) && (
+                      <>
+                        {" "}
+                        <span class="badge badge-neutral" title={t.pdfTitle}>
+                          {t.pdfTag}
+                        </span>
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    <span title={es.bundle.watchModeTitles[b.watch_mode]}>
+                      {lookup(es.bundle.watchModes, b.watch_mode)}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class={`badge status-${b.display_status}`}
+                      title={es.bundle.displayStatusTitles[b.display_status]}
+                    >
+                      {lookup(es.bundle.displayStatus, b.display_status)}
+                    </span>
+                  </td>
+                  <td class="nowrap">{formatDate(b.checked_at)}</td>
+                  <td class="num">
+                    {anchors.total === 0 ? (
+                      <>
+                        <span aria-hidden="true">{DASH}</span>
+                        <span class="visually-hidden">{t.anchorsNone}</span>
+                      </>
+                    ) : (
+                      t.anchors(anchors.verified, anchors.total)
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableWrap>
+      )
+    }
   </section>
 
   <section aria-labelledby="supuestos">

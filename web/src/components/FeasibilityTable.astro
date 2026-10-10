@@ -1,7 +1,7 @@
 ---
 import { es, lookup } from "../i18n/es";
 import { getSite } from "../logic/data";
-import { formatDate } from "../logic/format";
+import { formatDate, hostOf } from "../logic/format";
 import { routes } from "../logic/paths";
 import type { FeasibilityView } from "../logic/types";
 import { isPending } from "../logic/verdicts";
@@ -24,13 +24,6 @@ const t = es.service;
 const f = es.feasibility;
 // "unknown" (facts missing) is one of each axis' values in es.axes: "Sin datos".
 const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}, value);
-const host = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-};
 ---
 
 <TableWrap captionId={captionId}>
@@ -111,9 +104,9 @@ const host = (url: string) => {
                                 <a
                                   href={e.url}
                                   rel="nofollow noopener noreferrer external"
-                                  aria-label={f.evidenceLinkLabel(host(e.url), kind)}
+                                  aria-label={f.evidenceLinkLabel(hostOf(e.url), kind)}
                                 >
-                                  {host(e.url)}
+                                  {hostOf(e.url)}
                                 </a>
                                 {" · "}
                                 {f.sourceKind(kind)}

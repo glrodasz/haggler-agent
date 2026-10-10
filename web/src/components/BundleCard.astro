@@ -1,8 +1,16 @@
 ---
 import { es, lookup } from "../i18n/es";
 import { getSite } from "../logic/data";
-import { formatDate, formatMoney, formatPercent, formatPrice, periodSuffix } from "../logic/format";
-import { routes } from "../logic/paths";
+import {
+  formatDate,
+  formatMoney,
+  formatPercent,
+  formatPrice,
+  hostOf,
+  periodSuffix,
+} from "../logic/format";
+import { bundleAnchor, routes } from "../logic/paths";
+import { bundleSavingNotes, savingClass } from "../logic/site";
 import type { Bundle, BundleComponent, BundleEvidence } from "../logic/types";
 import BundleVerdict from "./BundleVerdict.astro";
 import CountryLabel from "./CountryLabel.astro";
@@ -38,7 +46,9 @@ const statusDate = (() => {
     const days = site.daysBeforeGeneration(b.verified_at);
     return days === null ? null : t.manualAgo(Math.max(0, days));
   }
-  if (status === "expired" && b.valid_until) return t.expiredOn(formatDate(b.valid_until));
+  // Never an announced end still ahead: a bundle marked expired before it has no end date.
+  const ended = status === "expired" ? site.bundleEndedOn(b) : null;
+  if (ended) return t.expiredOn(formatDate(ended));
   if (b.checked_at) return t.checkedOn(formatDate(b.checked_at));
   return null;
 })();
@@ -69,12 +79,7 @@ const standaloneNote =
       : t.partialSum(names(b.standalone_missing));
 
 const saving = b.saving_pct;
-const savingClass =
-  saving !== null && saving > 0 ? "positive" : saving !== null && saving < 0 ? "negative" : "";
-const savingNotes = [
-  ...(saving !== null && b.saving_basis === "marginal" ? [t.marginalSaving] : []),
-  ...(saving !== null && status !== "verified" ? [t.unverifiedSaving] : []),
-];
+const savingNotes = bundleSavingNotes(b);
 
 // "Incluye" lists what the subscriber gets; discounts and free months are optional savings.
 const included = b.components.filter(
@@ -128,13 +133,6 @@ const confirmation = (confirmed: boolean) =>
     ? { css: "badge status-verified", title: t.confirmedTitle, text: t.confirmed }
     : { css: "badge status-unverified", title: t.unconfirmedTitle, text: t.unconfirmed };
 
-const host = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-};
 const evidenceMeta = (e: BundleEvidence): string[] =>
   [
     e.fact ? lookup(t.evidenceFacts, e.fact) : null,
@@ -146,7 +144,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
   ].filter((x): x is string => x !== null);
 ---
 
-<li class="card bundle-card">
+<li class="card bundle-card" id={bundleAnchor(b.bundle_id)}>
   <h3>{b.name}</h3>
   <p class="small muted">
     <CountryLabel cc={b.country} /> ·{" "}
@@ -244,7 +242,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     </dd>
     <dt>{t.saving}</dt>
     <dd>
-      <span class={savingClass} title={t.savingHelp}>
+      <span class={savingClass(saving)} title={t.savingHelp}>
         {formatPercent(saving, { signed: true })}
       </span>
       {savingNotes.length > 0 && <span class="muted small"> ({savingNotes.join(", ")})</span>}
@@ -350,9 +348,9 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
                 <a
                   href={e.url}
                   rel="nofollow noopener noreferrer external"
-                  aria-label={f.evidenceLinkLabel(host(e.url), lookup(es.evidenceKinds, e.kind))}
+                  aria-label={f.evidenceLinkLabel(hostOf(e.url), lookup(es.evidenceKinds, e.kind))}
                 >
-                  {host(e.url)}
+                  {hostOf(e.url)}
                 </a>
                 {evidenceMeta(e).map((m) => (
                   <> · {m}</>

@@ -681,6 +681,15 @@ select:disabled {
   margin: 0;
   padding-left: var(--space-5);
 }
+/* /paquetes: the other profiles' verdicts, one per line inside a table cell. */
+.profile-verdicts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.profile-verdicts li + li {
+  margin-top: var(--space-1);
+}
 .toc {
   font-size: var(--text-sm);
 }

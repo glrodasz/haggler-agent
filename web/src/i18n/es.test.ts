@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Bundle } from "../logic/types";
+import { BUNDLE_DISPLAY_STATUSES, WATCH_MODES } from "../logic/types";
 import { es, profileDescription } from "./es";
 
 /** Every literal string in the copy (functions are templates and are checked separately). */
@@ -69,6 +70,41 @@ describe("bundle copy never suggests misrepresenting anything", () => {
     expect(copy.filter((text) => forbidden.test(text))).toEqual([]);
   });
 
+  it("in the bundles page and its navigation entry", () => {
+    const copy = [es.site.nav.bundles, ...texts(es.bundlesIndex)];
+    expect(copy.length).toBeGreaterThan(15);
+    expect(copy.filter((text) => forbidden.test(text))).toEqual([]);
+  });
+
+  // The methodology has to name what the site never suggests: every sentence of its bundle
+  // section that mentions one of those must rule it out, and the statement must be there.
+  it("in the methodology's bundle section, only to rule it out", () => {
+    const m = es.methodology;
+    const copy = [
+      m.bundlesTitle,
+      m.bundlesLead,
+      ...m.bundles("2 %").flatMap((item) => [item.title, item.text]),
+      m.bundlesNotLegal,
+      m.watchedTitle,
+      m.watchedLead,
+      m.watchedCaption,
+      m.watchedEmpty,
+      m.colBundle,
+      m.colSource,
+      m.colWatch,
+      m.colLastCheck,
+      m.colAnchors,
+      m.anchors(1, 3),
+      m.anchorsNone,
+      m.pdfTag,
+      m.pdfTitle,
+    ];
+    const sentences = copy.flatMap((text) => text.split(/(?<=[.;:])\s+/));
+    const mentions = sentences.filter((text) => forbidden.test(text));
+    expect(mentions.filter((text) => !/\bnunca\b/i.test(text))).toEqual([]);
+    expect(mentions.some((text) => /\bnunca sugiere usar una VPN\b/i.test(text))).toBe(true);
+  });
+
   // The sample, and src/data when it exists: CI's contract job fills it with `haggler
   // site-data` output, so the reasons the Python evaluator writes are checked here too.
   const bundleFiles: [string, string][] = [
@@ -86,6 +122,75 @@ describe("bundle copy never suggests misrepresenting anything", () => {
     ]);
     if (bundles.length > 0) expect(data.length).toBeGreaterThan(0);
     expect(data.filter((t) => forbidden.test(t))).toEqual([]);
+  });
+});
+
+describe("methodology of bundles", () => {
+  it("states the rules a bundle's state, saving and verdict rest on", () => {
+    const text = es.methodology
+      .bundles("2 %")
+      .map((item) => item.text)
+      .join(" ");
+    for (const rule of [
+      "archivo curado a mano", // the YAML is the only source of values
+      "cita literal",
+      "PDF oficial del país del paquete",
+      "15 días o menos",
+      "edición vigente",
+      "Verificación manual",
+      "45 días",
+      "nunca cuenta como fuente oficial",
+      "precios de introducción, descuentos ni meses gratis",
+      "precio marginal",
+      "plan base",
+      "(2 %)",
+      "ficha curada a mano",
+      "oferta oficial de tu país",
+      "se compone de los requisitos",
+      "lo dice tal cual",
+      "«No factible»",
+      "hereda ese paso",
+    ]) {
+      expect(text, rule).toContain(rule);
+    }
+    expect(es.methodology.bundlesNotLegal).toMatch(/No es asesoría legal/);
+  });
+
+  // Written as the rules, never as a watcher, a proof or an assumption the data does not have.
+  it("claims nothing the pipeline does not do yet", () => {
+    const m = es.methodology;
+    const text = [
+      ...m.bundles("2 %").map((item) => item.text),
+      m.watchedLead,
+      ...Object.values(es.bundle.watchModeTitles),
+    ].join(" ");
+    expect(text).not.toMatch(/comprobante|el vigilante (lee|y la investigación)|última lectura/);
+    expect(text).not.toMatch(/encuentra su cita literal/);
+    expect(text).toContain("encontró su cita literal");
+    expect(text).toContain("queda registrada la fecha de esa comprobación");
+    // Unknown requirements are assumptions only on the bundle's own composed route.
+    expect(text).toContain(
+      "Cuando el veredicto se compone de los propios términos y requisitos del paquete, un requisito sin datos figura como supuesto",
+    );
+    expect(text).toContain("solo cuentan los requisitos conocidos");
+    // An intro price is only published for a verified bundle (pricing.first_year_monthly_eur).
+    expect(text).toContain("un precio de introducción, solo cuando el paquete está verificado");
+    // The bundle's own terms: unknown without a rule, allowed only on an official citation.
+    expect(text).toContain("regla sobre el país de residencia");
+    expect(text).toContain("solo cuenta con una cita oficial");
+  });
+
+  it("names every watch mode and display status the table can show", () => {
+    for (const mode of WATCH_MODES) {
+      expect(es.bundle.watchModes[mode], mode).toBeTruthy();
+      expect(es.bundle.watchModeTitles[mode], mode).toBeTruthy();
+    }
+    for (const status of BUNDLE_DISPLAY_STATUSES) {
+      expect(es.bundle.displayStatus[status], status).toBeTruthy();
+    }
+    expect(es.methodology.anchors(2, 3)).toBe("2 de 3");
+    expect(es.bundlesIndex.groupCount(1)).toBe("1 paquete");
+    expect(es.bundlesIndex.groupCount(3)).toBe("3 paquetes");
   });
 });
 

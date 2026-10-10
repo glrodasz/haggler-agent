@@ -63,6 +63,20 @@ export interface SiteIndex extends SiteData {
   bundlesForCountry(cc: string): Bundle[];
   /** Bundles of the country whose offer ended (published for a while, never computed with). */
   expiredBundlesForCountry(cc: string): Bundle[];
+  /**
+   * /paquetes: the active bundles grouped by the default profile's verdict (see
+   * groupBundlesByVerdict).
+   */
+  bundleGroups(): BundleGroup[];
+  /** Every expired bundle, the most recently ended first (see compareExpiredBundles). */
+  expiredBundles(): Bundle[];
+  /**
+   * The day an expired bundle's offer ended, null when bundles.json does not say (see
+   * bundleEndedOn): never a day after the one site-data ran.
+   */
+  bundleEndedOn(bundle: Pick<Bundle, "valid_until">): string | null;
+  /** Every published bundle (expired ones too) by country name, then by name. */
+  watchedBundles(): Bundle[];
   /** A bundle's verdicts split for its card: the default profile's, then the other profiles'. */
   bundleVerdicts(bundle: Bundle): BundleVerdicts;
   /**
@@ -95,6 +109,17 @@ export interface BundleVerdicts {
   /** Every other profile's verdicts, in bundles.json order (each pending one after its own). */
   others: BundleVerdict[];
 }
+
+/** A /paquetes group: the active bundles whose default-profile verdict carries `label`. */
+export interface BundleGroup {
+  label: string;
+  /** 0..4, or UNKNOWN_RANK (unknown and out-of-range ranks): the groups are sorted on it. */
+  rank: number;
+  /** Highest saving first (see compareBundlesBySaving). */
+  bundles: Bundle[];
+}
+
+const UNKNOWN_LABEL = "unknown";
 
 /** An expired bundle is only listed apart ("Ofertas vencidas"), never with the active ones. */
 export function isActiveBundle(bundle: Pick<Bundle, "display_status">): boolean {
@@ -142,6 +167,154 @@ export function splitBundleVerdicts(
     pending: own.find((v) => v.provenance === "agent_pending"),
     others: verdicts.filter((v) => v.profile !== defaultProfile),
   };
+}
+
+/** Rank a verdict is grouped and sorted on: 0..4; anything else (99, out of range) is unknown. */
+function groupRank(rank: number): number {
+  return Number.isInteger(rank) && rank >= 0 && rank <= 4 ? rank : UNKNOWN_RANK;
+}
+
+function byId(a: Pick<Bundle, "bundle_id">, b: Pick<Bundle, "bundle_id">): number {
+  return a.bundle_id < b.bundle_id ? -1 : a.bundle_id > b.bundle_id ? 1 : 0;
+}
+
+/** Highest saving_pct first, bundles without a saving last; ties by name, then by id. */
+export function compareBundlesBySaving(
+  a: Pick<Bundle, "saving_pct" | "name" | "bundle_id">,
+  b: Pick<Bundle, "saving_pct" | "name" | "bundle_id">,
+): number {
+  if (a.saving_pct !== b.saving_pct) {
+    if (a.saving_pct === null) return 1;
+    if (b.saving_pct === null) return -1;
+    return b.saving_pct - a.saving_pct;
+  }
+  return a.name.localeCompare(b.name, "es") || byId(a, b);
+}
+
+/**
+ * The day an expired bundle's offer ended, as far as bundles.json says: its valid_until once
+ * that is before `generatedOn` (the day site-data ran, which Python dated the status on). null
+ * for a bundle the curated data marks expired before its announced end (valid_until still ahead
+ * or that very day) or without an end date: the day it really ended is not published.
+ */
+export function bundleEndedOn(
+  bundle: Pick<Bundle, "valid_until">,
+  generatedOn: string,
+): string | null {
+  const end = bundle.valid_until;
+  return end !== null && end < generatedOn ? end : null;
+}
+
+/**
+ * When an expired bundle ended, for sorting: bundleEndedOn, else the earlier of valid_until and
+ * the last review of its row (marked expired by then), as status.expired_on dates it in Python.
+ */
+function expiredSortDate(
+  bundle: Pick<Bundle, "valid_until" | "last_verified">,
+  generatedOn: string,
+): string | null {
+  const ended = bundleEndedOn(bundle, generatedOn);
+  if (ended !== null) return ended;
+  const dates = [bundle.valid_until, bundle.last_verified].filter((d): d is string => d !== null);
+  return dates.length === 0 ? null : dates.reduce((a, b) => (b < a ? b : a));
+}
+
+/**
+ * The most recently ended first (expiredSortDate against `generatedOn`, bundles without any date
+ * last); ties by name, then by id.
+ */
+export function compareExpiredBundles(
+  a: Pick<Bundle, "valid_until" | "last_verified" | "name" | "bundle_id">,
+  b: Pick<Bundle, "valid_until" | "last_verified" | "name" | "bundle_id">,
+  generatedOn: string,
+): number {
+  const endA = expiredSortDate(a, generatedOn);
+  const endB = expiredSortDate(b, generatedOn);
+  if (endA !== endB) {
+    if (endA === null) return 1;
+    if (endB === null) return -1;
+    return endA < endB ? 1 : -1;
+  }
+  return a.name.localeCompare(b.name, "es") || byId(a, b);
+}
+
+/**
+ * Groups the ACTIVE bundles by the default profile's reviewed verdict (never the variant with
+ * pending findings): groups in rank order 0..4, unknown last (a bundle without a verdict for the
+ * profile counts as unknown); at equal rank by label, "unknown" last. A label seen with
+ * different ranks takes the worst one. Within a group, compareBundlesBySaving.
+ */
+export function groupBundlesByVerdict(
+  bundles: readonly Bundle[],
+  defaultProfile: string,
+): BundleGroup[] {
+  const groups = new Map<string, BundleGroup>();
+  for (const bundle of bundles) {
+    if (!isActiveBundle(bundle)) continue;
+    const main = splitBundleVerdicts(bundle.verdicts, defaultProfile).main;
+    const label = main?.label ?? UNKNOWN_LABEL;
+    const rank = main ? groupRank(main.rank) : UNKNOWN_RANK;
+    const group = groups.get(label);
+    if (group) {
+      group.rank = Math.max(group.rank, rank);
+      group.bundles.push(bundle);
+    } else {
+      groups.set(label, { label, rank, bundles: [bundle] });
+    }
+  }
+  for (const group of groups.values()) group.bundles.sort(compareBundlesBySaving);
+  const lastIfUnknown = (label: string) => (label === UNKNOWN_LABEL ? 1 : 0);
+  return [...groups.values()].sort(
+    (a, b) =>
+      a.rank - b.rank ||
+      lastIfUnknown(a.label) - lastIfUnknown(b.label) ||
+      (a.label < b.label ? -1 : a.label > b.label ? 1 : 0),
+  );
+}
+
+/** The other public profiles' reviewed verdicts on a bundle, in bundles.json order. */
+export function otherProfileVerdicts(
+  bundle: Pick<Bundle, "verdicts">,
+  defaultProfile: string,
+): BundleVerdict[] {
+  return splitBundleVerdicts(bundle.verdicts, defaultProfile).others.filter(
+    (v) => v.provenance !== "agent_pending",
+  );
+}
+
+/**
+ * A bundle's anchors: its evidence entries that back a value (fact set), and how many of them
+ * our own fetch verified. total 0 before the watcher has anything to check.
+ */
+export function bundleAnchors(bundle: Pick<Bundle, "evidence">): {
+  verified: number;
+  total: number;
+} {
+  const anchors = bundle.evidence.filter((e) => e.fact !== null);
+  return {
+    verified: anchors.filter((e) => e.verified).length,
+    total: anchors.length,
+  };
+}
+
+/**
+ * What qualifies a bundle's saving wherever it is shown: computed on the marginal cost, and
+ * "sin verificar" until the bundle is verified. None without a saving.
+ */
+export function bundleSavingNotes(
+  bundle: Pick<Bundle, "saving_pct" | "saving_basis" | "display_status">,
+): string[] {
+  if (bundle.saving_pct === null) return [];
+  return [
+    ...(bundle.saving_basis === "marginal" ? [es.bundle.marginalSaving] : []),
+    ...(bundle.display_status !== "verified" ? [es.bundle.unverifiedSaving] : []),
+  ];
+}
+
+/** CSS modifier of a saving: positive, negative, or none (zero or unknown). */
+export function savingClass(pct: number | null): string {
+  if (pct === null || pct === 0) return "";
+  return pct > 0 ? "positive" : "negative";
 }
 
 /**
@@ -260,6 +433,19 @@ export function buildIndex(data: SiteData): SiteIndex {
     bundlesForCountry: (cc) => data.bundles.filter((b) => b.country === cc && isActiveBundle(b)),
     expiredBundlesForCountry: (cc) =>
       data.bundles.filter((b) => b.country === cc && !isActiveBundle(b)),
+    bundleGroups: () => groupBundlesByVerdict(data.bundles, data.feasibility.default_profile),
+    expiredBundles: () =>
+      data.bundles
+        .filter((b) => !isActiveBundle(b))
+        .sort((a, b) => compareExpiredBundles(a, b, generatedOn)),
+    bundleEndedOn: (bundle) => bundleEndedOn(bundle, generatedOn),
+    watchedBundles: () =>
+      [...data.bundles].sort(
+        (a, b) =>
+          countryName(a.country).localeCompare(countryName(b.country), "es") ||
+          a.name.localeCompare(b.name, "es") ||
+          byId(a, b),
+      ),
     bundleVerdicts: (bundle) =>
       splitBundleVerdicts(bundle.verdicts, data.feasibility.default_profile),
     daysBeforeGeneration: (iso) => (iso ? Math.round(daysBetween(iso, generatedOn)) : null),

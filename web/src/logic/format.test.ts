@@ -10,6 +10,8 @@ import {
   formatPercent,
   formatPrice,
   formatSignedMoney,
+  hostOf,
+  isPdfUrl,
   periodSuffix,
 } from "./format";
 
@@ -99,5 +101,20 @@ describe("periodSuffix and flagEmoji", () => {
     expect(flagEmoji("se")).toBe("🇸🇪");
     expect(flagEmoji("XYZ")).toBe("");
     expect(flagEmoji("")).toBe("");
+  });
+});
+
+describe("hostOf and isPdfUrl", () => {
+  it("shows the host of a link without www", () => {
+    expect(hostOf("https://www.telia.se/mobilabonnemang/")).toBe("telia.se");
+    expect(hostOf("https://static3.go3.tv/file/list.pdf")).toBe("static3.go3.tv");
+    expect(hostOf("no es una url")).toBe("no es una url");
+  });
+
+  it("recognises PDF documents by their path", () => {
+    expect(isPdfUrl("https://static3.go3.tv/file/go3/pricelist.PDF")).toBe(true);
+    expect(isPdfUrl("https://example.com/precios.pdf?v=2#p3")).toBe(true);
+    expect(isPdfUrl("https://example.com/pdf/planes")).toBe(false);
+    expect(isPdfUrl("precios.pdf")).toBe(false);
   });
 });

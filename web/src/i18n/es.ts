@@ -15,6 +15,7 @@ export const es = {
       home: "Comparador",
       services: "Servicios",
       countries: "Países",
+      bundles: "Paquetes",
       changes: "Cambios",
       methodology: "Metodología",
     },
@@ -368,6 +369,17 @@ export const es = {
       outdated_document: "documento desactualizado",
       not_checked: "sin comprobar",
     } as Record<string, string>,
+    /** watch_mode: how the bundle's official pages are checked. */
+    watchModes: {
+      auto: "Automática",
+      manual: "A mano",
+      off: "Sin vigilancia",
+    } as Record<string, string>,
+    watchModeTitles: {
+      auto: "Sus páginas oficiales están en la vigilancia automática semanal; si aún no se han leído, la ficha lo indica.",
+      manual: "Sus páginas no se leen de forma automática: una persona las revisa.",
+      off: "Sus valores no se comprueban de forma automática.",
+    } as Record<string, string>,
     expiredTitle: (count: number) => `Ofertas vencidas (${count})`,
     expiredLead: "Paquetes cuya oferta ya terminó. Se muestran un tiempo como referencia.",
     requirementFields: {
@@ -527,6 +539,29 @@ export const es = {
     backToServices: "Todos los servicios",
   },
 
+  bundlesIndex: {
+    title: "Paquetes",
+    lead: "Paquetes promocionales que reúnen varias suscripciones por un solo precio, agrupados por su veredicto para el perfil por defecto y, dentro de cada grupo, del mayor al menor ahorro.",
+    profileNote: (profile: string) =>
+      `Veredicto del perfil por defecto: ${profile}. Al lado, el de los demás perfiles.`,
+    empty: "Todavía no hay paquetes vigentes registrados.",
+    groupCount: (count: number) => `${count} ${count === 1 ? "paquete" : "paquetes"}`,
+    caption: (label: string) => `Paquetes con el veredicto «${label}» para el perfil por defecto`,
+    colBundle: "Paquete",
+    colCountry: "País",
+    colStatus: "Estado",
+    colMonthly: "Mensual (EUR)",
+    colSaving: "Ahorro",
+    colOthers: "Otros perfiles",
+    marginal: (full: string) => `coste adicional al plan base; completo: ${full}`,
+    pendingVerdict: "Con hallazgos pendientes:",
+    noOthers: "Sin otros perfiles",
+    cardLink: (name: string, country: string) => `${name}: ficha completa en la página de ${country}`,
+    savingNote:
+      "El ahorro compara el precio regular con los servicios incluidos comprados por separado en el país del paquete. No cuenta la comisión de cambio, los precios de introducción, los descuentos ni los meses gratis.",
+    methodologyLink: "Cómo se verifican los paquetes",
+  },
+
   countriesIndex: {
     title: "Países",
     lead: "Países del catálogo con su moneda y el número de ofertas publicadas.",
@@ -652,6 +687,59 @@ export const es = {
     defaultProfileTag: "Por defecto",
     researchNotLegal:
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",
+    bundlesTitle: "Paquetes",
+    bundlesLead:
+      "Un paquete reúne varias suscripciones por un solo precio, a menudo con un plan de telefonía o una suscripción de tienda. Sus precios, servicios y condiciones cambian sin aviso, así que se publican con más cautela que los precios diarios.",
+    bundles: (fee: string) => [
+      {
+        title: "Una sola fuente para los valores",
+        text: "Los valores de cada paquete (precio, precio de introducción, plan base, permanencia, servicios incluidos, fechas y requisitos) salen solo de un archivo curado a mano. Ningún proceso automático lo modifica: lo automático solo puede aportar pruebas sobre esos valores o proponer cambios, y una persona los revisa.",
+      },
+      {
+        title: "Qué cuenta como confirmado",
+        text: "Un valor solo figura como confirmado si nuestra propia descarga encontró su cita literal, el «ancla», en la página oficial o en el PDF oficial del país del paquete hace 15 días o menos. Si la fuente es una lista de precios en PDF con ediciones, solo cuenta la edición vigente. Una página bloqueada, ilegible o de otro país no confirma nada. Si falta algo, el valor se muestra «sin confirmar» y el paquete dice por qué.",
+      },
+      {
+        title: "Verificación manual",
+        text: "Una persona puede comprobar el paquete a mano; queda registrada la fecha de esa comprobación. Se muestra como «Verificación manual», con los días transcurridos, caduca a los 45 días y nunca cuenta como fuente oficial.",
+      },
+      {
+        title: "Ahorro sin adornos",
+        text: "El ahorro compara el precio regular del paquete con la suma de los servicios incluidos comprados por separado en el mismo país, cada uno a su precio más barato, así que nunca se exagera. No cuenta precios de introducción, descuentos ni meses gratis. Los descuentos y los meses gratis se muestran aparte; un precio de introducción, solo cuando el paquete está verificado. Cuando el paquete exige un plan base, como una línea móvil, el ahorro se calcula sobre el precio marginal, es decir, el precio del paquete menos el del plan base, y la ficha lo indica.",
+      },
+      {
+        title: "Comisión de cambio",
+        text: `Si el paquete se paga en una moneda distinta de la de tu país, la ficha muestra también el precio con la comisión de cambio de la tarjeta (${fee}). El porcentaje de ahorro no la incluye, porque compara precios del mismo país.`,
+      },
+      {
+        title: "Un veredicto por perfil",
+        text: "Cada perfil público recibe su veredicto, con los mismos ejes y etiquetas que las fichas de factibilidad. Si hay una ficha curada a mano para el paquete y el perfil, se parte de ella, y los requisitos y los servicios incluidos solo pueden empeorarla. Si el paquete es del país de residencia, es la oferta oficial de tu país, salvo que exija algo que el perfil no tiene. Si no, el veredicto se compone de los requisitos del paquete y del veredicto, en ese país, de cada servicio incluido; si su precio es el de un servicio que ya seguimos, como Apple One, cuenta el veredicto de ese servicio. Para los demás paquetes también cuentan sus propios términos: si no encontramos en ellos una regla sobre el país de residencia, el eje «Términos del servicio» queda «Sin datos», y que permitan contratarlo desde otro país solo cuenta con una cita oficial. Manda el peor, y el nivel del paquete nunca es menor que el de sus servicios incluidos.",
+      },
+      {
+        title: "Los requisitos se enuncian como hechos",
+        text: "Si el paquete exige algo que el perfil no tiene, como un documento de identidad, una línea de teléfono o una tarjeta del país, el veredicto lo dice tal cual y esa vía es «No factible». Cuando el veredicto se compone de los propios términos y requisitos del paquete, un requisito sin datos figura como supuesto y nunca mejora el veredicto. Si parte de una ficha curada, de la oferta de tu país o del veredicto de un servicio que ya seguimos, solo cuentan los requisitos conocidos.",
+      },
+      {
+        title: "Nunca datos falsos",
+        text: "En los veredictos compuestos, una vía que exigiría declarar algo que no es cierto, como una residencia o una dirección de facturación que no son las tuyas, es «No factible». En una ficha curada a mano, ese paso queda marcado, el eje de legalidad lo indica y el nivel es como mínimo 2. Si la ficha curada de un servicio incluido tiene un paso así, el paquete hereda ese paso, su razón y, como mínimo, su nivel. El sitio nunca sugiere usar una VPN, otra dirección ni datos falsos.",
+      },
+    ],
+    bundlesNotLegal:
+      "No es asesoría legal: los veredictos describen lo que encontramos en fuentes públicas y lo que cada perfil puede demostrar honestamente, no lo que debas hacer.",
+    watchedTitle: "Paquetes vigilados",
+    watchedLead:
+      "Todos los paquetes publicados, también los que no se vigilan: su fuente oficial, cómo se comprueban, su estado, su última comprobación automática y cuántas de sus anclas se han verificado. Una raya (—) indica que todavía no hay ninguna.",
+    watchedCaption: "Paquetes vigilados: fuente, vigilancia, estado y anclas verificadas",
+    watchedEmpty: "No hay paquetes publicados.",
+    colBundle: "Paquete",
+    colSource: "Fuente oficial",
+    colWatch: "Vigilancia",
+    colLastCheck: "Última comprobación",
+    colAnchors: "Anclas verificadas",
+    anchors: (verified: number, total: number) => `${verified} de ${total}`,
+    anchorsNone: "Todavía sin anclas",
+    pdfTag: "PDF",
+    pdfTitle: "Documento PDF oficial",
     assumptionsTitle: "Cinco supuestos arriesgados",
     assumptionsLead: "Errores frecuentes al razonar sobre precios de otros países:",
     assumptions: (residence: string) => [

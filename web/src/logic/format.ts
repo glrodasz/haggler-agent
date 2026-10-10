@@ -118,3 +118,21 @@ export function flagEmoji(cc: string): string {
   const base = 0x1f1e6 - "A".charCodeAt(0);
   return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => base + c.charCodeAt(0)));
 }
+
+/** Host of a link for display ("www." dropped); the text itself when it is not a URL. */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+/** Whether a link points to a PDF document (by its path, the only thing the data says). */
+export function isPdfUrl(url: string): boolean {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith(".pdf");
+  } catch {
+    return false;
+  }
+}

@@ -6,17 +6,33 @@ import { cheapestFor } from "./compare";
 import { decodeState, defaultState, encodeState } from "./selection";
 import {
   assertSiteData,
+  bundleAnchors,
   bundleCoversService,
+  bundleEndedOn,
+  bundleSavingNotes,
   bundleDiscountsService,
   buildIndex,
+  compareBundlesBySaving,
+  compareExpiredBundles,
+  groupBundlesByVerdict,
   isActiveBundle,
+  otherProfileVerdicts,
   riskClass,
+  savingClass,
   splitBundleVerdicts,
 } from "./site";
 import { inlineJson, packOffers, unpackOffers } from "./transport";
-import type { Bundle, BundleComponent, BundleVerdict, ChangeRow, Offer, SiteData } from "./types";
-import { DATA_FILES } from "./types";
-import { routes, withBase } from "./paths";
+import type {
+  Bundle,
+  BundleComponent,
+  BundleEvidence,
+  BundleVerdict,
+  ChangeRow,
+  Offer,
+  SiteData,
+} from "./types";
+import { DATA_FILES, UNKNOWN_RANK } from "./types";
+import { bundleAnchor, routes, withBase } from "./paths";
 
 const sampleDir = join(import.meta.dirname, "..", "data-sample");
 
@@ -331,6 +347,275 @@ describe("SiteIndex", () => {
   });
 });
 
+describe("bundles page (/paquetes) and the watched table", () => {
+  const meli = data.bundles.find((b) => b.bundle_id === "meli_plus_co_total")!;
+  const profile = data.feasibility.default_profile;
+  const reviewed = site.bundleVerdicts(meli).main!;
+  const verdict = (label: string, rank: number, extra: Partial<BundleVerdict> = {}) => ({
+    ...reviewed,
+    profile,
+    label,
+    rank,
+    ...extra,
+  });
+  /** An active bundle with one default-profile verdict (none when label is null). */
+  const make = (
+    id: string,
+    label: string | null,
+    rank: number,
+    extra: Partial<Bundle> = {},
+  ): Bundle => ({
+    ...meli,
+    bundle_id: id,
+    name: id,
+    saving_pct: null,
+    verdicts: label === null ? [] : [verdict(label, rank)],
+    ...extra,
+  });
+  const shape = (groups: ReturnType<typeof groupBundlesByVerdict>) =>
+    groups.map((g) => [g.label, g.rank, g.bundles.map((b) => b.bundle_id)]);
+
+  it("groups the sample's active bundles by the default profile's verdict, then by saving", () => {
+    expect(shape(site.bundleGroups())).toEqual([
+      [
+        "official_home",
+        0,
+        ["telia_se_obegransad_streaming", "apple_one_family_se", "apple_one_individual_se"],
+      ],
+      ["tos_breach_low_enforcement", 2, ["meli_plus_co_total", "meli_plus_co_esencial"]],
+      ["not_feasible", 4, ["meli_plus_br_mega", "meli_plus_mx_mega"]],
+      ["unknown", UNKNOWN_RANK, ["go3_lt_filmai_netflix"]],
+    ]);
+    const grouped = site.bundleGroups().flatMap((g) => g.bundles);
+    expect(grouped.every(isActiveBundle)).toBe(true);
+    expect(grouped.length + site.expiredBundles().length).toBe(data.bundles.length);
+  });
+
+  it("returns no groups for an empty list or only expired bundles", () => {
+    expect(groupBundlesByVerdict([], profile)).toEqual([]);
+    const gone = make("gone", "official_home", 0, { display_status: "expired", verdicts: [] });
+    expect(groupBundlesByVerdict([gone], profile)).toEqual([]);
+  });
+
+  it("excludes expired bundles from the groups", () => {
+    const active = make("active", "official_home", 0);
+    const gone = make("gone", "official_home", 0, { display_status: "expired" });
+    expect(shape(groupBundlesByVerdict([gone, active], profile))).toEqual([
+      ["official_home", 0, ["active"]],
+    ]);
+  });
+
+  it("puts unknown verdicts last: no verdict, rank 99 and out-of-range ranks", () => {
+    const groups = groupBundlesByVerdict(
+      [
+        make("none", null, 0),
+        make("unknown", "unknown", UNKNOWN_RANK),
+        make("future", "future_label", 7),
+        make("blocked", "not_feasible", 4),
+        make("home", "official_home", 0),
+      ],
+      profile,
+    );
+    expect(shape(groups)).toEqual([
+      ["official_home", 0, ["home"]],
+      ["not_feasible", 4, ["blocked"]],
+      // Same (unknown) rank: other labels first, "unknown" itself last.
+      ["future_label", UNKNOWN_RANK, ["future"]],
+      ["unknown", UNKNOWN_RANK, ["none", "unknown"]],
+    ]);
+  });
+
+  it("groups on the reviewed verdict, never on the pending variant or another profile", () => {
+    const b = make("b", "tos_breach_low_enforcement", 2, {
+      verdicts: [
+        verdict("tos_breach_low_enforcement", 2),
+        verdict("tos_breach_enforced", 3, { provenance: "agent_pending" }),
+        verdict("not_feasible", 4, { profile: "se_resident_eu_generic" }),
+      ],
+    });
+    expect(shape(groupBundlesByVerdict([b], profile))).toEqual([
+      ["tos_breach_low_enforcement", 2, ["b"]],
+    ]);
+    // Only a pending verdict for the profile: not evaluated (unknown) for the grouping.
+    const pendingOnly = make("p", null, 0, {
+      verdicts: [verdict("official_home", 0, { provenance: "agent_pending" })],
+    });
+    expect(shape(groupBundlesByVerdict([pendingOnly], profile))).toEqual([
+      ["unknown", UNKNOWN_RANK, ["p"]],
+    ]);
+  });
+
+  it("orders a group by saving, savings unknown last, ties by name then id", () => {
+    const at = (id: string, saving_pct: number | null, name = id) =>
+      make(id, "official_home", 0, { saving_pct, name });
+    const group = groupBundlesByVerdict(
+      [
+        at("n1", null, "Zeta"),
+        at("low", -5),
+        at("b2", 10, "Beta"),
+        at("a1", 10, "alfa"),
+        at("n0", null, "Alfa"),
+        at("dup_b", 10, "Beta"),
+        at("high", 40),
+      ],
+      profile,
+    )[0]!;
+    expect(group.bundles.map((b) => b.bundle_id)).toEqual([
+      "high",
+      "a1",
+      "b2",
+      "dup_b",
+      "low",
+      "n0",
+      "n1",
+    ]);
+    const pick = (saving_pct: number | null, name: string, bundle_id: string) => ({
+      saving_pct,
+      name,
+      bundle_id,
+    });
+    expect(compareBundlesBySaving(pick(0, "a", "x"), pick(null, "a", "x"))).toBeLessThan(0);
+    expect(compareBundlesBySaving(pick(null, "a", "x"), pick(-50, "a", "x"))).toBeGreaterThan(0);
+    expect(compareBundlesBySaving(pick(5, "a", "x"), pick(5, "a", "x"))).toBe(0);
+  });
+
+  it("takes the worst rank when a label comes with different ranks", () => {
+    const groups = groupBundlesByVerdict([make("a", "odd", 1), make("b", "odd", 3)], profile);
+    expect(shape(groups)).toEqual([["odd", 3, ["a", "b"]]]);
+  });
+
+  it("lists the other profiles' reviewed verdicts next to the default one", () => {
+    expect(otherProfileVerdicts(meli, profile).map((v) => [v.profile, v.label, v.rank])).toEqual([
+      ["se_resident_eu_generic", "not_feasible", 4],
+    ]);
+    const other = verdict("not_feasible", 4, { profile: "se_resident_eu_generic" });
+    const withPending = {
+      verdicts: [
+        reviewed,
+        other,
+        { ...other, provenance: "agent_pending" as const, label: "unknown", rank: UNKNOWN_RANK },
+      ],
+    };
+    expect(otherProfileVerdicts(withPending, profile)).toEqual([other]);
+    expect(otherProfileVerdicts({ verdicts: [reviewed] }, profile)).toEqual([]);
+  });
+
+  it("lists expired bundles apart, the most recently ended first", () => {
+    expect(site.expiredBundles().map((b) => b.bundle_id)).toEqual([
+      "meli_plus_mx_mega_lanzamiento",
+    ]);
+    const end = (
+      bundle_id: string,
+      valid_until: string | null,
+      name = bundle_id,
+      last_verified: string | null = null,
+    ) => ({ bundle_id, valid_until, name, last_verified });
+    const sorted = [
+      end("old", "2026-01-31"),
+      end("none", null),
+      end("new_b", "2026-08-31", "B"),
+      end("new_a", "2026-08-31", "A"),
+    ].sort((a, b) => compareExpiredBundles(a, b, "2026-10-10"));
+    expect(sorted.map((b) => b.bundle_id)).toEqual(["new_a", "new_b", "old", "none"]);
+  });
+
+  it("never dates an expired bundle after the day site-data ran", () => {
+    const today = "2026-10-10";
+    expect(bundleEndedOn({ valid_until: "2026-08-31" }, today)).toBe("2026-08-31");
+    expect(bundleEndedOn({ valid_until: "2026-10-09" }, today)).toBe("2026-10-09");
+    // Marked expired before its announced end (status.expired_on): the end day is unknown.
+    expect(bundleEndedOn({ valid_until: "2026-12-31" }, today)).toBeNull();
+    expect(bundleEndedOn({ valid_until: today }, today)).toBeNull();
+    expect(bundleEndedOn({ valid_until: null }, today)).toBeNull();
+    const gone = data.bundles.find((b) => b.bundle_id === "meli_plus_mx_mega_lanzamiento")!;
+    expect(site.bundleEndedOn(gone)).toBe("2026-08-31");
+    const early = { ...gone, valid_until: "2026-12-31", last_verified: "2026-10-01" };
+    expect(site.bundleEndedOn(early)).toBeNull();
+  });
+
+  it("sorts a bundle marked expired early by its last review, not its announced end", () => {
+    const end = (bundle_id: string, valid_until: string | null, last_verified: string | null) => ({
+      bundle_id,
+      valid_until,
+      last_verified,
+      name: bundle_id,
+    });
+    const sorted = [
+      end("ended_sep", "2026-09-30", "2026-09-01"),
+      end("marked_aug", "2026-12-31", "2026-08-15"),
+      end("marked_no_end", null, "2026-10-01"),
+      end("nothing", null, null),
+    ].sort((a, b) => compareExpiredBundles(a, b, "2026-10-10"));
+    expect(sorted.map((b) => b.bundle_id)).toEqual([
+      "marked_no_end",
+      "ended_sep",
+      "marked_aug",
+      "nothing",
+    ]);
+  });
+
+  it("qualifies a saving like the card: marginal basis, unverified until verified", () => {
+    const notes = (
+      saving_pct: number | null,
+      saving_basis: Bundle["saving_basis"],
+      display_status: Bundle["display_status"],
+    ) => bundleSavingNotes({ saving_pct, saving_basis, display_status });
+    expect(notes(62.5, "marginal", "unverified")).toEqual([
+      es.bundle.marginalSaving,
+      es.bundle.unverifiedSaving,
+    ]);
+    expect(notes(-4.22, "full", "manual")).toEqual([es.bundle.unverifiedSaving]);
+    expect(notes(10, "marginal", "verified")).toEqual([es.bundle.marginalSaving]);
+    expect(notes(10, "full", "verified")).toEqual([]);
+    expect(notes(null, "marginal", "unverified")).toEqual([]);
+    // Every unverified saving of the sample carries the qualifier.
+    for (const b of data.bundles.filter((x) => x.saving_pct !== null)) {
+      expect(bundleSavingNotes(b).includes(es.bundle.unverifiedSaving), b.bundle_id).toBe(
+        b.display_status !== "verified",
+      );
+    }
+  });
+
+  it("lists every published bundle in the watched table by country, then name", () => {
+    expect(site.watchedBundles().map((b) => b.bundle_id)).toEqual([
+      "meli_plus_br_mega",
+      "meli_plus_co_esencial",
+      "meli_plus_co_total",
+      "go3_lt_filmai_netflix",
+      "meli_plus_mx_mega",
+      "meli_plus_mx_mega_lanzamiento",
+      "apple_one_family_se",
+      "apple_one_individual_se",
+      "telia_se_obegransad_streaming",
+    ]);
+  });
+
+  it("counts anchors: evidence backing a value, verified by our own fetch", () => {
+    // No watcher run yet: the sample's evidence are plain source links.
+    for (const b of data.bundles) {
+      expect(bundleAnchors(b), b.bundle_id).toEqual({ verified: 0, total: 0 });
+    }
+    const ev = (fact: string | null, verified: boolean): BundleEvidence => ({
+      ...meli.evidence[0]!,
+      fact,
+      verified,
+    });
+    expect(
+      bundleAnchors({
+        evidence: [ev("price", true), ev("component", false), ev("intro", true), ev(null, true)],
+      }),
+    ).toEqual({ verified: 2, total: 3 });
+    expect(bundleAnchors({ evidence: [] })).toEqual({ verified: 0, total: 0 });
+  });
+
+  it("marks savings as positive, negative or neither", () => {
+    expect(savingClass(12.5)).toBe("positive");
+    expect(savingClass(-4.22)).toBe("negative");
+    expect(savingClass(0)).toBe("");
+    expect(savingClass(null)).toBe("");
+  });
+});
+
 describe("empty data contract", () => {
   // What `haggler site-data` writes for a data/ dir without any completed run (first deploy,
   // fresh clone): no run_id, no as_of, no FX table, no prices; the changelog may still exist.
@@ -474,5 +759,10 @@ describe("paths", () => {
     expect(withBase("", "/")).toBe("/");
     expect(routes.service("netflix", "/haggler-agent/")).toBe("/haggler-agent/servicios/netflix/");
     expect(routes.country("CO", "/x/")).toBe("/x/paises/co/");
+    expect(routes.bundles("/x/")).toBe("/x/paquetes/");
+    expect(routes.bundle("CO", "meli_plus_co_total", "/x/")).toBe(
+      "/x/paises/co/#paquete-meli_plus_co_total",
+    );
+    expect(bundleAnchor("meli_plus_co_total")).toBe("paquete-meli_plus_co_total");
   });
 });
