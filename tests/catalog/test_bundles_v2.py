@@ -601,6 +601,60 @@ def test_validity_anchor_without_a_yaml_date_needs_any_dated_text(
     assert _errors(data, cat, profiles, instruments) == []
 
 
+def test_validity_anchor_states_the_date_in_its_direction(cat, profiles, instruments) -> None:
+    """A start date ("fr.o.m.") never confirms an end date of the YAML."""
+    data = _mutated(
+        _then(
+            _set("valid_until", "2026-04-01"),
+            _anchor("validity", "Erbjudandet gäller fr.o.m. 1 april 2026, för nya kunder"),
+        )
+    )
+    errors = _errors(data, cat, profiles, instruments)
+    assert any("validity anchor does not state 2026-04-01" in e for e in errors), errors
+    data = _mutated(
+        _then(
+            _set("valid_from", "2026-12-31"),
+            _anchor("validity", "Oferta válida hasta el 31 de diciembre de 2026"),
+        )
+    )
+    errors = _errors(data, cat, profiles, instruments)
+    assert any("validity anchor does not state 2026-12-31" in e for e in errors), errors
+
+
+def test_a_multi_line_anchor_keeps_its_line_breaks(cat, profiles, instruments) -> None:
+    """A duration on the next line may be the next item's: the intro is not confirmed, as it
+    would be if the anchor were joined into one line."""
+    data = _mutated(
+        _then(
+            _set("price.intro_amount", "9900"),
+            _anchor("intro", "Acme Total: $ 9.900/mes\npor 3 meses"),
+        )
+    )
+    errors = _errors(data, cat, profiles, instruments)
+    assert any("intro anchor does not state 9900 COP/month" in e for e in errors), errors
+    data = _mutated(
+        _then(
+            _set("price.intro_amount", "9900"),
+            _anchor("intro", "Acme Total:   $ 9.900/mes   por 3 meses"),
+        )
+    )
+    assert _errors(data, cat, profiles, instruments) == []
+
+
+def test_a_component_anchor_naming_another_tier_fails(cat, profiles, instruments) -> None:
+    def other_tiers_line(data: dict, b: dict) -> None:
+        _esencial_tier(data, b)
+        data["bundles"][1]["watch"]["anchors"][1]["text"] = (
+            "Acme Total: incluye Netflix con anuncios y más beneficios"
+        )
+
+    errors = _errors(_mutated(other_tiers_line), cat, profiles, instruments)
+    assert any(
+        "component anchor does not state netflix.standard_with_ads" in e and "Acme Total" in e
+        for e in errors
+    ), errors
+
+
 def test_validity_anchor_may_state_the_start_date(cat, profiles, instruments) -> None:
     data = _mutated(
         _then(

@@ -137,11 +137,13 @@ _UNIT = (
     r"|weeks?|veckor|vecka|semanas?|days?|dagar|días?|dias)"
 )
 _LEAD = r"(?:the\s+first\s+|de\s+första\s+|los\s+primeros\s+|las\s+primeras\s+|the\s+next\s+)?"
-# "$2.99/mo. for 3 months", " i 1 månad", "/mes durante 3 meses" right after the price.
+# "$2.99/mo. for 3 months", " i 1 månad", "/mes durante 3 meses" right after the price. The unit
+# may be glued to the next sentence by markup ("i 6 månaderIngen bindningstid": an upper-case
+# letter), never to more of a lower-case word.
 _INTRO_AFTER = re.compile(
     rf"^\s*(?:/\s*[^\s\d/]{{1,8}}\.?)?[\s,]*(?:[^\W\d_]+[^\w/]+){{0,2}}?"
     rf"(?:for|för|i|in|por|para|durante|pendant|für|voor|per|na|za|po|için|selama|trong|på"
-    rf"|under|x)\s+{_LEAD}{_N}\s+{_UNIT}\b",
+    rf"|under|x)\s+{_LEAD}{_N}\s+{_UNIT}(?-i:(?![a-zß-öø-ÿ0-9_]))",
     re.IGNORECASE,
 )
 # "3 months for ", "Try 1 month of Premium for ", "första månaden för " right before the price.

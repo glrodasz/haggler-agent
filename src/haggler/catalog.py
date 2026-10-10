@@ -12,7 +12,7 @@ import yaml
 from babel.numbers import list_currencies
 
 from haggler.config import repo_root
-from haggler.dates import find_dates
+from haggler.dates import date_direction, find_dates
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
     Bundle,
@@ -249,6 +249,11 @@ def _watch_errors(who: str, b: Bundle) -> list[str]:
     return errors
 
 
+def anchor_lines(text: str) -> str:
+    """An anchor's text with its line breaks kept and the blanks inside each line collapsed."""
+    return "\n".join(j for line in text.splitlines() if (j := " ".join(line.split())))
+
+
 _PRICE_FACTS: dict[str, tuple[ValueKind, str]] = {
     "price": ("money", "amount"),
     "base_price": ("base_money", "base_plan_amount"),
@@ -262,13 +267,17 @@ def _anchor_value_errors(
 ) -> list[str]:
     """Each anchor states the value it confirms, checked on its text alone (offline, no page
     context): a price anchor the YAML amount (haggler.research.values.check_value: amount,
-    currency, period, role, tier name), a component anchor its service (and the number of a
-    discount), a validity anchor a date with a year (one of the YAML's valid_from, valid_until
-    or intro_valid_until when one is set)."""
+    currency, period, role, tier name), a component anchor its service (the number of a
+    discount, the plan, not another tier's), a validity anchor a date with a year (one of the
+    YAML's valid_from, valid_until or intro_valid_until when one is set, in its direction: a
+    date the text gives as a start, "fr.o.m. 1 april 2026", only confirms valid_from, one it
+    gives as an end, "hasta el 31 de diciembre de 2026", only an end date). The anchor keeps its
+    line breaks (blanks inside a line are collapsed): a line break ends what may describe a
+    price (haggler.research.values, "Roles")."""
     errors: list[str] = []
     price = b.price
     for a in b.watch.anchors:
-        text = " ".join(a.text.split())
+        text = anchor_lines(a.text)
         if a.fact in _PRICE_FACTS:
             kind, attr = _PRICE_FACTS[a.fact]
             amount = getattr(price, attr)
@@ -299,18 +308,34 @@ def _anchor_value_errors(
             if comp.inclusion in _COUNTED_INCLUSIONS and comp.value is not None:
                 value = f"{comp.service_id}:{comp.value}"
             result = check_value(
-                "component", value, text, country=b.country, currency=price.currency, catalog=cat
+                "component",
+                value,
+                text,
+                country=b.country,
+                currency=price.currency,
+                bundle=b,
+                bundles=bundles.bundles,
+                catalog=cat,
             )
             if not result.ok:
                 errors.append(f"{who}: component anchor does not state {value}: {result.reason}")
         elif a.fact == "validity":
-            found = {d.value for d in find_dates(text)}
-            dates = (b.valid_from, b.valid_until, price.intro_valid_until)
-            wanted = {d for d in dates if d is not None}
+            found = find_dates(text)
+            # (date, the direction the text may not give it in)
+            fields = (
+                (b.valid_from, "until"),
+                (b.valid_until, "from"),
+                (price.intro_valid_until, "from"),
+            )
+            wanted = [(d, not_as) for d, not_as in fields if d is not None]
             if not found:
                 errors.append(f"{who}: validity anchor states no date with a year")
-            elif wanted and not found & wanted:
-                listed = " or ".join(sorted(d.isoformat() for d in wanted))
+            elif wanted and not any(
+                f.value == d and date_direction(text, f) != not_as
+                for f in found
+                for d, not_as in wanted
+            ):
+                listed = " or ".join(sorted({d.isoformat() for d, _ in wanted}))
                 errors.append(f"{who}: validity anchor does not state {listed}")
     return errors
 

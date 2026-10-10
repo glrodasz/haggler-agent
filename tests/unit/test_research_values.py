@@ -31,17 +31,38 @@ APPLE_CO = (
     "El plan Individual cuesta $45.900 al mes, el plan Familiar $62.900 al mes y el plan "
     "Premium $86.900 al mes."
 )
-TELIA_PLAY = "Ordinarie pris: 269 kr/mån.Pris: 199 kr/mån.Rabatten gäller i 6 månader"
+# The real visible line: markup glues the next sentence to "månader".
+TELIA_PLAY = (
+    "Ordinarie pris: 269 kr/mån.Pris: 199 kr/mån.Rabatten gäller i 6 månaderIngen bindningstid"
+)
+TELIA_PLAY_CONTEXT = [
+    "Streaming Mer",
+    "Spara 58 kr/mån jämfört med att köpa tjänsterna separat",
+    TELIA_PLAY,
+    "Köp",
+]
 MELI_COMPONENTS = "30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium."
 TELIA_COMPONENTS = "Netflix Standard, HBO Max Basic med reklam, Disney+ Standard med reklam"
+# The Meli+ Esencial description on /suscripciones/melimas: it is Meli+ Total that has Disney+.
+MELI_ESENCIAL_PAGE = (
+    "Meli+ Total: incluye Disney+ Estándar con anuncios y beneficios en otras plataformas de "
+    "entretenimiento, además de todos los beneficios de Meli+ Esencial."
+)
+MELI_MEGA_COMPONENTS = "Entretenimento incluido: Disney+, Netflix, HBO Max, Apple TV"
 
 
 PROVIDERS = [
     {
         "id": "meli",
         "name": "Mercado Libre",
-        "domains": {"CO": ["mercadolibre.com.co"], "MX": ["mercadolibre.com.mx"]},
+        "domains": {
+            "CO": ["mercadolibre.com.co"],
+            "MX": ["mercadolibre.com.mx"],
+            "BR": ["mercadolivre.com.br"],
+        },
     },
+    {"id": "telia", "name": "Telia", "domains": {"SE": ["telia.se"]}},
+    {"id": "google", "name": "Google", "domains": {"CO": ["gemini.google/co/"]}},
     {
         "id": "apple",
         "name": "Apple",
@@ -49,11 +70,25 @@ PROVIDERS = [
     },
 ]
 # (bundle_id, provider, country, name, aliases, amount, currency): two Meli+ tiers in CO (one in
-# MX), Apple One Individual / Familj in SE and three Apple One tiers in CO.
+# MX, one in BR), Apple One Individual / Familj in SE, three Apple One tiers in CO, a Telia
+# bundle sold on top of a base plan and three Google AI tiers in CO.
 TIERS = [
     ("meli_co_total", "meli", "CO", "Meli+ Total", ["Meli+ Total"], "21900", "COP"),
     ("meli_co_esencial", "meli", "CO", "Meli+ Esencial", ["Meli+ Esencial"], "9900", "COP"),
     ("meli_mx_mega", "meli", "MX", "Meli+ Mega", ["Meli+ Mega"], "399", "MXN"),
+    ("meli_br_mega", "meli", "BR", "Meli+ Mega", ["Meli+ Mega", "Plano Mega"], "74.90", "BRL"),
+    (
+        "telia_se_plus",
+        "telia",
+        "SE",
+        "Telia Obegränsad Plus + Netflix, HBO Max y Disney+",
+        [],
+        "699",
+        "SEK",
+    ),
+    ("google_co_plus", "google", "CO", "Google AI Plus", ["AI Plus"], "19900", "COP"),
+    ("google_co_pro", "google", "CO", "Google AI Pro", ["AI Pro"], "79000", "COP"),
+    ("google_co_ultra", "google", "CO", "Google AI Ultra", ["AI Ultra"], "449000", "COP"),
     (
         "apple_se_individual",
         "apple",
@@ -76,9 +111,20 @@ TIERS = [
     ("apple_co_family", "apple", "CO", "Apple One Familiar", ["Familiar"], "62900", "COP"),
     ("apple_co_premium", "apple", "CO", "Apple One Premium", ["Premium"], "86900", "COP"),
 ]
+# Price fields besides amount and currency.
+PRICE_EXTRA: dict[str, dict[str, str]] = {
+    "telia_se_plus": {
+        "base_plan_name": "Telia Obegränsad Plus",
+        "base_plan_amount": "569",
+        "marginal_amount": "130",
+    },
+}
 OFFICIAL_URL = {
     ("meli", "CO"): "https://www.mercadolibre.com.co/suscripciones/planes",
     ("meli", "MX"): "https://www.mercadolibre.com.mx/suscripciones/planes",
+    ("meli", "BR"): "https://www.mercadolivre.com.br/assinaturas/melimais",
+    ("telia", "SE"): "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus",
+    ("google", "CO"): "https://gemini.google/co/subscriptions/",
     ("apple", "SE"): "https://www.apple.com/se/apple-one/",
     ("apple", "CO"): "https://www.apple.com/co/apple-one/",
 }
@@ -95,7 +141,12 @@ BUNDLES = BundlesFile.model_validate(
                 "tier": bundle_id.rsplit("_", 1)[-1],
                 "aliases": aliases,
                 "official_url": OFFICIAL_URL[provider, country],
-                "price": {"amount": amount, "currency": currency, "tax_included": True},
+                "price": {
+                    "amount": amount,
+                    "currency": currency,
+                    "tax_included": True,
+                    **PRICE_EXTRA.get(bundle_id, {}),
+                },
                 "components": [],
                 "last_verified": "2026-10-09",
             }
@@ -176,9 +227,18 @@ def test_antes_before_an_intro_offer_is_the_regular_price() -> None:
 
 
 def test_telia_play_ordinarie_pris_is_regular_when_the_discount_has_a_duration() -> None:
-    assert _ok(_check("money", "269 SEK/month", TELIA_PLAY))
-    assert _ok(_check("intro_money", "199 SEK/month", TELIA_PLAY))
-    assert not _ok(_check("money", "199 SEK/month", TELIA_PLAY))
+    """The real line: "6 månaderIngen bindningstid" (glued by markup) is still a duration."""
+    for context in ([], TELIA_PLAY_CONTEXT):
+        assert _ok(_check("money", "269 SEK/month", TELIA_PLAY, context_lines=context))
+        assert _ok(_check("intro_money", "199 SEK/month", TELIA_PLAY, context_lines=context))
+        wrong = _check("money", "199 SEK/month", TELIA_PLAY, context_lines=context)
+        assert wrong.status == "value_not_in_quote" and "introductory" in wrong.reason
+        wrong = _check("intro_money", "269 SEK/month", TELIA_PLAY, context_lines=context)
+        assert wrong.status == "value_not_in_quote"
+    for regular, intro in (("319", "249"), ("499", "399")):
+        line = TELIA_PLAY.replace("269", regular).replace("199", intro)
+        assert _ok(_check("money", f"{regular} SEK/month", line))
+        assert not _ok(_check("money", f"{intro} SEK/month", line))
     # Without "Rabatten gäller i 6 månader" the ordinary price is a struck-through one.
     permanent = _check("money", "269 SEK/month", "Ordinarie pris: 269 kr/mån. Pris: 199 kr/mån.")
     assert permanent.status == "value_not_in_quote" and "comparison" in permanent.reason
@@ -256,7 +316,18 @@ def test_an_ordinary_price_with_another_price_around_is_a_comparison_one() -> No
     quote = "Telia Play Mer 269 kr/mån. Ordinarie pris 339 kr/mån. Prova gratis: 0 kr i 30 dagar"
     result = _check("money", "339 SEK/month", quote)
     assert result.status == "value_not_in_quote" and "comparison" in result.reason
-    assert _ok(_check("money", "269 SEK/month", quote))
+    # ... and the lower price next to it is a discount without a duration: neither.
+    result = _check("money", "269 SEK/month", quote)
+    assert result.status == "value_not_in_quote" and "offer price" in result.reason
+
+
+def test_the_doubled_product_page_line_never_confirms_the_discounted_price() -> None:
+    """telia.se repeats each price as visible text and a screen-reader label, glued:
+    "269 kr/mån" + "Ordinarie pris: 269 kr/mån" + "199 kr/mån" + "Pris: 199 kr/mån"."""
+    line = "269 kr/månOrdinarie pris: 269 kr/mån199 kr/månPris: 199 kr/mån"
+    result = _check("money", "199 SEK/month", line)
+    assert result.status == "value_not_in_quote" and "offer price" in result.reason
+    assert not _ok(_check("intro_money", "199 SEK/month", line))
 
 
 @pytest.mark.parametrize(
@@ -380,6 +451,358 @@ def test_a_then_price_after_a_free_trial_is_regular() -> None:
     assert _ok(_check("money", "295 SEK/month", quote, "apple_se_family"))
 
 
+@pytest.mark.parametrize(
+    ("value", "quote", "context", "kw"),
+    [
+        # The struck-through markup is lost: two prices, the second lower, nothing between.
+        ("24900 COP/month", "$ 24.900", ["Meli+ Total", "$ 24.900", "$ 21.900/mes", "x"], {}),
+        ("24900 COP/month", "Meli+ Total $ 24.900 $ 21.900/mes", [], {}),
+        ("24900 COP/month", "Meli+ Total $ 24.900 12% OFF $ 21.900/mes", [], {}),
+        ("24900 COP/month", "$ 24.900", ["Meli+ Total", "12% OFF", "$ 24.900", "$ 21.900/mes"], {}),
+        (
+            "339 SEK/month",
+            "Apple One Familj 339 kr 295 kr/mån",
+            [],
+            {"bundle_id": "apple_se_family"},
+        ),
+        (
+            "29.90 BRL/month",
+            "Meli+ Mega R$ 29,90 R$ 19,90/mês",
+            [],
+            {"bundle_id": "meli_br_mega", "country": "BR", "currency": "BRL"},
+        ),
+    ],
+)
+def test_a_struck_through_price_read_by_position_is_a_comparison_price(
+    value: str, quote: str, context: list[str], kw: dict[str, Any]
+) -> None:
+    bundle_id = kw.pop("bundle_id", "meli_co_total")
+    result = _check("money", value, quote, bundle_id, context_lines=context, **kw)
+    assert result.status == "value_not_in_quote" and "comparison" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "context", "kw"),
+    [
+        (
+            "29900 COP/month",
+            "Antes $ 29.900 Ahora $ 19.900/mes por 2 meses",
+            [
+                "Meli+ Total",
+                "Antes $ 29.900 Ahora $ 19.900/mes por 2 meses",
+                "Luego $ 21.900/mes",
+                "Suscribirme",
+            ],
+            {},
+        ),
+        (
+            "29900 COP/month",
+            "Meli+ Total: precio anterior $ 29.900, hoy $ 19.900 por 2 meses.",
+            [
+                "Meli+ Total: precio anterior $ 29.900, hoy $ 19.900 por 2 meses.",
+                "Después de 2 meses pagas $ 21.900 al mes.",
+            ],
+            {},
+        ),
+        (
+            "29.90 BRL/month",
+            "De R$ 29,90 por R$ 19,90 nos 3 primeiros meses",
+            ["Meli+ Mega", "De R$ 29,90 por R$ 19,90 nos 3 primeiros meses", "Depois R$ 24,90/mês"],
+            {"bundle_id": "meli_br_mega", "country": "BR", "currency": "BRL"},
+        ),
+    ],
+)
+def test_a_previous_price_is_not_regular_when_the_text_states_the_price_after_the_offer(
+    value: str, quote: str, context: list[str], kw: dict[str, Any]
+) -> None:
+    bundle_id = kw.pop("bundle_id", "meli_co_total")
+    result = _check("money", value, quote, bundle_id, context_lines=context, **kw)
+    assert result.status == "value_not_in_quote" and "after the offer" in result.reason, result
+    # The real Meli+ line still has none.
+    assert _ok(
+        _check("money", "21900 COP/month", MELI_LINE, "meli_co_total", context_lines=MELI_CONTEXT)
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id"),
+    [
+        ("215 SEK/month", "Spara 58/77/215 kr/mån jämfört med att köpa tjänsterna separat", None),
+        ("12000 COP/month", "Meli+ Total: ahorro de $ 12.000 al mes", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total. Ahorro mensual: $ 12.000", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total: economia de $ 12.000 por mês", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total: descuento de $ 12.000 al mes", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total: $ 12.000 de descuento al mes", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total: $ 12.000 OFF al mes", "meli_co_total"),
+        ("12000 COP/month", "Meli+ Total: dto. $ 12.000/mes", "meli_co_total"),
+        ("58 SEK/month", "Apple One Familj: Rabatt 58 kr/mån", "apple_se_family"),
+        ("58 SEK/month", "Apple One Familj: 58 kr rabatt i månaden", "apple_se_family"),
+        ("58 SEK/month", "Apple One Familj. Besparing: 58 kr/mån", "apple_se_family"),
+        ("58 SEK/month", "Apple One Familj: 58 kr/mån billigare än separat", "apple_se_family"),
+        ("9910 MXN/month", "Meli+ Mega $ 9910% OFF", "meli_mx_mega"),  # "$ 99" + "10% OFF"
+        # Real telia.se lines.
+        (
+            "100 SEK/month",
+            "Samlingsrabatt: Samla bredband och mobilabonnemang hos oss och få upp till 100 kr/mån "
+            "i rabatt på ditt mobilabonnemang.",
+            None,
+        ),
+        ("100 SEK/month", "100 kr/mån i samlingsrabatt om du har bredband från Telia", None),
+        ("50 SEK/month", "Är du 18-27 år får du 50 kr rabatt/mån på mobilabonnemanget.", None),
+    ],
+)
+def test_savings_and_discount_amounts_are_no_price(
+    value: str, quote: str, bundle_id: str | None
+) -> None:
+    result = _check("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and "saved" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id"),
+    [
+        ("80000 COP/month", "Meli+ Total. Valor total: $ 80.000/mes", "meli_co_total"),
+        (
+            "80000 COP/month",
+            "Meli+ Total incluye servicios por un valor total de $ 80.000/mes",
+            "meli_co_total",
+        ),
+        ("80000 COP/month", "Meli+ Total: beneficios valorizados en $ 80.000/mes", "meli_co_total"),
+        ("80000 COP/month", "Meli+ Total: servicios que valen $ 80.000/mes", "meli_co_total"),
+        ("80000 COP/month", "Meli+ Total: por separado $ 80.000/mes", "meli_co_total"),
+        (
+            "80000 COP/month",
+            "Meli+ Total: comprados por separado cuestan $ 80.000/mes",
+            "meli_co_total",
+        ),
+        (
+            "80000 COP/month",
+            "Meli+ Total: $ 80.000/mes si los compras separadamente",
+            "meli_co_total",
+        ),
+        (
+            "80000 COP/month",
+            "Meli+ Total $ 21.900/mes en lugar de pagar $ 80.000/mes",
+            "meli_co_total",
+        ),
+        (
+            "80000 COP/month",
+            "Meli+ Total $ 21.900/mes ao invés de pagar $ 80.000/mes",
+            "meli_co_total",
+        ),
+        ("500 SEK/month", "Apple One Familj: Värde 500 kr/mån", "apple_se_family"),
+        (
+            "500 SEK/month",
+            "Apple One Familj: tjänster till ett värde av 500 kr/mån",
+            "apple_se_family",
+        ),
+        (
+            "500 SEK/month",
+            "Apple One Familj 295 kr/mån istället för att betala 500 kr/mån",
+            "apple_se_family",
+        ),
+        (
+            "500 SEK/month",
+            "Apple One Familj 295 kr/mån instead of paying 500 kr/mån",
+            "apple_se_family",
+        ),
+        ("500 SEK/month", "Apple One Familj 295 kr/mån vs 500 kr/mån", "apple_se_family"),
+        ("99 SEK/month", "Fri frakt via telia.se (värde 99 kr)", None),  # real line
+    ],
+)
+def test_value_and_sum_amounts_are_comparison_prices(
+    value: str, quote: str, bundle_id: str | None
+) -> None:
+    result = _check("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and "comparison" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote"),
+    [
+        ("5000 COP/month", "Meli+ Total: ahorra $ 5.000 por 3 meses"),
+        ("5000 COP/month", "Meli+ Total: descuento de $ 5.000 por 3 meses"),
+        ("5000 COP/month", "Meli+ Total: $ 5.000 OFF por 3 meses"),
+    ],
+)
+def test_a_discount_with_a_duration_is_no_intro_price(value: str, quote: str) -> None:
+    result = _check("intro_money", value, quote, "meli_co_total")
+    assert result.status == "value_not_in_quote" and "saved" in result.reason, result
+    result = _check("intro_money", "70 SEK/month", "Apple One Familj: 70 kr rabatt i 6 månader")
+    assert result.status == "value_not_in_quote" and "saved" in result.reason
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "Meli+ Total: $ 19.900 el primer mes",
+        "Meli+ Total por solo $ 19.900 el primer mes",
+        "Meli+ Total: $ 19.900 tu primer mes",
+        "Meli+ Total: $ 19.900 durante el primer mes",
+        "Meli+ Total: $ 19.900 no primeiro mês",
+        "Meli+ Total $ 19.900/mes hasta 3 meses",
+    ],
+)
+def test_a_first_month_or_up_to_n_months_is_an_intro(quote: str) -> None:
+    regular = _check("money", "19900 COP/month", quote, "meli_co_total")
+    assert regular.status == "value_not_in_quote" and "introductory" in regular.reason, regular
+    assert _ok(_check("intro_money", "19900 COP/month", quote, "meli_co_total"))
+    swedish = _check("money", "199 SEK/month", "Apple One Familj 199 kr första månaden")
+    assert swedish.status == "value_not_in_quote" and "introductory" in swedish.reason
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "Meli+ Total $ 19.900/mes hasta el 31 de diciembre",
+        "Meli+ Total $ 19.900/mes, precio promocional válido hasta el 31/12/2026",
+        "Meli+ Total $ 19.900/mes precio promocional",
+        "Meli+ Total $ 19.900/mes con 9% de descuento",
+        "Meli+ Total con descuento: $ 19.900/mes",
+        "Meli+ Total precio con descuento $ 19.900/mes",
+        "Meli+ Total desde $ 19.900/mes",
+        "Meli+ Total a partir de $ 19.900/mes",
+        "Meli+ Total $ 19.900 - $ 29.900/mes",  # a range
+        "Meli+ Total entre $ 19.900 y $ 29.900 al mes",
+    ],
+)
+def test_an_offer_without_a_duration_confirms_neither_role(quote: str) -> None:
+    for kind in ("money", "intro_money"):
+        result = _check(kind, "19900 COP/month", quote, "meli_co_total")
+        assert result.status == "value_not_in_quote" and "offer price" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "kw"),
+    [
+        # Free-shipping thresholds (real lines).
+        (
+            "19 BRL/month",
+            "Frete grátis rápido a partir de R$ 19.",
+            {"bundle_id": "meli_br_mega", "country": "BR", "currency": "BRL"},
+        ),
+        (
+            "30000 COP/month",
+            "Envíos gratis en millones de productos desde $ 30.000.",
+            {
+                "bundle_id": "meli_co_esencial",
+                "context_lines": [
+                    "Meli+ Esencial",
+                    "$ 9.900/mes",
+                    "Envíos gratis en millones de productos desde $ 30.000.",
+                    "Meli+ Total",
+                ],
+            },
+        ),
+        # The intro amount restated on the next line's button (real BR lines).
+        (
+            "15.90 BRL/month",
+            "Assinar por R$ 15,90",
+            {
+                "country": "BR",
+                "currency": "BRL",
+                "context_lines": [
+                    "Meli+ Total",
+                    "R$ 15,90 /mês por 2 meses",
+                    "Assinar por R$ 15,90",
+                    "Meli+ Mega",
+                ],
+            },
+        ),
+        (
+            "199 SEK/month",
+            "Köp för 199 kr/mån",
+            {"context_lines": ["Telia Play Mer", "199 kr/mån i 6 mån", "Köp för 199 kr/mån", "x"]},
+        ),
+        ("295 SEK/month", "Apple One Familj 199/295 kr/mån", {"bundle_id": "apple_se_family"}),
+    ],
+)
+def test_thresholds_restated_intros_and_lists_are_offers(
+    value: str, quote: str, kw: dict[str, Any]
+) -> None:
+    bundle_id = kw.pop("bundle_id", None)
+    result = _check("money", value, quote, bundle_id, **kw)
+    assert result.status == "value_not_in_quote" and "offer price" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id"),
+    [
+        (
+            "10483 COP/month",
+            "Plan Familiar $62.900 al mes ($10.483 por persona)",
+            "apple_co_family",
+        ),
+        ("49 SEK/month", "Apple One Familj 295 kr/mån – bara 49 kr per person", "apple_se_family"),
+        ("10483 COP/month", "Apple One Familiar: $ 10.483 por usuario al mes", "apple_co_family"),
+        ("10483 COP/month", "Apple One Familiar: $ 10.483 por pessoa/mês", "apple_co_family"),
+        ("49 SEK/month", "Apple One Familj: 49 kr/mån per familjemedlem", "apple_se_family"),
+        (
+            "49 SEK/month",
+            "Apple One Familj: lägg till en extra användare för 49 kr/mån",
+            "apple_se_family",
+        ),
+        (
+            "10000 COP/month",
+            "Apple One Familiar: cada miembro adicional $ 10.000/mes",
+            "apple_co_family",
+        ),
+    ],
+)
+def test_a_price_per_person_is_not_the_bundles(value: str, quote: str, bundle_id: str) -> None:
+    result = _check("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and "per person" in result.reason, result
+    family = "Plan Familiar $62.900 al mes ($10.483 por persona)"
+    assert _ok(_check("money", "62900 COP/month", family, "apple_co_family"))
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id", "why"),
+    [
+        ("18403 COP/month", "Meli+ Total $ 18.403 + IVA al mes", "meli_co_total", "before tax"),
+        (
+            "18403 COP/month",
+            "Meli+ Total: precio sin IVA $ 18.403/mes",
+            "meli_co_total",
+            "before tax",
+        ),
+        (
+            "172 SEK/month",
+            "Apple One Familj 172 kr/mån exkl. moms",
+            "apple_se_family",
+            "before tax",
+        ),
+        (
+            "172 SEK/month",
+            "Apple One Familj, pris exkl. moms: 172 kr/mån",
+            "apple_se_family",
+            "before tax",
+        ),
+        ("172 SEK/month", "Apple One Familj 172 kr/mån excl. VAT", "apple_se_family", "before tax"),
+        (
+            "3497 COP/month",
+            "Meli+ Total $ 21.900/mes (IVA incluido $ 3.497)",
+            "meli_co_total",
+            "tax",
+        ),
+        ("59 SEK/month", "Apple One Familj 295 kr/mån varav moms 59 kr", "apple_se_family", "tax"),
+        ("59 SEK/month", "Apple One Familj 295 kr/mån. Moms: 59 kr/mån", "apple_se_family", "tax"),
+    ],
+)
+def test_prices_before_tax_and_tax_amounts_never_confirm_a_tax_included_price(
+    value: str, quote: str, bundle_id: str, why: str
+) -> None:
+    result = _check("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and why in result.reason, result
+    with_vat = "Meli+ Total $ 21.900/mes (IVA incluido $ 3.497)"
+    assert _ok(_check("money", "21900 COP/month", with_vat, "meli_co_total"))
+    # A bundle stored without tax takes the price before tax.
+    b = ROWS["apple_se_family"]
+    ex_vat = b.model_copy(update={"price": b.price.model_copy(update={"tax_included": False})})
+    quote = "Apple One Familj 172 kr/mån exkl. moms"
+    assert _ok(_check("money", "172 SEK/month", quote, "apple_se_family", bundle=ex_vat))
+
+
 # ---------------------------------------------------------------- tier names (siblings)
 
 
@@ -417,9 +840,31 @@ def test_several_tiers_need_the_tier_name_in_the_quote_or_its_context() -> None:
     assert sibling.status == "value_not_in_quote" and "meli_co_esencial" in sibling.reason
 
 
-def test_a_single_tier_needs_no_name() -> None:
-    """Meli+ Mega is the only MX bundle of the provider."""
-    assert _ok(_check("money", "399 MXN/month", "$ 399/mes", "meli_mx_mega"))
+def test_a_single_tier_still_needs_its_name() -> None:
+    """Meli+ Mega is the only MX bundle of the YAML, but the real MX page also lists Total
+    ($ 99) and Esencial ($ 49.90): a price confirms Mega only next to its name."""
+    alone = _check("money", "399 MXN/month", "$ 399/mes", "meli_mx_mega")
+    assert alone.status == "value_not_in_quote" and "names no tier" in alone.reason
+    assert _ok(_check("money", "399 MXN/month", "Meli+ Mega $ 399/mes", "meli_mx_mega"))
+    card = ["Meli+ Esencial", "$ 49.90/mes", "Meli+ Mega", "$ 399/mes"]
+    assert _ok(_check("money", "399 MXN/month", card[3], "meli_mx_mega", context_lines=card))
+    for value, quote in (
+        ("99 MXN/month", "Meli+ Total $ 99/mes"),
+        ("49.90 MXN/month", "Meli+ Esencial $ 49.90/mes"),
+        ("49.90 MXN/month", "$ 49.90/mes"),
+    ):
+        result = _check("money", value, quote, "meli_mx_mega")
+        assert result.status == "value_not_in_quote" and "names no tier" in result.reason
+    # BR: another tier's intro never confirms the only BR row; the page's own card label does.
+    br = {"country": "BR", "currency": "BRL"}
+    other = _check(
+        "intro_money", "15.90 BRL/month", "Meli+ Total R$ 15,90/mês por 2 meses", "meli_br_mega"
+    )
+    assert other.status == "value_not_in_quote" and "names no tier" in other.reason
+    card = ["Plano Mega", "Assinar por R$ 74,90"]
+    assert _ok(
+        _check("money", "74.90 BRL/month", card[1], "meli_br_mega", context_lines=card, **br)
+    )
 
 
 @pytest.mark.parametrize(
@@ -502,6 +947,201 @@ def test_without_bundles_the_curated_ones_are_the_siblings(monkeypatch) -> None:
     assert result.status == "value_not_in_quote" and "familjeabonnemanget" in result.reason
 
 
+@pytest.mark.parametrize(
+    ("kind", "value", "quote", "ok"),
+    [
+        # The base plan's price never confirms the bundle's, nor the other way round.
+        ("money", "569 SEK/month", "Telia Obegränsad Plus 569 kr/mån", False),
+        ("base_money", "569 SEK/month", "Telia Obegränsad Plus 569 kr/mån", True),
+        (
+            "base_money",
+            "699 SEK/month",
+            "Obegränsad Plus med Netflix, Max och Disney+ 699 kr/mån",
+            False,
+        ),
+        (
+            "money",
+            "569 SEK/month",
+            "Obegränsad Plus 569 kr Obegränsad Plus + Netflix, Max, Disney+ 699 kr",
+            False,
+        ),
+        (
+            "base_money",
+            "699 SEK/month",
+            "Obegränsad Plus 569 kr Obegränsad Plus + Netflix, Max, Disney+ 699 kr",
+            False,
+        ),
+        ("money", "349 SEK/month", "Telia Mobil 30 GB 349 kr/mån", False),
+        ("base_money", "449 SEK/month", "Telia Obegränsad 449 kr/mån", False),
+        # Real telia.se lines of other products.
+        ("money", "319 SEK/month", "Ordinarie pris: 319 kr/mån.", False),
+        (
+            "money",
+            "50 SEK/month",
+            "till Netflix Premium (4 enheter kan streama samtidigt istället för 2) för endast 50 "
+            "kr/mån, i samband med aktiveringen eller senare via Mitt Telia.",
+            False,
+        ),
+        (
+            "money",
+            "699 SEK/month",
+            "Telia Obegränsad Plus + Netflix, HBO Max y Disney+: 699 kr/mån",
+            True,
+        ),
+    ],
+)
+def test_a_bundle_on_a_base_plan_needs_its_own_name(
+    kind: str, value: str, quote: str, ok: bool
+) -> None:
+    result = _check(kind, value, quote, "telia_se_plus")
+    assert _ok(result) is ok, result
+
+
+@pytest.mark.parametrize(
+    ("bundle_id", "value", "quote", "bundles_without"),
+    [
+        # The real Apple CO line, with a YAML that has no Premium row.
+        ("apple_co_family", "86900 COP/month", APPLE_CO, "apple_co_premium"),
+        ("meli_co_total", "9900 COP/month", "Meli+ Total $ 21.900/mes. Esencial $ 9.900/mes", None),
+        (
+            "meli_co_total",
+            "9900 COP/month",
+            "Meli+ Total cuesta $ 21.900 al mes. El plan básico cuesta $ 9.900 al mes.",
+            None,
+        ),
+        (
+            "meli_co_total",
+            "9900 COP/month",
+            "Meli+ Total: $ 21.900/mes, o si prefieres el plan más simple, $ 9.900/mes",
+            None,
+        ),
+        (
+            "apple_se_family",
+            "215 SEK/month",
+            "Familjeabonnemanget kostar 295 kr i månaden medan det personliga kostar 215 kr",
+            None,
+        ),
+        (
+            "apple_se_family",
+            "215 SEK/month",
+            "Apple One Familj 295 kr/mån. Individuell 215 kr/mån",
+            None,
+        ),
+        (
+            "meli_co_total",
+            "9900 COP/month",
+            "Meli+ Total\n$ 21.900/mes\n$ 9.900/mes\nMeli+ Esencial",
+            None,
+        ),
+        # An inherited tier name in the amount's sentence.
+        (
+            "meli_co_total",
+            "9900 COP/month",
+            "Meli+ Total: todo lo de Meli+ Esencial, que cuesta $ 9.900/mes, más Disney+",
+            None,
+        ),
+        (
+            "apple_se_family",
+            "215 SEK/month",
+            "Apple One Familj: everything in Individual (215 kr/mån), plus family sharing",
+            None,
+        ),
+        # A table row under one heading: the heading is not each column's.
+        ("meli_co_total", "9900 COP/month", "Plan Meli+ Total\nPrecio $ 9.900 $ 21.900", None),
+    ],
+)
+def test_a_tier_name_with_another_price_before_the_amount_is_not_its_tier(
+    bundle_id: str, value: str, quote: str, bundles_without: str | None
+) -> None:
+    rows = [b for b in BUNDLES.bundles if b.bundle_id != bundles_without]
+    result = _check("money", value, quote, bundle_id, bundles=rows)
+    assert result.status == "value_not_in_quote" and "names no tier" in result.reason, result
+    if bundles_without:  # each amount of the real line still confirms its own tier
+        assert _ok(_check("money", "62900 COP/month", APPLE_CO, "apple_co_family", bundles=rows))
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "quote", "bundle_id", "kw"),
+    [
+        (
+            "intro_money",
+            "19900 COP/month",
+            "$ 19.900/mes por 2 meses",
+            "meli_co_total",
+            {"context_lines": ["Meli+ Total", "$ 19.900/mes por 2 meses", MELI_LINE]},
+        ),
+        (
+            "money",
+            "9900 COP/month",
+            "$ 9.900/mes",
+            "meli_co_esencial",
+            {
+                "context_lines": [
+                    "Meli+ Esencial",
+                    "$ 9.900/mes",
+                    "Envíos gratis en millones de productos desde $ 30.000.",
+                ]
+            },
+        ),
+        (
+            "money",
+            "399 MXN/month",
+            "$ 399/mes",
+            "meli_mx_mega",
+            {"context_lines": ["Meli+ Mega", "$ 399/mes"]},
+        ),
+        (
+            "money",
+            "74.90 BRL/month",
+            "Assinar por R$ 74,90",
+            "meli_br_mega",
+            {
+                "country": "BR",
+                "currency": "BRL",
+                "context_lines": ["Plano Mega", "Assinar por R$ 74,90"],
+            },
+        ),
+        (
+            "money",
+            "79000 COP/month",
+            "COP 79,000 por mes",
+            "google_co_pro",
+            {"context_lines": ["Google AI Pro", "COP 79,000 por mes"]},
+        ),
+    ],
+)
+def test_real_probe_lines_with_their_card_heading_confirm(
+    kind: str, value: str, quote: str, bundle_id: str, kw: dict[str, Any]
+) -> None:
+    """The H0 lines whose card heading names the tier (an alias must be the page's label:
+    "Plano Mega" on the BR page)."""
+    result = _check(kind, value, quote, bundle_id, **kw)
+    assert _ok(result), result
+
+
+def test_an_inherited_name_in_the_amounts_own_clause_is_its_tier() -> None:
+    quote = "Disfruta todos los beneficios de Meli+ Esencial por $ 9.900/mes"
+    lines = ["Meli+ Total $ 21.900/mes", "Suscribirme", quote, "Suscribirme"]
+    result = _check("money", "9900 COP/month", quote, "meli_co_total", context_lines=lines)
+    assert result.status == "value_not_in_quote" and "meli_co_esencial" in result.reason, result
+    assert _ok(_check("money", "9900 COP/month", quote, "meli_co_esencial"))
+
+
+def test_a_tier_named_in_a_comparison_is_not_the_amounts() -> None:
+    """Real gemini.google/co line under the Ultra card: "5 veces más altos que los de AI Pro"."""
+    quote = "COP 449,000/ mes: Límites de uso 5 veces más altos que los de AI Pro"
+    lines = [
+        "Google AI Ultra",
+        "COP 449,000/ mes",
+        quote,
+        "COP 790,000 / mes: Límites de uso 20 veces más altos que los de AI Pro",
+    ]
+    pro = _check("money", "449000 COP/month", quote, "google_co_pro", context_lines=lines)
+    assert pro.status == "value_not_in_quote" and "google_co_ultra" in pro.reason, pro
+    ultra = _check("money", "449000 COP/month", quote, "google_co_ultra", context_lines=lines)
+    assert _ok(ultra), ultra
+
+
 # ------------------------------------------------------------- currency and country
 
 
@@ -546,7 +1186,7 @@ def test_a_code_or_nationality_next_to_the_amount_wins(quote: str) -> None:
 
 
 def test_a_dollar_is_the_bundles_currency_only_where_that_currency_uses_it() -> None:
-    assert _ok(_check("money", "399 MXN/month", "$ 399/mes", "meli_mx_mega"))
+    assert _ok(_check("money", "399 MXN/month", "Meli+ Mega $ 399/mes", "meli_mx_mega"))
     swedish = _check("money", "399 SEK/month", "Apple One Familj $ 399/mån", "apple_se_family")
     assert swedish.status == "value_not_in_quote" and "unknown currency" in swedish.reason
 
@@ -567,6 +1207,37 @@ def test_a_value_as_decimal_takes_currency_and_period_from_the_arguments() -> No
     assert _ok(_check("money", 21900, "Meli+ Total: COP 21.900 por mes", "meli_co_total"))
 
 
+@pytest.mark.parametrize(
+    ("quote", "context"),
+    [
+        ("Meli+ Mega $ 19.99 dólares al mes", []),
+        ("Meli+ Mega (USD): $ 19.99 al mes", []),
+        ("$ 19.99 al mes", ["Precios en dólares (USD)", "Meli+ Mega", "$ 19.99 al mes", ""]),
+        ("$ 19.99 al mes", ["Todos los precios en USD", "Meli+ Mega", "$ 19.99 al mes", ""]),
+    ],
+)
+def test_a_dollar_written_as_usd_is_never_the_bundles_pesos(quote: str, context: list[str]) -> None:
+    result = _check(
+        "money",
+        "19.99 MXN/month",
+        quote,
+        "meli_mx_mega",
+        context_lines=context,
+        url="https://www.mercadolibre.com.mx/suscripciones/planes",
+        fx=FX,
+    )
+    assert result.status == "value_not_in_quote" and "USD" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    "quote",
+    ["Apple One Familj 295 kr/md (danske kroner)", "Apple One Familj 295 kr. DKK pr. måned"],
+)
+def test_kronor_of_another_country_are_not_sek(quote: str) -> None:
+    result = _check("money", "295 SEK/month", quote, "apple_se_family")
+    assert result.status == "value_not_in_quote" and "DKK" in result.reason, result
+
+
 # ------------------------------------------------------------------------ period
 
 
@@ -585,6 +1256,73 @@ def test_period_must_match_when_the_quote_states_one(value: str, quote: str, ok:
     assert _ok(result) is ok, result
     if not ok:
         assert "per " in result.reason
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id"),
+    [
+        ("5000 COP/month", "Meli+ Total: $ 5.000 a la semana", "meli_co_total"),
+        ("5000 COP/month", "Meli+ Total: $ 5.000/semana", "meli_co_total"),
+        ("5000 COP/month", "Meli+ Total: $ 5.000/día", "meli_co_total"),
+        ("99000 COP/month", "Meli+ Total semestral $ 99.000", "meli_co_total"),
+        ("99000 COP/month", "Meli+ Total $ 99.000/6 meses", "meli_co_total"),
+        ("99000 COP/month", "Meli+ Total $ 99.000 cada 6 meses", "meli_co_total"),
+        ("99000 COP/month", "Meli+ Total $ 99.000 por semestre", "meli_co_total"),
+        ("40000 COP/month", "Meli+ Total $ 40.000 bimestral", "meli_co_total"),
+        ("65700 COP/month", "Meli+ Total $ 65.700 al trimestre", "meli_co_total"),
+        ("50 SEK/month", "Apple One Familj 50 kr/vecka", "apple_se_family"),
+        ("50 SEK/month", "Apple One Familj 50 kr i veckan", "apple_se_family"),
+        ("10 SEK/month", "Apple One Familj bara 10 kr per dag", "apple_se_family"),
+        ("990 SEK/month", "Apple One Familj 990 kr/halvår", "apple_se_family"),
+        ("885 SEK/month", "Apple One Familj 885 kr per kvartal", "apple_se_family"),
+    ],
+)
+def test_a_rate_the_period_markers_miss_is_a_period_mismatch(
+    value: str, quote: str, bundle_id: str
+) -> None:
+    result = _check("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and "per month" in result.reason, result
+
+
+def test_a_quarterly_rate_confirms_a_quarterly_value() -> None:
+    quote = "Apple One Familj 885 kr per kvartal"
+    assert _ok(_check("money", "885 SEK/quarter", quote, "apple_se_family", period="quarter"))
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "context", "bundle_id"),
+    [
+        ("16583 COP/month", "Meli+ Total $ 16.583/mes facturado anualmente", [], "meli_co_total"),
+        ("16583 COP/month", "Meli+ Total $ 16.583/mes en el plan anual", [], "meli_co_total"),
+        (
+            "16583 COP/month",
+            "Meli+ Total plan anual: $ 199.000 (equivale a $ 16.583/mes)",
+            [],
+            "meli_co_total",
+        ),
+        (
+            "16583 COP/month",
+            "Meli+ Total plan mensual $ 21.900 | plan anual 12x de $ 16.583",
+            [],
+            "meli_co_total",
+        ),
+        ("16583 COP/month", "Meli+ Total: 12 cuotas de $ 16.583", [], "meli_co_total"),
+        (
+            "16583 COP/month",
+            "$ 16.583/mes",
+            ["Meli+ Total anual", "Paga una vez", "$ 16.583/mes", "Suscribirme"],
+            "meli_co_total",
+        ),
+        ("179 SEK/month", "Apple One Familj 179 kr/mån vid årsbetalning", [], "apple_se_family"),
+        ("179 SEK/month", "Apple One Familj 179 kr/mån, betalas årsvis", [], "apple_se_family"),
+        ("179 SEK/month", "Apple One Familj 179 kr/mo billed annually", [], "apple_se_family"),
+    ],
+)
+def test_the_monthly_equivalent_of_an_annual_plan_is_no_monthly_price(
+    value: str, quote: str, context: list[str], bundle_id: str
+) -> None:
+    result = _check("money", value, quote, bundle_id, context_lines=context)
+    assert result.status == "value_not_in_quote" and "annual" in result.reason, result
 
 
 # --------------------------------------------------------- plausibility, big change
@@ -673,6 +1411,35 @@ def test_a_current_value_that_cannot_be_compared_is_said() -> None:
     assert _ok(result) and "not in COP" in result.reason
 
 
+@pytest.mark.parametrize(
+    "value", ["1e5000", "1E+999999", "9e999999999", "1e-999999999", Decimal("1e5000"), "-5"]
+)
+def test_extreme_values_are_not_amounts_and_never_raise(value: Any) -> None:
+    quote = "Meli+ Total: $ 21.900/mes"
+    result = _check("money", value, quote, "meli_co_total", fx=FX)
+    assert result.status == "value_not_in_quote"
+    for kind, v in (("pct", value), ("int", value), ("component", f"hbo_max:{value}")):
+        assert _check(kind, v, "30% OFF en HBO Max").status == "value_not_in_quote"
+    current = _check("money", "21900 COP/month", quote, "meli_co_total", current=value)
+    assert _ok(current) and not current.big_change and "change not measured" in current.reason
+
+
+def test_a_page_amount_out_of_bounds_is_no_price() -> None:
+    """A 26-digit run before "kr" on a page line (the watcher's hint scan passes it in)."""
+    from haggler.money import find_prices
+
+    line = "Telia Play Mer " + "9" * 26 + " kr/mån"
+    (money,) = find_prices(line, ["SEK"], words=True)
+    result = check_value(
+        "money", money.amount, line, country="SE", currency="SEK", period="month", fx=FX
+    )
+    assert result.status == "value_not_in_quote"
+    result = check_value(
+        "money", Decimal("269"), line, country="SE", currency="SEK", period="month", fx=FX
+    )
+    assert result.status == "value_not_in_quote" and "no price" in result.reason
+
+
 # ------------------------------------------------------------------ quote and context
 
 
@@ -704,6 +1471,20 @@ def test_the_quote_is_found_in_its_context_despite_case_and_spacing() -> None:
     assert _ok(
         _check("money", "21900 COP/month", quote, "meli_co_total", context_lines=MELI_CONTEXT)
     )
+
+
+def test_a_long_text_is_checked_fast_or_not_at_all() -> None:
+    import time
+
+    from haggler.research.values import MAX_CHECK_CHARS
+
+    text = ("Meli+ Esencial $ 21.900/mes. " * 400)[: MAX_CHECK_CHARS - 10]
+    started = time.perf_counter()
+    result = _check("money", "21900 COP/month", text, "meli_co_total")
+    assert time.perf_counter() - started < 5
+    assert result.status == "value_not_in_quote" and "meli_co_esencial" in result.reason
+    too_long = _check("money", "21900 COP/month", text * 2, "meli_co_total")
+    assert too_long.status == "value_not_in_quote" and "too long" in too_long.reason
 
 
 # ------------------------------------------------------------------- int and pct
@@ -744,6 +1525,39 @@ def test_numbers_are_whole_tokens(kind: str, value: Any, quote: str, ok: bool) -
     assert _ok(_check(kind, value, quote)) is ok
 
 
+@pytest.mark.parametrize(
+    ("kind", "value", "quote", "ok"),
+    [
+        # The real Meli+ line: 9 is the percentage, 2 the months.
+        ("int", 9, MELI_LINE, False),
+        ("months", 9, MELI_LINE, False),
+        ("pct", 9, MELI_LINE, True),
+        ("months", 2, MELI_LINE, True),
+        ("pct", 2, MELI_LINE, False),
+        ("months", 6, TELIA_PLAY, True),  # "6 månaderIngen"
+        ("months", 6, "Rabatten gäller i sex månader", True),
+        ("months", 2, "Meli+ Total: $ 19.900 los 2 primeros meses", True),
+        ("months", 3, "Prueba de 3-meses", True),
+        ("months", 10, "Desconto por dez meses", True),
+        ("months", 12, "Meses: 12", True),
+        ("months", 4, "Netflix Premium 4K HDR por 2 meses", False),
+        ("int", 30, MELI_COMPONENTS, False),  # a percentage
+        ("int", 58, "Spara 58 kr/mån jämfört med att köpa tjänsterna separat", False),  # money
+        ("int", 10, "Promoção válida até dez/2026", False),  # December
+        ("int", 10, "Oferta válida até Dez. 2026 para novos assinantes", False),
+        ("int", 12, "Válido hasta las 12:00", False),
+        ("int", 4, "Netflix Premium 4K HDR por 2 meses", False),
+        ("int", 6, "6% de descuento por 2 meses", False),
+        ("int", 5, "Hasta 5 perfiles", True),
+        ("pct", 30, "30 por ciento de descuento", True),
+        ("pct", 30, "30 procent rabatt", True),
+    ],
+)
+def test_numbers_carry_their_unit(kind: str, value: Any, quote: str, ok: bool) -> None:
+    result = _check(kind, value, quote)
+    assert _ok(result) is ok, result
+
+
 # ------------------------------------------------------------------------- dates
 
 
@@ -762,6 +1576,26 @@ def test_numbers_are_whole_tokens(kind: str, value: Any, quote: str, ok: bool) -
 )
 def test_dates_need_the_year(value: Any, quote: str, ok: bool) -> None:
     result = _check("date", value, quote)
+    assert _ok(result) is ok, result
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "quote", "ok"),
+    [
+        ("date_until", "2026-11-01", "Nuevos precios a partir del 1 de noviembre de 2026", False),
+        ("date_until", "2026-04-01", "Priset gäller fr.o.m. 1 april 2026", False),
+        ("date_until", "2026-12-31", "Oferta válida hasta el 31 de diciembre de 2026", True),
+        ("date_until", "2027-03-31", "Rabatten gäller t.o.m. 31 mars 2027", True),
+        ("date_until", "2026-12-31", "Precio especial 31/12/2026", True),  # says neither
+        ("date_from", "2026-04-01", "Priset gäller fr.o.m. 1 april 2026", True),
+        ("date_from", "2026-11-01", "Nuevos precios a partir del 1 de noviembre de 2026", True),
+        ("date_from", "2026-12-31", "Oferta válida hasta el 31 de diciembre de 2026", False),
+        ("date", "2026-11-01", "Nuevos precios a partir del 1 de noviembre de 2026", True),
+        ("date_until", "2027-01-01", "Hasta el 1ro. de enero de 2027", True),
+    ],
+)
+def test_dates_with_a_direction(kind: str, value: str, quote: str, ok: bool) -> None:
+    result = _check(kind, value, quote)
     assert _ok(result) is ok, result
 
 
@@ -806,6 +1640,128 @@ def test_components(value: str, quote: str, ok: bool, cat) -> None:
 
 def test_component_uses_the_default_catalog_when_none_is_given() -> None:
     assert _ok(_check("component", "hbo_max:30", MELI_COMPONENTS))
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id", "why"),
+    [
+        # A discount is no inclusion (the real Meli+ CO and MX lines).
+        ("hbo_max", MELI_COMPONENTS, None, "discount"),
+        ("vix", MELI_COMPONENTS, None, "discount"),
+        (
+            "apple_tv.standard",
+            "30% OFF en HBO Max Estándar, Apple TV, Universal+, Paramount+ y ViX Premium.",
+            None,
+            "discount",
+        ),
+        ("hbo_max", "3 meses gratis de HBO Max", None, "free months"),
+        # Another tier's line (the real Meli+ Esencial description).
+        ("disney_plus.standard_with_ads", MELI_ESENCIAL_PAGE, "meli_co_esencial", "Meli+ Total"),
+        (
+            "disney_plus",
+            "Meli+ Total incluye Disney+. Meli+ Esencial incluye envíos gratis.",
+            "meli_co_esencial",
+            "Meli+ Total",
+        ),
+        # Negations.
+        ("disney_plus", "Disney+ no está incluido en Meli+ Esencial", None, "not included"),
+        ("disney_plus", "Disney+ ingår inte i abonnemanget", None, "not included"),
+        ("disney_plus", "Disney+ is not included in this plan", None, "not included"),
+        ("disney_plus", "Meli+ Esencial: sin Disney+", None, "not included"),
+        ("netflix", "Sin Netflix", None, "not included"),
+        ("netflix", "Netflix not included", None, "not included"),
+        ("netflix", "No incluye: Disney+, Netflix y HBO Max", None, "not included"),
+        ("netflix", "Netflix y Disney+ no están incluidos", None, "not included"),
+        # The real Esencial card: the struck item and its "No incluido" label in one line.
+        (
+            "disney_plus.standard_with_ads",
+            "No incluido: Disney+ Estándar con anuncios.",
+            None,
+            "not",
+        ),
+        (
+            "disney_plus.standard_with_ads",
+            "Disney+ Estándar con anuncios.No incluido: Disney+ Estándar con anuncios.",
+            None,
+            "not included",
+        ),
+        ("hbo_max:30", MELI_COMPONENTS + "No incluido: " + MELI_COMPONENTS, None, "not included"),
+    ],
+)
+def test_a_component_line_that_excludes_discounts_or_names_another_tier_fails(
+    value: str, quote: str, bundle_id: str | None, why: str, cat
+) -> None:
+    result = _check("component", value, quote, bundle_id, catalog=cat)
+    assert result.status == "value_not_in_quote" and why in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "bundle_id"),
+    [
+        ("disney_plus.standard_with_ads", MELI_ESENCIAL_PAGE, "meli_co_total"),
+        ("disney_plus.standard_with_ads", "Disney+ Estándar con anuncios.", "meli_co_esencial"),
+        ("netflix", MELI_MEGA_COMPONENTS, "meli_mx_mega"),
+        ("apple_tv", MELI_MEGA_COMPONENTS, "meli_mx_mega"),
+        ("hbo_max", MELI_MEGA_COMPONENTS, "meli_mx_mega"),
+        ("hbo_max", "Obegränsad Plus med Netflix, Max och Disney+", "telia_se_plus"),
+        ("netflix.standard", "Telco Plus med Netflix Standard 699 kr/mån", None),
+        ("disney_plus", "Netflix Estándar sin anuncios, Disney+ y HBO Max", None),
+        ("hbo_max", "HBO Max, no incluye Netflix", None),  # the negation is Netflix's
+    ],
+)
+def test_real_inclusion_lines_still_confirm(
+    value: str, quote: str, bundle_id: str | None, cat
+) -> None:
+    result = _check("component", value, quote, bundle_id, catalog=cat)
+    assert _ok(result), result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "ok"),
+    [
+        ("hbo_max.premium", TELIA_COMPONENTS, False),  # "Basic med reklam"
+        ("hbo_max.standard", TELIA_COMPONENTS, False),
+        ("netflix.standard", "Netflix Standard med reklam, HBO Max Basic med reklam", False),
+        (
+            "netflix.standard_with_ads",
+            "Netflix Standard med reklam, HBO Max Basic med reklam",
+            True,
+        ),
+        ("netflix.standard", "Netflix Estándar con anuncios incluido", False),
+        ("hbo_max.premium", "Incluye el plan Básico con anuncios de HBO Max", False),
+        ("hbo_max.basic_with_ads", "Incluye el plan Básico con anuncios de HBO Max", True),
+        ("disney_plus.standard", "Incluye Estándar con anuncios de Disney+", False),
+        ("hbo_max.premium", "HBO Max con anuncios", False),  # an ads marker alone
+        ("hbo_max.basic_with_ads", "HBO Max con anuncios", True),
+        ("paramount_plus.standard", "Paramount+ Básico", False),  # a plan it does not have
+    ],
+)
+def test_component_plans(value: str, quote: str, ok: bool, cat) -> None:
+    result = _check("component", value, quote, catalog=cat)
+    assert _ok(result) is ok, result
+
+
+@pytest.mark.parametrize(
+    ("value", "quote", "ok"),
+    [
+        (
+            "hbo_max:30",
+            "30% OFF en Disney+. HBO Max incluido sin costo.",
+            False,
+        ),  # another sentence
+        ("hbo_max:30", "Disney+ con 30% OFF, además HBO Max", False),  # Disney+'s number
+        ("paramount_plus:30", MELI_COMPONENTS, True),  # bare list items
+        ("hbo_max:30", "HBO Max, con 30% OFF", True),
+        # "Max" is a common word: as written only, and never before a number.
+        ("hbo_max", "Dela abonnemanget med max 5 personer i din familj", False),
+        ("hbo_max", "Netflix Premium: máx. 4 pantallas a la vez", False),
+        ("hbo_max:30", "30% OFF en Disney+, máx. 2 cuentas", False),
+        ("hbo_max", "Telia Obegränsad Max 50 GB", False),
+    ],
+)
+def test_component_numbers_and_short_aliases(value: str, quote: str, ok: bool, cat) -> None:
+    result = _check("component", value, quote, catalog=cat)
+    assert _ok(result) is ok, result
 
 
 # --------------------------------------------------------------------------- urls

@@ -57,7 +57,7 @@ bundles:
     country: CO
     name: Meli+ Total
     tier: total
-    aliases: [Meli+ Total]
+    aliases: [Meli+ Total, Plan Total]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "24900", currency: COP, period: month, tax_included: true}
     components:
@@ -100,7 +100,7 @@ bundles:
     country: CO
     name: Meli+ Esencial
     tier: esencial
-    aliases: [Meli+ Esencial]
+    aliases: [Meli+ Esencial, Plan Esencial]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "9900", currency: COP, period: month, tax_included: true}
     components:
@@ -133,7 +133,7 @@ bundles:
     country: MX
     name: Meli+ Mega (con anuncios)
     tier: mega
-    aliases: [Meli+ Mega]
+    aliases: [Meli+ Mega, Plan Mega]
     official_url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
     price: {amount: "399", currency: MXN, period: month, tax_included: true}
     components:
@@ -156,7 +156,7 @@ bundles:
     country: BR
     name: Meli+ Mega
     tier: mega
-    aliases: [Meli+ Mega]
+    aliases: [Meli+ Mega, Plano Mega]
     official_url: https://www.mercadolivre.com.br/assinaturas/melimais
     price: {amount: "74.90", currency: BRL, period: month, tax_included: true}
     components:
@@ -179,6 +179,8 @@ bundles:
     country: SE
     name: Telia Obegränsad Plus + Netflix, HBO Max y Disney+
     tier: obegransad_plus_all_streaming
+    # Product title as the page prints it (H0 probe, 2026-10-09).
+    aliases: [Obegränsad Plus med Netflix, HBO Max och Disney+]
     # /privat/mobilt/abonnemang gives 404 since 2026-10-09 (H0 probe); it redirected here.
     official_url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
     price:

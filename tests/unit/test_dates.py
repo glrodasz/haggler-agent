@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from haggler.dates import contains_date, find_dates
+from haggler.dates import contains_date, date_direction, find_dates
 
 DEC_31 = date(2026, 12, 31)
 
@@ -21,6 +21,8 @@ DEC_31 = date(2026, 12, 31)
         ("Aplica hasta el 31-dic-2026", DEC_31),
         ("Termina el 5 de dic. de 2026", date(2026, 12, 5)),
         ("Vigente hasta el 1ro de enero de 2027", date(2027, 1, 1)),  # Latin American ordinal
+        ("Vigente hasta el 1ro. de enero de 2027", date(2027, 1, 1)),
+        ("Vence 1.° de marzo de 2027", date(2027, 3, 1)),
         ("Desde el 2do de marzo de 2027", date(2027, 3, 2)),
         # pt
         ("Oferta válida até 31 de dezembro de 2026", DEC_31),
@@ -80,3 +82,37 @@ def test_accents_and_case_do_not_matter_and_offsets_stay_valid() -> None:
     assert [d.value for d in found] == [DEC_31, date(2027, 3, 1)]
     assert found[0].raw == "31 DE DEZEMBRO DE 2026"
     assert found[1].raw == "1 de março de 2027"
+
+
+def test_whitespace_runs_count_as_one_space_and_offsets_stay_valid() -> None:
+    text = "Hasta el 31  de\n diciembre   de 2026."
+    (found,) = find_dates(text)
+    assert found.value == DEC_31 and text[found.start : found.end] == found.raw
+    assert found.raw == "31  de\n diciembre   de 2026"
+
+
+def test_a_long_whitespace_run_after_a_month_is_linear() -> None:
+    import time
+
+    started = time.perf_counter()
+    assert find_dates("1 dic" + " " * 50_000 + "x") == []
+    assert time.perf_counter() - started < 1
+
+
+@pytest.mark.parametrize(
+    ("text", "direction"),
+    [
+        ("Nuevos precios a partir del 1 de noviembre de 2026", "from"),
+        ("Erbjudandet gäller fr.o.m. 1 april 2026", "from"),
+        ("Vigente desde el 4 de septiembre de 2026", "from"),
+        ("Från den 1:a april 2026", "from"),
+        ("Oferta válida hasta el 31 de diciembre de 2026", "until"),
+        ("Oferta válida até 31 de dezembro de 2026", "until"),
+        ("Rabatten gäller t.o.m. 31 mars 2027", "until"),
+        ("Valid until December 31, 2026", "until"),
+        ("Precio especial 31/12/2026", None),
+    ],
+)
+def test_date_direction(text: str, direction: str | None) -> None:
+    (found,) = find_dates(text)
+    assert date_direction(text, found) == direction

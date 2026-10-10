@@ -143,6 +143,10 @@ def test_period_marker(text, period):
         ("Then ", "/mo. for 12 months", False),  # "then" right before wins
         ("", " i 1 månad", True),
         ("", "/månad efteråt", False),
+        # Markup glues the next sentence to the unit (real telia.se line): still a duration.
+        ("", "/mån.Rabatten gäller i 6 månaderIngen bindningstid", True),
+        ("", " i 6 månaderIngen bindningstid", True),
+        ("", " i 6 månaderna", False),  # more of a lower-case word is not the unit
     ],
 )
 def test_is_intro(before, after, intro):
