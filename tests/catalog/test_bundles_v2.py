@@ -237,6 +237,40 @@ def _observed_price(plan_id: str) -> dict:
     }
 
 
+def _anchor(fact: str, text: str, **extra: Any) -> Callable[[dict, dict], None]:
+    def mutate(_data: dict, b: dict) -> None:
+        b["watch"]["anchors"].append({"fact": fact, "url": PAGE, "text": text, **extra})
+
+    return mutate
+
+
+def _base_plan(amount: str = "19900") -> Callable[[dict, dict], None]:
+    def mutate(_data: dict, b: dict) -> None:
+        b["price"].update(base_plan_name="Acme Base", base_plan_amount=amount)
+
+    return mutate
+
+
+def _esencial_tier(data: dict, _b: dict) -> None:
+    """A second Acme tier in CO, with its own price and a valid price anchor."""
+    other = _second_bundle(data, official_url="https://www.acme.com.co/esencial")
+    other["price"] = {"amount": "9900", "currency": "COP", "tax_included": True}
+    other["watch"]["pages"][0]["url"] = other["official_url"]
+    other["watch"]["anchors"] = [
+        {
+            "fact": "price",
+            "url": other["official_url"],
+            "text": "Acme Esencial: $ 9.900/mes, envío",
+        },
+        {
+            "fact": "component",
+            "service_id": "netflix",
+            "url": PDF,
+            "text": "Incluye Netflix con anuncios",
+        },
+    ]
+
+
 def _in_sweden(data: dict, b: dict) -> None:
     """The same bundle sold in SE, where the verdict's profile lives."""
     data["providers"][0]["domains"]["SE"] = ["acme.se"]
@@ -334,6 +368,96 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
         "component anchor without a component service",
         _set("watch.anchors.1.service_id", "spotify"),
         "component anchor needs the service_id of a component",
+    ),
+    # anchor values (offline check_value on the anchor text alone)
+    (
+        "price anchor with another amount",
+        _set("watch.anchors.0.text", "Acme Total: $ 21.900/mes, envío gratis"),
+        "price anchor does not state 24900 COP/month: the quote does not state 24900 COP",
+    ),
+    (
+        "price anchor quoting a comparison price",
+        _set("watch.anchors.0.text", "Acme Total: antes $ 24.900/mes, ahora $ 19.900/mes"),
+        "is a comparison (struck-through) price, not the regular price",
+    ),
+    (
+        "price anchor per year for a monthly price",
+        _set("watch.anchors.0.text", "Acme Total: $ 24.900 al año, envío gratis"),
+        "is per year, not per month",
+    ),
+    (
+        "price anchor in another currency",
+        _set("watch.anchors.0.text", "Acme Total: US$ 24.900/mes, envío gratis"),
+        "'US$ 24.900' is USD",
+    ),
+    (
+        "price anchor without the tier name when the provider has two tiers",
+        _then(_esencial_tier, _set("watch.anchors.0.text", "Plan mensual: $ 24.900/mes, envío")),
+        "acme_co_total: price anchor does not state 24900 COP/month: the quote names no tier",
+    ),
+    (
+        "price anchor naming the sibling tier",
+        _then(_esencial_tier, _set("watch.anchors.0.text", "Acme Esencial: $ 24.900/mes, envío")),
+        "the tier named next to the amount is 'Acme Esencial' (acme_co_esencial)",
+    ),
+    (
+        "base_price anchor without base_plan_amount",
+        _anchor("base_price", "Acme Base: $ 19.900/mes, sin permanencia"),
+        "base_price anchor needs price.base_plan_amount to confirm",
+    ),
+    (
+        "base_price anchor with another amount",
+        _then(_base_plan(), _anchor("base_price", "Acme Base: $ 18.900/mes, sin permanencia")),
+        "base_price anchor does not state 19900 COP/month",
+    ),
+    (
+        "intro anchor without intro_amount",
+        _anchor("intro", "Acme Total: $ 9.900/mes por 3 meses"),
+        "intro anchor needs price.intro_amount to confirm",
+    ),
+    (
+        "intro anchor quoting a regular price",
+        _then(
+            _set("price.intro_amount", "9900"),
+            _anchor("intro", "Acme Total: $ 9.900/mes, envío gratis"),
+        ),
+        "is the regular price, not an introductory price",
+    ),
+    (
+        "component anchor that does not name the service",
+        _set("watch.anchors.1.text", "Incluye una plataforma de series con anuncios"),
+        "component anchor does not state netflix.standard_with_ads: the quote does not name",
+    ),
+    (
+        "component anchor naming another plan",
+        _set("watch.anchors.1.text", "Incluye Netflix Premium, sin costo adicional"),
+        "names Netflix premium, not standard_with_ads",
+    ),
+    (
+        "discount anchor without its number",
+        _anchor("component", "20% OFF en HBO Max y otras plataformas", service_id="hbo_max"),
+        "component anchor does not state hbo_max:30",
+    ),
+    (
+        "validity anchor without a year",
+        _anchor("validity", "Oferta válida hasta el 31 de diciembre"),
+        "validity anchor states no date with a year",
+    ),
+    (
+        "validity anchor with another date than valid_until",
+        _then(
+            _set("valid_until", "2026-12-31"),
+            _anchor("validity", "Oferta válida hasta el 30 de noviembre de 2026"),
+        ),
+        "validity anchor does not state 2026-12-31",
+    ),
+    (
+        "validity anchor with another start date than valid_from",
+        _then(
+            _set("valid_from", "2026-04-01"),
+            _anchor("validity", "Erbjudandet gäller fr.o.m. 1 maj 2025, för nya kunder"),
+        ),
+        "validity anchor does not state 2026-04-01",
     ),
     # price and components
     (
@@ -449,6 +573,48 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
 def test_integrity_rule(mutate, expected: str, cat, profiles, instruments) -> None:
     errors = _errors(_mutated(mutate), cat, profiles, instruments)
     assert any(expected in e for e in errors), errors
+
+
+def test_every_anchor_fact_that_states_its_value_passes(cat, profiles, instruments) -> None:
+    data = _mutated(
+        _then(
+            _base_plan(),
+            _set("price.intro_amount", "9900"),
+            _set("valid_until", "2026-12-31"),
+            _anchor("base_price", "Acme Base: $ 19.900/mes, sin permanencia"),
+            _anchor("intro", "Acme Total: $ 9.900/mes por 3 meses, luego $ 24.900/mes"),
+            _anchor("component", "30% OFF en HBO Max y otras plataformas", service_id="hbo_max"),
+            _anchor("validity", "Oferta válida hasta el 31 de diciembre de 2026"),
+        )
+    )
+    assert _errors(data, cat, profiles, instruments) == []
+
+
+def test_two_tiers_with_named_price_anchors_pass(cat, profiles, instruments) -> None:
+    assert _errors(_mutated(_esencial_tier), cat, profiles, instruments) == []
+
+
+def test_validity_anchor_without_a_yaml_date_needs_any_dated_text(
+    cat, profiles, instruments
+) -> None:
+    data = _mutated(_anchor("validity", "Erbjudandet gäller fr.o.m. 1 april 2026"))
+    assert _errors(data, cat, profiles, instruments) == []
+
+
+def test_validity_anchor_may_state_the_start_date(cat, profiles, instruments) -> None:
+    data = _mutated(
+        _then(
+            _set("valid_from", "2026-04-01"),
+            _set("valid_until", "2027-03-31"),
+            _anchor("validity", "Erbjudandet gäller fr.o.m. 1 april 2026, för nya kunder"),
+        )
+    )
+    assert _errors(data, cat, profiles, instruments) == []
+
+
+def test_price_anchor_with_the_ordinary_price_alone_passes(cat, profiles, instruments) -> None:
+    data = _mutated(_set("watch.anchors.0.text", "Acme Total: Precio regular $ 24.900/mes"))
+    assert _errors(data, cat, profiles, instruments) == []
 
 
 def test_anchor_may_quote_the_index_page(cat, profiles, instruments) -> None:

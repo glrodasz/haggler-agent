@@ -12,6 +12,7 @@ import yaml
 from babel.numbers import list_currencies
 
 from haggler.config import repo_root
+from haggler.dates import find_dates
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
     Bundle,
@@ -22,7 +23,9 @@ from haggler.models.curated import (
 )
 from haggler.models.profiles import Profile, ProfilesFile
 from haggler.models.research import MAX_QUOTE, ReviewFile
+from haggler.money import format_money_code
 from haggler.research.evidence import MIN_QUOTE, public_host
+from haggler.research.values import ValueKind, check_value
 
 KNOWN_ADAPTERS = {
     "netflix_help",
@@ -74,6 +77,11 @@ def load_payment_instruments(
 def load_bundles(curated_dir: Path | None = None) -> BundlesFile:
     base = curated_dir or repo_root() / "data" / "curated"
     return BundlesFile.model_validate(_read_yaml(base / "bundles.yaml"))
+
+
+@cache
+def default_bundles() -> BundlesFile:
+    return load_bundles()
 
 
 def _curated_dir(curated_dir: Path | None) -> Path:
@@ -128,7 +136,7 @@ def _split_domain(entry: str) -> tuple[str, str | None]:
     return host, (slash + path if slash else None)
 
 
-def _on_domains(url: str, domains: Iterable[str]) -> bool:
+def on_domains(url: str, domains: Iterable[str]) -> bool:
     """https on one of `domains` or a subdomain of one; an entry with a path prefix also needs
     the URL's path under that prefix (one host serving several countries)."""
     parts = urlsplit(url)
@@ -147,7 +155,7 @@ def _on_domains(url: str, domains: Iterable[str]) -> bool:
 def _domain_errors(owner: str, domains: list[str], urls: list[str] = ()) -> list[str]:
     errors = [f"{owner}: bad official domain {d!r}" for d in domains if not _DOMAIN.fullmatch(d)]
     for url in urls:
-        if not _on_domains(url, domains):
+        if not on_domains(url, domains):
             errors.append(f"{owner}: research url {url!r} is not https on an official domain")
     return errors
 
@@ -197,7 +205,7 @@ def _bundle_url_errors(who: str, b: Bundle, provider: Provider) -> list[str]:
     return [
         f"{who}: {what} {url!r} is not https on a {b.country} domain of provider {provider.id}"
         for what, url in urls
-        if not _on_domains(url, domains)
+        if not on_domains(url, domains)
     ]
 
 
@@ -238,6 +246,72 @@ def _watch_errors(who: str, b: Bundle) -> list[str]:
             errors.append(f"{who}: {a.fact} anchor url {a.url} is not one of the watch pages")
         if a.fact == "component" and a.service_id not in component_ids:
             errors.append(f"{who}: component anchor needs the service_id of a component")
+    return errors
+
+
+_PRICE_FACTS: dict[str, tuple[ValueKind, str]] = {
+    "price": ("money", "amount"),
+    "base_price": ("base_money", "base_plan_amount"),
+    "intro": ("intro_money", "intro_amount"),
+}
+_COUNTED_INCLUSIONS = ("discount_pct", "discount_abs", "free_months")
+
+
+def _anchor_value_errors(
+    who: str, b: Bundle, bundles: BundlesFile, cat: Catalog, provider: Provider | None
+) -> list[str]:
+    """Each anchor states the value it confirms, checked on its text alone (offline, no page
+    context): a price anchor the YAML amount (haggler.research.values.check_value: amount,
+    currency, period, role, tier name), a component anchor its service (and the number of a
+    discount), a validity anchor a date with a year (one of the YAML's valid_from, valid_until
+    or intro_valid_until when one is set)."""
+    errors: list[str] = []
+    price = b.price
+    for a in b.watch.anchors:
+        text = " ".join(a.text.split())
+        if a.fact in _PRICE_FACTS:
+            kind, attr = _PRICE_FACTS[a.fact]
+            amount = getattr(price, attr)
+            if amount is None:
+                if a.fact != "price":  # an observed price has no YAML amount to compare
+                    errors.append(f"{who}: {a.fact} anchor needs price.{attr} to confirm")
+                continue
+            result = check_value(
+                kind,
+                amount,
+                text,
+                country=b.country,
+                currency=price.currency,
+                period=price.period,
+                provider=provider,
+                bundle=b,
+                bundles=bundles.bundles,
+                catalog=cat,
+            )
+            if not result.ok:
+                value = format_money_code(amount, price.currency, price.period)
+                errors.append(f"{who}: {a.fact} anchor does not state {value}: {result.reason}")
+        elif a.fact == "component":
+            comp = next((c for c in b.components if c.service_id == a.service_id), None)
+            if comp is None or a.service_id not in {s.id for s in cat.services}:
+                continue  # reported by _watch_errors / _bundle_errors
+            value = comp.service_id + (f".{comp.plan_id}" if comp.plan_id else "")
+            if comp.inclusion in _COUNTED_INCLUSIONS and comp.value is not None:
+                value = f"{comp.service_id}:{comp.value}"
+            result = check_value(
+                "component", value, text, country=b.country, currency=price.currency, catalog=cat
+            )
+            if not result.ok:
+                errors.append(f"{who}: component anchor does not state {value}: {result.reason}")
+        elif a.fact == "validity":
+            found = {d.value for d in find_dates(text)}
+            dates = (b.valid_from, b.valid_until, price.intro_valid_until)
+            wanted = {d for d in dates if d is not None}
+            if not found:
+                errors.append(f"{who}: validity anchor states no date with a year")
+            elif wanted and not found & wanted:
+                listed = " or ".join(sorted(d.isoformat() for d in wanted))
+                errors.append(f"{who}: validity anchor does not state {listed}")
     return errors
 
 
@@ -383,6 +457,7 @@ def _bundle_errors(
                     "must be off"
                 )
         errors.extend(_watch_errors(who, b))
+        errors.extend(_anchor_value_errors(who, b, bundles, cat, provider))
         errors.extend(_price_errors(who, b, cat))
         errors.extend(_component_errors(who, b))
         errors.extend(_verification_errors(who, b))

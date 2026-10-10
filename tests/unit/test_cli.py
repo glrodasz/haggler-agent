@@ -10,6 +10,7 @@ import types
 from pathlib import Path
 
 import pytest
+import yaml
 
 from haggler import cli
 from haggler.config import Settings, llm_credentials_available
@@ -356,6 +357,36 @@ def test_validate_catalog_integrity_errors(tmp_path: Path, capsys) -> None:
     captured = capsys.readouterr()
     assert "ERROR spotify: unknown adapter nope" in captured.out
     assert "1 errores de integridad" in captured.err
+
+
+def test_validate_catalog_checks_anchor_values_offline(tmp_path: Path, capsys) -> None:
+    """An anchor must state the YAML value on its text alone: a Meli+ Total price anchor that
+    quotes the 2-month intro price fails, one that quotes the YAML price passes."""
+    catalog_dir, curated_dir = _copy_catalog(tmp_path)
+    path = curated_dir / "bundles.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    (total,) = [b for b in data["bundles"] if b["bundle_id"] == "meli_plus_co_total"]
+    amount = total["price"]["amount"]
+    page = total["watch"]["pages"][0]["url"]
+    argv = [
+        "validate-catalog",
+        "--catalog-dir",
+        str(catalog_dir),
+        "--curated-dir",
+        str(curated_dir),
+    ]
+
+    def with_anchor(text: str) -> None:
+        total["watch"]["anchors"] = [{"fact": "price", "url": page, "text": text}]
+        path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+
+    with_anchor("Meli+ Total: $ 19.900/mes por 2 meses")
+    assert cli.main(argv) == 1
+    out = capsys.readouterr().out
+    assert f"ERROR bundle meli_plus_co_total: price anchor does not state {amount} COP/month" in out
+
+    with_anchor(f"Meli+ Total: $ {int(amount):,}/mes".replace(",", ".") + ", envío gratis")
+    assert cli.main(argv) == 0, capsys.readouterr().out
 
 
 def test_validate_catalog_schema_errors(tmp_path: Path, capsys) -> None:

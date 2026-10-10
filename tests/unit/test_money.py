@@ -176,3 +176,39 @@ def test_arabic_digits_in_bare_amounts():
     assert parse_number("٤٩٫٩٩") == Decimal("49.99")
     assert parse_number("١٬٢٩٩") == Decimal("1299")
     assert parse_bare_amount("السعر ١٬٢٩٩٫٥٠") == Decimal("1299.50")
+
+
+# ---- currency words (value-vs-quote checks only) ---------------------------------------------
+
+MELI_LINE = (
+    "Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. "
+    "Precio anterior: $ 21.900 pesos por mes."
+)
+
+
+def test_currency_words_are_opt_in():
+    """The daily pipeline never reads "19900 pesos" as a price; value checks do."""
+    assert [(m.amount, m.currency) for m in find_prices(MELI_LINE, ["COP"])] == [
+        (Decimal("21900"), "COP")
+    ]
+    found = find_prices(MELI_LINE, ["COP"], words=True)
+    assert [(m.amount, m.currency, m.raw) for m in found] == [
+        (Decimal("19900"), "COP", "19900 pesos"),
+        (Decimal("21900"), "COP", "$ 21.900"),  # "pesos" after "$ 21.900" adds nothing
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected", "found"),
+    [
+        ("19900 pesos por mes", ["MXN"], [("19900", "MXN")]),
+        ("19900 pesos por mes", ["SEK"], []),  # only where the country expects a peso
+        ("215 kronor i månaden", ["SEK"], [("215", "SEK")]),
+        ("74,90 reais por mês", ["BRL"], [("74.90", "BRL")]),
+        ("pesos 19900", ["COP"], []),  # the word comes after the amount
+        ("19900 pesosx", ["COP"], []),
+    ],
+)
+def test_currency_words(text, expected, found):
+    got = find_prices(text, expected, words=True)
+    assert [(str(m.amount), m.currency) for m in got] == found

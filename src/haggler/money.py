@@ -9,6 +9,13 @@ Separator rules (no locale needed):
   * one separator, followed by exactly 3 digits -> thousands ("18.900", "1,559");
   * one separator, followed by 1-2 digits -> decimal ("129,00", "4.99");
   * spaces / NBSP / thin spaces / apostrophes between digit groups -> thousands.
+
+Currency words after an amount ("19900 pesos", "215 kronor") count only with words=True and
+only when the page's country expects one of their currencies (value-vs-quote checks use them;
+the daily price pipeline does not).
+
+`format_money_code` / `parse_money_code` write and read the compact value form used by research
+facts and the change log: "21900 COP/month", "74.90 BRL/month", "1290 SEK/year".
 """
 
 from __future__ import annotations
@@ -104,6 +111,8 @@ _ISO_CODES = [
     "SGD",
     "UAH",
 ]
+
+ISO_CODES = frozenset(_ISO_CODES)
 
 # Currencies whose prices are effectively always shown without minor units.
 ZERO_DECIMAL = {"CLP", "COP", "VND", "IDR", "JPY", "KRW", "ISK", "HUF", "PKR", "UGX"}
@@ -210,8 +219,40 @@ def _resolve(marker: str, expected: list[str]) -> str | None:
     return candidates[0] if len(candidates) == 1 else None
 
 
-def find_prices(text: str, expected: list[str] | None = None) -> list[Money]:
-    """All prices in `text` that carry a currency marker."""
+# Currency words written after an amount; ambiguous on their own, so they only count when the
+# country expects one of their currencies ("19900 pesos" on a Colombian page is COP).
+_WORD_MARKERS: dict[str, tuple[str, ...]] = {
+    "pesos": ("COP", "MXN", "ARS", "CLP"),
+    "peso": ("COP", "MXN", "ARS", "CLP"),
+    "kronor": ("SEK",),
+    "krona": ("SEK",),
+    "reais": ("BRL",),
+    "soles": ("PEN",),
+}
+_WORD_PRICE_RE = re.compile(
+    rf"(?P<num>{_NUM})[{_SPACES}]?(?P<word>{'|'.join(_WORD_MARKERS)})(?![^\W\d_])",
+    re.IGNORECASE,
+)
+
+
+def _word_prices(text: str, expected: list[str], taken: list[Money]) -> list[Money]:
+    out: list[Money] = []
+    for m in _WORD_PRICE_RE.finditer(_ascii_digits(text)):
+        if any(p.start < m.end() and m.start() < p.end for p in taken):
+            continue
+        currency = next((c for c in expected if c in _WORD_MARKERS[m["word"].lower()]), None)
+        amount = parse_number(m["num"])
+        if currency is None or amount is None:
+            continue
+        out.append(Money(amount, currency, text[m.start() : m.end()], m.start(), m.end()))
+    return out
+
+
+def find_prices(
+    text: str, expected: list[str] | None = None, *, words: bool = False
+) -> list[Money]:
+    """All prices in `text` that carry a currency marker (with words=True also a currency word
+    after the amount, see the module docstring)."""
     expected = expected or []
     out: list[Money] = []
     for m in _PRICE_RE.finditer(_ascii_digits(text)):
@@ -227,6 +268,8 @@ def find_prices(text: str, expected: list[str] | None = None) -> list[Money]:
             continue
         raw = text[m.start() : m.end()]
         out.append(Money(amount, _resolve(marker, expected), raw, m.start(), m.end()))
+    if words:
+        out = sorted([*out, *_word_prices(text, expected, out)], key=lambda p: p.start)
     return out
 
 
@@ -246,3 +289,34 @@ def parse_bare_amount(text: str) -> Decimal | None:
     """Parse a price string that has no currency marker (e.g. JSON field "129,00")."""
     m = re.search(_NUM, _ascii_digits(text))
     return parse_number(m.group(0)) if m else None
+
+
+# ---- compact value form: "21900 COP/month" --------------------------------------------------
+
+MONEY_PERIODS = ("month", "year", "quarter")
+_MONEY_CODE = re.compile(
+    r"^\s*(?P<amount>\d+(?:\.\d+)?)\s+(?P<currency>[A-Z]{3})(?:\s*/\s*(?P<period>[a-z]+))?\s*$"
+)
+
+
+def plain_amount(amount: Decimal) -> str:
+    """129.00 -> "129", 4.90 -> "4.90", 18900 -> "18900" (never exponent notation)."""
+    if amount == amount.to_integral_value():
+        return str(int(amount))
+    return format(amount, "f")
+
+
+def format_money_code(amount: Decimal, currency: str, period: str | None = None) -> str:
+    """The compact form of an amount: "21900 COP/month" ("21900 COP" without a period)."""
+    text = f"{plain_amount(amount)} {currency}"
+    return f"{text}/{period}" if period else text
+
+
+def parse_money_code(text: str) -> tuple[Decimal, str, str | None] | None:
+    """Read the compact form: "21900 COP/month" -> (Decimal("21900"), "COP", "month"); the
+    period is optional ("21900 COP" -> period None). None when `text` is not in that form (a
+    decimal point, never a comma; an upper-case ISO code; month, year or quarter)."""
+    m = _MONEY_CODE.match(text)
+    if m is None or (m["period"] is not None and m["period"] not in MONEY_PERIODS):
+        return None
+    return Decimal(m["amount"]), m["currency"], m["period"]

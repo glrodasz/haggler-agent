@@ -10,6 +10,7 @@ from haggler.sources.base import market_segment
 from haggler.sources.heuristics import (
     classify_prices,
     detect_period,
+    follows_then,
     is_comparison,
     is_intro,
     is_savings,
@@ -276,3 +277,29 @@ def test_intro_count_swallowed_by_an_earlier_price_still_counts():
 def test_suffix_marker_followed_by_a_colon_is_still_the_prices_own():
     assert _roles("$10.99 per month: cancel anytime", ["USD"]) == [("10.99", "month", "regular")]
     assert _roles("€99 yearly: best value", ["EUR"]) == [("99", "year", "regular")]
+
+
+@pytest.mark.parametrize(
+    ("before", "then"),
+    [
+        ("Apple One Familj: 0 kr i 1 månad, sedan ", True),
+        ("$ 9.900/mes por 3 meses, luego ", True),
+        ("Free for 1 month, then just ", True),
+        ("Ordinarie pris: ", False),
+        ("Meli+ Total: ", False),
+    ],
+)
+def test_follows_then(before: str, then: bool) -> None:
+    assert follows_then(before) is then
+
+
+def test_classify_prices_reads_currency_words_only_when_asked() -> None:
+    line = "19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes."
+    assert [(str(i.money.amount), i.role) for i in classify_prices(line, ["COP"])] == [
+        ("21900", "regular")
+    ]
+    infos = classify_prices(line, ["COP"], currency_words=True)
+    assert [(str(i.money.amount), i.period, i.role) for i in infos] == [
+        ("19900", "month", "intro"),
+        ("21900", "month", "regular"),
+    ]

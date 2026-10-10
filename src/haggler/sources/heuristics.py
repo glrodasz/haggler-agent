@@ -167,6 +167,12 @@ _INTRO_WORDS = re.compile(
 _CLAUSE = re.compile(r"[.!?;•|]\s")
 
 
+def follows_then(before: str) -> bool:
+    """True when `before`, the text before a price, ends in "then/därefter/luego ...": the price
+    is the regular one that follows an offer ("Free for 1 month, then $10.99/mo.")."""
+    return bool(_THEN.search(before[-80:]))
+
+
 def is_intro(before: str, after: str, *, words: bool = False) -> bool:
     """True for introductory prices: "0 kr i 1 månad", "3 months for €0", "€5 for 3 months".
 
@@ -235,14 +241,20 @@ class PriceInfo:
 
 
 def classify_prices(
-    text: str, expected: list[str], *, next_text: str = "", intro_words: bool = False
+    text: str,
+    expected: list[str],
+    *,
+    next_text: str = "",
+    intro_words: bool = False,
+    currency_words: bool = False,
 ) -> list[PriceInfo]:
     """Every price in `text` with its stated period and role (see the module docstring).
 
     `next_text` is the following line: a short one holds a period split off by markup
-    ("<span>1 090 kr</span><div>/år</div>").
+    ("<span>1 090 kr</span><div>/år</div>"). currency_words=True also reads amounts followed by
+    a currency word ("19900 pesos", see haggler.money.find_prices).
     """
-    found = find_prices(text, expected)
+    found = find_prices(text, expected, words=currency_words)
     out: list[PriceInfo] = []
     prev_end = 0
     for k, m in enumerate(found):
