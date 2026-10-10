@@ -4,9 +4,11 @@ Agente construido con **Google ADK** (`google-adk` 2.x) que recolecta cada día 
 suscripciones de consumo **por país** desde fuentes oficiales, los valida y alimenta un sitio
 estático para encontrar la combinación más barata *y factible* para quien vive en Suecia.
 
-> Estado: **Fase 2** — precios diarios, sitio y un agente semanal de investigación de
-> factibilidad con perfiles configurables. Bundles e instrumentos de pago siguen curados a mano
-> (`data/curated/`). Ver [el roadmap](#roadmap).
+> Estado: **Fase 3** — precios diarios, sitio, un agente semanal de investigación de factibilidad
+> con perfiles configurables y la vigilancia de paquetes (bundles): sus valores siguen curados a
+> mano en `data/curated/bundles.yaml`, y un vigilante sin LLM los confirma en las páginas y PDF
+> oficiales. Faltan los datos de la primera ola (las anclas, tras el primer despliegue). Ver
+> [el roadmap](#roadmap).
 
 ## Qué hace
 
@@ -32,6 +34,16 @@ recomienda declarar datos falsos.
 | Evaluar | Función pura (`research/evaluate.py`) que deriva los tres ejes **por perfil** (`data/curated/profiles.yaml`): país de la tarjeta, presencia, documentos, dirección. Lo curado gana; las mejoras exigen fuente oficial; una ruta que requiere declarar datos falsos es *No factible*. |
 | Revisar | Los hallazgos quedan *Pendiente de revisión* hasta `haggler research accept`; el comparador los excluye salvo que se active la casilla. |
 
+### Paquetes (Fase 3)
+
+| Paso | Cómo |
+|---|---|
+| Valores | `data/curated/bundles.yaml` es la única fuente (precio, intro, plan base, componentes, fechas, requisitos) y ningún job lo escribe. Cada valor se confirma con un **ancla**: una cita literal copiada de nuestra propia extracción de la página oficial. |
+| Vigilar | Dentro del job semanal, sin LLM ni consultas: lee las páginas y las listas PDF versionadas de los paquetes en modo `auto` (robots.txt, sin evadir muros, dominios oficiales del país del paquete), comprueba las anclas, anota pistas de precio y detecta ediciones nuevas. |
+| Proponer | Un agente con Google Search busca valores y requisitos de hasta 2 paquetes por semana, después de todo lo de la Fase 2. Un valor solo cuenta si la cita está en una página oficial del país y dice ese valor (chequeo valor‑cita). |
+| Revisar | `haggler research review --subject <id>` imprime un snippet YAML por propuesta; se acepta pegándolo en un PR (`validate-catalog` comprueba el ancla offline) y la siguiente corrida lo verifica en línea. La factibilidad se acepta por id, como en la Fase 2. |
+| Mostrar | `/paquetes`: estado derivado (verificado, requiere revisión, verificación manual, sin verificar, vencido), precio mensual con y sin la comisión de cambio del 2 %, ahorro sin contar el precio de introducción y veredicto por perfil. |
+
 ## Arquitectura
 
 ```
@@ -54,7 +66,8 @@ plan_tasks → fetch_and_parse (paralelo, reintentos por ítem) → llm_extract 
 Workflow de investigación:
 
 ```
-plan_research → research (agentes con Google Search) → verify_evidence (nuestro fetch) → persist
+plan_research → watch_bundles (vigilante de paquetes, sin LLM) → research (agentes con Google Search)
+              → verify_evidence (nuestro fetch) → persist
 ```
 
 ## Estructura
@@ -67,7 +80,7 @@ catalog/            servicios, planes, fuentes y países (YAML editable)
 data/latest/        últimos precios publicados (gestionado por el bot)
 data/changes/       historial de cambios de precio (append-only)
 data/curated/       factibilidad, perfiles, revisiones, bundles, instrumentos de pago
-data/research/      hechos verificados por el agente de investigación (gestionado por el bot)
+data/research/      hechos verificados por el agente y estado del vigilante de paquetes (bot)
 web/                sitio estático (Astro + Preact)
 infra/              bootstrap de GCP
 .github/workflows/  CI, probe, despliegue del job, publicación
@@ -98,6 +111,10 @@ uv run haggler research run --store local --services netflix --pairs spotify:CO
 uv run haggler research review                                   # pendientes e impacto
 uv run haggler research accept netflix --by tu-usuario
 
+# Paquetes (docs/SETUP.md §14)
+uv run haggler research run --store local --watch-only           # solo el vigilante: 0 consultas
+uv run haggler research review --bundles                         # propuestas y snippets YAML
+
 # UI de desarrollo de ADK
 PYTHONPATH=agents uv run adk web agents
 ```
@@ -112,9 +129,12 @@ Despliegue en GCP y GitHub Pages: ver [docs/SETUP.md](docs/SETUP.md).
 ## Roadmap
 
 1. **Fase 1**: precios diarios por país + sitio mínimo.
-2. **Fase 2 (esta)**: agente semanal de investigación de factibilidad (hechos verificados con cita
+2. **Fase 2**: agente semanal de investigación de factibilidad (hechos verificados con cita
    literal, evaluador determinístico por perfil, revisión humana por hash de evidencia).
-3. **Fase 3**: agente de bundles (Meli+, telcos, Apple One…) que monitorea páginas/PDF oficiales.
+3. **Fase 3 (esta)**: vigilancia de paquetes (Meli+, Telia, Apple One…). Hecho: YAML canónico con
+   anclas, vigilante semanal sin LLM de páginas y PDF oficiales, agente que solo propone,
+   estado derivado, ahorro honesto y veredicto por perfil en `/paquetes`. Pendiente: los datos de
+   la primera ola (anclas copiadas del probe tras el despliegue) y la segunda (Telia Play).
 4. **Fase 4**: optimizador de combinaciones en el navegador (una región por cuenta Apple/Google,
    máximo de instrumentos de pago extranjeros, bundles como SKU virtuales).
 

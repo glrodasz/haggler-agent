@@ -10,7 +10,7 @@ Cloud Scheduler (europe-north1, 04:17 Europe/Stockholm)
    ▼
 Cloud Run Job haggler-daily (europe-north2)  ──►  gs://PROYECTO-haggler-data/
    imagen de Artifact Registry                      raw/  runs/  latest/
-   cuenta haggler-job + Gemini en Vertex AI         research/  (semanal, §13)
+   cuenta haggler-job + Gemini en Vertex AI         research/  (semanal, §13 y §14)
                                                           │
 Cloud Run Job haggler-research (lunes 05:23) ─────────────┤
    misma imagen: haggler research run                     ▼
@@ -23,7 +23,7 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
 | `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación y `mode=bundles` mide la legibilidad de las páginas de los paquetes (no usa GCP) |
 | `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
-| `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages |
+| `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages; el resumen del run cuenta lo que hay por revisar en los paquetes (§14) |
 
 ## 1. Requisitos
 
@@ -119,6 +119,8 @@ Opcionales:
 | `GCP_RESEARCH_JOB_NAME` | variable | nombre del job de investigación si el bootstrap se corrió con otro `RESEARCH_JOB` (por defecto `haggler-research`) |
 | `HAGGLER_EXTRACT_MODEL` | variable | modelo Gemini del fallback LLM si el de por defecto (`gemini-3.1-flash-lite`) no está disponible en Vertex; `deploy-job.yml` lo pasa al job |
 | `HAGGLER_RESEARCH_MODEL` | variable | modelo Gemini con Google Search del job de investigación (por defecto `gemini-3-flash-preview`; el probe `mode=research` lista los disponibles) |
+| `HAGGLER_RESEARCH_MAX_BUNDLES` | variable | paquetes que el agente investiga por corrida (por defecto 2; §14); `deploy-job.yml` lo pasa al job de investigación si es un número entero |
+| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | variable | URL distintas que el vigilante de paquetes lee por corrida (por defecto 40; §14); igual que la anterior |
 | `GEMINI_API_KEY` | **secreto** | clave de Google AI Studio, solo para `probe.yml` en `mode=full` y `mode=research` (sin ella el probe corre sin LLM) |
 
 Mientras falten variables, `deploy-job.yml` y el paso de sync de `publish.yml` no fallan: dejan un
@@ -248,8 +250,9 @@ gcloud logging read 'resource.type="cloud_scheduler_job"' --freshness=2d --limit
 ```
 
 **GitHub Actions**: pestaña *Actions*. `publish.yml` deja en el resumen del run el `diff --stat`
-de `data/` (y un *warning* si el sync falló); `probe.yml` deja el `summary.md` del probe en el
-resumen y `summary.md` + `summary.json` como artefacto `probe-summary-<modo>` (3 días).
+de `data/` (y un *warning* si el sync falló) y la línea "Paquetes: …" con lo que hay por revisar
+(§14); `probe.yml` deja el `summary.md` del probe en el resumen y `summary.md` + `summary.json`
+como artefacto `probe-summary-<modo>` (3 días).
 
 ## 8. Probe (afinar parsers con las páginas reales)
 
@@ -354,6 +357,9 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 | `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con la ruta base `/haggler-agent` y no detecta un dominio propio |
 | `publish`: el deploy a Pages falla | Pages no está habilitado con *Source: GitHub Actions* (paso 4), o se lanzó desde una rama que no es `main` |
 | Los workflows programados dejaron de correr | GitHub desactiva los `schedule` de repos públicos tras 60 días sin actividad; reactivarlos en *Actions* |
+| `publish`: *warning* "resumen de paquetes" | `haggler research review --bundles --summary` falló (el log del paso muestra el error); solo falta la línea del resumen, el sitio se publica igual. Reproducirlo en local con `data/` al día (§14) |
+| `deploy-job`: *warning* "… no es un número entero" | la variable de repositorio `HAGGLER_RESEARCH_MAX_BUNDLES` o `HAGGLER_BUNDLE_WATCH_MAX_PAGES` no es un entero; el job queda con el valor por defecto. Corregirla y volver a correr `deploy-job` |
+| Un paquete sigue en *Requiere revisión* | `haggler research review --subject <id>` da la causa. Una propuesta oficial que difiere del YAML: pegar su snippet o rechazarla. Sin propuesta ("Propuestas de valor: ninguna") no hay nada que pegar ni rechazar, y `reject` no cambia el estado: si falta un ancla de precio, plan base o componente en una página que cargó, volver a copiar su texto de la salida del probe `mode=bundles` (§8), o quitar el ancla vieja, en un PR a `bundles.yaml`; si su lista PDF tiene una edición nueva, cambiar `watch.pages[].url` a esa edición y volver a copiar sus anclas de ella (§14, "Sin propuesta") |
 
 ## 12. Notas de seguridad
 
@@ -392,11 +398,12 @@ research/runs/AAAA-MM-DD/RUN/report.json    presupuesto usado, verificación por
 research/latest/{services,pairs,instruments}.json   hechos verificados (citas + URL + fecha)
 research/latest/state.json                  vigencia y reintentos por sujeto
 research/latest/run.json                    se escribe al final, con los SHA-256
+research/latest/{bundles,bundle_watch}.json paquetes (§14)
 research/usage/AAAA-MM.json                 llamadas y consultas del mes (también las de --dry-run)
 raw/research/AAAA-MM-DD/…                   páginas leídas (se borran a los 30 días)
 ```
 
-`publish.yml` no cambia: `haggler sync` también copia la investigación a `data/research/`, y
+`haggler sync` (en `publish.yml`) también copia la investigación a `data/research/`, y
 `haggler site-data` calcula los veredictos por perfil (`data/curated/profiles.yaml`). Los
 hallazgos nuevos aparecen en el sitio como **Pendiente de revisión** y el comparador los ignora
 salvo que se marque la casilla correspondiente.
@@ -438,3 +445,274 @@ con `--max-retries 0`: un reintento gastaría otra vez las consultas de búsqued
 
 Nada de esto es asesoría legal: el sitio informa riesgos con su fuente y nunca sugiere VPN ni
 declarar datos falsos (una ruta que lo exigiría se muestra como *No factible*).
+
+## 14. Paquetes (Fase 3)
+
+Los paquetes promocionales (Meli+, Telia, Apple One…) están en `data/curated/bundles.yaml`, **la
+única fuente de sus valores**: precio, precio de introducción, plan base, permanencia,
+componentes, fechas y requisitos. Ningún job escribe ese archivo. Lo automático es evidencia (el
+vigilante) o propuestas (las pistas del vigilante y los hallazgos del agente); un valor solo
+cambia cuando una persona edita el YAML en un pull request.
+
+No hay job, Scheduler ni cambios en `bootstrap.sh` nuevos: todo corre dentro de
+`haggler-research` (§13), y `publish.yml` lo sincroniza y lo publica como el resto.
+
+```
+plan_research → watch_bundles (vigilante, sin LLM) → research → verify_evidence → persist
+```
+
+### El vigilante: qué hace y cuándo
+
+- **Cuándo**: en cada corrida de `haggler-research` (los lunes a las 05:23 Europe/Stockholm, o a
+  mano), siempre: también con el guardia mensual de consultas agotado, con `--no-llm`, con
+  `--max-jobs 0` y con `--watch-only`. No usa el modelo ni Google Search.
+- **Qué lee**: las páginas (`watch.pages`) de cada paquete con `watch.mode: auto`, de un
+  proveedor con `automated_access: allowed` y no vencido. Cada URL una vez por corrida, como
+  máximo `HAGGLER_BUNDLE_WATCH_MAX_PAGES` (40) URL distintas, con las reglas de acceso de todo el
+  agente: `robots.txt` en cada salto (también la página índice y el PDF), user agent
+  identificable, al menos 3 s entre peticiones a un mismo host, sin proxies y sin evadir muros.
+  Una página que no cabe en el tope queda `over_budget`, nunca se omite en silencio.
+- **Qué registra**, por paquete, en `bundle_watch.json`:
+  - cada página: su estado (`ok`, `blocked`, `robots_disallowed`, `not_found`, `wrong_country`,
+    `pdf_error`…), la URL final y la edición, si es un PDF versionado;
+  - cada ancla de `watch.anchors`: `verified` (la cita está en el texto visible y dice el valor
+    del YAML), `missing` (la página cargó y la cita no está, o ya no dice ese valor),
+    `embedded_only` (solo en datos embebidos: nunca confirma), `outdated_document` (cita una
+    edición del PDF que ya tiene otra más nueva) o `unreadable` (no se pudo leer la página:
+    **nunca** cuenta como "cambió el valor");
+  - las **pistas de precio**: importes en la moneda del país que el chequeo valor‑cita lee como
+    precio del paquete y que difieren del YAML. Son propuestas, nunca valores;
+  - el resultado: `changed` (falta un ancla de precio, plan base o componente en una página que
+    cargó), `new_document` (la lista PDF tiene una edición más nueva), `unreadable` (no se pudo
+    leer ninguna página) u `ok`.
+- **PDF versionados** (las listas de precios de Telia): con `index_url` + `link_pattern` se lee
+  primero el índice y se toma la edición más nueva. El texto se extrae en un proceso aparte, con
+  límites, y **nunca** va al modelo.
+- **Pausa**: una página ilegible 3 corridas seguidas no se vuelve a pedir durante 28 días
+  (conserva su último estado).
+
+### El agente de paquetes
+
+- Investiga paquetes **después** de todos los sujetos de la Fase 2, con los mismos topes de
+  llamadas y consultas y el mismo guardia mensual: si el presupuesto se acaba, los paquetes son lo
+  primero que se salta. Como máximo `HAGGLER_RESEARCH_MAX_BUNDLES` (2) por corrida.
+- Solo elige paquetes `auto` (un `manual` solo si se pide con `--bundles`; nunca uno `off`,
+  vencido o de un proveedor que prohíbe el acceso automatizado), a los 28 días de su última
+  investigación, o a los 14 si la oferta o su precio de introducción terminan en los próximos 14
+  días. Entre los que tocan van primero los que el vigilante vio cambiar en esa corrida, luego
+  los nunca investigados, los que tienen valores sin ancla, los que vencen pronto y los más
+  antiguos.
+- Hay dos clases de hallazgos:
+  - **valores** (precio, intro, plan base, permanencia, fechas, componentes, descuentos, URL de
+    la lista de precios): solo cuentan con una cita literal en una página **oficial del país del
+    paquete** que además pase el chequeo valor‑cita (si no, `value_not_in_quote` o
+    `implausible`). Se aceptan editando el YAML (ver el ciclo de revisión);
+  - **factibilidad** (cláusula de residencia, controles, línea local, medio de pago, consulta de
+    crédito…): como en la Fase 2, se aceptan por id y hash.
+- Los hallazgos pendientes de los paquetes `auto` que no se investigan esa semana se vuelven a
+  comprobar en su página sin el modelo (`rechecked_on`): una cita que desapareció deja de contar.
+- Nunca sugiere VPN, otra dirección ni datos falsos.
+
+**Coste**: el vigilante hace unas 15–25 peticiones GET por semana y 0 consultas; el agente, como
+máximo 2 paquetes por semana (≈ 100 consultas al mes), dentro del guardia de 1 500 que comparte
+con la Fase 2 (§9).
+
+### Archivos
+
+```
+research/latest/bundle_watch.json   estado del vigilante: páginas, anclas, pistas y resultado
+research/latest/bundles.json        hechos del agente de paquetes (cuando hay alguno)
+research/latest/run.json            los lista con su SHA-256 cuando existen
+raw/research/AAAA-MM-DD/…           páginas y PDF leídos (se borran a los 30 días)
+
+data/research/bundle_watch.json     copias de haggler sync (publish.yml), versionadas
+data/research/bundles.json
+data/curated/bundles.yaml           los valores y las anclas (a mano, en un PR)
+data/curated/research_review.yaml   decisiones de factibilidad y propuestas rechazadas
+```
+
+Los dos archivos de paquetes son opcionales para `haggler sync`: un `run.json` que no los lista
+(de antes de la Fase 3) se sincroniza igual. `haggler site-data` combina el YAML, `data/research/`
+y los precios del día, y publica por paquete su estado, la evidencia, el veredicto de cada perfil
+y los cambios pendientes (la sección "Cambios pendientes de revisión" de la tarjeta).
+
+### Cuándo un valor está confirmado
+
+El estado de un paquete es derivado: en el YAML solo cabe `status: unverified|expired`, y un
+`verified`, `verified: true` o `retrieved_at` escrito a mano se rechaza. Un valor está
+**confirmado** solo si se cumple todo esto:
+
+1. está en el YAML con un **ancla** (`watch.anchors`): una cita literal copiada de *nuestra*
+   extracción de la página (la salida del probe `mode=bundles`, §8, o un snippet de la revisión);
+2. el ancla pasa `validate-catalog` offline;
+3. el vigilante la encuentra en el texto visible (no solo en datos embebidos);
+4. la página está en un dominio oficial del **país del paquete** (`providers[].domains`);
+5. la verificación tiene 15 días o menos;
+6. si es un PDF versionado, es la edición vigente.
+
+Si falta algo, el sitio lo muestra "sin confirmar", con la razón; si deja de confirmarse, dice
+"último valor confirmado X el <fecha>". Los estados, por precedencia: **Vencida**, **Requiere
+revisión** (falta un ancla decisiva en una página que cargó, hay una edición nueva del PDF o una
+propuesta oficial que difiere del YAML), **Verificado**, **Verificación manual** y **Sin
+verificar**.
+
+### Ciclo de revisión
+
+1. **Ver qué hay.** El resumen del run de `publish.yml` trae la línea "Paquetes: …" con las
+   propuestas de valor y los hallazgos de factibilidad pendientes y los paquetes por revisar. En
+   tu copia del repo, con `data/` al día (`git pull`):
+
+   ```bash
+   uv run haggler research review --bundles                      # cada paquete con algo pendiente
+   uv run haggler research review --subject meli_plus_co_total   # uno solo
+   uv run haggler research review --bundles --summary            # la línea del resumen
+   ```
+
+   Para cada paquete: su estado y las razones, las páginas y anclas según el vigilante, las
+   propuestas (valor antes → después, fuente, cita y URL), los hallazgos de factibilidad, el
+   impacto en el veredicto de cada perfil y un **snippet YAML** por propuesta. La revisión
+   general (`haggler research review`) termina con "Paquetes por revisar: …" cuando hay alguno.
+
+2. **Copiar el snippet** en la fila del paquete de `data/curated/bundles.yaml`, en un pull
+   request. Trae el valor en su ruta (`price.amount`, `price.intro_amount`, `valid_until`,
+   `components`…, con `marginal_amount` recalculado si el YAML lo tiene) y la cita literal como
+   ancla, o como evidencia oficial cuando ningún ancla confirma ese campo (la permanencia, por
+   ejemplo). Lee sus notas: la página que falta en `watch.pages`, el ancla vieja que cita el
+   valor anterior y hay que quitar, un ancla que `validate-catalog` rechazaría, un cambio de más
+   del 50 %, una vigilancia `manual`. Con los precios pasa a menudo que la cita se verificó en
+   línea porque el nombre del nivel estaba en un título más arriba, pero un ancla tiene que
+   nombrarlo en su propio texto: copia entonces un fragmento más largo de la salida del probe
+   `mode=bundles` (§8).
+
+   `haggler research accept` no acepta valores de paquetes: sale con código 2 e imprime el
+   snippet. Tampoco acepta un paquete entero (su id o `bundle:<id>`): sus hallazgos de
+   factibilidad se aceptan uno a uno, por su id.
+
+3. **`validate-catalog` comprueba el ancla offline**, en local (`uv run haggler validate-catalog`)
+   y en el CI del pull request: entre 20 y 400 caracteres, sin elipsis, en una de las
+   `watch.pages` (o en el índice de un PDF versionado), y su texto dice el valor del YAML
+   (importe, moneda, periodo, rol y nombre del nivel; el servicio, el plan y el porcentaje de un
+   componente; una fecha con año).
+
+4. **Merge a `main`**: `deploy-job.yml` se dispara con los cambios en `data/curated/**` y
+   redespliega la imagen con el YAML nuevo.
+
+5. **La siguiente corrida semanal verifica el ancla en línea**, y el `publish.yml` siguiente
+   publica el estado. La propuesta se resuelve sola en cuanto el YAML tiene el valor: no hay nada
+   que aceptar. Para no esperar al lunes: una corrida `--watch-only` (abajo) y después
+   `gh workflow run publish.yml --ref main`.
+
+**Rechazar** una propuesta equivocada (una pista del vigilante o un hallazgo del agente), con el
+id que muestra `review` (entre comillas: los valores llevan espacios):
+
+```bash
+uv run haggler research reject 'watch:meli_plus_co_total:bundle_price:9900 COP/month' \
+  --by tu-usuario --note "es el precio del plan Esencial"
+uv run haggler research reject meli_plus_co_total --note "revisado"   # todo lo del paquete
+uv run haggler research accept 'ID-DEL-HALLAZGO' --by tu-usuario     # factibilidad, uno a uno
+git add data/curated/research_review.yaml && git commit -m "Revisión de paquetes" && git push
+```
+
+Como en la Fase 2, una decisión vale para el id **y** el hash de su evidencia: si aparece otra
+cita, otra línea u otra página, la propuesta vuelve.
+
+**Sin propuesta.** Dos causas de *Requiere revisión* no traen ninguna propuesta: `review` dice
+"Propuestas de valor: ninguna", no hay snippet que pegar y ni `reject` ni `accept` cambian el
+estado. Solo sale de *Requiere revisión* cuando el vigilante vuelve a verificar el ancla o cuando
+cambia el YAML (el ancla, o la URL de la edición). Se arregla a mano, en un PR a
+`data/curated/bundles.yaml`:
+
+- **Falta un ancla** ("… ya no aparece en …" o "… sigue en …, pero ya no indica el valor
+  registrado"): la página cambió de redacción, o cambió un valor que el vigilante no propone (el
+  plan base o un componente; solo propone precios). Corre el probe `mode=bundles` (§8) sobre esa
+  página y vuelve a copiar el texto del ancla de su salida (con el valor nuevo en el YAML, si
+  cambió), o quita el ancla vieja si ya no corresponde (un componente que el paquete dejó de
+  incluir sale también de `components`).
+- **Hay una edición nueva de la lista PDF** ("Hay una edición más nueva de la lista de
+  precios"): cambia `watch.pages[].url` a la edición nueva (su URL es `newest_url` de esa página
+  en `data/research/bundle_watch.json`). `index_url` y `link_pattern` siguen igual, y
+  `link_pattern` tiene que seguir casando con la URL nueva (lo comprueba `validate-catalog`).
+  Después vuelve a copiar las anclas de esa edición, con la URL nueva como su `url`. Si el
+  vigilante leyó la edición nueva y sus precios difieren del YAML, `review` ya los muestra como
+  propuestas: pega sus snippets en el mismo PR.
+
+Un ancla editada empieza de cero: no cuenta hasta que la siguiente corrida la verifica. Los pasos
+3–5 de arriba valen igual.
+
+### Verificación manual
+
+Si la página no se puede leer pero comprobaste la oferta tú mismo (tu factura, la app), en la fila
+del paquete:
+
+```yaml
+    verified_by: user_report
+    user_report:
+      date: 2026-10-05
+      note: "Factura propia de octubre: 21.900 COP."
+```
+
+Se muestra como "Verificación manual (hace N días)" y vence a los **45 días** (vuelve a *Sin
+verificar*, con la razón). **Nunca** cuenta como fuente oficial: no confirma ningún valor ni
+ancla, y un estado *Verificado* o *Requiere revisión* del vigilante tiene prioridad.
+
+### Modos de vigilancia y lo que no se puede leer
+
+| `watch.mode` | Qué pasa |
+|---|---|
+| `auto` | el vigilante lee las páginas cada semana y el agente puede investigar el paquete. Solo con páginas que el probe `mode=bundles` (§8) marca `readable` (su `suggested_mode`): ninguna URL ilegible queda en `auto` |
+| `manual` | nadie lo lee solo; se comprueba a mano (verificación manual). El agente solo lo investiga si se pide con `--bundles` |
+| `"off"` | ni vigilante ni agente; es obligatorio si el proveedor tiene `automated_access: forbidden`. Va entre comillas: sin ellas, YAML lee `off` como `false` |
+
+Lo que nuestro fetch no puede leer (y nunca se intenta evadir) queda en `manual` o *Sin
+verificar*, con la razón visible en el sitio:
+
+- precios pintados con JavaScript: no hay navegador headless, y un dato que solo está en el JSON
+  embebido (`__NEXT_DATA__`, ld+json) queda `embedded_only` y no confirma nada por sí solo;
+- muros de login, de verificación de cuenta o anti-bot (`blocked`);
+- páginas que `robots.txt` no permite (`robots_disallowed`);
+- PDF escaneados (sin texto: no hay OCR), cifrados o de más de 60 páginas (`pdf_error`); uno
+  de más de 10 MiB se rechaza al descargarlo (`failed`);
+- precios que dependen de la IP (one.google.com le muestra USD al runner): `wrong_country`. Nunca
+  se usan proxies ni VPN.
+
+Una página que no se puede leer (`blocked`, `robots_disallowed`, `wrong_country`, `pdf_error`,
+`failed`…) nunca cuenta como "cambió el valor": sus anclas quedan `unreadable`. Un precio pintado
+con JavaScript es distinto, porque la página sí carga: su ancla queda `embedded_only` (si la cita
+solo está en el JSON embebido) o `missing` (si no está en ninguna parte), y `missing` sí marca el
+paquete como *Requiere revisión*. Por eso esas páginas van en `manual`. Para dejar de vigilar un
+paquete basta con cambiar su `watch.mode` en un PR.
+
+### Corridas a mano
+
+Solo el vigilante, sin agente (0 llamadas al modelo y 0 consultas):
+
+```bash
+gcloud run jobs execute haggler-research --region europe-north2 \
+  --args=research,run,--store,gcs,--watch-only --wait
+```
+
+Investigar paquetes concretos (es explícito: ignora la frescura y el tope, y vale también para un
+paquete `manual`; el `^;^` es porque la lista lleva coma, §6):
+
+```bash
+gcloud run jobs execute haggler-research --region europe-north2 --wait \
+  --args='^;^research;run;--store;gcs;--bundles;meli_plus_co_total,telia_se_obegransad_streaming;--max-jobs;2'
+```
+
+Después, `gh workflow run publish.yml --ref main` sincroniza y publica; el resultado queda en
+`data/research/bundle_watch.json`. Cambiar los argumentos requiere el permiso
+`run.jobs.runWithOverrides` (§6). Si dos corridas coinciden, la que termina segunda solo escribe
+su reporte y no pisa `research/latest/`. En local (con red):
+`uv run haggler research run --store local --watch-only` (con `--dry-run` no escribe nada).
+
+### Ajustes
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `HAGGLER_RESEARCH_MAX_BUNDLES` | `2` | paquetes que el agente investiga por corrida, después de todo lo demás |
+| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | `40` | URL distintas que el vigilante lee por corrida (índices y PDF incluidos) |
+
+En el job se fijan como variables de repositorio (§3): `deploy-job.yml` las pasa al job de
+investigación solo si existen y son números enteros. Un cambio hecho a mano con
+`gcloud run jobs update` se pierde en el siguiente despliegue, porque `--set-env-vars` reemplaza
+todas las variables. En local van en `.env` (ver `.env.example`).

@@ -6,6 +6,8 @@
 # A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
 # leaves a warning and the site is rebuilt from the committed data/. A failed push of data/
 # (e.g. branch protection) leaves a warning and the site is still built from the synced data.
+# After a sync, the run's summary also counts the bundles' pending proposals and findings
+# (haggler research review --bundles --summary); that step never fails the job.
 name: publish
 
 on:
@@ -144,6 +146,33 @@ jobs:
           echo "::warning title=push de data/ falló::No se pudo hacer push de data/ a ${GITHUB_REF_NAME} (¿rama protegida sin bypass para github-actions[bot]?). El sitio se publica igualmente con los datos sincronizados; data/ del repositorio queda desactualizado. Ver docs/SETUP.md §11."
           echo "⚠ No se pudo hacer push de data/; el sitio se publica con los datos sincronizados." >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      # The bundles' pending proposals and findings, counted on the synced data/ for the run's
+      # summary (docs/SETUP.md §14). Read-only and informative: whatever the review command does,
+      # the step ends with 0 (a failure is a warning) and continue-on-error covers the rest. Its
+      # own timeout is a step failure that continue-on-error absorbs; a hang left to the job's
+      # timeout would cancel the job and skip build and deploy.
+      - name: Bundle review summary
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          status=0
+          line="$(uv run --frozen --no-dev haggler research review --bundles --summary \
+            --data-dir data 2> "$RUNNER_TEMP/review.err")" || status=$?
+          cat "$RUNNER_TEMP/review.err" >&2
+          if [ "$status" -eq 0 ] && [ -n "$line" ]; then
+            {
+              echo ""
+              echo "### Paquetes"
+              echo ""
+              echo "${line}"
+              echo ""
+              echo "Detalle y snippets: \`haggler research review --bundles\` (docs/SETUP.md §14)."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=resumen de paquetes::haggler research review --bundles --summary no dio un resumen (código ${status}). El sitio se publica igual. Ver docs/SETUP.md §14."
+          fi
 
   build:
     name: build site

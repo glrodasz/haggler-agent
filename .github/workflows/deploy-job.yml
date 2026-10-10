@@ -1,5 +1,6 @@
 # Builds the job image, pushes it to Artifact Registry and (re)deploys both Cloud Run Jobs: the
-# daily prices job and the weekly feasibility research job (same image, other arguments).
+# daily prices job and the weekly research job (feasibility research and the bundle watcher;
+# same image, other arguments). A change to data/curated/** (bundles.yaml) redeploys both.
 # Needs the repository variables printed by infra/bootstrap.sh (docs/SETUP.md); without them the
 # workflow only emits a notice. Workload Identity Federation only trusts the default branch, so a
 # manual run from another branch is skipped with a notice too.
@@ -139,14 +140,31 @@ jobs:
         if: steps.cfg.outputs.ok == 'true'
         env:
           IMAGE: ${{ steps.image.outputs.ref }}
-          # Optional repository variable (default: HAGGLER_RESEARCH_MODEL in src/haggler/config.py).
+          # Optional repository variables (defaults in src/haggler/config.py).
           RESEARCH_MODEL: ${{ vars.HAGGLER_RESEARCH_MODEL }}
+          RESEARCH_MAX_BUNDLES: ${{ vars.HAGGLER_RESEARCH_MAX_BUNDLES }}
+          BUNDLE_WATCH_MAX_PAGES: ${{ vars.HAGGLER_BUNDLE_WATCH_MAX_PAGES }}
         run: |
           env_vars="HAGGLER_STORE=gcs,HAGGLER_GCS_BUCKET=${GCS_BUCKET},GOOGLE_GENAI_USE_ENTERPRISE=1"
           env_vars="${env_vars},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global"
           if [ -n "${RESEARCH_MODEL}" ]; then
             env_vars="${env_vars},HAGGLER_RESEARCH_MODEL=${RESEARCH_MODEL}"
           fi
+          # Bundles (docs/SETUP.md §14): whole numbers only. Anything else would make the job
+          # fail at start (or, with a comma, set another variable), so it is skipped with a
+          # warning and the job keeps the default.
+          add_count() {
+            [ -n "$2" ] || return 0
+            case "$2" in
+              *[!0-9]*)
+                echo "::warning title=deploy-job::$1 no es un número entero; el job usa el valor por defecto (src/haggler/config.py)."
+                return 0
+                ;;
+            esac
+            env_vars="${env_vars},$1=$2"
+          }
+          add_count HAGGLER_RESEARCH_MAX_BUNDLES "${RESEARCH_MAX_BUNDLES}"
+          add_count HAGGLER_BUNDLE_WATCH_MAX_PAGES "${BUNDLE_WATCH_MAX_PAGES}"
           # --max-retries 0: a retry would spend the run's search-query budget again; the next
           # weekly run picks up what this one could not do (failed subjects keep their facts).
           gcloud run jobs deploy "${RESEARCH_JOB_NAME}" \
@@ -165,4 +183,5 @@ jobs:
             echo ""
             echo "- Job de investigación: \`${RESEARCH_JOB_NAME}\` (semanal)"
             echo "- Ejecutar ahora: \`gcloud run jobs execute ${RESEARCH_JOB_NAME} --region ${REGION} --wait\`"
+            echo "- Solo el vigilante de paquetes (0 consultas): \`gcloud run jobs execute ${RESEARCH_JOB_NAME} --region ${REGION} --args=research,run,--store,gcs,--watch-only --wait\`"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -293,3 +295,250 @@ def test_bootstrap_schedules_the_research_job_weekly_and_expires_its_pages() -> 
     assert 'ensure_job_and_trigger "${RESEARCH_JOB}"' in text
     assert '"condition": {"age": 30, "matchesPrefix": ["raw/research/"]}' in text
     assert "gh variable set GCP_RESEARCH_JOB_NAME" in text
+
+
+# ------------------------------------------------------------------ bundles (docs/SETUP.md §14)
+
+BUNDLE_SUMMARY = "Bundle review summary"
+BUNDLE_SETTINGS = (
+    ("HAGGLER_RESEARCH_MAX_BUNDLES", "research_max_bundles"),
+    ("HAGGLER_BUNDLE_WATCH_MAX_PAGES", "bundle_watch_max_pages"),
+)
+UV_HAGGLER = "run --frozen --no-dev haggler"
+
+
+def _bash(script: str, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    """A workflow step's script under GitHub's default shell for run steps."""
+    return subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=cwd,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def _fake_bin(tmp_path: Path, name: str, body: str) -> Path:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    tool = bin_dir / name
+    tool.write_text("#!/bin/sh\n" + body)
+    tool.chmod(0o755)
+    return bin_dir
+
+
+def _run_bundle_summary(tmp_path: Path, uv_body: str) -> tuple[subprocess.CompletedProcess, str]:
+    """Runs the real publish step with a fake `uv`; returns the result and the job summary."""
+    script = step(load("publish.yml"), "sync", BUNDLE_SUMMARY)["run"]
+    bin_dir = _fake_bin(tmp_path, "uv", uv_body)
+    summary = tmp_path / "summary.md"
+    result = _bash(
+        script,
+        tmp_path,
+        {
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+            "RUNNER_TEMP": str(tmp_path),
+            "GITHUB_STEP_SUMMARY": str(summary),
+            "UV_RECORD": str(tmp_path / "uv-call.txt"),
+            "PYTHON": sys.executable,
+        },
+    )
+    return result, summary.read_text() if summary.exists() else ""
+
+
+def test_publish_summarizes_the_bundles_to_review_without_gating_the_site() -> None:
+    publish = load("publish.yml")
+    names = [s.get("name") for s in steps(publish, "sync")]
+    # On the synced data/, once it was committed: nothing it does reaches what is pushed or built.
+    assert names.index("haggler sync") < names.index("Commit and push data/")
+    assert names.index("Commit and push data/") < names.index(BUNDLE_SUMMARY)
+    summary = step(publish, "sync", BUNDLE_SUMMARY)
+    assert summary["if"] == "steps.sync.outcome == 'success'"
+    assert summary["continue-on-error"] is True
+    # A step timeout is absorbed by continue-on-error; the job's timeout would fail the job.
+    assert 0 < summary["timeout-minutes"] < publish["jobs"]["sync"]["timeout-minutes"]
+    command = " ".join(summary["run"].replace("\\\n", " ").split())
+    assert "haggler research review --bundles --summary --data-dir data" in command
+    assert "docs/SETUP.md §14" in summary["run"]
+    # The site still only depends on the sync.
+    assert publish["jobs"]["sync"]["outputs"] == {
+        "synced": "${{ steps.sync.outcome == 'success' }}"
+    }
+    assert "if" not in publish["jobs"]["build"]
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_publish_bundle_summary_writes_the_counts_line(tmp_path: Path) -> None:
+    line = "Paquetes: 1 propuesta de valor pendiente; 1 paquete por revisar: meli_plus_co_total."
+    result, summary = _run_bundle_summary(
+        tmp_path, f'echo "$*" > "$UV_RECORD"\necho "aviso: x" >&2\necho "{line}"\n'
+    )
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "uv-call.txt").read_text() == (
+        f"{UV_HAGGLER} research review --bundles --summary --data-dir data\n"
+    )
+    assert f"### Paquetes\n\n{line}\n" in summary
+    assert "haggler research review --bundles" in summary
+    assert "aviso: x" in result.stderr  # the command's own warnings stay in the log
+    assert "::warning" not in result.stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+@pytest.mark.parametrize(
+    "uv_body",
+    [
+        'echo "haggler research: ValidationError: boom" >&2\nexit 1\n',
+        "exit 0\n",  # no line at all
+    ],
+    ids=["fails", "prints-nothing"],
+)
+def test_publish_bundle_summary_never_fails_the_job(tmp_path: Path, uv_body: str) -> None:
+    result, summary = _run_bundle_summary(tmp_path, uv_body)
+    assert result.returncode == 0, result.stderr
+    assert "::warning title=resumen de paquetes::" in result.stdout
+    assert "docs/SETUP.md §14" in result.stdout
+    assert "::error" not in result.stdout
+    assert "### Paquetes" not in summary
+    if "boom" in uv_body:
+        assert "boom" in result.stderr
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_publish_bundle_summary_runs_with_the_real_cli_on_a_first_deploy(tmp_path: Path) -> None:
+    """The step's arguments against the real CLI, on a data/ without research yet."""
+    uv_body = (
+        f'[ "$1 $2 $3 $4" = "{UV_HAGGLER}" ] || exit 97\n'
+        "shift 4\n"
+        'exec "$PYTHON" -c \'import sys; from haggler.cli import main; '
+        'sys.exit(main(sys.argv[1:]))\' "$@"\n'
+    )
+    (tmp_path / "data").mkdir()
+    result, summary = _run_bundle_summary(tmp_path, uv_body)
+    assert result.returncode == 0, result.stderr
+    assert "::warning" not in result.stdout, result.stderr
+    assert "### Paquetes\n\nPaquetes: nada pendiente de revisión.\n" in summary
+
+
+def _run_research_deploy(tmp_path: Path, **variables: str) -> tuple[list[str], str, str]:
+    """Runs the real research deploy step with a fake `gcloud`; returns its --set-env-vars
+    entries, the step's stdout and the job summary."""
+    script = step(load("deploy-job.yml"), "deploy", "Deploy research Cloud Run Job")["run"]
+    record = tmp_path / "gcloud-args.txt"
+    gcloud = 'for a in "$@"; do echo "$a"; done > "$GCLOUD_RECORD"\n'  # one argument per line
+    bin_dir = _fake_bin(tmp_path, "gcloud", gcloud)
+    summary = tmp_path / "summary.md"
+    result = _bash(
+        script,
+        tmp_path,
+        {
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+            "GCLOUD_RECORD": str(record),
+            "GITHUB_STEP_SUMMARY": str(summary),
+            "GITHUB_SHA": "0123456789abcdef",
+            "IMAGE": "europe-north2-docker.pkg.dev/p/haggler/haggler:0123",
+            "RESEARCH_JOB_NAME": "haggler-research",
+            "PROJECT_ID": "p",
+            "REGION": "europe-north2",
+            "JOB_SA": "haggler-job@p.iam.gserviceaccount.com",
+            "GCS_BUCKET": "p-haggler-data",
+            "RESEARCH_MODEL": "",
+            "RESEARCH_MAX_BUNDLES": "",
+            "BUNDLE_WATCH_MAX_PAGES": "",
+            **variables,
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    args = record.read_text().splitlines()
+    env_vars = args[args.index("--set-env-vars") + 1].split(",")
+    return env_vars, result.stdout, summary.read_text()
+
+
+def test_deploy_job_maps_the_optional_bundle_settings_to_repository_variables() -> None:
+    deploy = load("deploy-job.yml")
+    research = step(deploy, "deploy", "Deploy research Cloud Run Job")
+    assert research["env"]["RESEARCH_MAX_BUNDLES"] == "${{ vars.HAGGLER_RESEARCH_MAX_BUNDLES }}"
+    assert research["env"]["BUNDLE_WATCH_MAX_PAGES"] == (
+        "${{ vars.HAGGLER_BUNDLE_WATCH_MAX_PAGES }}"
+    )
+    # Phase 1 is untouched: the daily job never gets them.
+    daily = step(deploy, "deploy", "Deploy Cloud Run Job")
+    for name, _attr in BUNDLE_SETTINGS:
+        assert name not in daily["run"]
+        assert name not in str(daily.get("env", {}))
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_deploy_job_passes_the_bundle_settings_only_when_set(tmp_path: Path) -> None:
+    base = [
+        "HAGGLER_STORE=gcs",
+        "HAGGLER_GCS_BUCKET=p-haggler-data",
+        "GOOGLE_GENAI_USE_ENTERPRISE=1",
+        "GOOGLE_CLOUD_PROJECT=p",
+        "GOOGLE_CLOUD_LOCATION=global",
+    ]
+    env_vars, stdout, summary = _run_research_deploy(tmp_path)
+    assert env_vars == base
+    assert "::warning" not in stdout
+    # The 0-query run of docs/SETUP.md §14, ready to copy.
+    assert "--args=research,run,--store,gcs,--watch-only --wait" in summary
+
+    env_vars, stdout, _ = _run_research_deploy(
+        tmp_path, RESEARCH_MAX_BUNDLES="3", BUNDLE_WATCH_MAX_PAGES="25", RESEARCH_MODEL="m"
+    )
+    assert env_vars == [
+        *base,
+        "HAGGLER_RESEARCH_MODEL=m",
+        "HAGGLER_RESEARCH_MAX_BUNDLES=3",
+        "HAGGLER_BUNDLE_WATCH_MAX_PAGES=25",
+    ]
+    assert "::warning" not in stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+@pytest.mark.parametrize("value", ["two", "2,HAGGLER_STORE=local", "-1", "2.5", " 2"])
+def test_deploy_job_skips_a_bundle_setting_that_is_not_a_whole_number(
+    tmp_path: Path, value: str
+) -> None:
+    env_vars, stdout, _ = _run_research_deploy(
+        tmp_path, RESEARCH_MAX_BUNDLES=value, BUNDLE_WATCH_MAX_PAGES=value
+    )
+    # The job keeps its defaults (a bad value would crash it at start, a comma set another one).
+    assert not [e for e in env_vars if e.startswith(("HAGGLER_RESEARCH_MAX", "HAGGLER_BUNDLE"))]
+    assert env_vars.count("HAGGLER_STORE=gcs") == 1
+    assert "HAGGLER_STORE=local" not in env_vars
+    assert stdout.count("::warning title=deploy-job::") == 2
+    assert "HAGGLER_RESEARCH_MAX_BUNDLES no es un número entero" in stdout
+
+
+@pytest.mark.parametrize(("name", "attr"), BUNDLE_SETTINGS)
+def test_bundle_settings_are_real_and_documented_with_their_defaults(
+    name: str, attr: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from haggler.config import Settings
+
+    monkeypatch.delenv(name, raising=False)
+    default = getattr(Settings(), attr)
+    monkeypatch.setenv(name, str(default + 1))
+    assert getattr(Settings(), attr) == default + 1
+    env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
+    assert re.search(rf"^# {name}={default}\s", env_example, re.M)
+    setup = (ROOT / "docs" / "SETUP.md").read_text(encoding="utf-8")
+    assert f"| `{name}` | variable |" in setup  # §3, optional repository variables
+    assert f"| `{name}` | `{default}` |" in setup  # §14, settings
+
+
+def test_setup_watch_only_run_is_the_deployed_research_job_plus_the_flag() -> None:
+    from haggler.jobs.research import add_run_arguments, options_from_args
+
+    run = step(load("deploy-job.yml"), "deploy", "Deploy research Cloud Run Job")["run"]
+    job_args = re.search(r"--args=(\S+)", run)
+    assert job_args and job_args.group(1) == "research,run,--store,gcs"
+    watch_only = f"--args={job_args.group(1)},--watch-only"
+    setup = (ROOT / "docs" / "SETUP.md").read_text(encoding="utf-8")
+    execute = "gcloud run jobs execute haggler-research --region europe-north2 \\\n"
+    assert f"{execute}  {watch_only} --wait" in setup
+    # "research run" is the CLI's; the rest goes to the job's own parser.
+    argv = [*job_args.group(1).split(",")[2:], "--watch-only"]
+    options = options_from_args(add_run_arguments(argparse.ArgumentParser()).parse_args(argv))
+    assert options.watch_only and options.store == "gcs"
