@@ -21,14 +21,11 @@ from google.adk.workflow import RetryConfig
 from haggler.llm.models import generate_content_config
 from haggler.models.research import ResearchAnswer, SubjectKind
 from haggler.research.fields import vocabulary_prompt
+from haggler.research.kinds import KINDS
 
 # Search grounding plus several claims with quotes need more room than the price extractor.
 MAX_OUTPUT_TOKENS = 8192
-AGENT_NAMES: dict[SubjectKind, str] = {
-    "service": "service_researcher",
-    "pair": "pair_researcher",
-    "instrument": "instrument_researcher",
-}
+AGENT_NAMES: dict[SubjectKind, str] = {kind: spec.agent_name for kind, spec in KINDS.items()}
 
 COMMON_RULES = """\
 Rules (all mandatory):
@@ -50,6 +47,7 @@ Rules (all mandatory):
 Answer with the JSON object of the response schema and nothing else.
 """
 
+# One prompt per registered kind (research.kinds); test_research_kinds checks none is missing.
 INSTRUCTIONS: dict[SubjectKind, str] = {
     "service": """\
 You research the general country rules of ONE consumer subscription service (the user message is

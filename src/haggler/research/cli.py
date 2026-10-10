@@ -9,7 +9,7 @@
         appended to, never re-dumped, so comments and history stay)
 
 SELECTOR: a claim id, a subject key ("pair:netflix:CO"), or a bare service/instrument id
-("netflix" = the service's subject and every pair of that service).
+("netflix" = the service's subject and every pair of that service; see research.kinds).
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ from haggler.models.research import Claim, ReviewDecision, ReviewFile, SubjectFa
 from haggler.research.evaluate import EvalContext, assess
 from haggler.research.fields import FIELD_SPECS, value_label_es
 from haggler.research.io import load_data_dir
+from haggler.research.kinds import KINDS
 from haggler.research.review import ReviewIndex, select_claims
 
 REVIEW_FILE = "research_review.yaml"
@@ -67,17 +68,22 @@ def _claim_line(claim: Claim, status: str) -> list[str]:
 
 
 def _affected_pairs(subjects: list[SubjectFacts], ctx: EvalContext) -> set[tuple[str, str]]:
-    """(service, country) pairs whose verdict can depend on these subjects."""
+    """(service, country) pairs whose verdict can depend on these subjects (the pair_scope of
+    their kind in research.kinds)."""
     pairs: set[tuple[str, str]] = set()
-    pair_keys = [k.split(":") for k in ctx.facts if k.startswith("pair:")]
+    # kinds._check: a "self" kind's ids are (service_id, country), a "service" kind's start with
+    # service_id. Malformed keys are skipped where their ids cannot name a pair.
+    researched = [ref.ids for k in ctx.facts if (ref := KINDS["pair"].parse(k)) is not None]
     for s in subjects:
-        parts = s.key.split(":")
-        if s.kind == "pair" and len(parts) == 3:
-            pairs.add((parts[1], parts[2]))
-        elif s.kind == "service":
-            pairs |= {(p[1], p[2]) for p in pair_keys if len(p) == 3 and p[1] == parts[1]}
-        elif s.kind == "instrument":
-            pairs |= {(p[1], p[2]) for p in pair_keys if len(p) == 3}
+        spec, ref = KINDS[s.kind], s.ref
+        if spec.pair_scope == "self":
+            if len(ref.ids) == len(spec.parts):
+                pairs.add((ref.ids[0], ref.ids[1]))
+        elif spec.pair_scope == "service":
+            if ref.owner is not None:
+                pairs |= {(p[0], p[1]) for p in researched if p[0] == ref.owner}
+        elif spec.pair_scope == "all":
+            pairs |= {(p[0], p[1]) for p in researched}
     return pairs
 
 

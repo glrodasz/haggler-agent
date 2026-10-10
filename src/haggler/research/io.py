@@ -27,11 +27,13 @@ import pydantic
 from pydantic import TypeAdapter
 
 from haggler.models.research import ResearchState, SubjectFacts
+from haggler.research.kinds import KINDS, SubjectKind
 from haggler.store import Store, dumps, dumps_lines
 
 PREFIX = "research"
 LATEST = f"{PREFIX}/latest"
-KIND_FILES = {"service": "services.json", "pair": "pairs.json", "instrument": "instruments.json"}
+# Kind -> its facts file, in registry order (research.kinds).
+KIND_FILES: dict[SubjectKind, str] = {kind: spec.data_file for kind, spec in KINDS.items()}
 LATEST_FILES = (*KIND_FILES.values(), "state.json")
 DATA_FILES = tuple(KIND_FILES.values())
 RUN_SCHEMA_VERSION = 1
@@ -138,7 +140,7 @@ def load_latest(store: Store) -> Latest:
 
 
 def subject_files(subjects: Iterable[SubjectFacts]) -> dict[str, bytes]:
-    """{file name: bytes} of the three subject files, sorted by key (stable git diffs)."""
+    """{file name: bytes} of every kind's subject file, sorted by key (stable git diffs)."""
     by_kind: dict[str, list[SubjectFacts]] = {k: [] for k in KIND_FILES}
     for s in subjects:
         by_kind[s.kind].append(s)

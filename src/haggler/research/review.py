@@ -34,15 +34,12 @@ def select_claims(
     subjects: Iterable[SubjectFacts], selector: str
 ) -> list[tuple[SubjectFacts, Claim]]:
     """Claims named by a CLI selector: a claim id, a subject key ("pair:netflix:CO"), or a bare
-    service/instrument id ("netflix" = its service subject and every pair of that service)."""
+    service/instrument id, which names every subject it owns (the first id of the key, see
+    research.kinds: "netflix" = its service subject and every pair of that service)."""
     out: list[tuple[SubjectFacts, Claim]] = []
     for subject in subjects:
-        parts = subject.key.split(":")
-        whole = (
-            selector == subject.key
-            or (subject.kind in ("service", "instrument") and selector == parts[1])
-            or (subject.kind == "pair" and selector == parts[1])
-        )
+        owner = subject.ref.owner
+        whole = selector == subject.key or (owner is not None and selector == owner)
         for claim in subject.claims:
             if whole or claim.id == selector:
                 out.append((subject, claim))

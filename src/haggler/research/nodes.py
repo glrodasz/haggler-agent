@@ -41,6 +41,7 @@ from haggler.research import io
 from haggler.research.agents import build_researcher
 from haggler.research.deps import ResearchDeps, research_budget
 from haggler.research.evidence import PageCache, recheck_claims, reverify, verify_subject
+from haggler.research.kinds import RUN_ORDER
 from haggler.research.plan import (
     PAUSE_AFTER_FAILURES,
     Limits,
@@ -56,7 +57,8 @@ from haggler.store import dumps, read_json, write_text_gz
 log = logging.getLogger(__name__)
 
 WORKFLOW_NAME = "feasibility_research"
-KIND_ORDER: tuple[SubjectKind, ...] = ("pair", "service", "instrument")
+# The research node runs the kinds in this order (research.kinds run_order): pairs first.
+KIND_ORDER: tuple[SubjectKind, ...] = RUN_ORDER
 MAX_OPEN_QUESTIONS = 5
 VERIFY_CONCURRENCY = 4
 

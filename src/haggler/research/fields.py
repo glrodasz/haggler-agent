@@ -14,7 +14,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Literal
 
-SubjectKind = Literal["service", "pair", "instrument"]
+from haggler.research.kinds import KINDS, SubjectKind
+
 ValueType = Literal["enum", "bool", "int", "country", "text"]
 
 _CC = re.compile(r"^[A-Z]{2}$")
@@ -289,9 +290,10 @@ FIELDS: tuple[FieldSpec, ...] = (
 )
 
 FIELD_SPECS: dict[str, FieldSpec] = {f.name: f for f in FIELDS}
+# Kind -> the fields its agent may report, in FIELDS order (kinds in registry order).
 FIELDS_BY_LEVEL: dict[str, tuple[str, ...]] = {
-    level: tuple(f.name for f in FIELDS if f.level == level)
-    for level in ("service", "pair", "instrument")
+    kind: tuple(f.name for f in FIELDS if f.level == spec.field_level)
+    for kind, spec in KINDS.items()
 }
 MAX_TEXT_VALUE = 120
 

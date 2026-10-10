@@ -14,9 +14,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from haggler.research import kinds
+from haggler.research.kinds import SubjectKind, SubjectRef
 from haggler.text import normalize_for_match
 
-SubjectKind = Literal["service", "pair", "instrument"]
 SourceClass = Literal["official", "press", "forum"]
 CheckStatus = Literal[
     "verified",
@@ -70,8 +71,9 @@ class ResearchAnswer(BaseModel):
 
 
 def subject_key(kind: SubjectKind, *parts: str) -> str:
-    """ "service:netflix", "pair:netflix:CO", "instrument:revolut_eea"."""
-    return ":".join((kind, *parts))
+    """ "service:netflix", "pair:netflix:CO", "instrument:revolut_eea" (research.kinds); the ids
+    are joined unchecked."""
+    return kinds.subject_key(kind, *parts)
 
 
 def claim_id(subject: str, field: str, value: str, event_date: date | None = None) -> str:
@@ -153,6 +155,12 @@ class SubjectFacts(_Strict):
 
     def claim(self, claim_id_: str) -> Claim | None:
         return next((c for c in self.claims if c.id == claim_id_), None)
+
+    @property
+    def ref(self) -> SubjectRef:
+        """The key split under this subject's kind, unchecked (research.kinds KindSpec.split):
+        a malformed stored key still splits, so its readers never raise."""
+        return kinds.KINDS[self.kind].split(self.key)
 
 
 # ------------------------------------------------------------------------- review

@@ -1,8 +1,8 @@
 """Which subjects a research run looks at (pure). CONTRACT.
 
-* Freshness windows: a service is due after SERVICE_DAYS, a pair after PAIR_DAYS, an instrument
-  after INSTRUMENT_DAYS (since its last successful research). A subject that failed
-  PAUSE_AFTER_FAILURES runs in a row is paused for PAUSE_DAYS.
+* Freshness windows (declared per kind in research.kinds): a service is due after SERVICE_DAYS,
+  a pair after PAIR_DAYS, an instrument after INSTRUMENT_DAYS (since its last successful
+  research). A subject that failed PAUSE_AFTER_FAILURES runs in a row is paused for PAUSE_DAYS.
 * Pairs are (service, country) offers worth at least MIN_SAVING_EUR a month AND MIN_SAVING_PCT
   of the home price against the residence of a public profile, computed with compare.cheapest
   WITHOUT feasibility (every verdict rank 0) on the latest published prices. A pair curated for
@@ -33,15 +33,17 @@ from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
 from haggler.models.profiles import ProfilesFile
 from haggler.models.research import ResearchState, SubjectFacts, SubjectKind, subject_key
+from haggler.research.kinds import KINDS, kind_of
 
-SERVICE_DAYS = 90
-PAIR_DAYS = 60
-INSTRUMENT_DAYS = 120
+# Freshness windows (days), declared per kind in research.kinds.
+_WINDOWS: dict[SubjectKind, int] = {kind: spec.window_days for kind, spec in KINDS.items()}
+SERVICE_DAYS = _WINDOWS["service"]
+PAIR_DAYS = _WINDOWS["pair"]
+INSTRUMENT_DAYS = _WINDOWS["instrument"]
 PAUSE_AFTER_FAILURES = 3
 PAUSE_DAYS = 28
 MIN_SAVING_EUR = Decimal("1")
 MIN_SAVING_PCT = Decimal("15")
-_WINDOWS = {"service": SERVICE_DAYS, "pair": PAIR_DAYS, "instrument": INSTRUMENT_DAYS}
 
 
 @dataclass(frozen=True)
@@ -117,13 +119,12 @@ def due(key: str, facts: dict[str, SubjectFacts], state: ResearchState, today: d
     st = state.subjects.get(key)
     if st is not None and st.paused_until is not None and st.paused_until > today:
         return None
-    kind = key.split(":", 1)[0]
     last = st.last_success if st is not None else None
     if last is None and key in facts:
         last = facts[key].researched_on
     if last is None:
         return "new"
-    if (today - last).days >= _WINDOWS[kind]:
+    if (today - last).days >= _WINDOWS[kind_of(key)]:
         return "stale"
     return None
 
