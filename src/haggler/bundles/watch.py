@@ -18,9 +18,12 @@ the index page of a versioned PDF), then the documents the versioned PDFs point 
 the budget is status over_budget and logged by URL. A paused page (3 unreadable runs in a row,
 then 28 days) is not fetched and keeps its previous check and anchors.
 
-A page is read (status ok) when it loaded, its final URL is on the provider's domains for the
-bundle's country (haggler.catalog.on_domains) and, when it shows prices, some of them are in the
-country's currency; otherwise wrong_country (one.google.com prices by IP). A price whose marker
+A page is read (status ok) when it loaded, it is no wall (research.evidence.Page.wall: a final
+URL on a sign-in or account-verification page the watch URL was not, such as Mercado Libre's
+/gz/account-verification, or a bot challenge served with 200; else blocked), its final URL is
+on the provider's domains for the bundle's country (haggler.catalog.on_domains) and, when it
+shows prices, some of them are in the country's currency; otherwise wrong_country
+(one.google.com prices by IP). A price whose marker
 cannot be that currency ("$" or "kr" on a page of a country whose currency is neither) is
 foreign, and so is a "$" amount the country's currency cannot plausibly be ("$9.99" on a COP
 page: decimals of a currency without them, or under PLAUSIBLE_MONTHLY_EUR's floor with the FX
@@ -55,12 +58,15 @@ bundle and that differs from the YAML value (the regular amount, the base plan a
 amount; the intro amount). In a PDF (a price list of many products, whose columns are not
 understood) the line itself must also name the bundle (its aliases or name). An observed price
 (price.source observed) comes from the daily data: no regular hints. At most MAX_HINTS per
-bundle, deduplicated; a hint found again keeps its first_seen. Hints are proposals for review
+bundle, deduplicated; a hint found again keeps its first_seen. When the line alone names no tier
+(the tier is in a heading above it) and validate-catalog would refuse it as an anchor, the hint
+also keeps anchor_text: the excerpt from that heading to the line (research.evidence.
+anchor_span), which the review snippet offers. Hints are proposals for review
 (haggler.bundles.proposals), never values.
 
 Outcome: changed when a price, base_price or component anchor is missing on a page that was
 read; else new_document when a versioned PDF is superseded; else unreadable when no page could
-be read; else ok.
+be read (an index page only counts when an anchor quotes it); else ok.
 """
 
 from __future__ import annotations
@@ -68,7 +74,7 @@ from __future__ import annotations
 import logging
 import re
 from collections import Counter
-from collections.abc import Awaitable, Iterable, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -97,7 +103,14 @@ from haggler.models.catalog import Catalog
 from haggler.models.curated import Anchor, Bundle, BundlesFile, Provider, WatchPage
 from haggler.models.fx import FxTable
 from haggler.money import ZERO_DECIMAL, Money, find_prices
-from haggler.research.evidence import CONTEXT_AFTER, CONTEXT_BEFORE, Page, PageCache, canonical_url
+from haggler.research.evidence import (
+    CONTEXT_AFTER,
+    CONTEXT_BEFORE,
+    Page,
+    PageCache,
+    anchor_span,
+    canonical_url,
+)
 from haggler.research.values import PLAUSIBLE_MONTHLY_EUR, ValueCheck, ValueKind, check_value
 from haggler.text import normalize_for_match
 
@@ -332,6 +345,10 @@ def page_status(
 ) -> tuple[PageStatus, str]:
     if page.status is None:
         final = page.final_url or page.url
+        # A sign-in / account-verification page or a bot challenge that answered 200 is a wall:
+        # unreadable, never the page's content (its anchors would all read as missing).
+        if (wall := page.wall()) is not None:
+            return "blocked", _clip(f"{wall} wall at {final}")
         if not on_domains(final, provider.domains.get(bundle.country, [])):
             return "wrong_country", _clip(
                 f"final URL {final} is not on a {bundle.country} domain of {provider.id}"
@@ -483,6 +500,27 @@ def _hint_line(line: str, raw: str) -> str:
     return line[at : at + HINT_LINE_CHARS]
 
 
+def _offline_check(kind: ValueKind, amount: Decimal, job: _Job, env: _Env) -> Callable[[str], bool]:
+    """validate-catalog's check of an anchor text for `amount` (no page context, no FX)."""
+    b = job.bundle
+
+    def accepts(text: str) -> bool:
+        return check_value(
+            kind,
+            amount,
+            anchor_lines(text),
+            country=b.country,
+            currency=b.price.currency,
+            period=b.price.period,
+            provider=job.provider,
+            bundle=b,
+            bundles=env.bundles,
+            catalog=env.catalog,
+        ).ok
+
+    return accepts
+
+
 def _hints(job: _Job, env: _Env) -> list[PriceHint]:
     b = job.bundle
     p = b.price
@@ -541,6 +579,7 @@ def _hints(job: _Job, env: _Env) -> list[PriceHint]:
                     if not result.ok:
                         continue
                     seen.add((role, money.amount))
+                    offline = _offline_check(kind, money.amount, job, env)
                     out.append(
                         PriceHint(
                             url=url,
@@ -552,6 +591,9 @@ def _hints(job: _Job, env: _Env) -> list[PriceHint]:
                             reason=_clip(result.reason),
                             big_change=result.big_change,
                             first_seen=first_seen.get((role, money.amount)) or env.today,
+                            # The line alone may name no tier (a heading above names it):
+                            # validate-catalog then needs the lines from that heading on.
+                            anchor_text=anchor_span(page, line, offline),
                         )
                     )
                     break
@@ -839,7 +881,10 @@ def _outcome(job: _Job, anchors: list[AnchorCheck]) -> WatchOutcome:
         return "changed"
     if any(s.state == "superseded" for s in job.slots):
         return "new_document"
-    if not any(s.status == "ok" for s in job.slots):
+    # A versioned PDF's index page is only read for its links: it counts as a page read only
+    # when an anchor quotes it.
+    quoted = {str(a.url) for a in job.bundle.watch.anchors}
+    if not any(s.status == "ok" and (s.kind != "index" or s.url in quoted) for s in job.slots):
         return "unreadable"
     return "ok"
 

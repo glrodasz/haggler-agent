@@ -5,8 +5,9 @@ Pure (no I/O). bundles.yaml is the only source of a bundle's values and no job w
 proposal is accepted by EDITING the YAML (snippet(): the value at its YAML path plus an anchor
 with the literal quote, ready to paste), and it then resolves itself: a proposal whose value the
 YAML already holds is never listed. A rejection in data/curated/research_review.yaml (by id AND
-hash, `haggler research reject`) hides it; new evidence (another quote, line or page) is a new
-hash, so it comes back.
+hash, `haggler research reject`) hides it, and any other proposal of the same value with the same
+hash (the watcher and the agent on the same line); new evidence (another quote, line or page) is
+a new hash, so it comes back.
 
 Sources, listed in this order:
 * watcher: the PriceHints of the bundle's watch state (bundle_watch.json), only when that state
@@ -36,11 +37,20 @@ Resolution (resolved(): the YAML already holds the value):
 Snippets (snippet()): the value at its YAML path (price.amount, price.intro_amount, valid_until,
 components[], watch.pages[]...), with the marginal amount recomputed when the YAML keeps one, and
 the literal quote as an anchor of the field's fact (a field no anchor fact confirms, such as the
-contract months, gets an official evidence entry with the quote instead). Notes say what to
-check by hand: the page missing from watch.pages, an anchor validate-catalog would refuse (its
-length, or the value check on its text alone, offline_check), an existing anchor of the same
-fact that states the old value and must go (replaced_anchors: validate-catalog would refuse it
-once the value changes), a big change, a manual watch.
+contract months, gets an official evidence entry with the quote instead). When the quote alone
+names no tier (the tier is a heading above it, as on a plans page that shows several tiers),
+the anchor is the excerpt from that heading to the quote kept with the hint or the claim
+(anchor_text, research.evidence.anchor_span), one line each: validate-catalog checks an
+anchor's text alone and the watcher finds it on the page as one piece. A page that is another
+edition of a versioned price list (a watch page with index_url and link_pattern whose pattern
+matches it) replaces that page's entry, which keeps its index_url and link_pattern, instead of
+being added as a new, unversioned page. edition_snippets(): for a versioned PDF the watcher found
+superseded, the entry with the newest edition's url and the anchors that edition still contains
+(PageCheck.newest_anchors) moved to it, with notes on the ones it does not contain. Notes say
+what to check by hand: the page missing from watch.pages, an anchor validate-catalog would
+refuse (its length, or the value check on its text alone, offline_check), an existing anchor of
+the same fact that states the old value and must go (replaced_anchors: validate-catalog would
+refuse it once the value changes), a big change, a manual watch.
 
 `current` is the YAML value the proposal would replace, in the same vocabulary form (for a
 multi-valued field, the entry of the same service), None when the YAML has none.
@@ -52,6 +62,7 @@ the order above. The others (no value check) are listed by the review CLI only.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from datetime import date
@@ -64,15 +75,15 @@ import yaml
 from haggler.bundles.research import yaml_values
 from haggler.bundles.status import is_expired, watched
 from haggler.dates import find_dates
-from haggler.models.bundles import BundleWatchState, PriceHint
+from haggler.models.bundles import BundleWatchState, PriceHint, anchor_hash
 from haggler.models.catalog import Catalog
-from haggler.models.curated import Anchor, Bundle, BundlesFile
+from haggler.models.curated import Anchor, Bundle, BundlesFile, WatchPage
 from haggler.models.research import Claim, SubjectFacts, claim_hash, claim_id
 from haggler.money import format_money_code, parse_money_code, plain_amount
-from haggler.research.evidence import canonical_url
+from haggler.research.evidence import ValueContext, canonical_url
 from haggler.research.fields import FIELD_SPECS, FIELDS
 from haggler.research.review import ClaimReview, ReviewIndex
-from haggler.research.values import ValueCheck, ValueKind, big_change, check_value
+from haggler.research.values import ValueCheck, big_change
 
 ProposalSource = Literal["watcher", "agent"]
 SOURCE_ES = {"watcher": "vigilante", "agent": "investigación automática"}
@@ -123,6 +134,9 @@ class Proposal:
     # for, see bundle_proposals).
     review: ClaimReview = "pending"
     reason: str = ""
+    # The anchor text validate-catalog accepts when `quote` alone names no tier (the excerpt
+    # from the heading above it, research.evidence.anchor_span); the snippet offers it.
+    anchor_text: str | None = None
 
     @property
     def publishable(self) -> bool:
@@ -245,6 +259,7 @@ def _hint_proposal(
         first_seen=hint.first_seen or watch.checked_at,
         retrieved_at=watch.checked_at,
         reason=hint.reason,
+        anchor_text=hint.anchor_text,
     )
 
 
@@ -272,6 +287,7 @@ def _claim_proposal(bundle: Bundle, claim: Claim, review: ClaimReview, today: da
         retrieved_at=retrieved.date() if retrieved else None,
         review=review,
         reason=claim.check.detail,
+        anchor_text=claim.anchor_text,
     )
 
 
@@ -302,13 +318,19 @@ def bundle_proposals(
             continue
         status = index.status(claim)
         out.append(_claim_proposal(bundle, claim, status, today))
+    # A rejection hides the proposal, and every other one of the same value on the same
+    # evidence (the same hash: the watcher and the agent read the same line).
+    rejected = {
+        (p.field, p.proposed, p.hash)
+        for p in out
+        if (d := index.lookup(p.id, p.hash)) is not None and d.decision == "reject"
+    }
     kept: list[Proposal] = []
     seen: set[tuple[str, str]] = set()
     for p in out:
         if (p.id, p.hash) in seen or resolved(bundle, p.field, p.proposed, today):
             continue
-        decision = index.lookup(p.id, p.hash)
-        if not include_rejected and decision is not None and decision.decision == "reject":
+        if not include_rejected and (p.field, p.proposed, p.hash) in rejected:
             continue
         seen.add((p.id, p.hash))
         kept.append(p)
@@ -335,6 +357,19 @@ def pending_changes(proposals: Iterable[Proposal]) -> list[Proposal]:
 # ------------------------------------------------------------------ snippets
 
 
+class _SnippetDumper(yaml.SafeDumper):
+    """safe_dump, with a multi-line anchor text as a literal block (its line breaks visible)."""
+
+
+def _str_block(dumper: yaml.SafeDumper, value: str) -> yaml.ScalarNode:
+    return dumper.represent_scalar(
+        "tag:yaml.org,2002:str", value, style="|" if "\n" in value else None
+    )
+
+
+_SnippetDumper.add_representer(str, _str_block)
+
+
 @dataclass
 class Snippet:
     """What to paste into bundles.yaml to accept a proposal: `path` names the value's place,
@@ -346,8 +381,13 @@ class Snippet:
     notes: list[str] = field(default_factory=list)
 
     def text(self) -> str:
-        dumped = yaml.safe_dump(
-            self.fragment, sort_keys=False, allow_unicode=True, width=10_000, indent=2
+        dumped = yaml.dump(
+            self.fragment,
+            Dumper=_SnippetDumper,
+            sort_keys=False,
+            allow_unicode=True,
+            width=10_000,
+            indent=2,
         )
         head = [
             f"# {YAML_FILE}, paquete {self.bundle_id}: {self.path}",
@@ -415,24 +455,16 @@ def _value_fragment(bundle: Bundle, p: Proposal, notes: list[str]) -> tuple[str,
         notes.append("la página la sigue vendiendo: revisa también valid_until")
         return "status", {"status": "unverified"}
     if p.field == "bundle_price_list_url":
+        versioned = edition_of(bundle, value)
+        if versioned is not None:
+            notes.append(_replace_page_note(versioned))
+            return "watch.pages[]", {"watch": {"pages": [_edition_entry(versioned, value)]}}
         notes.append(
             "si es una edición nueva de una lista versionada, cambia la url de esa página "
             "(index_url y link_pattern siguen igual) y vuelve a copiar sus anclas"
         )
         return "watch.pages[]", {"watch": {"pages": [{"url": value, "kind": "pdf"}]}}
     raise ValueError(f"{p.field} is not a bundle value field")
-
-
-# The value check validate-catalog runs on an anchor's text alone (haggler.catalog), per field.
-_OFFLINE_KIND: dict[str, ValueKind] = {
-    "bundle_price": "money",
-    "bundle_intro_price": "intro_money",
-    "bundle_base_price": "base_money",
-    "bundle_includes": "component",
-    "bundle_discount": "component",
-    "bundle_intro_until": "date_until",
-    "bundle_offer_until": "date_until",
-}
 
 
 def offline_check(
@@ -443,31 +475,16 @@ def offline_check(
     catalog: Catalog | None = None,
 ) -> ValueCheck | None:
     """The proposed value checked on the quote ALONE, as validate-catalog checks an anchor's
-    text (no page context: a price anchor must name the bundle's tier itself, where the agent's
-    quote may have taken it from a heading above). None for a field without an anchor fact."""
-    kind = _OFFLINE_KIND.get(p.field)
-    if kind is None:
-        return None
-    price = bundle.price
-    value: object = p.proposed
-    period = price.period
-    if p.field in _MONEY_ATTR:
-        parsed = parse_money_code(p.proposed)
-        if parsed is None:
-            return ValueCheck("value_not_in_quote", f"not an amount: {p.proposed}")
-        value, _currency, period = parsed[0], parsed[1], parsed[2] or price.period
-    return check_value(
-        kind,
-        value,
-        " ".join(p.quote.split()),
-        country=bundle.country,
-        currency=price.currency,
-        period=period,
-        provider=bundles.provider(bundle.provider_id) if bundles else None,
+    text (research.evidence.ValueContext.offline: no page context, its line breaks kept; a
+    price anchor must name the bundle's tier itself, where the agent's quote may have taken it
+    from a heading above). None for a field without an anchor fact."""
+    ctx = ValueContext(
         bundle=bundle,
-        bundles=bundles.bundles if bundles else None,
+        provider=bundles.provider(bundle.provider_id) if bundles else None,
+        bundles=tuple(bundles.bundles) if bundles else (),
         catalog=catalog,
     )
+    return ctx.offline(p.field, p.proposed, p.quote)
 
 
 def replaced_anchors(
@@ -512,6 +529,103 @@ def replaced_anchors(
     return out
 
 
+def edition_of(bundle: Bundle, url: str) -> WatchPage | None:
+    """The versioned watch page (index_url and link_pattern) `url` is another edition of: its
+    link_pattern matches `url`, which is not the page's own url."""
+    target = canonical_url(url)
+    for wp in bundle.watch.pages:
+        if wp.index_url is None or wp.link_pattern is None or canonical_url(str(wp.url)) == target:
+            continue
+        try:
+            if re.search(wp.link_pattern, url):
+                return wp
+        except re.error:  # validate-catalog refuses it; nothing to match here
+            continue
+    return None
+
+
+def _edition_entry(wp: WatchPage, url: str) -> dict[str, Any]:
+    return {
+        "url": url,
+        "kind": wp.kind,
+        "index_url": str(wp.index_url),
+        "link_pattern": wp.link_pattern,
+    }
+
+
+def _replace_page_note(wp: WatchPage) -> str:
+    return (
+        f"es otra edición de la lista versionada {wp.url}: reemplaza esa entrada de "
+        "watch.pages por esta (index_url y link_pattern siguen igual) y cambia la url de sus "
+        "anclas que sigan en la edición nueva"
+    )
+
+
+def _anchor_entry(a: Anchor, url: str) -> dict[str, Any]:
+    entry: dict[str, Any] = {"fact": a.fact}
+    if a.service_id:
+        entry["service_id"] = a.service_id
+    return entry | {"url": url, "text": a.text}
+
+
+def edition_snippets(bundle: Bundle, watch: BundleWatchState | None) -> list[Snippet]:
+    """For each versioned PDF the watcher found superseded (its PageCheck superseded, with the
+    newest edition's URL; only while the watch state counts, status.watched): the watch.pages
+    entry with the newest edition's url (index_url and link_pattern unchanged) that replaces the
+    curated one, and the curated edition's anchors the newest one still contains
+    (PageCheck.newest_anchors) at the new url, replacing theirs. Notes name the anchors it does
+    not contain, or say that it could not be read."""
+    w = watched(bundle, watch)
+    if w is None:
+        return []
+    out: list[Snippet] = []
+    for wp in bundle.watch.pages:
+        check = w.page(str(wp.url))
+        if (
+            wp.index_url is None
+            or wp.link_pattern is None
+            or check is None
+            or check.status != "superseded"
+            or not check.newest_url
+        ):
+            continue
+        new, edition = check.newest_url, check.newest_edition
+        notes = [
+            f"reemplaza la entrada de watch.pages con url {wp.url}: la edición {edition} "
+            f"sustituye a la {check.edition} (index_url y link_pattern siguen igual)"
+        ]
+        moved: list[dict[str, Any]] = []
+        missing: list[str] = []
+        for a in bundle.watch.anchors:
+            if canonical_url(str(a.url)) != canonical_url(str(wp.url)):
+                continue
+            if check.newest_status == "ok" and anchor_hash(a) in check.newest_anchors:
+                moved.append(_anchor_entry(a, new))
+            else:
+                missing.append(a.fact + (f" ({a.service_id})" if a.service_id else ""))
+        if moved:
+            notes.append(
+                "reemplaza estas anclas de la edición anterior por las de abajo (mismo texto, "
+                f"url nueva): la edición {edition} las contiene"
+            )
+        if missing and check.newest_status == "ok":
+            notes.append(
+                f"la edición {edition} no contiene estas anclas de la anterior: "
+                f"{', '.join(missing)}; quítalas o cópialas de nuevo de la salida de "
+                "`haggler probe --mode bundles`"
+            )
+        elif missing:
+            notes.append(
+                f"la edición {edition} no se pudo leer ({check.newest_status or 'sin leer'}): "
+                f"comprueba a mano si contiene estas anclas: {', '.join(missing)}"
+            )
+        frag: dict[str, Any] = {"watch": {"pages": [_edition_entry(wp, new)]}}
+        if moved:
+            frag["watch"]["anchors"] = moved
+        out.append(Snippet(bundle.bundle_id, "watch.pages[]", frag, notes))
+    return out
+
+
 def _excerpt(text: str, limit: int = 160) -> str:
     flat = " ".join(text.split())
     return flat if len(flat) <= limit else flat[: limit - 3].rstrip() + "..."
@@ -534,23 +648,33 @@ def snippet(
     quote = " ".join(p.quote.split())
     fact = ANCHOR_FACT.get(p.field)
     if fact is not None:
+        # The excerpt from the tier's heading on, when the quote alone names no tier.
+        text = p.anchor_text or quote
         anchor: dict[str, Any] = {"fact": fact}
         if fact == "component":
             anchor["service_id"] = p.proposed.replace(":", ".").split(".", 1)[0]
-        anchor |= {"url": p.url, "text": quote}
+        anchor |= {"url": p.url, "text": text}
         watch = frag.setdefault("watch", {})
         pages = {canonical_url(str(w.url)) for w in bundle.watch.pages}
         pages |= {canonical_url(str(w.index_url)) for w in bundle.watch.pages if w.index_url}
         if canonical_url(p.url) not in pages:
-            watch.setdefault("pages", []).append({"url": p.url, "kind": _page_kind(p.url)})
-            notes.append("la página aún no está en watch.pages: añádela (un ancla cita una)")
+            versioned = edition_of(bundle, p.url)
+            if versioned is not None:
+                # Another edition of a versioned price list: its entry changes url, it stays
+                # versioned (a new page would never be checked for a newer edition).
+                watch.setdefault("pages", []).append(_edition_entry(versioned, p.url))
+                notes.append(_replace_page_note(versioned))
+            else:
+                watch.setdefault("pages", []).append({"url": p.url, "kind": _page_kind(p.url)})
+                notes.append("la página aún no está en watch.pages: añádela (un ancla cita una)")
         watch["anchors"] = [anchor]
-        if not _ANCHOR_MIN <= len(quote) <= _ANCHOR_MAX:
+        length = len(" ".join(text.split()))
+        if not _ANCHOR_MIN <= length <= _ANCHOR_MAX:
             notes.append(
-                f"el texto del ancla tiene {len(quote)} caracteres ({_ANCHOR_MIN}-{_ANCHOR_MAX}): "
+                f"el texto del ancla tiene {length} caracteres ({_ANCHOR_MIN}-{_ANCHOR_MAX}): "
                 "cópialo más completo de la salida de `haggler probe --mode bundles`"
             )
-        check = offline_check(bundle, p, bundles=bundles, catalog=catalog)
+        check = offline_check(bundle, replace(p, quote=text), bundles=bundles, catalog=catalog)
         if check is not None and not check.ok:
             notes.append(
                 f"validate-catalog no aceptará este texto tal cual ({check.reason}): cópialo de "

@@ -237,6 +237,37 @@ async def test_robots_disallow_raises_without_fetching_page(fetcher, router):
     assert not page.called
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        f"{SITE}/se/../co/apple-one/",
+        f"{SITE}/se/%2e%2e/co/apple-one/",
+        f"{SITE}/./co/./apple-one/",
+    ],
+)
+async def test_robots_is_checked_on_the_path_really_sent(fetcher, router, url):
+    # httpx (and servers, for %2e) resolve dot segments: robots.txt must see /co/, not /se/.
+    allow_robots(router, body="User-agent: *\nDisallow: /co/\n")
+    page = router.get(f"{SITE}/co/apple-one/").mock(return_value=httpx.Response(200))
+    with pytest.raises(RobotsDisallowedError):
+        await fetcher.fetch(url)
+    assert not page.called
+
+
+async def test_dot_segments_are_resolved_on_every_hop_and_in_final_url(fetcher, router):
+    allow_robots(router, body="User-agent: *\nDisallow: /private/\n")
+    router.get(f"{SITE}/se/../co/").mock(return_value=httpx.Response(200, text="<p>co</p>"))
+    resp = await fetcher.fetch(f"{SITE}/se/../co/")
+    assert (resp.url, resp.final_url) == (f"{SITE}/se/../co/", f"{SITE}/co/")
+    router.get(f"{SITE}/go").mock(
+        return_value=httpx.Response(302, headers={"Location": "/public/%2E%2E/private/x"})
+    )
+    target = router.get(f"{SITE}/private/x").mock(return_value=httpx.Response(200))
+    with pytest.raises(RobotsDisallowedError):
+        await fetcher.fetch(f"{SITE}/go")
+    assert not target.called
+
+
 async def test_robots_404_allows_all(fetcher, router):
     robots = router.get(f"{SITE}/robots.txt").mock(return_value=httpx.Response(404))
     router.get(f"{SITE}/a").mock(return_value=httpx.Response(200, text="a"))
@@ -546,3 +577,27 @@ async def test_external_client_is_used(clock, router):
     async with httpx.AsyncClient() as external:
         f = HttpFetcher(settings(), client=external, monotonic=clock.monotonic, sleep=clock.sleep)
         assert (await f.fetch(f"{SITE}/x")).text == "via external"
+
+
+# ------------------------------------------------------------------ dot segments
+
+
+@pytest.mark.parametrize(
+    ("url", "resolved"),
+    [
+        ("https://h.example/se/../co/x", "https://h.example/co/x"),
+        ("https://h.example/se/%2E%2e/co/x", "https://h.example/co/x"),
+        ("https://h.example/a/./b/", "https://h.example/a/b/"),
+        ("https://h.example/a/b/..", "https://h.example/a/"),
+        ("https://h.example/../../x?q=../y#f", "https://h.example/x?q=../y#f"),
+        # Unchanged, byte for byte: no dot segment (a query or "..." is not one).
+        ("https://WWW.Example.com/A%20b/...?q=../", "https://WWW.Example.com/A%20b/...?q=../"),
+        ("https://h.example", "https://h.example"),
+    ],
+)
+def test_resolve_dot_segments(url, resolved):
+    from haggler.fetch.urls import resolve_dot_segments
+
+    assert resolve_dot_segments(url) == resolved
+    # What httpx sends for the resolved URL is that same path.
+    assert httpx.URL(resolved).raw_path == httpx.URL(resolve_dot_segments(resolved)).raw_path

@@ -581,8 +581,10 @@ verificar**.
    valor anterior y hay que quitar, un ancla que `validate-catalog` rechazaría, un cambio de más
    del 50 %, una vigilancia `manual`. Con los precios pasa a menudo que la cita se verificó en
    línea porque el nombre del nivel estaba en un título más arriba, pero un ancla tiene que
-   nombrarlo en su propio texto: copia entonces un fragmento más largo de la salida del probe
-   `mode=bundles` (§8).
+   nombrarlo en su propio texto: el snippet trae entonces el fragmento desde ese título hasta la
+   cita, una línea por renglón (`text: |-`), que `validate-catalog` acepta y el vigilante
+   encuentra en la página. Si ni así basta, la nota lo dice: copia un fragmento más largo de la
+   salida del probe `mode=bundles` (§8).
 
    `haggler research accept` no acepta valores de paquetes: sale con código 2 e imprime el
    snippet. Tampoco acepta un paquete entero (su id o `bundle:<id>`): sus hallazgos de
@@ -629,12 +631,15 @@ cambia el YAML (el ancla, o la URL de la edición). Se arregla a mano, en un PR 
   cambió), o quita el ancla vieja si ya no corresponde (un componente que el paquete dejó de
   incluir sale también de `components`).
 - **Hay una edición nueva de la lista PDF** ("Hay una edición más nueva de la lista de
-  precios"): cambia `watch.pages[].url` a la edición nueva (su URL es `newest_url` de esa página
-  en `data/research/bundle_watch.json`). `index_url` y `link_pattern` siguen igual, y
-  `link_pattern` tiene que seguir casando con la URL nueva (lo comprueba `validate-catalog`).
-  Después vuelve a copiar las anclas de esa edición, con la URL nueva como su `url`. Si el
+  precios"): `review` muestra la URL de la edición nueva, dice de cada ancla de la vieja si la
+  nueva la contiene, e imprime un snippet "edición nueva de la lista de precios": la entrada de
+  `watch.pages` con la URL nueva (el mismo `index_url` y `link_pattern`, que tiene que seguir
+  casando con ella: lo comprueba `validate-catalog`), que **reemplaza** a la vieja, y las anclas
+  que siguen en la edición nueva con su URL nueva, que reemplazan a las suyas. Las que no
+  siguen las nombra una nota: quítalas o vuelve a copiarlas de la salida del probe. Si el
   vigilante leyó la edición nueva y sus precios difieren del YAML, `review` ya los muestra como
-  propuestas: pega sus snippets en el mismo PR.
+  propuestas: pega sus snippets en el mismo PR (su página es la misma entrada versionada, nunca
+  una página nueva).
 
 Un ancla editada empieza de cero: no cuenta hasta que la siguiente corrida la verifica. Los pasos
 3–5 de arriba valen igual.
@@ -668,7 +673,9 @@ verificar*, con la razón visible en el sitio:
 
 - precios pintados con JavaScript: no hay navegador headless, y un dato que solo está en el JSON
   embebido (`__NEXT_DATA__`, ld+json) queda `embedded_only` y no confirma nada por sí solo;
-- muros de login, de verificación de cuenta o anti-bot (`blocked`);
+- muros de login, de verificación de cuenta o anti-bot (`blocked`), también los que responden
+  200: una redirección a una página de acceso o de verificación de cuenta del propio proveedor
+  (la `/gz/account-verification` de Mercado Libre) o un desafío anti-bot servido con 200;
 - páginas que `robots.txt` no permite (`robots_disallowed`);
 - PDF escaneados (sin texto: no hay OCR), cifrados o de más de 60 páginas (`pdf_error`); uno
   de más de 10 MiB se rechaza al descargarlo (`failed`);

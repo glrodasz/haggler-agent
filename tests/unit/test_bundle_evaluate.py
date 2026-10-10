@@ -32,6 +32,7 @@ from haggler.models.research import (
     SubjectFacts,
     claim_hash,
     claim_id,
+    subject_key,
 )
 from haggler.publish import site_data
 from haggler.research.evaluate import EvalContext, assess
@@ -613,6 +614,195 @@ def test_a_foreign_offer_is_only_allowed_on_an_official_bundle_finding() -> None
         bundle(), EU, context(_subject("bundle:acme_co", press), review=_accept(press))
     )
     assert b is not None and b.tos == "unknown"
+
+
+STATED = {
+    "local_id": "none",
+    "local_payment": "any_card",
+    "local_line": "none",
+    "residency": "not_required",
+    "billing_address": "not_required",
+    "signup_presence": "not_checked",
+    "credit_check": False,
+}
+ACME = "bundle:acme_co"
+
+
+def _with_findings(
+    b: Bundle, profile: Profile, *found: tuple[str, str], include_pending: bool = False
+) -> BundleAssessment:
+    """The verdict of `b` with an accepted official foreign_offer_allowed plus `found` findings
+    of the bundle subject (accepted, unless include_pending: then left pending)."""
+    allowed = _claim(ACME, "bundle_foreign_offer_allowed", "true")
+    claims = [allowed, *(_claim(ACME, f, v) for f, v in found)]
+    accepted = [allowed] if include_pending else claims
+    ctx = context(_subject(ACME, *claims), review=_accept(*accepted))
+    a = assess_bundle(b, profile, ctx, include_pending=include_pending)
+    assert a is not None
+    return a
+
+
+def test_stated_requirements_and_an_allowed_offer_give_rank_0() -> None:
+    a = _with_findings(bundle(requirements=STATED), EU)
+    assert (a.rank, a.provenance, a.assumptions_es) == (0, "agent_reviewed", ())
+
+
+@pytest.mark.parametrize(
+    ("finding", "step", "reason"),
+    [
+        (
+            ("bundle_billing_address", "required"),
+            "billing_address",
+            "Exige una dirección de facturación en CO y el perfil no tiene una real allí.",
+        ),
+        (
+            ("bundle_account_country_basis", "self_declared"),
+            "declare_country",
+            "Exige declarar CO como país propio sin vivir allí.",
+        ),
+        (
+            ("bundle_account_country_basis", "billing_address"),
+            "billing_address",
+            "Exige una dirección de facturación en CO y el perfil no tiene una real allí.",
+        ),
+    ],
+)
+def test_a_false_declaration_finding_makes_the_own_route_rank_4(
+    finding: tuple[str, str], step: str, reason: str
+) -> None:
+    # The curated requirements say nothing is needed: an accepted official finding still wins.
+    a = _with_findings(bundle(requirements=STATED), EU, finding)
+    assert (a.rank, a.legality, a.practical) == (4, "requires_misrepresentation", "impossible")
+    assert (step, "CO", True) in [(s.type, s.value, s.requires_false_declaration) for s in a.steps]
+    assert reason in a.reasons_es
+    assert a.provenance == "agent_reviewed"
+    # The same finding with requirements left unknown: rank 4 too, not unknown.
+    unknown = _with_findings(bundle(), EU, finding)
+    assert (unknown.rank, unknown.legality) == (4, "requires_misrepresentation")
+
+
+@pytest.mark.parametrize(
+    ("finding", "reason"),
+    [
+        (
+            ("bundle_local_id_required", "true"),
+            "Exige un documento de identidad de CO; el perfil no tiene uno.",
+        ),
+        (
+            ("bundle_payment_method", "local_card"),
+            "Exige una tarjeta emitida en CO; el perfil no tiene ni puede obtener una.",
+        ),
+        (
+            ("bundle_account_country_basis", "payment_method_country"),
+            "Exige una tarjeta emitida en CO; el perfil no tiene ni puede obtener una.",
+        ),
+        (
+            ("bundle_local_line", "mobile"),
+            "Exige una línea móvil de CO; el perfil no tiene un teléfono de CO.",
+        ),
+        (
+            ("bundle_signup_location", "checked"),
+            "Exige estar en CO al contratar; el perfil no viaja a CO.",
+        ),
+        (
+            ("bundle_account_country_basis", "signup_location"),
+            "Exige estar en CO al contratar; el perfil no viaja a CO.",
+        ),
+        (
+            ("bundle_account_country_basis", "phone_number"),
+            "Exige un número de teléfono de CO; el perfil no tiene uno.",
+        ),
+    ],
+)
+def test_a_requirement_finding_is_a_gate(finding: tuple[str, str], reason: str) -> None:
+    a = _with_findings(bundle(requirements=STATED), EU, finding)
+    assert (a.rank, a.practical, a.provenance) == (4, "impossible", "agent_reviewed")
+    assert reason in a.reasons_es
+
+
+def test_requirement_findings_the_profile_meets() -> None:
+    # The CO citizen holds a cédula and a CO card and can be in CO once.
+    ok = _with_findings(
+        bundle(requirements=STATED),
+        CO,
+        ("bundle_local_id_required", "true"),
+        ("bundle_payment_method", "local_card"),
+        ("bundle_signup_location", "checked"),
+    )
+    assert ok.practical == "presence_once" and ok.rank == 1
+    assert {("local_id", "CO"), ("payment_country", "CO"), ("presence", "CO")} <= {
+        (s.type, s.value) for s in ok.steps
+    }
+    credit = _with_findings(bundle(requirements=STATED), CO, ("bundle_credit_check", "true"))
+    assert (credit.practical, credit.rank) == ("unknown", UNKNOWN_RANK)
+
+
+def test_official_findings_settle_unknown_requirements() -> None:
+    # Unknown curated requirements are assumptions, so the route stays unknown ...
+    base = _with_findings(bundle(), CO)
+    assert base.rank == UNKNOWN_RANK and base.assumptions_es
+    # ... until official findings settle them (the residency is about the ToS clause).
+    settled = _with_findings(
+        bundle(requirements={"residency": "not_required"}),
+        CO,
+        ("bundle_billing_address", "not_required"),
+        ("bundle_signup_location", "not_checked"),
+        ("bundle_local_id_required", "false"),
+        ("bundle_local_line", "none"),
+        ("bundle_payment_method", "any_card"),
+        ("bundle_credit_check", "false"),
+    )
+    assert (settled.rank, settled.assumptions_es) == (0, ())
+    # A favourable value from the press settles nothing (Facts keeps it official only).
+    press = _claim(ACME, "bundle_billing_address", "not_required")
+    press = press.model_copy(
+        update={"check": press.check.model_copy(update={"source_class": "press"})}
+    )
+    allowed = _claim(ACME, "bundle_foreign_offer_allowed", "true")
+    ctx = context(_subject(ACME, allowed, press), review=_accept(allowed, press))
+    a = assess_bundle(bundle(requirements={"billing_address": "unknown"}), CO, ctx)
+    assert a is not None
+    assert "Se asume que no se pide una dirección de facturación en CO." in a.assumptions_es
+
+
+def test_a_finding_never_relaxes_a_curated_requirement() -> None:
+    stated = {**STATED, "local_payment": "local_card", "billing_address": "required"}
+    a = _with_findings(
+        bundle(requirements=stated),
+        EU,
+        ("bundle_payment_method", "any_card"),
+        ("bundle_billing_address", "not_required"),
+    )
+    assert (a.rank, a.legality) == (4, "requires_misrepresentation")
+    assert "Exige una tarjeta emitida en CO; el perfil no tiene ni puede obtener una." in (
+        a.reasons_es
+    )
+
+
+def test_a_pending_requirement_finding_only_reaches_the_pending_variant() -> None:
+    b = bundle(requirements=STATED)
+    reviewed = _with_findings(b, EU, ("bundle_billing_address", "required"))
+    assert reviewed.rank == 4
+    pending_only = _with_findings(
+        b, EU, ("bundle_billing_address", "required"), include_pending=True
+    )
+    assert (pending_only.rank, pending_only.provenance) == (4, "agent_pending")
+    allowed = _claim(ACME, "bundle_foreign_offer_allowed", "true")
+    billing = _claim(ACME, "bundle_billing_address", "required")
+    ctx = context(_subject(ACME, allowed, billing), review=_accept(allowed))
+    without = assess_bundle(b, EU, ctx)
+    assert without is not None and (without.rank, without.provenance) == (0, "agent_reviewed")
+
+
+def test_an_observed_bundle_takes_hardening_requirement_findings() -> None:
+    key = subject_key("bundle", APPLE_ONE_CO.bundle_id)
+    declared = _claim(key, "bundle_account_country_basis", "self_declared")
+    base = assess_bundle(APPLE_ONE_CO, CO, CTX)
+    ctx = context(_subject(key, declared), review=_accept(declared))
+    a = assess_bundle(APPLE_ONE_CO, CO, ctx)
+    assert base is not None and a is not None and base.rank == 2
+    assert (a.rank, a.legality, a.practical) == (4, "requires_misrepresentation", "impossible")
+    assert "Exige declarar CO como país propio sin vivir allí." in a.reasons_es
 
 
 def test_bundle_value_findings_never_change_a_verdict() -> None:

@@ -5,14 +5,17 @@ assess_bundle(bundle, profile, ctx) applies, in order:
 
 0. expired: an expired bundle (haggler.bundles.status.is_expired) gets no verdict (None).
 1. curated: the bundle's `verdicts` record for the profile is used as is; its axes and steps give
-   the rank (haggler.feasibility.axes_rank). Without a verified tos_clause (none can be verified
-   before the watcher exists) it is shown unverified with low confidence. The stated requirements
-   (rule 3 gates) still apply and can only make it harder: a document, line, payment or presence
-   the profile lacks -> impossible; a FALSE DECLARATION the YAML states (residency required;
-   billing_address required without a real address in T) adds its step and reason, so the legality
-   is requires_misrepresentation and the rank at least 2 (decision 1 keeps a curated false
-   declaration at its own rank, never below 2); a credit check is stated as a reason (the record
-   already judged practicality). Components (rule 4) can only raise its rank.
+   the rank (haggler.feasibility.axes_rank). Without a verified tos_clause it is shown unverified
+   with low confidence, and no clause is verified today: the watcher only checks anchors (price,
+   intro, base plan, components, validity), never a record's tos_clause, so a curated bundle
+   verdict is always unverified/low (Meli+ CO's terms cannot be read by our fetch at all, H0).
+   The stated requirements (rule 3 gates) still apply and can only make it harder: a document,
+   line, payment or presence the profile lacks -> impossible; a FALSE DECLARATION the YAML
+   states (residency required; billing_address required without a real address in T) adds its
+   step and reason, so the legality is requires_misrepresentation and the rank at least 2
+   (decision 1 keeps a curated false declaration at its own rank, never below 2); a credit check
+   is stated as a reason (the record already judged practicality). Components (rule 4) can only
+   raise its rank.
 2. home (T == R): official_home, rank 0, with hard gates: a local ID document (local_id other than
    none/unknown) needs T among the profile's documents; a mobile line needs a phone of T; a fixed
    line needs a real address in T. A failed gate -> not_feasible (rank 4, practical impossible)
@@ -28,18 +31,27 @@ assess_bundle(bundle, profile, ctx) applies, in order:
      findings, and pending ones with include_pending; bundle_residence_clause,
      bundle_enforcement_event, bundle_foreign_offer_allowed through research.evaluate.tos_axis;
      compliant only with official claims; unknown without facts);
-   - the curated requirements are gates on both: local_id -> a document of T; local_line
-     mobile/fixed/both -> a phone / a real address of T; local_payment local_card -> a card issued
-     in T, held or obtainable online; local_bank -> an instrument with an IBAN of T, held or
+   - the requirements are gates on both: the curated ones with the bundle subject's requirement
+     findings folded in (bundle_billing_address, bundle_signup_location,
+     bundle_local_id_required, bundle_local_line, bundle_payment_method, bundle_credit_check and
+     bundle_account_country_basis, through research.evaluate's Facts: accepted findings, pending
+     ones with include_pending; a favourable value only from an official source). A finding
+     settles a requirement the YAML leaves unknown and a requirement only gets harder: a curated
+     value is never relaxed. local_id (or bundle_local_id_required true) -> a document of T;
+     local_line mobile/fixed/both -> a phone / a real address of T; local_payment local_card
+     (or an account country set by the payment method or the store region) -> a card issued in
+     T, held or obtainable online; local_bank -> an instrument with an IBAN of T, held or
      obtainable online; carrier_bill -> a phone line of T; signup_presence checked -> the profile
-     can be in T once; credit_check -> practicality unknown. A requirement the profile does not
-     meet makes the route impossible and is stated as a plain fact;
+     can be in T once; an account country set by the phone number -> a phone of T; credit_check
+     -> practicality unknown. A requirement the profile does not meet makes the route impossible
+     and is stated as a plain fact;
    - a route that needs a FALSE DECLARATION (residency required; billing_address required without
-     a real address of the profile in T) is never offered: legality requires_misrepresentation,
-     practical impossible, rank 4;
+     a real address of the profile in T; an account country the subscriber declares) is never
+     offered: legality requires_misrepresentation, practical impossible, rank 4;
    - on the bundle's own route an unknown requirement is an assumption ("se asume que ..."), and
      an unknown payment rule without a held card of T leaves practicality unknown; an observed
-     route only takes the stated requirements (its service verdict covers the rest).
+     route only takes the stated (and researched) requirements as gates, never as assumptions
+     (its service verdict covers the rest).
 4. components: every included component and the N cheapest options of each choose_n group
    (`counted`, from haggler.bundles.pricing), each assessed with research.evaluate.assess(service,
    T). The worst axis wins and a component that is not feasible makes the bundle not feasible. An
@@ -57,9 +69,9 @@ assess_bundle(bundle, profile, ctx) applies, in order:
    rank below 2 that rests on assumptions -> unknown: improvements need facts.
 
 Provenance: home | curated | composed; agent_reviewed / agent_pending once the bundle subject's
-own research facts decide its ToS. With include_pending, a verdict that used a
-finding still pending review (in a component, the observed service or the bundle subject) is
-agent_pending; publish lists it only when it differs from the reviewed one.
+own research facts decide its ToS or a requirement of its own route. With include_pending, a
+verdict that used a finding still pending review (in a component, the observed service or the
+bundle subject) is agent_pending; publish lists it only when it differs from the reviewed one.
 
 Reasons and assumptions only state requirements and facts, never a way around them (no VPN, other
 addresses or false data). Not legal advice.
@@ -69,6 +81,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 from haggler.bundles.pricing import counted_components
 from haggler.bundles.status import BundleState, bundle_state, is_expired
@@ -86,11 +99,12 @@ from haggler.feasibility import (
 from haggler.models.curated import (
     Bundle,
     BundleComponent,
+    BundleRequirements,
     BundleVerdictRecord,
     FeasibilityStep,
 )
 from haggler.models.profiles import Profile
-from haggler.models.research import SubjectKind, subject_key
+from haggler.models.research import Claim, SubjectKind, subject_key
 from haggler.research.evaluate import (
     UNKNOWN_AXIS,
     Assessment,
@@ -103,9 +117,12 @@ from haggler.research.evaluate import (
     obtainable_card,
     tos_axis,
 )
+from haggler.research.fields import FIELD_SPECS, severity
 
 BUNDLE_SUBJECT: SubjectKind = "bundle"
 _NO_ID = frozenset({"", "none", "unknown"})
+# A local ID document a research finding requires (bundle_local_id_required), name unknown.
+_ID_REQUIRED = "required"
 _ID_NAMES = {"cedula": "cédula", "curp": "CURP", "cpf": "CPF"}
 _CONFIDENCE_ORDER = ("low", "medium", "high")
 _AXIS_ORDER = {"legality": LEGALITY_RANK, "tos": TOS_RANK, "practical": PRACTICAL_RANK}
@@ -233,10 +250,104 @@ def _impossible(w: Work, reason: str) -> None:
     w.reasons.append(reason)
 
 
-def _gates(bundle: Bundle, profile: Profile, facts: Facts, w: Work, mode: str) -> bool:
-    """Apply the bundle's curated requirements to a route (see the module rules for which ones
-    each route takes). Returns True when a stated requirement leaves practicality unknown."""
+def _researched(
+    bundle: Bundle, profile: Profile, facts: Facts, w: Work
+) -> tuple[BundleRequirements, list[Claim]]:
+    """The curated requirements with the bundle subject's requirement findings folded in (rule 3),
+    and the findings used. A finding settles a requirement the YAML leaves unknown (a favourable
+    value only on the provider's own word: Facts drops the others), and a requirement only ever
+    gets harder: a stricter finding wins over a curated value, a curated one is never relaxed.
+    The account_country_basis twin applies like the service field (research.evaluate):
+    billing_address / signup_location imply those requirements, payment_method_country and
+    store_region a card of T, phone_number a phone of T and self_declared a FALSE DECLARATION
+    (declaring T while living elsewhere)."""
     r = bundle.requirements
+    t = bundle.country
+    key = subject_key(BUNDLE_SUBJECT, bundle.bundle_id)
+    used: list[Claim] = []
+
+    def found(field_name: str) -> str | None:
+        res = facts.resolve(key, field_name)
+        if res is None:
+            return None
+        used.extend(res.claims)
+        return res.value
+
+    basis = facts.values(key, "bundle_account_country_basis")
+
+    def implied(*values: str) -> bool:
+        hit = [c for v in values for c in basis.get(v, [])]
+        used.extend(hit)
+        return bool(hit)
+
+    updates: dict[str, Any] = {}
+    billing = found("bundle_billing_address")
+    if implied("billing_address") or billing == "required":
+        updates["billing_address"] = "required"
+    elif billing == "not_required" and r.billing_address == "unknown":
+        updates["billing_address"] = "not_required"
+
+    signup = found("bundle_signup_location")
+    if implied("signup_location") or signup == "checked":
+        updates["signup_presence"] = "checked"
+    elif signup == "not_checked" and r.signup_presence == "unknown":
+        updates["signup_presence"] = "not_checked"
+
+    local_id = found("bundle_local_id_required")
+    if local_id == "true" and r.local_id.strip().lower() in _NO_ID:
+        updates["local_id"] = _ID_REQUIRED
+    elif local_id == "false" and r.local_id.strip().lower() == "unknown":
+        updates["local_id"] = "none"
+
+    line = found("bundle_local_line")
+    mobile = r.local_line in ("mobile", "both") or line in ("mobile", "both")
+    fixed = r.local_line in ("fixed", "both") or line in ("fixed", "both")
+    if mobile or fixed:
+        updates["local_line"] = "both" if mobile and fixed else "mobile" if mobile else "fixed"
+    elif line == "none" and r.local_line == "unknown":
+        updates["local_line"] = "none"
+
+    pay = found("bundle_payment_method")
+    payments = [p for p in (r.local_payment, pay) if p not in (None, "unknown")]
+    if implied("payment_method_country", "store_region"):
+        payments.append("local_card")
+    if payments:
+        spec = FIELD_SPECS["bundle_payment_method"]
+        updates["local_payment"] = max(payments, key=lambda p: severity(spec, p))
+
+    credit = found("bundle_credit_check")
+    if credit == "true":
+        updates["credit_check"] = True
+    elif credit == "false" and r.credit_check is None:
+        updates["credit_check"] = False
+
+    if "store_region" in basis:
+        w.step("store_region", t)
+    if implied("phone_number"):
+        if t in profile.phones():
+            w.step("local_phone", t)
+        else:
+            _impossible(w, f"Exige un número de teléfono de {t}; el perfil no tiene uno.")
+    if implied("self_declared"):
+        w.false_declaration = True
+        w.step("declare_country", t, requires_false_declaration=True)
+        w.reasons.append(f"exige declarar {t} como país propio sin vivir allí")
+    w.use(used, key)
+    return r.model_copy(update=updates), list({c.id: c for c in used}.values())
+
+
+def _gates(
+    bundle: Bundle,
+    profile: Profile,
+    facts: Facts,
+    w: Work,
+    mode: str,
+    requirements: BundleRequirements | None = None,
+) -> bool:
+    """Apply the bundle's requirements (by default the curated ones) to a route (see the module
+    rules for which ones each route takes). Returns True when a stated requirement leaves
+    practicality unknown."""
+    r = requirements or bundle.requirements
     t = bundle.country
     route = mode == _ROUTE
     unknown = False
@@ -247,8 +358,9 @@ def _gates(bundle: Bundle, profile: Profile, facts: Facts, w: Work, mode: str) -
             w.step("local_id", t)
         else:
             name = _ID_NAMES.get(local_id.lower(), local_id)
+            which = "" if local_id == _ID_REQUIRED else f" ({name})"
             _impossible(
-                w, f"Exige un documento de identidad de {t} ({name}); el perfil no tiene uno."
+                w, f"Exige un documento de identidad de {t}{which}; el perfil no tiene uno."
             )
     elif route and local_id.lower() == "unknown":
         w.assumptions.append(f"se asume que no se pide un documento de identidad de {t}")
@@ -363,8 +475,9 @@ def _home(bundle: Bundle, profile: Profile, facts: Facts, state: BundleState) ->
 
 
 def _clause_verified(record: BundleVerdictRecord) -> bool:
-    """Whether our own fetch confirmed the record's tos_clause. That evidence comes from the
-    watcher (milestone H7): until then no clause counts as verified."""
+    """Whether our own fetch confirmed the record's tos_clause. Nothing fetches one (the watcher
+    checks anchors only), so no clause counts as verified: a curated verdict is always shown
+    unverified with low confidence."""
     return False
 
 
@@ -401,7 +514,10 @@ def _observed(
     w.steps.extend(a.steps)
     w.assumptions.extend(a.assumptions_es)
     w.reasons.extend(a.reasons_es)
-    credit_unknown = _gates(bundle, profile, facts, w, _OBSERVED)
+    # The bundle subject's findings only make the stated requirements harder here: the
+    # observed service's verdict already covers what they leave unknown.
+    requirements, _found = _researched(bundle, profile, facts, w)
+    credit_unknown = _gates(bundle, profile, facts, w, _OBSERVED, requirements)
     legality, practical = a.legality, a.practical
     if w.false_declaration:
         legality, practical = "requires_misrepresentation", "impossible"
@@ -438,7 +554,9 @@ def _own_route(bundle: Bundle, profile: Profile, facts: Facts) -> _Route:
     )
     if tos == "compliant" and not all(c.official for c in claims):
         tos = UNKNOWN_AXIS  # a foreign offer is only allowed on the provider's own word
-    unknown = _gates(bundle, profile, facts, w, _ROUTE)
+    requirements, found = _researched(bundle, profile, facts, w)
+    claims = [*claims, *found]
+    unknown = _gates(bundle, profile, facts, w, _ROUTE, requirements)
     if w.false_declaration:
         legality, practical = "requires_misrepresentation", "impossible"
     else:
@@ -454,7 +572,8 @@ def _own_route(bundle: Bundle, profile: Profile, facts: Facts) -> _Route:
         confidence="low",
         status="unverified",
         pending=facts.pending(claims),
-        # The bundle subject's own facts decided the ToS (agent_reviewed / agent_pending).
+        # The bundle subject's own facts decided the ToS or a requirement (agent_reviewed /
+        # agent_pending).
         researched=bool(claims),
         work=w,
     )

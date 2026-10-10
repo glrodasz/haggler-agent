@@ -33,7 +33,10 @@ For each ClaimDraft of a subject:
    the claimed value in the quote; else the claim is "value_not_in_quote" or "implausible" and,
    like any other failed check, not persisted. A url value must also be the document the quote
    came from. A value more than research.values.BIG_CHANGE away from the YAML value keeps
-   Claim.big_change (and is logged). The bundle's feasibility twins take the Phase 2 checks only.
+   Claim.big_change (and is logged). When the quote states its value only with the lines above
+   it (a tier named in a heading) and validate-catalog would refuse it as an anchor's text, the
+   claim keeps Claim.anchor_text, the excerpt from that heading to the quote (anchor_span), for
+   the review snippet. The bundle's feasibility twins take the Phase 2 checks only.
 
 Fetched pages (PDF text included) are never sent back to the model. Raw pages can be kept
 (store_raw: the text of an HTML page, the bytes of a PDF) for audits.
@@ -55,6 +58,8 @@ from urllib.parse import urlsplit, urlunsplit
 from haggler.fetch import Fetcher, RawResponse
 from haggler.fetch.errors import BlockedError, FetchError, RobotsDisallowedError
 from haggler.fetch.pdf import extract_pdf_text, is_pdf_response
+from haggler.fetch.urls import resolve_dot_segments
+from haggler.fetch.walls import THIN_TEXT_CHARS, challenge_headers, login_wall, page_wall
 from haggler.llm.grounding import GroundingSource
 from haggler.models.research import (
     MAX_QUOTE,
@@ -69,13 +74,15 @@ from haggler.models.research import (
     claim_hash,
     claim_id,
 )
+from haggler.money import parse_money_code
 from haggler.research.fields import FIELD_SPECS, FIELDS_BY_LEVEL, normalize_value, parse_event_date
-from haggler.research.values import ValueCheck, check_value
+from haggler.research.values import ValueCheck, ValueKind, check_value
 from haggler.text import (
     contains_normalized,
     html_to_lines,
     json_scripts,
     normalize_for_match,
+    page_title,
     text_hash,
     text_node_lines,
 )
@@ -142,7 +149,9 @@ def host_matches(host: str, domains: Iterable[str]) -> bool:
 
 def on_official(url: str, domains: Iterable[str]) -> bool:
     """The URL's host is one of `domains` (or a subdomain); an entry with a path prefix
-    ("www.apple.com/se/") also needs the URL's path under it (haggler.catalog.on_domains)."""
+    ("www.apple.com/se/") also needs the URL's path under it (haggler.catalog.on_domains), with
+    its dot segments resolved ("/se/../co/" is a /co/ page)."""
+    url = resolve_dot_segments(url)
     host = host_of(url)
     path = urlsplit(url).path
     for entry in domains:
@@ -164,6 +173,7 @@ def site_of(host: str) -> str:
 
 
 def source_class(url: str, official_domains: Iterable[str]) -> SourceClass:
+    url = resolve_dot_segments(url)  # the page really fetched (fetch.urls)
     host = host_of(url)
     path = urlsplit(url).path
     if (
@@ -294,6 +304,8 @@ class Page:
     raw_ref: str | None = None
     is_pdf: bool = False
     pdf_pages: int = 0
+    # The response headers a bot-wall test reads (haggler.fetch.walls.CHALLENGE_HEADERS).
+    headers: dict[str, str] = field(default_factory=dict)
     _lines: list[str] | None = field(default=None, repr=False)
     _nodes: list[str] | None = field(default=None, repr=False)
     _embedded: list[str] | None = field(default=None, repr=False)
@@ -334,6 +346,21 @@ class Page:
         if allow_embedded and contains_normalized("\n".join(self.embedded()), quote):
             return "embedded"
         return None
+
+    def wall(self) -> str | None:
+        """What wall a page that loaded is, or None (haggler.fetch.walls): "login" when its final
+        URL is a sign-in or account-verification page the requested URL was not; else the
+        bot-wall vendor of a definite challenge header, or of a marker in the title or visible
+        text of a thin HTML page (a challenge served with 200)."""
+        if self.status is not None:
+            return None
+        if login_wall(self.url, self.final_url or self.url):
+            return "login"
+        if self.is_pdf or self.content_type == "text/plain":
+            return page_wall(self.headers, "", [], False)
+        lines = self.lines()
+        thin = sum(len(ln) for ln in lines) < THIN_TEXT_CHARS
+        return page_wall(self.headers, page_title(self.text) if thin else "", lines, thin)
 
     def locate(self, quote: str) -> tuple[int, list[str]] | None:
         """(index of the line where the quote starts, context lines: CONTEXT_BEFORE before
@@ -397,6 +424,7 @@ class PageCache:
         page.http_status = resp.status_code
         page.content_type = (resp.content_type or "").lower()
         page.retrieved_at = resp.fetched_at or self.now()
+        page.headers = challenge_headers(resp.headers or {})
         # Before the text types: a PDF served without a content type gets the Accept fallback.
         if is_pdf_response(resp):
             return await self._read_pdf(page, resp)
@@ -440,6 +468,20 @@ _CURRENT_PRICE = {
     "bundle_intro_price": "intro_amount",
     "bundle_base_price": "base_plan_amount",
 }
+
+
+# The check validate-catalog runs on an anchor's text alone (haggler.catalog), per bundle value
+# field an anchor fact confirms (proposals.ANCHOR_FACT).
+OFFLINE_KIND: dict[str, ValueKind] = {
+    "bundle_price": "money",
+    "bundle_intro_price": "intro_money",
+    "bundle_base_price": "base_money",
+    "bundle_includes": "component",
+    "bundle_discount": "component",
+    "bundle_intro_until": "date_until",
+    "bundle_offer_until": "date_until",
+}
+_OFFLINE_MONEY = frozenset({"money", "intro_money", "base_money"})
 
 
 @dataclass(frozen=True)
@@ -491,6 +533,60 @@ class ValueContext:
                 )
         return result
 
+    def offline(self, field_name: str, value: str, text: str) -> ValueCheck | None:
+        """`value` checked on `text` ALONE, the way validate-catalog checks an anchor's text
+        (haggler.catalog: its line breaks kept, no page context, no FX table); None for a
+        field no anchor fact confirms."""
+        from haggler.catalog import anchor_lines
+
+        kind = OFFLINE_KIND.get(field_name)
+        if kind is None:
+            return None
+        b = self.bundle
+        price = b.price
+        checked: object = value
+        period = price.period
+        if kind in _OFFLINE_MONEY:
+            parsed = parse_money_code(value)
+            if parsed is None:
+                return ValueCheck("value_not_in_quote", f"not an amount: {value}")
+            checked, period = parsed[0], parsed[2] or price.period
+        return check_value(
+            kind,
+            checked,
+            anchor_lines(text),
+            country=b.country,
+            currency=price.currency,
+            period=period,
+            provider=self.provider,
+            bundle=b,
+            bundles=self.bundles or None,
+            catalog=self.catalog,
+        )
+
+
+def anchor_span(page: Page, quote: str, accepts: Callable[[str], bool]) -> str | None:
+    """An anchor text for a quote that states its value only with the page lines above it (the
+    tier named in a heading, as on Meli+ CO's plans page): the shortest text of whole lines
+    above the quote plus the quote, one per line, that is on the page as one piece, has at most
+    MAX_QUOTE characters and passes `accepts` (validate-catalog's offline check of an anchor's
+    text, ValueContext.offline). None when the quote passes alone, or when no such text does."""
+    flat = " ".join(quote.split())
+    if not flat or accepts(flat):
+        return None
+    located = page.locate(flat)
+    if located is None:
+        return None
+    first, context = located
+    above = [" ".join(ln.split()) for ln in context[: min(first, CONTEXT_BEFORE)]]
+    for start in range(len(above) - 1, -1, -1):
+        text = "\n".join([*(ln for ln in above[start:] if ln), flat])
+        if len(" ".join(text.split())) > MAX_QUOTE:
+            break
+        if page.contains(text) and accepts(text):
+            return text
+    return None
+
 
 @dataclass
 class Verification:
@@ -498,6 +594,10 @@ class Verification:
     unverified: list[UnverifiedClaim] = field(default_factory=list)
     # (source class, check status) of every draft, for the run report.
     checks: list[tuple[str, str]] = field(default_factory=list)
+
+
+def _accepted(check: ValueCheck | None) -> bool:
+    return check is not None and check.ok
 
 
 def _check(
@@ -591,6 +691,7 @@ async def verify_subject(
                 page, status, via, detail = alt, "verified", kind_, alt.detail
                 break
         big_change = False
+        anchor_text: str | None = None
         if status == "verified" and kind == "bundle" and spec.value_check is not None:
             # The value hook (rule 5): the quote must state the claimed value.
             if value_context is None:
@@ -599,9 +700,19 @@ async def verify_subject(
                 vc = value_context.check(valid.field, valid.value, valid.quote, page)
                 if not vc.ok:
                     status, detail = vc.status, vc.reason
-                elif vc.big_change:
-                    big_change = True
-                    log.info("%s %s=%s: big change (%s)", key, valid.field, valid.value, vc.reason)
+                else:
+                    if vc.big_change:
+                        big_change = True
+                        log.info(
+                            "%s %s=%s: big change (%s)", key, valid.field, valid.value, vc.reason
+                        )
+                    anchor_text = anchor_span(
+                        page,
+                        valid.quote,
+                        lambda t, ctx=value_context, v=valid: _accepted(
+                            ctx.offline(v.field, v.value, t)
+                        ),
+                    )
         final = page.final_url or valid.url
         cls = source_class(final if status == "verified" else valid.url, official_domains)
         out.checks.append((cls, status))
@@ -632,6 +743,7 @@ async def verify_subject(
             ),
             first_seen=first_seen.get(cid, today),
             big_change=big_change,
+            anchor_text=anchor_text,
         )
         # One claim per id: official beats press beats forum; the first one wins ties.
         prev = kept.get(cid)
@@ -650,16 +762,21 @@ async def reverify(
     value_context: ValueContext | None = None,
 ) -> tuple[str, Claim | None]:
     """Re-fetch a stored claim's page: ("verified", refreshed claim), ("unchecked", claim) when
-    the page could not be read today, ("gone", None) for 404/410, ("changed", None) when the
-    page loaded without the quote (or now redirects elsewhere). With `value_context` (a bundle
-    subject), a value claim's quote must also still state its value on the page as it is today:
-    else (the check's status, None)."""
+    the page could not be read today (also a wall that answered 200 instead of the page),
+    ("gone", None) for 404/410, ("changed", None) when the page loaded without the quote (or now
+    redirects elsewhere). With `value_context` (a bundle
+    subject), a wall that answered 200 (Page.wall: a sign-in or account-verification page, a bot
+    challenge) is a page that could not be read ("unchecked"), and a value claim's quote must
+    also still state its value on the page as it is today: else (the check's status, None)."""
     page = await pages.get(c.url)
     if page.status == "not_found":
         return "gone", None
-    if page.status is not None:
+    if page.status is not None or (value_context is not None and page.wall() is not None):
         return "unchecked", c
     if not (page.contains(c.quote) and canonical_url(page.final_url or c.url) == c.url):
+        # A wall that answered 200 is a page we could not read, not one without the quote.
+        if page.wall() is not None:
+            return "unchecked", c
         return "changed", None
     spec = FIELD_SPECS.get(c.field)
     big_change = c.big_change

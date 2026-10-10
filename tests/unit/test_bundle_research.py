@@ -12,7 +12,7 @@ import pytest
 
 from conftest import FixtureFetcher
 from haggler.bundles import research as bundle_research
-from haggler.catalog import load_bundles, load_catalog
+from haggler.catalog import load_bundles, load_catalog, on_domains
 from haggler.fetch import RawResponse
 from haggler.models.curated import BundlesFile
 from haggler.models.fx import FxRate, FxTable
@@ -328,12 +328,17 @@ def test_new_fields_stay_out_of_the_json_while_unset():
         ("https://www.apple.com/co/apple-one/", False),
         ("https://www.apple.com/", False),
         ("https://support.apple.com/se/apple-one/", False),
+        # Dot segments are resolved first: these are /co/ pages (httpx fetches /co/apple-one/).
+        ("https://www.apple.com/se/../co/apple-one/", False),
+        ("https://www.apple.com/se/%2e%2e/co/apple-one/", False),
+        ("https://www.apple.com/co/../se/apple-one/", True),
     ],
 )
 def test_official_domains_with_a_path_prefix(url: str, official: bool):
     domains = ["www.apple.com/se/"]
     assert on_official(url, domains) is official
     assert (source_class(url, domains) == "official") is official
+    assert on_domains(url, domains) is official
 
 
 def test_plain_domains_classify_as_before():
@@ -508,6 +513,35 @@ async def test_recheck_drops_a_value_its_quote_no_longer_states():
     # Without a value context (a Phase 2 recheck) only the quote counts, as before.
     kept, _ = await recheck_claims([stale], pages=pages, official_domains=CO_DOMAINS)
     assert [c.id for c in kept] == [stale.id]
+
+
+@pytest.mark.parametrize(
+    "wall",
+    [
+        RawResponse(
+            url=PLANES,
+            final_url="https://www.mercadolibre.com.co/gz/account-verification?go=x",
+            status_code=200,
+            text="<html><body><h1>Verifica tu cuenta</h1></body></html>",
+        ),
+        RawResponse(
+            url=PLANES,
+            final_url=PLANES,
+            status_code=200,
+            text="<html><head><title>Just a moment...</title></head><body></body></html>",
+        ),
+    ],
+    ids=["account_verification", "challenge"],
+)
+async def test_recheck_keeps_a_bundle_finding_behind_a_wall_that_answers_200(wall):
+    good = _stored(KEY, "bundle_price", "21900 COP/month", PRICE_QUOTE)
+    clause = _stored(KEY, "bundle_residence_clause", "must_reside", CLAUSE)
+    pages = PageCache(FixtureFetcher({**ROUTES, PLANES: wall}))
+    kept, dropped = await recheck_claims(
+        [good, clause], pages=pages, official_domains=CO_DOMAINS, value_context=context()
+    )
+    # Unreadable today: kept as they were (never "no longer on the page").
+    assert kept == [good, clause] and dropped == []
 
 
 # --------------------------------------------------------------- the agent's job

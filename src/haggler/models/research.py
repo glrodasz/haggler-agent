@@ -143,6 +143,12 @@ class Claim(_Strict):
     first_seen: date
     # A bundle value more than research.values.BIG_CHANGE away from the bundles.yaml value.
     big_change: bool = Field(default=False, exclude_if=lambda v: not v)
+    # A bundle value whose quote states it only with the page lines above it (a tier named in a
+    # heading): the excerpt from that line to the quote, one per line, which validate-catalog
+    # accepts as an anchor's text (research.evidence.anchor_span). Never part of the hash.
+    anchor_text: str | None = Field(
+        default=None, max_length=MAX_QUOTE, exclude_if=lambda v: v is None
+    )
 
     @property
     def url(self) -> str:

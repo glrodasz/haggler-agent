@@ -71,6 +71,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from haggler.models.curated import Anchor, AnchorFact
+from haggler.models.research import MAX_QUOTE
 from haggler.research.evidence import canonical_url
 from haggler.text import normalize_for_match
 
@@ -169,6 +170,12 @@ class PriceHint(_Strict):
     big_change: bool = False
     # The first run that found this amount in this role (None in a file written before H8).
     first_seen: date | None = None
+    # When `line` alone names no tier but the lines above it do (a heading): the excerpt from
+    # that line to `line`, one per line, which validate-catalog accepts as the anchor's text
+    # (research.evidence.anchor_span); the review snippet offers it.
+    anchor_text: str | None = Field(
+        default=None, max_length=MAX_QUOTE, exclude_if=lambda v: v is None
+    )
 
 
 class BundleWatchState(_Strict):

@@ -474,6 +474,22 @@ async def test_recheck_drops_facts_whose_page_is_gone():
     assert kept == first.claims and dropped == []
 
 
+async def test_recheck_keeps_facts_behind_a_wall_that_answers_200():
+    from haggler.research.evidence import recheck_claims
+
+    first, _ = await verify([draft()], {TERMS: PAGE})
+    login = "https://www.netflix.com/login?nextpage=terms"
+    wall = RawResponse(
+        url=TERMS,
+        final_url=login,
+        status_code=200,
+        text="<html><body><h1>Sign in</h1><form><input name=email></form></body></html>",
+    )
+    pages = PageCache(FixtureFetcher({TERMS: wall}))
+    kept, dropped = await recheck_claims(first.claims, pages=pages, official_domains=NETFLIX)
+    assert kept == first.claims and dropped == []
+
+
 async def test_one_fetch_per_url_and_one_claim_per_id():
     out, fetcher = await verify([draft(), draft()], {TERMS: PAGE})
     assert len(out.claims) == 1 and fetcher.calls == [TERMS]

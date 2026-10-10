@@ -49,8 +49,9 @@ from selectolax.lexbor import LexborHTMLParser
 from haggler.catalog import load_bundles
 from haggler.config import Settings
 from haggler.fetch import Fetcher, RawResponse
-from haggler.fetch.client import looks_like_bot_wall
 from haggler.fetch.pdf import PdfText, extract_pdf_text
+from haggler.fetch.walls import THIN_TEXT_CHARS, page_wall
+from haggler.fetch.walls import login_wall as _login_wall
 from haggler.models.catalog import Catalog, CountryDef
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.money import find_prices
@@ -77,8 +78,6 @@ MAX_AMOUNT_LINES = 20
 MAX_COMPONENT_LINES = 10
 MAX_EMBEDDED_SNIPPETS = 5
 MAX_SCRIPT_IDS = 20
-# Visible text shorter than this is most likely painted by JavaScript.
-THIN_TEXT_CHARS = 400
 # Bounds for embedded data (a __NEXT_DATA__ blob can be megabytes and find_prices is slow on
 # bulk text): blobs up to MAX_BLOB_CHARS are parsed as JSON, string leaves longer than
 # MAX_LEAF_CHARS are skipped, a blob that is not JSON is scanned up to MAX_SCAN_CHARS, and the
@@ -106,19 +105,6 @@ READABILITY = (
 _LABEL = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 _COMMENT = re.compile(r"(?:^|\s)#.*$")
 _SEPARATOR = re.compile(r"(?:^|(?<=\s));|;(?=\s|$)")
-# Sign-in paths, and account-verification walls (Mercado Libre sends some pages to
-# /gz/account-verification?go=...): either way the page is behind the provider's account.
-_LOGIN_PATH = re.compile(
-    r"(?:^|/)(?:login|log-in|signin|sign-in|sign_in|logon|auth|authorize|oauth2?|sso|servicelogin"
-    r"|lgz|account-verification)(?:$|[/?._-])",
-    re.IGNORECASE,
-)
-# Hosts that only serve sign-in (accounts.google.com, idmsa.apple.com, login.microsoftonline...).
-_LOGIN_HOST = re.compile(r"^(?:login|signin|accounts?|auth|sso|idmsa|appleid)\.", re.IGNORECASE)
-# Response headers that mark a challenge by themselves on a 2xx page ("server" only feeds the
-# Akamai deny-page test, which also needs its text). A bare `x-datadome` is not one: DataDome
-# sends it on ordinary responses too.
-_CHALLENGE_HEADERS = frozenset({"cf-mitigated", "x-amzn-waf-action", "server"})
 # A bare "$" is shared with USD and the other dollars. In the currencies whose consumer prices
 # run in the thousands, a bare-"$" amount below this floor is most likely a foreign price (a page
 # that localises by IP shows the runner's US price), so it is not counted as the local currency.
@@ -398,24 +384,6 @@ def is_pdf(resp: RawResponse) -> bool:
     if resp.body or "pdf" in (resp.content_type or "").lower():
         return True
     return resp.text.lstrip(_PDF_LEAD).startswith("%PDF-")
-
-
-def _is_login(url: str) -> bool:
-    parts = urlsplit(url)
-    return bool(_LOGIN_HOST.match(parts.hostname or "") or _LOGIN_PATH.search(parts.path))
-
-
-def _login_wall(url: str, final_url: str) -> bool:
-    """The final URL is a sign-in page the requested one was not (a login wall)."""
-    return _is_login(final_url) and not _is_login(url)
-
-
-def page_wall(headers: dict[str, str], title: str, lines: list[str], thin: bool) -> str | None:
-    """The bot wall a 2xx page is: by a definite challenge header, or, on a thin page, by a
-    marker in its title or visible text. Never by script sources or attributes: ordinary pages
-    load reCAPTCHA, DataDome or Cloudflare's bot-management scripts."""
-    definite = {k: v for k, v in headers.items() if k.lower() in _CHALLENGE_HEADERS}
-    return looks_like_bot_wall(definite, "\n".join([title, *lines]) if thin else "")
 
 
 def _country_segment(path: str, country: CountryDef) -> str | None:

@@ -13,6 +13,7 @@ from babel.numbers import list_currencies
 
 from haggler.config import repo_root
 from haggler.dates import date_direction, find_dates
+from haggler.fetch.urls import resolve_dot_segments
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
     Bundle,
@@ -138,8 +139,9 @@ def _split_domain(entry: str) -> tuple[str, str | None]:
 
 def on_domains(url: str, domains: Iterable[str]) -> bool:
     """https on one of `domains` or a subdomain of one; an entry with a path prefix also needs
-    the URL's path under that prefix (one host serving several countries)."""
-    parts = urlsplit(url)
+    the URL's path under that prefix (one host serving several countries), with its dot
+    segments resolved ("/se/../co/" is a /co/ page)."""
+    parts = urlsplit(resolve_dot_segments(url))
     if parts.scheme != "https":
         return False
     host = (parts.hostname or "").lower()

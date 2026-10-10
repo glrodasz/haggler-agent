@@ -231,6 +231,46 @@ def test_a_rejected_hint_is_hidden_until_new_evidence() -> None:
     assert [x.id for x in proposals(watch=other, review=review)] == [p.id]
 
 
+def test_the_watcher_and_the_agent_on_the_same_line_are_one_change() -> None:
+    from haggler.bundles.review import report_lines, review_bundle, summary_line
+    from haggler.catalog import load_feasibility, load_payment_instruments
+    from haggler.research.evaluate import EvalContext
+
+    w = watch(hint("21900"))
+    f = facts(claim("bundle_price", "21900 COP/month"))  # the hint's line, on the same page
+    watcher, agent = proposals(watch=w, facts=f)
+    assert (watcher.source, agent.source) == ("watcher", "agent")
+    assert watcher.id != agent.id and watcher.hash == agent.hash
+    # One pending change on the site, one in the job summary, one snippet in the review.
+    assert len(pending_changes([watcher, agent])) == 1
+    r = review_bundle(bundle(), watch=w, facts=f, review=ReviewIndex(), today=TODAY)
+    assert summary_line([r]).startswith("Paquetes: 1 propuesta de valor pendiente,")
+    ctx = EvalContext.build(
+        catalog=load_catalog(),
+        feasibility=load_feasibility(),
+        instruments=load_payment_instruments(),
+        today=TODAY,
+    )
+    text = report_lines(r, ctx, [], bundles=_file(bundle().model_dump(mode="json")))
+    heads = [ln for ln in text if ln.startswith("# Precio del paquete")]
+    assert heads == [f"# Precio del paquete: 24900 COP/month -> 21900 COP/month ({watcher.id}, "
+                     f"{agent.id})"]  # fmt: skip
+    # Rejecting one hides the other: the same value on the same evidence.
+    review = ReviewIndex(
+        ReviewFile(
+            decisions=[
+                ReviewDecision(
+                    id=watcher.id, hash=watcher.hash, decision="reject", decided_on=TODAY
+                )
+            ]
+        )
+    )
+    assert proposals(watch=w, facts=f, review=review) == []
+    # Another quote is other evidence: still listed.
+    other = facts(claim("bundle_price", "21900 COP/month", quote=TIER_PRICE))
+    assert [p.source for p in proposals(watch=w, facts=other, review=review)] == ["agent"]
+
+
 # ------------------------------------------------------------------ agent findings
 
 
@@ -409,6 +449,25 @@ def test_a_snippet_says_when_its_anchor_needs_more_text() -> None:
     (note,) = s.notes
     assert note.startswith("validate-catalog no aceptará este texto tal cual (")
     assert "names no tier" in note
+
+
+def test_a_snippet_offers_the_excerpt_from_the_tier_heading() -> None:
+    # The quote names no tier; the verification kept the excerpt from the heading above it
+    # (research.evidence.anchor_span), and the snippet offers that as a multi-line anchor.
+    b = bundle()
+    span = f"Acme Total\n{PRICE_QUOTE}"
+    for p in (
+        *proposals(b, facts=facts(claim("bundle_price", "21900 COP/month", anchor_text=span))),
+        *proposals(b, watch=watch(hint("21900", anchor_text=span))),
+    ):
+        assert p.quote == PRICE_QUOTE and p.anchor_text == span
+        s = snippet(b, p, bundles=_file(b.model_dump(mode="json")))
+        assert s.notes == []
+        assert "    text: |-\n      Acme Total\n      Precio actual" in s.text()
+        fragment = yaml.safe_load(s.text())
+        assert fragment["watch"]["anchors"][0]["text"] == span
+        row = _merge(b.model_dump(mode="json", exclude_none=True), fragment)
+        assert _errors(row) == []
 
 
 def test_snippets_for_intro_components_and_dates_validate() -> None:

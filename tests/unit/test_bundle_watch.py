@@ -10,6 +10,7 @@ from decimal import Decimal
 from typing import Any
 
 import pytest
+import yaml
 
 from conftest import FixtureFetcher
 from haggler.bundles.status import bundle_state
@@ -21,7 +22,7 @@ from haggler.bundles.watch import (
     summary,
     watch_bundles,
 )
-from haggler.catalog import load_catalog
+from haggler.catalog import load_catalog, load_feasibility, load_payment_instruments
 from haggler.fetch import RawResponse
 from haggler.fetch.errors import BlockedError, FetchError, RobotsDisallowedError
 from haggler.models.bundles import WatchFile, anchor_hash
@@ -159,6 +160,20 @@ def pdf(url: str, lines: list[str]) -> RawResponse:
     )
 
 
+# Mercado Libre sends some pages to its account verification (H0): a login wall, not content.
+VERIFY_URL = (
+    "https://www.acme.com.co/gz/account-verification?go=https%3A%2F%2Fwww.acme.com.co%2Fplanes"
+)
+VERIFY_PAGE = (
+    "<html><body><main><h1>Verifica tu cuenta</h1>"
+    "<p>Para continuar, ingresa a tu cuenta.</p></main></body></html>"
+)
+CHALLENGE_PAGE = (
+    "<html><head><title>Just a moment...</title></head><body>"
+    "<p>Checking your browser before accessing acme.com.co.</p></body></html>"
+)
+
+
 def index_page(*links: str) -> str:
     items = "".join(f'<li><a href="{href}">Prislista</a></li>' for href in links)
     return f"<html><body><main><h1>Priser</h1><ul>{items}</ul></main></body></html>"
@@ -283,8 +298,28 @@ async def test_an_excerpt_that_no_longer_states_the_value_is_missing_with_the_re
         FetchError("server error", status=500, url=ACME),
         FetchError("gone", status=404, url=ACME),
         html(ACME, acme_page(), final_url="https://www.acme.com.mx/planes"),
+        # Walls that answer 200 on the provider's own domain (HttpFetcher only raises
+        # BlockedError for a 4xx/503 wall).
+        html(ACME, VERIFY_PAGE, final_url=VERIFY_URL),
+        html(ACME, CHALLENGE_PAGE),
+        RawResponse(
+            url=ACME,
+            final_url=ACME,
+            status_code=200,
+            text=acme_page(),
+            headers={"cf-mitigated": "challenge"},
+        ),
     ],
-    ids=["blocked", "robots", "failed", "not_found", "wrong_country"],
+    ids=[
+        "blocked",
+        "robots",
+        "failed",
+        "not_found",
+        "wrong_country",
+        "account_verification_200",
+        "challenge_200",
+        "challenge_header_200",
+    ],
 )
 async def test_an_unreadable_page_never_counts_as_a_change(response: Any) -> None:
     bf = bundles(acme())
@@ -305,6 +340,21 @@ async def test_an_unreadable_page_never_counts_as_a_change(response: Any) -> Non
     assert st.display_status == "unverified"
     assert any("acme.com" in r for r in st.reasons_es)
     assert any(r.startswith("Último valor confirmado 21.900 COP") for r in st.reasons_es)
+
+
+async def test_a_wall_that_answers_200_is_a_blocked_page() -> None:
+    bf = bundles(acme())
+    out, _ = await watch(bf, {ACME: html(ACME, VERIFY_PAGE, final_url=VERIFY_URL)})
+    (page,) = out.bundles[0].pages
+    assert (page.status, page.final_url) == ("blocked", VERIFY_URL)
+    assert page.detail.startswith("login wall at ")
+    out, _ = await watch(bf, {ACME: html(ACME, CHALLENGE_PAGE)})
+    (page,) = out.bundles[0].pages
+    assert page.status == "blocked" and page.detail.startswith("cloudflare wall at ")
+    # A page that is long enough is content even when it names a captcha somewhere.
+    long_page = acme_page(extra="<p>" + "Formulario protegido por captcha. " * 20 + "</p>")
+    out, _ = await watch(bf, {ACME: long_page})
+    assert out.bundles[0].pages[0].status == "ok" and out.bundles[0].outcome == "ok"
 
 
 @pytest.mark.parametrize("third", ["blocked", "over_budget", "paused"])
@@ -666,6 +716,18 @@ async def test_without_this_runs_index_the_confidence_is_at_most_medium() -> Non
             assert st.display_status == "unverified" and reason in st.reasons_es
 
 
+async def test_an_index_read_alone_is_an_unreadable_outcome() -> None:
+    # Only the index page loaded; the document every anchor quotes did not.
+    bf = bundles(telco())
+    robots = RobotsDisallowedError("robots", url=PDF18)
+    out, _ = await watch(bf, {INDEX: index_page(PDF18), PDF18: robots})
+    (state,) = out.bundles
+    assert [p.status for p in state.pages] == ["ok", "robots_disallowed"]
+    assert state.outcome == "unreadable"
+    assert {a.status for a in state.anchors} == {"unreadable"}
+    assert summary(out)["outcomes"] == {"unreadable": 1}
+
+
 async def test_the_same_edition_at_another_url_is_read_where_the_index_links_it() -> None:
     moved = "https://www.telco.se/assets/m/9f0c/TSP-4667_18_0701_Prislista.pdf"
     routes = {
@@ -911,3 +973,104 @@ async def test_a_component_anchor_naming_a_sibling_tier_does_not_confirm() -> No
     out, _ = await watch(bundles(total, esencial), {ACME: page})
     state = next(s for s in out.bundles if s.bundle_id == "acme_esencial")
     assert anchors_by_fact(state)["hbo_max"].status == "missing"
+
+
+# ----------------------------------------------- a new edition, reviewed and pasted
+
+
+TELCO_NETFLIX = "Netflix Standard ingår i Telco Plus utan extra kostnad."
+
+
+def _paste_editions(row: dict[str, Any], snippets: list[Any]) -> dict[str, Any]:
+    """Paste snippets the way their notes say: a page entry with the index_url and
+    link_pattern of a versioned page replaces that page (and its anchors, which the snippet
+    carries to the new url when the new edition still has them); a price anchor replaces the
+    one that states the old price."""
+    out = {**row, "price": dict(row["price"]), "watch": dict(row["watch"])}
+    pages = list(out["watch"]["pages"])
+    anchors = list(out["watch"]["anchors"])
+    for s in snippets:
+        frag = yaml.safe_load(s.text())
+        out["price"] |= frag.get("price", {})
+        for page in frag.get("watch", {}).get("pages", []):
+            old = [p for p in pages if p.get("link_pattern") == page.get("link_pattern")]
+            for p in old:
+                if p["url"] != page["url"]:
+                    anchors = [a for a in anchors if a["url"] != p["url"]]
+            pages = [p for p in pages if p not in old] + [page]
+        for anchor in frag.get("watch", {}).get("anchors", []):
+            anchors = [
+                a
+                for a in anchors
+                if (a["fact"], a.get("service_id")) != (anchor["fact"], anchor.get("service_id"))
+            ] + [anchor]
+    out["watch"] |= {"pages": pages, "anchors": anchors}
+    return out
+
+
+async def test_a_superseded_price_list_is_reviewed_and_pasted_back_to_verified() -> None:
+    from haggler.bundles.proposals import bundle_proposals, edition_snippets, snippet
+    from haggler.bundles.review import report_lines, review_bundle
+    from haggler.catalog import integrity_errors
+    from haggler.research.evaluate import EvalContext
+    from haggler.research.review import ReviewIndex
+
+    row = telco(price={"amount": "699", "currency": "SEK", "tax_included": True})
+    row["watch"]["anchors"] = [
+        {"fact": "price", "url": PDF18, "text": TELCO_PRICE},
+        {"fact": "component", "service_id": "netflix", "url": PDF18, "text": TELCO_NETFLIX},
+    ]
+    bf = bundles(row)
+    assert [e for e in integrity_errors(CATALOG, bundles=bf) if "telco_plus" in e] == []
+    doc18 = pdf(PDF18, ["Telco Prislista 18", TELCO_PRICE, TELCO_NETFLIX])
+    doc19 = pdf(PDF19, ["Telco Prislista 19", "Telco Plus med Netflix Standard 729 kr/mån",
+                        TELCO_NETFLIX])  # fmt: skip
+    first, _ = await watch(bf, {INDEX: index_page(PDF18), PDF18: doc18})
+    week = TODAY + timedelta(days=7)
+    out, _ = await watch(bf, {INDEX: index_page(PDF19), PDF19: doc19}, previous=first, today=week)
+    (state,) = out.bundles
+    assert state.outcome == "new_document"
+
+    # The review names the newest edition's URL and which anchors it still has.
+    b = bf.bundles[0]
+    r = review_bundle(b, watch=state, facts=None, review=ReviewIndex(), today=week)
+    ctx = EvalContext.build(
+        catalog=CATALOG,
+        feasibility=load_feasibility(),
+        instruments=load_payment_instruments(),
+        today=week,
+    )
+    text = "\n".join(report_lines(r, ctx, [], bundles=bf))
+    assert f"edición 18, la más nueva 19 ({PDF19})" in text
+    lines = {ln.strip().split(":")[0]: ln for ln in text.splitlines() if "ancla " in ln}
+    assert lines["ancla price"].endswith("; no está en la edición 19")
+    assert lines["ancla component netflix"].endswith("; la edición 19 la contiene")
+
+    # The edition snippet moves the page (still versioned) and the anchor edition 19 still has.
+    (edition,) = edition_snippets(b, state)
+    frag = yaml.safe_load(edition.text())
+    assert frag["watch"]["pages"] == [
+        {"url": PDF19, "kind": "pdf", "index_url": INDEX, "link_pattern": PATTERN}
+    ]
+    assert frag["watch"]["anchors"] == [
+        {"fact": "component", "service_id": "netflix", "url": PDF19, "text": TELCO_NETFLIX}
+    ]
+    assert any("no contiene estas anclas de la anterior: price" in n for n in edition.notes)
+    # The price hint read in edition 19: its page replaces the versioned entry, never a new one.
+    (p,) = bundle_proposals(b, watch=state, facts=None, review=None, today=week)
+    assert (p.field, p.proposed, p.url) == ("bundle_price", "729 SEK/month", PDF19)
+    price = snippet(b, p, bundles=bf, catalog=CATALOG)
+    assert yaml.safe_load(price.text())["watch"]["pages"] == frag["watch"]["pages"]
+    assert not any("aún no está en watch.pages" in n for n in price.notes)
+    assert "reemplaza esa entrada de watch.pages" in " ".join(price.notes)
+
+    edited = bundles(_paste_editions(row, [edition, price]))
+    assert [e for e in integrity_errors(CATALOG, bundles=edited) if "telco_plus" in e] == []
+    later = week + timedelta(days=7)
+    out, _ = await watch(
+        edited, {INDEX: index_page(PDF19), PDF19: doc19}, previous=out, today=later
+    )
+    (state,) = out.bundles
+    assert state.outcome == "ok" and {a.status for a in state.anchors} == {"verified"}
+    assert state.pages[1].edition == "19" and state.pages[1].edition_check == "index"
+    assert bundle_state(edited.bundles[0], today=later, watch=state).display_status == "verified"

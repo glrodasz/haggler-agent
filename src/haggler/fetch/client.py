@@ -3,7 +3,8 @@
 WHY a hand-rolled fetcher (instead of ADK's load_web_page or plain httpx defaults):
 - we need the raw page (load_web_page drops short lines such as "129 kr");
 - every request is identifiable, rate limited per host and checked against robots.txt,
-  including redirect hops and the robots.txt download itself;
+  including redirect hops and the robots.txt download itself, on the path that is really sent
+  (dot segments such as "/se/../co/" resolved first, as httpx does);
 - failures are classified so the Workflow retries only what is worth retrying
   (TransientFetchError) and never retries or evades a bot wall (BlockedError).
 """
@@ -38,6 +39,7 @@ from haggler.fetch.robots import (
     RobotsFetchResult,
     RobotsRules,
 )
+from haggler.fetch.urls import resolve_dot_segments
 
 log = logging.getLogger(__name__)
 
@@ -231,6 +233,9 @@ class HttpFetcher:
         current = url
         total_ms = 0
         for _ in range(MAX_REDIRECTS + 1):
+            # The path httpx really sends (dot segments resolved): robots.txt is checked, and
+            # final_url reported, for that page, never for the string as written.
+            current = resolve_dot_segments(current)
             _check_url(current)
             await self._check_robots(current)
             hop = await self._get(current, accept=accept_header, limit=MAX_BODY_BYTES)

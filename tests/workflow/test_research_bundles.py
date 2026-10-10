@@ -10,6 +10,7 @@ from datetime import date
 from typing import Any
 
 import pytest
+import yaml
 from test_research import (
     BUNDLE_COMPONENT,
     BUNDLE_PAGE,
@@ -28,6 +29,8 @@ from test_research import (
     watched_bundles,
 )
 
+from haggler.bundles.proposals import bundle_proposals, snippet
+from haggler.catalog import integrity_errors, load_bundles, load_catalog
 from haggler.fetch import RawResponse
 from haggler.models.curated import BundlesFile
 from haggler.models.research import ReviewDecision, ReviewFile
@@ -362,3 +365,113 @@ async def test_a_planned_bundle_the_run_skips_is_rechecked(why: str):
     assert facts.rechecked_on == later and facts.researched_on == TODAY
     state = io.load_latest(store).state.subjects["bundle:acme_total"]
     assert state.last_success == TODAY
+
+
+# ------------------------------------------------- pasting the review snippet (Meli+ CO)
+
+
+def meli_auto() -> BundlesFile:
+    """bundles.yaml with both Meli+ CO tiers watched (watch.mode auto, as H10 will set them):
+    the plans page shows Total and Esencial, so a price excerpt must name its tier."""
+    data = load_bundles().model_dump(mode="json", exclude_none=True)
+    for row in data["bundles"]:
+        if row["bundle_id"] in ("meli_plus_co_total", "meli_plus_co_esencial"):
+            row["watch"]["mode"] = "auto"
+    return BundlesFile.model_validate(data)
+
+
+def _paste(row: dict[str, Any], fragment: dict[str, Any]) -> dict[str, Any]:
+    """A snippet merged into a bundles.yaml row the way a reviewer pastes it."""
+    out = dict(row)
+    for key, value in fragment.items():
+        if key == "price":
+            out["price"] = {**out["price"], **value}
+        elif key == "watch":
+            w = dict(out["watch"])
+            for part in ("pages", "anchors"):
+                w[part] = [*w.get(part, []), *value.get(part, [])]
+            out["watch"] = w
+        else:
+            out[key] = value
+    return out
+
+
+def _pasted(bf: BundlesFile, bundle_id: str, proposals: list[Any]) -> BundlesFile:
+    data = bf.model_dump(mode="json", exclude_none=True)
+    (row,) = [r for r in data["bundles"] if r["bundle_id"] == bundle_id]
+    b = next(x for x in bf.bundles if x.bundle_id == bundle_id)
+    for p in proposals:
+        s = snippet(b, p, bundles=bf, catalog=load_catalog())
+        assert not [n for n in s.notes if n.startswith("validate-catalog")], s.notes
+        row = _paste(row, yaml.safe_load(s.text()))
+    if "intro_amount" in row["price"]:
+        row["price"]["intro_months"] = 2  # its own field (bundle_intro_months)
+    data["bundles"] = [row if r["bundle_id"] == bundle_id else r for r in data["bundles"]]
+    return BundlesFile.model_validate(data)
+
+
+def _errors(bf: BundlesFile, bundle_id: str) -> list[str]:
+    return [e for e in integrity_errors(load_catalog(), bundles=bf) if bundle_id in e]
+
+
+async def test_the_watchers_snippet_pasted_as_printed_passes_validate_catalog():
+    store = prices_store()
+    bf = meli_auto()
+    deps = make_deps(model=None, store=store, routes=MELI_ROUTES)
+    deps.bundles = bf
+    await run(deps, watch_only=True)
+    watch, _ = io.load_watch(store)
+    assert watch is not None
+    state = next(s for s in watch.bundles if s.bundle_id == "meli_plus_co_total")
+    total = next(b for b in bf.bundles if b.bundle_id == "meli_plus_co_total")
+    shown = bundle_proposals(total, watch=state, facts=None, review=None, today=TODAY)
+    assert sorted((p.field, p.proposed) for p in shown) == [
+        ("bundle_intro_price", "19900 COP/month"),
+        ("bundle_price", "21900 COP/month"),
+    ]
+    # The lines name no tier ("Meli+ Total" is the heading above): the hint keeps the excerpt
+    # from the heading on, which validate-catalog checks alone.
+    by_field = {p.field: p for p in shown}
+    assert by_field["bundle_intro_price"].anchor_text == "Meli+ Total\n$ 19.900/mes por 2 meses"
+    assert by_field["bundle_price"].anchor_text == (
+        f"Meli+ Total\n$ 19.900/mes por 2 meses\n{PRICE_QUOTE}"
+    )
+    edited = _pasted(bf, "meli_plus_co_total", shown)
+    assert _errors(edited, "meli_plus_co_total") == []
+    # Deployed: the next run verifies both anchors on the page, and the proposals resolve.
+    later = date(2026, 10, 16)
+    deps = make_deps(model=None, store=store, routes=MELI_ROUTES, day=later)
+    deps.bundles = edited
+    await run(deps, watch_only=True)
+    watch, _ = io.load_watch(store)
+    assert watch is not None
+    state = next(s for s in watch.bundles if s.bundle_id == "meli_plus_co_total")
+    assert {(a.fact, a.status) for a in state.anchors} == {
+        ("price", "verified"),
+        ("intro", "verified"),
+    }
+    b = next(x for x in edited.bundles if x.bundle_id == "meli_plus_co_total")
+    assert bundle_proposals(b, watch=state, facts=None, review=None, today=later) == []
+
+
+async def test_the_agents_snippet_pasted_as_printed_passes_validate_catalog():
+    llm = GroundedGemini(responder=meli_responder)
+    deps = make_deps(model=llm, routes=MELI_ROUTES)
+    await run(deps, bundles=["meli_plus_co_total"])
+    facts = latest(deps.store)[KEY]
+    price = facts.claim(f"{KEY}:bundle_price:21900 COP/month")
+    assert price is not None
+    assert price.anchor_text == f"Meli+ Total\n$ 19.900/mes por 2 meses\n{PRICE_QUOTE}"
+    # A quote that names its own tier needs no longer excerpt.
+    disney = facts.claim(f"{KEY}:bundle_includes:disney_plus.standard_with_ads")
+    assert disney is not None and disney.anchor_text is None
+    bf = load_bundles()
+    total = next(b for b in bf.bundles if b.bundle_id == "meli_plus_co_total")
+    shown = [
+        p
+        for p in bundle_proposals(total, watch=None, facts=facts, review=None, today=TODAY)
+        if p.field == "bundle_price"
+    ]
+    assert [p.anchor_text for p in shown] == [price.anchor_text]
+    edited = _pasted(bf, "meli_plus_co_total", shown)
+    assert _errors(edited, "meli_plus_co_total") == []

@@ -1,12 +1,16 @@
 """What `haggler research review` shows for bundles (read-only; no network, never writes).
 
 For one bundle (`review --subject <bundle_id>`): its derived state, the watcher's pages and
-anchors, its open proposals with the value before -> after (haggler.bundles.proposals: watcher
-hints and agent value findings), its feasibility findings with their review state, the verdict
-of every public profile without and with the findings still pending review
+anchors (a superseded versioned PDF with the newest edition's URL, and for each anchor of it
+whether that edition still contains it), its open proposals with the value before -> after
+(haggler.bundles.proposals: watcher hints and agent value findings), its feasibility findings
+with their review state, the verdict of every public profile without and with the findings
+still pending review
 (haggler.bundles.evaluate.assess_bundle, include_pending), and a YAML snippet per proposal:
 bundles.yaml is the only source of a bundle's values, so a value is accepted by pasting the
-snippet into the YAML (in a PR), never by a review decision.
+snippet into the YAML (in a PR), never by a review decision. A superseded versioned PDF gets its
+own snippet (proposals.edition_snippets): the entry with the new edition's url and the anchors
+that edition still contains.
 
 For every bundle (`review --bundles --summary`): one line of counts for the publish.yml job
 summary.
@@ -23,16 +27,18 @@ from haggler.bundles.proposals import (
     SOURCE_ES,
     Proposal,
     bundle_proposals,
+    edition_snippets,
     pending_changes,
     snippet,
 )
 from haggler.bundles.status import BundleState, anchor_checks, bundle_state, watched
 from haggler.feasibility import LABEL_INFO
-from haggler.models.bundles import BundleWatchState, WatchFile
+from haggler.models.bundles import BundleWatchState, PageCheck, WatchFile, anchor_hash
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.models.profiles import Profile
 from haggler.models.research import Claim, SubjectFacts, subject_key
 from haggler.research.evaluate import EvalContext
+from haggler.research.evidence import canonical_url
 from haggler.research.fields import FIELD_SPECS
 from haggler.research.review import STATUS_ES, ClaimReview, ReviewIndex, claim_lines
 
@@ -174,7 +180,12 @@ def report_lines(
             extra = f", edición {page.edition}" if page.edition else ""
             if page.newest_edition and page.newest_edition != page.edition:
                 extra += f", la más nueva {page.newest_edition}"
+                if page.newest_url:
+                    extra += f" ({page.newest_url})"
             out.append(f"  página {page.url}: {page.status}{extra}")
+    superseded = {
+        canonical_url(p.url): p for p in (r.watch.pages if r.watch else []) if _superseded(p)
+    }
     for anchor, check in anchor_checks(b, r.watch):
         what = anchor.fact + (f" {anchor.service_id}" if anchor.service_id else "")
         status = check.status if check else "not_checked"
@@ -183,7 +194,15 @@ def report_lines(
             if check and check.last_verified_at
             else ""
         )
-        out.append(f"  ancla {what}: {ANCHOR_ES.get(status, status)}{verified}")
+        newer = ""
+        if (page := superseded.get(canonical_url(str(anchor.url)))) is not None:
+            if page.newest_status != "ok":
+                newer = f"; la edición {page.newest_edition} no se pudo leer"
+            elif anchor_hash(anchor) in page.newest_anchors:
+                newer = f"; la edición {page.newest_edition} la contiene"
+            else:
+                newer = f"; no está en la edición {page.newest_edition}"
+        out.append(f"  ancla {what}: {ANCHOR_ES.get(status, status)}{verified}{newer}")
     if not b.watch.anchors:
         out.append("  sin anclas en bundles.yaml")
 
@@ -213,17 +232,39 @@ def report_lines(
         change = ", sin cambio" if same else f" → {_label(after)}"
         out.append(f"  {profile.id}: {_label(before)}{change}")
 
-    if r.proposals:
+    editions = edition_snippets(b, r.watch)
+    if r.proposals or editions:
         out.append("")
         out.append(
             "Snippets para data/curated/bundles.yaml (pégalos en la fila del paquete en un PR; "
             "validate-catalog comprueba el ancla):"
         )
-        for p in r.proposals:
+        for e in editions:
             out.append("")
-            out.append(f"# {p.label_es}: {p.current or '—'} -> {p.proposed} ({p.id})")
+            out.append("# edición nueva de la lista de precios")
+            out += e.text().splitlines()
+        # One snippet per value and evidence: the watcher and the agent may read the same line.
+        for group in same_evidence(r.proposals):
+            p = group[0]
+            ids = ", ".join(x.id for x in group)
+            out.append("")
+            out.append(f"# {p.label_es}: {p.current or '—'} -> {p.proposed} ({ids})")
             out += snippet(b, p, bundles=bundles, catalog=ctx.catalog).text().splitlines()
     return out
+
+
+def same_evidence(proposals: Iterable[Proposal]) -> list[list[Proposal]]:
+    """Proposals grouped by (field, proposed value, hash), in their order: the same value on
+    the same evidence from the watcher and the agent is one change to paste (a rejection of
+    one hides the others, proposals.bundle_proposals)."""
+    groups: dict[tuple[str, str, str], list[Proposal]] = {}
+    for p in proposals:
+        groups.setdefault((p.field, p.proposed, p.hash), []).append(p)
+    return list(groups.values())
+
+
+def _superseded(page: PageCheck) -> bool:
+    return page.status == "superseded" and bool(page.newest_url)
 
 
 # ------------------------------------------------------------------ summary
@@ -236,7 +277,8 @@ def _plural(n: int, one: str, many: str) -> str:
 def summary_line(reviews: Iterable[BundleReview]) -> str:
     """One line for the publish.yml job summary."""
     reviews = list(reviews)
-    values = sum(len(r.proposals) for r in reviews)
+    # One per (field, value) of a bundle, as bundles.json pending_changes counts them.
+    values = sum(len({(p.field, p.proposed) for p in r.proposals}) for r in reviews)
     feasibility = sum(r.pending_feasibility for r in reviews)
     flagged = [r.bundle.bundle_id for r in reviews if r.needs_review]
     if not flagged:
