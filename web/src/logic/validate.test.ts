@@ -44,8 +44,54 @@ describe("site data contract (runtime)", () => {
     raw.cheapest[0].home = null;
     raw.cheapest[0].best_by_risk["0"] = null;
     raw.cheapest[0].savings_month_eur["0"] = null;
-    raw.bundles[0].feasibility = null;
-    raw.bundles[0].price.amount = null;
+    const bundle = raw.bundles[0];
+    for (const key of [
+      "observed_service_id",
+      "monthly_eur",
+      "full_monthly_eur",
+      "monthly_eur_with_fee",
+      "first_year_monthly_eur",
+      "standalone_sum_eur",
+      "saving_pct",
+      "verified_at",
+      "checked_at",
+      "valid_from",
+      "valid_until",
+      "last_verified",
+    ]) {
+      bundle[key] = null;
+    }
+    for (const key of [
+      "amount",
+      "observed_on",
+      "base_plan_name",
+      "base_plan_amount",
+      "marginal_amount",
+      "intro_amount",
+      "intro_months",
+      "intro_valid_until",
+      "contract_months",
+    ]) {
+      bundle.price[key] = null;
+    }
+    Object.assign(bundle.requirements, {
+      local_id: null,
+      local_line: null,
+      local_payment: null,
+      credit_check: null,
+      new_customers_only: null,
+    });
+    Object.assign(bundle.components[0], {
+      plan_id: null,
+      value: null,
+      ads: null,
+      choice_group_id: null,
+      choose_n: null,
+      standalone_eur: null,
+    });
+    bundle.optional_savings[0].value = null;
+    bundle.optional_savings[0].saving_month_eur = null;
+    bundle.verdicts[0].components[0].provenance = null;
     raw.changes[0].old = null;
     raw.changes[0].new = { amount: 9.5, currency: "EUR" };
     raw.changes[1].old = "129 SEK/month";
@@ -218,6 +264,183 @@ describe("site data contract (runtime)", () => {
       const raw = sample();
       mutate(raw);
       expect(() => assertSiteData(raw), `${name}: ${expected}`).toThrow(expected);
+    }
+  });
+
+  it("accepts every value of the bundles.json v2 enums", () => {
+    const values: [string[], (b: Record<string, any>, v: string) => void][] = [
+      [
+        ["verified", "needs_review", "manual", "unverified", "expired"],
+        (b, v) => (b.display_status = v),
+      ],
+      [["full", "marginal"], (b, v) => (b.saving_basis = v)],
+      [
+        ["official_fetch", "user_report", "search_summary", "agent_research"],
+        (b, v) => (b.verified_by = v),
+      ],
+      [["auto", "manual", "off"], (b, v) => (b.watch_mode = v)],
+      [["low", "medium", "high"], (b, v) => (b.confidence = v)],
+      [["curated", "observed"], (b, v) => (b.price.source = v)],
+      [["month", "year"], (b, v) => (b.price.period = v)],
+      [["required", "not_required", "unknown"], (b, v) => (b.requirements.residency = v)],
+      [["required", "not_required", "unknown"], (b, v) => (b.requirements.billing_address = v)],
+      [["checked", "not_checked", "unknown"], (b, v) => (b.requirements.signup_presence = v)],
+      [
+        ["included", "discount_pct", "discount_abs", "free_months", "choose_n"],
+        (b, v) => (b.components[0].inclusion = v),
+      ],
+      [
+        ["home", "curated", "composed", "agent_reviewed", "agent_pending"],
+        (b, v) => (b.verdicts[0].provenance = v),
+      ],
+      [["unverified", "verified"], (b, v) => (b.verdicts[0].status = v)],
+      [
+        ["home", "curated", "agent_reviewed", "agent_pending"],
+        (b, v) => (b.verdicts[0].components[0].provenance = v),
+      ],
+    ];
+    for (const [allowed, set] of values) {
+      for (const value of allowed) {
+        const raw = sample();
+        set(raw.bundles[0], value);
+        expect(validateFile("bundles", raw.bundles), value).toEqual([]);
+      }
+    }
+  });
+
+  it("rejects a value outside each bundles.json v2 enum", () => {
+    const cases: [(b: Record<string, any>) => void, RegExp][] = [
+      [
+        (b) => (b.display_status = "ok"),
+        /\[0\]\.display_status: se esperaba verified \| needs_review/,
+      ],
+      [(b) => (b.display_status = null), /\[0\]\.display_status: se esperaba .*, hay null/],
+      [(b) => (b.saving_basis = "partial"), /\[0\]\.saving_basis: se esperaba full \| marginal/],
+      [(b) => (b.verified_by = "watcher"), /\[0\]\.verified_by: se esperaba official_fetch/],
+      [
+        (b) => (b.watch_mode = false),
+        /\[0\]\.watch_mode: se esperaba auto \| manual \| off, hay boolean/,
+      ],
+      [(b) => (b.confidence = "unknown"), /\[0\]\.confidence: se esperaba low \| medium \| high/],
+      [(b) => (b.price.source = "agent"), /\[0\]\.price\.source: se esperaba curated \| observed/],
+      [(b) => (b.price.period = "quarter"), /\[0\]\.price\.period: se esperaba month \| year/],
+      [(b) => (b.requirements.residency = null), /\.requirements\.residency: se esperaba required/],
+      [
+        (b) => (b.requirements.residency = "yes"),
+        /\.requirements\.residency: se esperaba required/,
+      ],
+      [(b) => (b.requirements.billing_address = "no"), /\.requirements\.billing_address/],
+      [(b) => (b.requirements.signup_presence = "required"), /\.requirements\.signup_presence/],
+      [(b) => (b.components[0].inclusion = "bonus"), /\.components\[0\]\.inclusion/],
+      [(b) => (b.optional_savings[0].inclusion = "gift"), /\.optional_savings\[0\]\.inclusion/],
+      [
+        (b) => (b.verdicts[0].provenance = "agent"),
+        /\.verdicts\[0\]\.provenance: se esperaba home \| curated/,
+      ],
+      [
+        (b) => (b.verdicts[0].status = "expired"),
+        /\.verdicts\[0\]\.status: se esperaba unverified \| verified/,
+      ],
+      [(b) => (b.verdicts[0].confidence = "none"), /\.verdicts\[0\]\.confidence/],
+      [
+        (b) => (b.verdicts[0].components[0].provenance = "composed"),
+        /\.verdicts\[0\]\.components\[0\]\.provenance: se esperaba home \| curated \| agent_reviewed \| agent_pending/,
+      ],
+    ];
+    for (const [mutate, expected] of cases) {
+      const raw = sample();
+      mutate(raw.bundles[0]);
+      expect(validateFile("bundles", raw.bundles).join("\n"), `${expected}`).toMatch(expected);
+      expect(() => assertSiteData(raw), `${expected}`).toThrow(expected);
+    }
+  });
+
+  it("requires every bundles.json v2 key, nested ones included", () => {
+    /** The objects of the first sample bundle, by their path under bundles.json[0]. */
+    const nested = (b: Record<string, any>): Record<string, Record<string, unknown>> => ({
+      "": b,
+      ".price": b.price,
+      ".requirements": b.requirements,
+      ".components[0]": b.components[0],
+      ".optional_savings[0]": b.optional_savings[0],
+      ".evidence[0]": b.evidence[0],
+      ".verdicts[0]": b.verdicts[0],
+      ".verdicts[0].steps[0]": b.verdicts[0].steps[0],
+      ".verdicts[0].components[0]": b.verdicts[0].components[0],
+    });
+    const counts: Record<string, number> = {};
+    for (const [suffix, object] of Object.entries(nested(sample().bundles[0]))) {
+      expect(object, suffix).toBeDefined();
+      counts[suffix] = Object.keys(object).length;
+      for (const key of Object.keys(object)) {
+        const raw = sample();
+        delete nested(raw.bundles[0])[suffix]![key];
+        expect(validateFile("bundles", raw.bundles), `${suffix}.${key}`).toContain(
+          `bundles.json[0]${suffix}: falta el campo "${key}"`,
+        );
+      }
+    }
+    // The v2 contract's key counts (the sample bundle carries every key).
+    expect(counts).toEqual({
+      "": 35,
+      ".price": 13,
+      ".requirements": 8,
+      ".components[0]": 9,
+      ".optional_savings[0]": 4,
+      ".evidence[0]": 9,
+      ".verdicts[0]": 15,
+      ".verdicts[0].steps[0]": 4,
+      ".verdicts[0].components[0]": 5,
+    });
+  });
+
+  it("ignores extra keys; the v1 feasibility and status keys are gone", () => {
+    // A newer site-data may add fields; the pages never read the v1 ones again.
+    const raw = sample();
+    raw.bundles[0].feasibility = null;
+    raw.bundles[0].status = "unverified";
+    expect(validateFile("bundles", raw.bundles)).toEqual([]);
+    for (const b of sample().bundles) {
+      expect("feasibility" in b, b.bundle_id).toBe(false);
+      expect("status" in b, b.bundle_id).toBe(false);
+    }
+  });
+
+  it("fails on bundle verdicts for a profile feasibility.json does not list", () => {
+    const raw = sample();
+    raw.bundles[0].verdicts[1].profile = "nadie";
+    expect(() => assertSiteData(raw)).toThrow(
+      /bundles\.json\[0\]\.verdicts\[1\]\.profile: "nadie" no está en feasibility\.json profiles/,
+    );
+  });
+
+  it("fails on wrong bundle types (lists, numbers, booleans)", () => {
+    const cases: [(b: Record<string, any>) => void, RegExp][] = [
+      [(b) => (b.covers = "disney_plus"), /\[0\]\.covers: se esperaba una lista/],
+      [(b) => (b.standalone_missing = null), /\[0\]\.standalone_missing: se esperaba una lista/],
+      [(b) => (b.status_reasons_es = [1]), /\[0\]\.status_reasons_es\[0\]: se esperaba string/],
+      [(b) => (b.pending_changes = {}), /\[0\]\.pending_changes: se esperaba una lista/],
+      [
+        (b) => (b.price.tax_included = null),
+        /\.price\.tax_included: se esperaba boolean, hay null/,
+      ],
+      [(b) => (b.monthly_eur_with_fee = "5.54"), /\[0\]\.monthly_eur_with_fee: se esperaba number/],
+      [
+        (b) => (b.components[0].confirmed = null),
+        /\.components\[0\]\.confirmed: se esperaba boolean/,
+      ],
+      [(b) => (b.evidence[0].verified = "no"), /\.evidence\[0\]\.verified: se esperaba boolean/],
+      [(b) => (b.evidence[0].url = null), /\.evidence\[0\]\.url: se esperaba string, hay null/],
+      [(b) => (b.verdicts[0].rank = "2"), /\.verdicts\[0\]\.rank: se esperaba number/],
+      [
+        (b) => (b.verdicts[0].components = null),
+        /\.verdicts\[0\]\.components: se esperaba una lista/,
+      ],
+    ];
+    for (const [mutate, expected] of cases) {
+      const raw = sample();
+      mutate(raw.bundles[0]);
+      expect(validateFile("bundles", raw.bundles).join("\n"), `${expected}`).toMatch(expected);
     }
   });
 

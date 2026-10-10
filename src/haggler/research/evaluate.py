@@ -38,6 +38,10 @@ Pure (no I/O, no ADK). For a profile P living in R and a target country T:
 9. Confidence: high = reviewed, every decisive claim official, no assumptions; medium = ToS
    from official sources and no assumptions; low otherwise. Provenance agent_reviewed only when
    every decisive claim is accepted for its current hash, else agent_pending.
+
+The building blocks (Facts, Work, tos_axis, requirement, held_card, obtainable_card, obtainable,
+card_country, eea) are public because haggler.bundles.evaluate applies the same rules to a
+bundle's own route; they behave exactly as described above.
 """
 
 from __future__ import annotations
@@ -175,7 +179,7 @@ class _Resolved:
 
 
 @dataclass
-class _Work:
+class Work:
     """Accumulates one derived assessment."""
 
     steps: list[FeasibilityStep] = field(default_factory=list)
@@ -203,7 +207,7 @@ class _Work:
         return max(self.practical, key=_PRACTICAL_ORDER.index)
 
 
-class _Facts:
+class Facts:
     """Usable claims of fresh subjects for one evaluation."""
 
     def __init__(self, ctx: EvalContext, *, include_pending: bool) -> None:
@@ -263,14 +267,14 @@ class _Facts:
 # --------------------------------------------------------------------- instruments
 
 
-def _eea(ctx: EvalContext, cc: str) -> bool:
+def eea(ctx: EvalContext, cc: str) -> bool:
     try:
         return ctx.catalog.country(cc).eu_eea
     except KeyError:
         return False
 
 
-def _card_country(inst: PaymentInstrument, facts: _Facts, w: _Work) -> str | None:
+def card_country(inst: PaymentInstrument, facts: Facts, w: Work) -> str | None:
     if inst.card_bin_country_observed.value:
         return inst.card_bin_country_observed.value
     key = subject_key("instrument", inst.id)
@@ -281,7 +285,7 @@ def _card_country(inst: PaymentInstrument, facts: _Facts, w: _Work) -> str | Non
     return res.value
 
 
-def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Work) -> bool:
+def obtainable(inst: PaymentInstrument, profile: Profile, facts: Facts, w: Work) -> bool:
     """Curated values first; a verified official claim can only make an instrument harder to
     obtain (negative facts), and every fact it rests on without a claim is an assumption."""
     ctx = facts.ctx
@@ -295,7 +299,7 @@ def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Wo
     r = profile.residence_country
 
     def eligible(codes: Iterable[str]) -> bool:
-        return any(e in ("ANY", r) or (e == "EEA" and _eea(ctx, r)) for e in codes)
+        return any(e in ("ANY", r) or (e == "EEA" and eea(ctx, r)) for e in codes)
 
     if not eligible(inst.eligible_residence):
         return False
@@ -310,7 +314,7 @@ def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Wo
     if accepted_docs:
         ok = {
             "any_passport": bool(docs),
-            "eea_id": any(_eea(ctx, cc) for cc in docs),
+            "eea_id": any(eea(ctx, cc) for cc in docs),
             "residence_permit": r in docs,
             "issuer_country_id": inst.issuer_country in docs,
         }
@@ -330,23 +334,23 @@ def _obtainable(inst: PaymentInstrument, profile: Profile, facts: _Facts, w: _Wo
     return True
 
 
-def _held_card(target: str, profile: Profile, facts: _Facts, w: _Work) -> str | None:
+def held_card(target: str, profile: Profile, facts: Facts, w: Work) -> str | None:
     """Id of a held instrument whose card is issued in `target`."""
     held = set(profile.instruments_held)
     for inst in facts.ctx.instruments.instruments:
-        if inst.id in held and _card_country(inst, facts, w) == target:
+        if inst.id in held and card_country(inst, facts, w) == target:
             return inst.id
     return None
 
 
-def _obtainable_card(target: str, profile: Profile, facts: _Facts, w: _Work) -> str | None:
+def obtainable_card(target: str, profile: Profile, facts: Facts, w: Work) -> str | None:
     """Id of an instrument the profile could open online whose card is issued in `target`."""
     held = set(profile.instruments_held)
     for inst in facts.ctx.instruments.instruments:
         if inst.id in held:
             continue
-        probe = _Work()
-        if _card_country(inst, facts, probe) == target and _obtainable(inst, profile, facts, probe):
+        probe = Work()
+        if card_country(inst, facts, probe) == target and obtainable(inst, profile, facts, probe):
             w.use(probe.claims.values(), subject_key("instrument", inst.id))
             w.assumptions.extend(probe.assumptions)
             return inst.id
@@ -356,15 +360,13 @@ def _obtainable_card(target: str, profile: Profile, facts: _Facts, w: _Work) -> 
 # ------------------------------------------------------------------------- axes
 
 
-def _payment(
-    t: str, profile: Profile, facts: _Facts, w: _Work, svc_key: str, pair_key_: str
-) -> None:
+def _payment(t: str, profile: Profile, facts: Facts, w: Work, svc_key: str, pair_key_: str) -> None:
     pcc = facts.resolve(pair_key_, "payment_card_country")
     basis = facts.values(svc_key, "account_country_basis")
     must_match = pcc is not None and pcc.value == "must_match"
     if "store_region" in basis:
         w.step("store_region", t)
-    held = _held_card(t, profile, facts, w)
+    held = held_card(t, profile, facts, w)
     if held is not None:
         # A card of T satisfies the payment step whatever the rule is.
         w.step("payment_country", t)
@@ -387,7 +389,7 @@ def _payment(
         w.payment_unknown = True
         w.reasons.append(f"no se sabe si el pago exige una tarjeta de {t}")
         return
-    obtain = _obtainable_card(t, profile, facts, w)
+    obtain = obtainable_card(t, profile, facts, w)
     if obtain is not None:
         w.step("obtain_instrument", obtain)
         w.step("payment_country", t)
@@ -402,9 +404,9 @@ def _payment(
     )
 
 
-def _requirement(
-    facts: _Facts,
-    w: _Work,
+def requirement(
+    facts: Facts,
+    w: Work,
     key: str,
     field_name: str,
     *,
@@ -431,7 +433,7 @@ def _requirement(
 
 
 def _practical(
-    t: str, profile: Profile, facts: _Facts, w: _Work, svc_key: str, pair_key_: str
+    t: str, profile: Profile, facts: Facts, w: Work, svc_key: str, pair_key_: str
 ) -> None:
     avail = facts.resolve(pair_key_, "available")
     if avail is not None and avail.value == "false":
@@ -443,7 +445,7 @@ def _practical(
     _payment(t, profile, facts, w, svc_key, pair_key_)
     basis = facts.values(svc_key, "account_country_basis")
 
-    if _requirement(
+    if requirement(
         facts,
         w,
         pair_key_,
@@ -461,7 +463,7 @@ def _practical(
             w.practical.append("impossible")
             w.reasons.append(f"exige estar en {t} al registrarse y el perfil no viaja a {t}")
 
-    if _requirement(
+    if requirement(
         facts,
         w,
         pair_key_,
@@ -477,7 +479,7 @@ def _practical(
             w.practical.append("impossible")
             w.reasons.append(f"exige volver a {t} periódicamente")
 
-    if _requirement(
+    if requirement(
         facts,
         w,
         pair_key_,
@@ -492,7 +494,7 @@ def _practical(
             w.practical.append("impossible")
             w.reasons.append(f"exige un documento de {t}")
 
-    if _requirement(
+    if requirement(
         facts,
         w,
         pair_key_,
@@ -509,7 +511,7 @@ def _practical(
             w.practical.append("impossible")
             w.reasons.append(f"exige un número de teléfono de {t}")
 
-    if _requirement(
+    if requirement(
         facts,
         w,
         pair_key_,
@@ -536,13 +538,23 @@ def _practical(
         w.reasons.append(f"exige declarar {t} como país propio sin vivir allí")
 
 
-def _tos(facts: _Facts, w: _Work, svc_key: str) -> tuple[str, list[Claim]]:
-    clause = facts.resolve(svc_key, "residence_clause")
+def tos_axis(
+    facts: Facts,
+    w: Work,
+    svc_key: str,
+    *,
+    clause_field: str = "residence_clause",
+    event_field: str = "enforcement_event",
+    allowed_field: str = "foreign_offer_allowed",
+) -> tuple[str, list[Claim]]:
+    """The ToS axis of one subject (rule 6). The field names are parameters so a bundle subject
+    reads its bundle_ twins (bundle_residence_clause ...) with the same rule."""
+    clause = facts.resolve(svc_key, clause_field)
     today = facts.ctx.today
     # Any documented event shows the rule exists; only recent ones make it "enforced".
     events = [
         c
-        for c in facts.usable(svc_key, "enforcement_event")
+        for c in facts.usable(svc_key, event_field)
         if c.event_date is not None and c.event_date <= today
     ]
     recent = [c for c in events if (today - c.event_date).days <= ENFORCEMENT_WINDOW_DAYS]  # type: ignore[operator]
@@ -550,17 +562,15 @@ def _tos(facts: _Facts, w: _Work, svc_key: str) -> tuple[str, list[Claim]]:
         used = [*(clause.claims if clause else []), *events]
         w.use(used, svc_key)
         if clause is not None:
-            w.reasons.append(
-                "los términos exigen: " + value_label_es("residence_clause", clause.value)
-            )
+            w.reasons.append("los términos exigen: " + value_label_es(clause_field, clause.value))
         if recent:
-            kinds = sorted({value_label_es("enforcement_event", c.value) for c in recent})
+            kinds = sorted({value_label_es(event_field, c.value) for c in recent})
             w.reasons.append("control documentado: " + ", ".join(kinds))
             return "breach_enforced", used
         if events:
             w.reasons.append("hubo controles, pero hace más de dos años")
         return "breach_unenforced", used
-    allowed = facts.resolve(svc_key, "foreign_offer_allowed")
+    allowed = facts.resolve(svc_key, allowed_field)
     if allowed is not None:
         w.use(allowed.claims, svc_key)
         return "compliant", allowed.claims
@@ -646,7 +656,7 @@ def assess(
     if record is not None:
         return _curated(record)
 
-    facts = _Facts(ctx, include_pending=include_pending)
+    facts = Facts(ctx, include_pending=include_pending)
     svc_key = subject_key("service", service_id)
     pair_key_ = subject_key("pair", service_id, target)
     unknown = Assessment(
@@ -664,8 +674,8 @@ def assess(
     if facts.subject(svc_key) is None and facts.subject(pair_key_) is None:
         return unknown
 
-    w = _Work()
-    tos, tos_claims = _tos(facts, w, svc_key)
+    w = Work()
+    tos, tos_claims = tos_axis(facts, w, svc_key)
     _practical(target, profile, facts, w, svc_key, pair_key_)
     if not w.claims:
         return unknown  # researched, but nothing usable for this profile (or all pending)
@@ -685,7 +695,7 @@ def assess(
     barrier = tos.startswith("breach") or practical not in ("remote", UNKNOWN_AXIS)
     if w.false_declaration:
         legality = "requires_misrepresentation"
-    elif eservice and _eea(ctx, r) and _eea(ctx, target) and barrier:
+    elif eservice and eea(ctx, r) and eea(ctx, target) and barrier:
         legality = "contestable_eu_right"
         legal_basis = (EU_LEGAL_BASIS,)
     else:

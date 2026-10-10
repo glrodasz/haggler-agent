@@ -228,44 +228,198 @@ export interface CheapestRow {
   savings_month_eur: Record<RiskKey, number | null>;
 }
 
-export type BundleInclusion =
-  | "included"
-  | "discount_pct"
-  | "discount_abs"
-  | "free_months"
-  | "choose_n";
+export const BUNDLE_INCLUSIONS = [
+  "included",
+  "discount_pct",
+  "discount_abs",
+  "free_months",
+  "choose_n",
+] as const;
+export type BundleInclusion = (typeof BUNDLE_INCLUSIONS)[number];
 
+export const BUNDLE_PERIODS = ["month", "year"] as const;
+export type BundlePeriod = (typeof BUNDLE_PERIODS)[number];
+
+/** "observed": the price is today's row of observed_service_id in offers.json. */
+export const BUNDLE_PRICE_SOURCES = ["curated", "observed"] as const;
+export type BundlePriceSource = (typeof BUNDLE_PRICE_SOURCES)[number];
+
+/** What a bundle's state is derived from (never typed in the YAML), most trusted first. */
+export const BUNDLE_DISPLAY_STATUSES = [
+  "verified",
+  "needs_review",
+  "manual",
+  "unverified",
+  "expired",
+] as const;
+export type BundleDisplayStatus = (typeof BUNDLE_DISPLAY_STATUSES)[number];
+
+/** Where a bundle's values come from (user_report never counts as an official source). */
+export const BUNDLE_VERIFIED_BY = [
+  "official_fetch",
+  "user_report",
+  "search_summary",
+  "agent_research",
+] as const;
+export type BundleVerifiedBy = (typeof BUNDLE_VERIFIED_BY)[number];
+
+export const WATCH_MODES = ["auto", "manual", "off"] as const;
+export type WatchMode = (typeof WATCH_MODES)[number];
+
+/** "marginal": the cost on top of a base plan the subscriber already pays (a telco add-on). */
+export const SAVING_BASES = ["full", "marginal"] as const;
+export type SavingBasis = (typeof SAVING_BASES)[number];
+
+export const CONFIDENCES = ["low", "medium", "high"] as const satisfies readonly Confidence[];
+
+/** A condition the provider imposes; "unknown" is never read as "not required". */
+export const REQUIREMENT_VALUES = ["required", "not_required", "unknown"] as const;
+export type RequirementValue = (typeof REQUIREMENT_VALUES)[number];
+
+/** Whether the provider checks that the subscriber is in the bundle's country at signup. */
+export const SIGNUP_PRESENCE_VALUES = ["checked", "not_checked", "unknown"] as const;
+export type SignupPresence = (typeof SIGNUP_PRESENCE_VALUES)[number];
+
+/**
+ * Where a bundle verdict comes from: the residence country ("home"), a hand-written record
+ * ("curated"), the bundle's own requirements plus its components' verdicts ("composed"), or the
+ * research evaluator with reviewed / pending findings.
+ */
+export const BUNDLE_PROVENANCES = [
+  "home",
+  "curated",
+  "composed",
+  "agent_reviewed",
+  "agent_pending",
+] as const;
+export type BundleProvenance = (typeof BUNDLE_PROVENANCES)[number];
+
+/** A component's verdict comes from its service's own record (null: not evaluated). */
+export const COMPONENT_PROVENANCES = [
+  "home",
+  "curated",
+  "agent_reviewed",
+  "agent_pending",
+] as const;
+export type ComponentProvenance = (typeof COMPONENT_PROVENANCES)[number];
+
+export const VERDICT_STATUSES = ["unverified", "verified"] as const;
+export type VerdictStatus = (typeof VERDICT_STATUSES)[number];
+
+/** Every amount is in `currency` per `period`; null when no source gives it. */
 export interface BundlePrice {
+  /** The regular price (never the intro one); null for an observed price without today's row. */
   amount: number | null;
   currency: string;
-  period: "month" | "year";
-  tax_included: boolean | null;
+  period: BundlePeriod;
+  tax_included: boolean;
+  source: BundlePriceSource;
+  /** Date of the offers.json row an observed price comes from (YYYY-MM-DD). */
+  observed_on: string | null;
+  base_plan_name: string | null;
+  base_plan_amount: number | null;
+  /** amount - base_plan_amount: the cost on top of the base plan. */
   marginal_amount: number | null;
+  intro_amount: number | null;
+  intro_months: number | null;
+  intro_valid_until: string | null;
+  contract_months: number | null;
 }
 
 export interface BundleComponent {
   service_id: string;
   plan_id: string | null;
   inclusion: BundleInclusion;
+  /** Percent for discount_pct, an amount in the bundle's currency for discount_abs, months. */
   value: number | null;
   ads: boolean | null;
+  choice_group_id: string | null;
+  /** How many of the choice group the subscriber picks. */
+  choose_n: number | null;
+  /** Cheapest monthly EUR price of the service bought on its own in the bundle's country. */
+  standalone_eur: number | null;
+  /** True once the watcher found the component on an official page (never before H7). */
+  confirmed: boolean;
+}
+
+/** What the subscriber saves per month IF they also subscribe to a discounted service. */
+export interface BundleOptionalSaving {
+  service_id: string;
+  inclusion: BundleInclusion;
+  value: number | null;
+  /** Null for free months, or without a standalone price. */
+  saving_month_eur: number | null;
 }
 
 export interface BundleRequirements {
-  residency?: string | null;
-  local_id?: string;
-  local_line?: string;
-  local_payment?: string;
-  credit_check?: boolean | null;
+  /** Local ID document ("cedula", "CURP", "personnummer"…, "none"); null when not established. */
+  local_id: string | null;
+  /** "mobile", "fixed", "none"…; null when not established. */
+  local_line: string | null;
+  /** "any_card", "local_card", "local_bank"…; null when not established. */
+  local_payment: string | null;
+  credit_check: boolean | null;
+  residency: RequirementValue;
+  billing_address: RequirementValue;
+  signup_presence: SignupPresence;
+  new_customers_only: boolean | null;
 }
 
-export interface BundleFeasibility {
-  purchasable_remotely: string;
-  usable_abroad: string;
-  tos_risk: string;
-  evidence: string;
+/** A cited source of a bundle value; the watcher fills fact/via/edition/status (H7). */
+export interface BundleEvidence {
+  /** price | base_price | intro | component | validity; null for a plain source link. */
+  fact: string | null;
+  url: string;
+  kind: EvidenceKind;
+  quote: string | null;
+  /** Date of our own fetch (YYYY-MM-DD); null until the watcher read the page. */
+  retrieved_at: string | null;
+  verified: boolean;
+  /** How the quote was found ("embedded" data instead of visible text…). */
+  via: string | null;
+  /** Edition of a versioned document (a price-list PDF). */
+  edition: string | null;
+  status: string | null;
 }
 
+/** The verdict of one component (its own service in the bundle's country) for the profile. */
+export interface BundleVerdictComponent {
+  service_id: string;
+  target_country: string;
+  label: LabelId;
+  rank: number;
+  provenance: ComponentProvenance | null;
+}
+
+/**
+ * One profile's verdict on a bundle: the same labels, axes and steps as feasibility.json, plus
+ * each included component's verdict (the bundle's rank is never below the worst of them).
+ */
+export interface BundleVerdict {
+  profile: string;
+  provenance: BundleProvenance;
+  label: LabelId;
+  rank: number;
+  eu_badge: boolean;
+  legality: string;
+  tos: string;
+  practical: string;
+  confidence: Confidence;
+  status: VerdictStatus;
+  notes_es: string;
+  steps: Step[];
+  assumptions_es: string[];
+  reasons_es: string[];
+  components: BundleVerdictComponent[];
+}
+
+/**
+ * bundles.json v2. Costs are monthly EUR rounded to 2 decimals: monthly_eur is the regular cost
+ * basis of the saving (the marginal cost when the bundle sits on a base plan, yearly prices /12,
+ * never an intro price); saving_pct compares it with standalone_sum_eur (a lower bound: the
+ * cheapest standalone price of each included component, partial when standalone_missing is not
+ * empty) and never counts the FX fee, intro prices, discounts or free months.
+ */
 export interface Bundle {
   bundle_id: string;
   provider_id: string;
@@ -274,17 +428,47 @@ export interface Bundle {
   name: string;
   tier: string;
   official_url: string;
+  /** The service whose offers.json row gives the price (price.source "observed"). */
+  observed_service_id: string | null;
+  /** Service ids the bundle stands in for (by default its included components). */
+  covers: string[];
   price: BundlePrice;
   monthly_eur: number | null;
-  components: BundleComponent[];
+  /** Full regular price per month, base plan included. */
+  full_monthly_eur: number | null;
+  /** monthly_eur plus the FX fee when the bundle's currency is not the residence's. */
+  monthly_eur_with_fee: number | null;
+  /** Average monthly cost of the first year with a current, verified intro price. */
+  first_year_monthly_eur: number | null;
+  saving_basis: SavingBasis;
   standalone_sum_eur: number | null;
+  standalone_missing: string[];
   /** Percent saved vs. buying the included components separately; negative = more expensive. */
   saving_pct: number | null;
+  optional_savings: BundleOptionalSaving[];
+  components: BundleComponent[];
   requirements: BundleRequirements;
-  feasibility: BundleFeasibility | null;
-  status: CuratedStatus;
+  display_status: BundleDisplayStatus;
+  /** Why the bundle is not verified (at least one unless display_status is "verified"). */
+  status_reasons_es: string[];
+  verified_by: BundleVerifiedBy;
+  verified_at: string | null;
+  checked_at: string | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  confidence: Confidence;
+  watch_mode: WatchMode;
+  evidence: BundleEvidence[];
+  /**
+   * One verdict per public profile (default profile first, then by id); a pending variant
+   * follows its reviewed one only when it differs. Empty when the bundle expired.
+   */
+  verdicts: BundleVerdict[];
+  /** Proposed value changes awaiting review (filled from milestone H8). */
+  pending_changes: Record<string, unknown>[];
   notes_es: string;
-  last_verified: string;
+  /** Last human review of the YAML row (YYYY-MM-DD). */
+  last_verified: string | null;
 }
 
 /** Old/new value of a change: an amount, a preformatted string, or a {amount, currency} pair. */

@@ -250,6 +250,9 @@ def _price_errors(who: str, b: Bundle, cat: Catalog) -> list[str]:
             errors.append(f"{who}: price currency {price.currency} is not {b.country}'s {currency}")
     if price.source == "curated" and price.amount is None:
         errors.append(f"{who}: curated price needs an amount")
+    if price.tax_included is None:
+        # bundles.json states it as a fact (a boolean); only the YAML can say which.
+        errors.append(f"{who}: price needs tax_included (true or false, as the page states it)")
     if price.source == "observed" and price.amount is not None:
         errors.append(f"{who}: observed price takes its amount from the daily data, not the YAML")
     amount, base, marginal = price.amount, price.base_plan_amount, price.marginal_amount

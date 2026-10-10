@@ -7,6 +7,7 @@ import { es } from "../i18n/es";
 import { formatPrice } from "./format";
 import type {
   Bundle,
+  BundleVerdict,
   ChangeRow,
   ChangeValue,
   CountryInfo,
@@ -46,8 +47,29 @@ export interface SiteIndex extends SiteData {
   acceptableLabels(): LabelInfo[];
   offersForService(serviceId: string): Offer[];
   offersForCountry(cc: string): Offer[];
+  /** Name of a public profile (its id when feasibility.json does not list it). */
+  profileName(id: string): string;
+  /**
+   * Active bundles that stand in for the service: its observed price (observed_service_id), the
+   * services it covers, or an included (or to-choose) component. Discounts do not count.
+   */
   bundlesForService(serviceId: string): Bundle[];
+  /**
+   * Active bundles that only give a discount or free months on the service (an optional saving),
+   * so its page still leads to them.
+   */
+  discountBundlesForService(serviceId: string): Bundle[];
+  /** Active bundles of the country, in bundles.json order. */
   bundlesForCountry(cc: string): Bundle[];
+  /** Bundles of the country whose offer ended (published for a while, never computed with). */
+  expiredBundlesForCountry(cc: string): Bundle[];
+  /** A bundle's verdicts split for its card: the default profile's, then the other profiles'. */
+  bundleVerdicts(bundle: Bundle): BundleVerdicts;
+  /**
+   * Whole days from `iso` to the day site-data ran (meta.generated_at): the day Python dated a
+   * bundle's status on, e.g. the 45-day manual verification (null without a date).
+   */
+  daysBeforeGeneration(iso: string | null | undefined): number | null;
   /** The default profile's records: non-pending first, then those pending review. */
   feasibilityForService(serviceId: string): FeasibilityView[];
   /** The default profile's records: non-pending first, then those pending review. */
@@ -63,6 +85,63 @@ export interface SiteIndex extends SiteData {
   /** changes.json sorted newest first, limited to `days` before meta.as_of (all without it). */
   recentChanges(days?: number): ChangeRow[];
   formatChangeValue(row: ChangeRow, value: ChangeValue): string;
+}
+
+export interface BundleVerdicts {
+  /** The default profile's verdict with pending findings excluded. */
+  main: BundleVerdict | undefined;
+  /** The default profile's verdict including pending findings, only when it differs. */
+  pending: BundleVerdict | undefined;
+  /** Every other profile's verdicts, in bundles.json order (each pending one after its own). */
+  others: BundleVerdict[];
+}
+
+/** An expired bundle is only listed apart ("Ofertas vencidas"), never with the active ones. */
+export function isActiveBundle(bundle: Pick<Bundle, "display_status">): boolean {
+  return bundle.display_status !== "expired";
+}
+
+/** Whether a bundle stands in for the service (see SiteIndex.bundlesForService). */
+export function bundleCoversService(
+  bundle: Pick<Bundle, "observed_service_id" | "covers" | "components">,
+  serviceId: string,
+): boolean {
+  return (
+    bundle.observed_service_id === serviceId ||
+    bundle.covers.includes(serviceId) ||
+    bundle.components.some(
+      (c) =>
+        c.service_id === serviceId && (c.inclusion === "included" || c.inclusion === "choose_n"),
+    )
+  );
+}
+
+const OPTIONAL_INCLUSIONS: readonly string[] = ["discount_pct", "discount_abs", "free_months"];
+
+/** Whether a bundle only discounts the service (or gives free months of it) without covering it. */
+export function bundleDiscountsService(
+  bundle: Pick<Bundle, "observed_service_id" | "covers" | "components">,
+  serviceId: string,
+): boolean {
+  return (
+    !bundleCoversService(bundle, serviceId) &&
+    bundle.components.some(
+      (c) => c.service_id === serviceId && OPTIONAL_INCLUSIONS.includes(c.inclusion),
+    )
+  );
+}
+
+/** Splits a bundle's verdicts into the default profile's (reviewed, pending) and the rest. */
+export function splitBundleVerdicts(
+  verdicts: readonly BundleVerdict[],
+  defaultProfile: string,
+): BundleVerdicts {
+  const own = verdicts.filter((v) => v.profile === defaultProfile);
+  return {
+    main: own.find((v) => v.provenance !== "agent_pending"),
+    pending: own.find((v) => v.provenance === "agent_pending"),
+    others: verdicts.filter((v) => v.profile !== defaultProfile),
+  };
 }
 
 /**
@@ -103,6 +182,8 @@ export function buildIndex(data: SiteData): SiteIndex {
   const offerCurrency = new Map(data.offers.map((o) => [o.obs_key, o.currency]));
   // site-data already limits changes.json to the window before as_of (or before today).
   const asOf = data.meta.as_of;
+  // The day site-data ran: bundles.json's status (manual age, expiry) is dated on it.
+  const generatedOn = data.meta.generated_at.slice(0, 10);
   const defaultProfile = resolveProfile(data.feasibility, data.feasibility.default_profile);
   // The pages show the default profile's records: offers.json carries that profile's verdicts.
   const defaultRecords = (
@@ -171,9 +252,17 @@ export function buildIndex(data: SiteData): SiteIndex {
           if (ra !== rb) return ra - rb;
           return a.obs_key < b.obs_key ? -1 : 1;
         }),
+    profileName: (id) => data.feasibility.profiles.find((p) => p.id === id)?.name_es ?? id,
     bundlesForService: (serviceId) =>
-      data.bundles.filter((b) => b.components.some((c) => c.service_id === serviceId)),
-    bundlesForCountry: (cc) => data.bundles.filter((b) => b.country === cc),
+      data.bundles.filter((b) => isActiveBundle(b) && bundleCoversService(b, serviceId)),
+    discountBundlesForService: (serviceId) =>
+      data.bundles.filter((b) => isActiveBundle(b) && bundleDiscountsService(b, serviceId)),
+    bundlesForCountry: (cc) => data.bundles.filter((b) => b.country === cc && isActiveBundle(b)),
+    expiredBundlesForCountry: (cc) =>
+      data.bundles.filter((b) => b.country === cc && !isActiveBundle(b)),
+    bundleVerdicts: (bundle) =>
+      splitBundleVerdicts(bundle.verdicts, data.feasibility.default_profile),
+    daysBeforeGeneration: (iso) => (iso ? Math.round(daysBetween(iso, generatedOn)) : null),
     feasibilityForService: (serviceId) =>
       defaultRecords(
         (r) => r.service_id === serviceId,

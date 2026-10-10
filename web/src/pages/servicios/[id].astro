@@ -27,6 +27,7 @@ const site = getSite();
 const t = es.service;
 const offers = site.offersForService(service.id);
 const bundles = site.bundlesForService(service.id);
+const discountBundles = site.discountBundlesForService(service.id);
 const records = site.feasibilityForService(service.id);
 const summary = site.cheapest.find(
   (r) => r.service_id === service.id && r.plan_id === service.default_plan,
@@ -156,4 +157,18 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
       )
     }
   </section>
+
+  {
+    discountBundles.length > 0 && (
+      <section aria-labelledby="paquetes-descuento">
+        <h2 id="paquetes-descuento">{t.discountBundlesTitle}</h2>
+        <p class="note">{t.discountBundlesLead}</p>
+        <ul class="cards">
+          {discountBundles.map((b) => (
+            <BundleCard bundle={b} />
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </Base>

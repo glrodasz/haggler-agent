@@ -231,13 +231,6 @@ class BundleRequirements(_Strict):
     new_customers_only: bool | None = None
 
 
-class BundleFeasibility(_Strict):
-    purchasable_remotely: Literal["yes", "no", "unknown"] = "unknown"
-    usable_abroad: Literal["yes", "travel_only", "no", "unknown"] = "unknown"
-    tos_risk: Literal["low", "medium", "high", "unknown"] = "unknown"
-    evidence: Literal["user_report", "terms", "press", "none"] = "none"
-
-
 class Provider(_Strict):
     id: str
     name: str
@@ -328,9 +321,6 @@ class Bundle(_Strict):
     # Service ids the bundle stands in for; None = its included components.
     covers: list[str] | None = None
     requirements: BundleRequirements = BundleRequirements()
-    # DEPRECATED: the v1 per-residence summary, still read by publish (bundles.json v1). Removed
-    # in milestone H2, when per-profile verdicts (`verdicts`) replace it.
-    feasibility_from: dict[str, BundleFeasibility] = Field(default_factory=dict)
     evidence: list[Evidence] = Field(default_factory=list)
     status: BundleStatus = "unverified"
     valid_from: date | None = None

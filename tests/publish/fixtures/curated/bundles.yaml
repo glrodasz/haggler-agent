@@ -1,5 +1,5 @@
-# Bundle fixture for the publish tests: one of each pricing shape (bundles.yaml v2; the
-# site-data output is still the bundles.json v1 contract).
+# Bundle fixture for the publish tests: one of each pricing shape (bundles.yaml v2 in,
+# bundles.json v2 out).
 providers:
   - id: mercado_libre
     name: Mercado Libre
@@ -39,8 +39,6 @@ bundles:
       - {service_id: apple_tv, plan_id: standard, inclusion: included}
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
     verified_by: search_summary
     watch:
       mode: manual
@@ -57,7 +55,7 @@ bundles:
     tier: family
     aliases: [Familj]
     official_url: https://www.apple.com/se/apple-one/
-    price: {currency: SEK, period: month, source: observed,
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
             observed_service_id: apple_one, observed_plan_id: family}
     components:
       - {service_id: apple_music, plan_id: family, inclusion: included}
@@ -77,8 +75,6 @@ bundles:
       - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
       - {service_id: spotify, inclusion: discount_pct, value: "30"}
     requirements: {local_id: cedula, local_payment: any_card}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: medium, evidence: user_report}
     notes_es: >-
       Precio en conflicto.
     verified_by: search_summary
@@ -101,8 +97,6 @@ bundles:
       - {service_id: netflix, plan_id: standard, inclusion: included}
       - {service_id: spotify, plan_id: individual, inclusion: included}
     requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
     verified_by: search_summary
     watch: {mode: "off"}
     last_verified: 2026-10-08

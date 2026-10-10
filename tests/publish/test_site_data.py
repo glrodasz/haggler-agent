@@ -17,7 +17,7 @@ import pytest
 
 from haggler.catalog import load_bundles, load_catalog, load_feasibility
 from haggler.models.curated import BundleRequirements
-from haggler.publish import SITE_FILES, build_site_data, site_data
+from haggler.publish import SITE_FILES, _services_json, build_site_data, site_data
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = FIXTURES / "golden"
@@ -127,20 +127,104 @@ BUNDLE_KEYS = {
     "name",
     "tier",
     "official_url",
+    "observed_service_id",
+    "covers",
     "price",
     "monthly_eur",
-    "components",
+    "full_monthly_eur",
+    "monthly_eur_with_fee",
+    "first_year_monthly_eur",
+    "saving_basis",
     "standalone_sum_eur",
+    "standalone_missing",
     "saving_pct",
+    "optional_savings",
+    "components",
     "requirements",
-    "feasibility",
-    "status",
+    "display_status",
+    "status_reasons_es",
+    "verified_by",
+    "verified_at",
+    "checked_at",
+    "valid_from",
+    "valid_until",
+    "confidence",
+    "watch_mode",
+    "evidence",
+    "verdicts",
+    "pending_changes",
     "notes_es",
     "last_verified",
 }
-BUNDLE_PRICE_KEYS = {"amount", "currency", "period", "tax_included", "marginal_amount"}
-COMPONENT_KEYS = {"service_id", "plan_id", "inclusion", "value", "ads"}
-BUNDLE_FEASIBILITY_KEYS = {"purchasable_remotely", "usable_abroad", "tos_risk", "evidence"}
+BUNDLE_PRICE_KEYS = {
+    "amount",
+    "currency",
+    "period",
+    "tax_included",
+    "source",
+    "observed_on",
+    "base_plan_name",
+    "base_plan_amount",
+    "marginal_amount",
+    "intro_amount",
+    "intro_months",
+    "intro_valid_until",
+    "contract_months",
+}
+COMPONENT_KEYS = {
+    "service_id",
+    "plan_id",
+    "inclusion",
+    "value",
+    "ads",
+    "choice_group_id",
+    "choose_n",
+    "standalone_eur",
+    "confirmed",
+}
+OPTIONAL_SAVING_KEYS = {"service_id", "inclusion", "value", "saving_month_eur"}
+BUNDLE_REQUIREMENT_KEYS = {
+    "local_id",
+    "local_line",
+    "local_payment",
+    "credit_check",
+    "residency",
+    "billing_address",
+    "signup_presence",
+    "new_customers_only",
+}
+BUNDLE_EVIDENCE_KEYS = {
+    "fact",
+    "url",
+    "kind",
+    "quote",
+    "retrieved_at",
+    "verified",
+    "via",
+    "edition",
+    "status",
+}
+BUNDLE_VERDICT_KEYS = {
+    "profile",
+    "provenance",
+    "label",
+    "rank",
+    "eu_badge",
+    "legality",
+    "tos",
+    "practical",
+    "confidence",
+    "status",
+    "notes_es",
+    "steps",
+    "assumptions_es",
+    "reasons_es",
+    "components",
+}
+VERDICT_COMPONENT_KEYS = {"service_id", "target_country", "label", "rank", "provenance"}
+DISPLAY_STATUSES = {"verified", "needs_review", "manual", "unverified", "expired"}
+BUNDLE_PROVENANCES = {"home", "curated", "composed", "agent_reviewed", "agent_pending"}
+REQUIREMENT_VALUES = {"required", "not_required", "unknown"}
 CHANGE_KEYS = {
     "date",
     "obs_key",
@@ -180,6 +264,80 @@ def check_ref(ref: dict | None) -> None:
         assert is_money(ref[key]), (key, ref)
     assert isinstance(ref["rank"], int)
     assert isinstance(ref["eu_badge"], bool)
+
+
+def check_bundle(b: dict[str, Any], *, label_ids: set[str], profile_ids: list[str]) -> None:
+    """One bundles.json v2 object: every key present, null only where the contract allows it."""
+    assert set(b) == BUNDLE_KEYS
+    price = b["price"]
+    assert set(price) == BUNDLE_PRICE_KEYS
+    for key in ("amount", "base_plan_amount", "marginal_amount", "intro_amount"):
+        assert is_money(price[key], nullable=True), (key, b["bundle_id"])
+    assert price["period"] in {"month", "year"}
+    assert isinstance(price["tax_included"], bool), b["bundle_id"]
+    assert price["source"] in {"curated", "observed"}
+    assert is_date(price["observed_on"], nullable=True)
+    assert is_date(price["intro_valid_until"], nullable=True)
+    assert (b["observed_service_id"] is not None) == (price["source"] == "observed")
+    assert all(isinstance(s, str) for s in b["covers"])
+    for key in (
+        "monthly_eur",
+        "full_monthly_eur",
+        "monthly_eur_with_fee",
+        "first_year_monthly_eur",
+        "standalone_sum_eur",
+        "saving_pct",
+    ):
+        assert is_money(b[key], nullable=True), (key, b["bundle_id"])
+    assert b["saving_basis"] in {"full", "marginal"}
+    assert all(isinstance(s, str) for s in b["standalone_missing"])
+    if b["standalone_sum_eur"] is None:
+        assert b["saving_pct"] is None
+    for o in b["optional_savings"]:
+        assert set(o) == OPTIONAL_SAVING_KEYS
+        assert o["inclusion"] in {"discount_pct", "discount_abs", "free_months"}
+        assert is_money(o["saving_month_eur"], nullable=True)
+    for comp in b["components"]:
+        assert set(comp) == COMPONENT_KEYS
+        assert is_money(comp["standalone_eur"], nullable=True)
+        assert comp["confirmed"] is False  # the watcher confirms components (H7)
+    req = b["requirements"]
+    assert set(req) == BUNDLE_REQUIREMENT_KEYS
+    assert req["residency"] in REQUIREMENT_VALUES
+    assert req["billing_address"] in REQUIREMENT_VALUES
+    assert req["signup_presence"] in {"checked", "not_checked", "unknown"}
+    assert b["display_status"] in DISPLAY_STATUSES
+    assert all(isinstance(r, str) and r for r in b["status_reasons_es"])
+    if b["display_status"] != "verified":
+        assert b["status_reasons_es"], b["bundle_id"]
+    assert b["verified_by"] in {"official_fetch", "user_report", "search_summary", "agent_research"}
+    for key in ("verified_at", "checked_at", "valid_from", "valid_until"):
+        assert is_date(b[key], nullable=True), key
+    assert b["confidence"] in {"low", "medium", "high"}
+    assert b["watch_mode"] in {"auto", "manual", "off"}
+    for e in b["evidence"]:
+        assert set(e) == BUNDLE_EVIDENCE_KEYS
+        assert isinstance(e["verified"], bool)
+    if b["display_status"] == "expired":
+        assert b["verdicts"] == []
+    else:
+        assert b["verdicts"] and b["verdicts"][0]["profile"] == profile_ids[0]
+    for v in b["verdicts"]:
+        assert set(v) == BUNDLE_VERDICT_KEYS
+        assert v["profile"] in profile_ids
+        assert v["provenance"] in BUNDLE_PROVENANCES
+        assert v["label"] in label_ids and isinstance(v["rank"], int)
+        assert isinstance(v["eu_badge"], bool)
+        assert v["status"] in {"verified", "unverified"}
+        assert all(set(st) == STEP_KEYS for st in v["steps"])
+        assert all(isinstance(x, str) for x in [*v["assumptions_es"], *v["reasons_es"]])
+        for c in v["components"]:
+            assert set(c) == VERDICT_COMPONENT_KEYS
+            assert isinstance(c["rank"], int)
+            # null: nothing evaluated the component's service in that country.
+            assert c["provenance"] in {None, "home", "curated", "agent_reviewed", "agent_pending"}
+    assert b["pending_changes"] == []
+    assert is_date(b["last_verified"])
 
 
 def check_contract(site: dict[str, Any]) -> None:
@@ -254,19 +412,9 @@ def check_contract(site: dict[str, Any]) -> None:
         for value in row["savings_month_eur"].values():
             assert is_money(value, nullable=True)
 
+    label_ids = {label["id"] for label in feas["labels"]}
     for b in site["bundles"]:
-        assert set(b) == BUNDLE_KEYS
-        assert set(b["price"]) == BUNDLE_PRICE_KEYS
-        assert is_money(b["price"]["amount"], nullable=True)
-        assert is_money(b["price"]["marginal_amount"], nullable=True)
-        assert b["price"]["period"] in {"month", "year"}
-        for key in ("monthly_eur", "standalone_sum_eur", "saving_pct"):
-            assert is_money(b[key], nullable=True), (key, b)
-        for comp in b["components"]:
-            assert set(comp) == COMPONENT_KEYS
-        assert isinstance(b["requirements"], dict)
-        assert b["feasibility"] is None or set(b["feasibility"]) == BUNDLE_FEASIBILITY_KEYS
-        assert is_date(b["last_verified"])
+        check_bundle(b, label_ids=label_ids, profile_ids=profile_ids)
 
     for ch in site["changes"]:
         assert set(ch) == CHANGE_KEYS
@@ -385,6 +533,19 @@ def test_services_and_countries(written: dict[str, Any]) -> None:
     icloud = by(written["services"], "id")["icloud_plus"]
     assert icloud["notes_es"] == "Precios de la tabla oficial de Apple."
     assert icloud["plans"][0] == {"id": "50gb", "label_es": "50 GB", "rank": 0, "ads": False}
+
+
+def test_a_service_a_bundle_only_covers_is_listed(fx_catalog: Any) -> None:
+    # vix has no price source and no component names it: covering it is enough for its page.
+    fixture = load_bundles(FIXTURES / "curated")
+    first = fixture.bundles[0].model_copy(update={"covers": ["vix"]})
+    bundles = fixture.model_copy(update={"bundles": [first, *fixture.bundles[1:]]})
+    ids = [s["id"] for s in _services_json(fx_catalog, bundles)]
+    assert "vix" in ids
+    assert "vix" not in [s["id"] for s in _services_json(fx_catalog, fixture)]
+
+
+def test_countries(written: dict[str, Any]) -> None:
     assert [c["cc"] for c in written["countries"]] == ["SE", "LT", "CO", "AR", "US"]
     assert written["countries"][0] == {
         "cc": "SE",
@@ -493,22 +654,17 @@ def test_bundles(written: dict[str, Any]) -> None:
 
     apple = bundles["apple_one_individual_se"]
     # Observed price (195 SEK) from offers; Arcade has no price and is left out of the sum.
-    assert apple["price"] == {
-        "amount": 195,
-        "currency": "SEK",
-        "period": "month",
-        "tax_included": True,
-        "marginal_amount": None,
-    }
-    assert apple["monthly_eur"] == 17.73  # 195 / 11
+    assert apple["observed_service_id"] == "apple_one"
+    assert apple["covers"] == ["apple_music", "apple_tv", "apple_arcade", "icloud_plus"]
+    assert apple["price"]["amount"] == 195
+    assert (apple["price"]["source"], apple["price"]["observed_on"]) == ("observed", "2026-10-08")
+    assert apple["monthly_eur"] == apple["full_monthly_eur"] == 17.73  # 195 / 11
+    assert apple["monthly_eur_with_fee"] == 17.73  # SEK at home: no FX fee
     assert apple["standalone_sum_eur"] == 20.91  # (119 + 99 + 12) / 11
+    assert apple["standalone_missing"] == ["apple_arcade"]
     assert apple["saving_pct"] == 15.21
-    assert apple["feasibility"] == {
-        "purchasable_remotely": "yes",
-        "usable_abroad": "yes",
-        "tos_risk": "low",
-        "evidence": "terms",
-    }
+    assert apple["display_status"] == "unverified"
+    assert apple["status_reasons_es"][0].startswith("Componentes tomados de un resumen")
 
     family = bundles["apple_one_family_se"]
     assert family["price"]["amount"] is None
@@ -517,41 +673,115 @@ def test_bundles(written: dict[str, Any]) -> None:
         None,
         None,
     )
-    assert family["feasibility"] is None
+    assert (
+        "Aún no hay un precio publicado de este plan en los datos diarios."
+        in (family["status_reasons_es"])
+    )
 
     meli = bundles["meli_co"]
     assert meli["monthly_eur"] == 5.53  # 24900 / 4500
-    assert meli["standalone_sum_eur"] == 3.76  # netflix standard_with_ads CO; discount ignored
+    assert meli["monthly_eur_with_fee"] == 5.64  # COP is not the residence's currency: +2 %
+    assert meli["standalone_sum_eur"] == 3.76  # netflix standard_with_ads CO; discount apart
     assert meli["saving_pct"] == -47.07
+    # The 30 % Spotify discount is an optional saving, never part of saving_pct.
+    assert meli["optional_savings"] == [
+        {
+            "service_id": "spotify",
+            "inclusion": "discount_pct",
+            "value": 30,
+            "saving_month_eur": 1.13,
+        }
+    ]
     assert meli["components"][1] == {
         "service_id": "spotify",
         "plan_id": None,
         "inclusion": "discount_pct",
         "value": 30,
         "ads": None,
+        "choice_group_id": None,
+        "choose_n": None,
+        "standalone_eur": 3.76,
+        "confirmed": False,
     }
     assert meli["requirements"]["local_id"] == "cedula"
     assert meli["notes_es"] == "Precio en conflicto."
+    # Without profiles.yaml the profile is synthesized with no documents: the curated verdict
+    # still applies, but a requirement the profile cannot meet makes it not feasible.
+    (verdict,) = meli["verdicts"]
+    assert (verdict["provenance"], verdict["rank"]) == ("curated", 4)
+    assert verdict["reasons_es"] == [
+        "Exige un documento de identidad de CO (cédula); el perfil no tiene uno."
+    ]
 
     telia = bundles["telia_se"]
     assert telia["price"]["amount"] == 699
     assert telia["price"]["marginal_amount"] == 130
+    assert telia["price"]["base_plan_name"] == "Telia Plus"
+    assert telia["saving_basis"] == "marginal"
     assert telia["monthly_eur"] == 11.82  # only the marginal 130 SEK
-    assert telia["standalone_sum_eur"] == 26.18  # (149 + 139) / 11
-    assert telia["saving_pct"] == 54.85
+    assert telia["full_monthly_eur"] == 63.55  # 699 / 11
+    # The sum of the rounded parts the card lists: 149 / 11 + 139 / 11 = 13.55 + 12.64.
+    parts = [c["standalone_eur"] for c in telia["components"] if c["inclusion"] == "included"]
+    assert parts == [13.55, 12.64]
+    assert telia["standalone_sum_eur"] == 26.19 == round(sum(parts), 2)
+    assert telia["saving_pct"] == 54.87  # (26.19 - 11.82) / 26.19
 
     yearly = bundles["yearly_lt"]
     assert yearly["price"]["period"] == "year"
     assert yearly["monthly_eur"] == 10.0  # 120 / 12
+    assert yearly["monthly_eur_with_fee"] == 10.2  # EUR is not SEK: +2 %
     assert yearly["standalone_sum_eur"] == 6.99  # cheapest LT Netflix plan (no plan id)
     assert yearly["saving_pct"] == -43.06
-    assert yearly["status"] == "expired"
+    assert yearly["display_status"] == "expired"
+    assert yearly["status_reasons_es"][0] == "La oferta pasó su fecha de fin."
+    assert yearly["verdicts"] == []
     assert yearly["last_verified"] == "2026-09-01"
 
 
-def test_bundle_requirements_keep_the_v1_keys(fx_catalog, fx_feasibility, fx_bundles) -> None:
-    """The bundles.yaml v2 requirement fields stay out of bundles.json v1 until the v2 contract
-    (milestone H2). (An unknown residency is still null: see the golden file.)"""
+def test_bundle_verdicts_per_profile(fx_catalog, fx_feasibility, fx_bundles) -> None:
+    """With profiles.yaml, one verdict per public profile, the default first: the curated
+    Meli+ record for the default profile, the cédula gate for the other one, and Telia at
+    home for both (personnummer and a Swedish line)."""
+    from haggler.catalog import load_payment_instruments, load_profiles
+
+    site = build_site_data(
+        FIXTURES / "data",
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=fx_catalog,
+        feasibility=fx_feasibility,
+        bundles=fx_bundles,
+        now=NOW,
+        profiles=load_profiles(),
+        instruments=load_payment_instruments(),
+    )
+    check_contract(site)
+    bundles = by(site["bundles"], "bundle_id")
+    ranks = {
+        bundle_id: [(v["profile"], v["provenance"], v["rank"]) for v in b["verdicts"]]
+        for bundle_id, b in bundles.items()
+    }
+    assert ranks["meli_co"] == [
+        (PROFILE, "curated", 2),
+        ("se_resident_eu_generic", "composed", 4),
+    ]
+    assert ranks["telia_se"] == [(PROFILE, "home", 0), ("se_resident_eu_generic", "home", 0)]
+    assert ranks["yearly_lt"] == []
+    meli = bundles["meli_co"]["verdicts"][0]
+    assert meli["components"] == [
+        {
+            "service_id": "netflix",
+            "target_country": "CO",
+            "label": "tos_breach_low_enforcement",
+            "rank": 2,
+            "provenance": "curated",
+        }
+    ]
+
+
+def test_bundle_requirements_v2(fx_catalog, fx_feasibility, fx_bundles) -> None:
+    """Every requirement key is published; a free-text or enum value that is not established
+    ("unknown") is null, while the three-valued requirements keep "unknown"."""
     v2 = BundleRequirements(
         residency="required",
         local_id="cedula",
@@ -572,12 +802,38 @@ def test_bundle_requirements_keep_the_v1_keys(fx_catalog, fx_feasibility, fx_bun
         now=NOW,
     )
     assert site["bundles"][0]["requirements"] == {
-        "residency": "required",
         "local_id": "cedula",
-        "local_line": "unknown",
-        "local_payment": "unknown",
+        "local_line": None,
+        "local_payment": None,
         "credit_check": None,
+        "residency": "required",
+        "billing_address": "required",
+        "signup_presence": "checked",
+        "new_customers_only": True,
     }
+    assert by(site["bundles"], "bundle_id")["meli_co"]["requirements"]["signup_presence"] == (
+        "checked"
+    )
+
+
+def test_expired_bundles_leave_the_site_after_90_days(
+    fx_catalog, fx_feasibility, fx_bundles
+) -> None:
+    def ids(now: datetime) -> list[str]:
+        site = build_site_data(
+            FIXTURES / "data",
+            residence=RESIDENCE,
+            profile=PROFILE,
+            catalog=fx_catalog,
+            feasibility=fx_feasibility,
+            bundles=fx_bundles,
+            now=now,
+        )
+        return [b["bundle_id"] for b in site["bundles"]]
+
+    # yearly_lt ended on 2026-09-01: listed under "Ofertas vencidas" until 2026-11-30.
+    assert "yearly_lt" in ids(datetime(2026, 11, 30, 5, 0, tzinfo=UTC))
+    assert "yearly_lt" not in ids(datetime(2026, 12, 1, 5, 0, tzinfo=UTC))
 
 
 def test_changes_window_dedupe_and_order(written: dict[str, Any]) -> None:
@@ -636,7 +892,18 @@ def test_first_deploy_with_empty_data(tmp_path: Path, catalog, feasibility, bund
     assert {s["id"] for s in site["services"]} >= {"netflix", "paramount_plus", "apple_arcade"}
     assert site["feasibility"]["records"]
     assert site["bundles"]
-    assert all(b["monthly_eur"] is None and b["saving_pct"] is None for b in site["bundles"])
+    for b in site["bundles"]:
+        # No FX table: no EUR figure; no daily data: an observed bundle has no price at all.
+        assert b["monthly_eur"] is None and b["saving_pct"] is None
+        assert b["full_monthly_eur"] is None and b["monthly_eur_with_fee"] is None
+        assert b["display_status"] == "unverified" and b["status_reasons_es"]
+        assert b["verdicts"]
+        if b["price"]["source"] == "observed":
+            assert b["price"]["amount"] is None
+            assert (
+                "Aún no hay un precio publicado de este plan en los datos diarios."
+                in (b["status_reasons_es"])
+            )
 
 
 def test_real_catalog_and_curated_with_fixture_data(catalog, feasibility, bundles) -> None:
@@ -824,3 +1091,53 @@ def test_research_records_per_profile(tmp_path: Path, catalog, feasibility, bund
     # offers.json keeps the default profile's verdicts (pending findings excluded).
     offers = by(site["offers"], "obs_key")
     assert offers["netflix:standard:CO:web:month"]["label"] == "tos_breach_low_enforcement"
+
+
+def test_bundle_pending_variant_is_listed_only_when_it_differs(
+    tmp_path: Path, fx_catalog, fx_feasibility, fx_bundles
+) -> None:
+    """As in feasibility.json: the verdict with findings still pending review follows the
+    reviewed one only when it differs."""
+    import shutil
+
+    from haggler.catalog import load_payment_instruments, load_profiles
+    from haggler.models.research import ReviewDecision, ReviewFile
+
+    data = tmp_path / "data"
+    shutil.copytree(FIXTURES / "data", data)
+    clause = _research_data(data).claims[0]
+    review = ReviewFile(
+        decisions=[
+            ReviewDecision(id=clause.id, hash=clause.hash, decision="accept", decided_on=NOW.date())
+        ]
+    )
+    # Without the cédula requirement the generic profile's verdict rests on Netflix CO.
+    bundles = fx_bundles.model_copy(
+        update={
+            "bundles": [
+                b.model_copy(update={"requirements": BundleRequirements()})
+                if b.bundle_id == "meli_co"
+                else b
+                for b in fx_bundles.bundles
+            ]
+        }
+    )
+    site = build_site_data(
+        data,
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=fx_catalog,
+        feasibility=fx_feasibility,
+        bundles=bundles,
+        now=NOW,
+        profiles=load_profiles(),
+        instruments=load_payment_instruments(),
+        review=review,
+    )
+    check_contract(site)
+    meli = by(site["bundles"], "bundle_id")["meli_co"]
+    assert [(v["profile"], v["provenance"], v["rank"]) for v in meli["verdicts"]] == [
+        (PROFILE, "curated", 2),
+        ("se_resident_eu_generic", "composed", 99),
+        ("se_resident_eu_generic", "agent_pending", 4),
+    ]

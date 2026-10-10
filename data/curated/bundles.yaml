@@ -10,8 +10,9 @@
 # (official_fetch | user_report | search_summary | agent_research).
 # watch.mode: auto (the weekly watcher reads the pages) | manual (checked by hand) | off.
 # Quote "off": YAML reads a bare off as false.
-# feasibility_from is DEPRECATED (the v1 per-residence summary): per-profile `verdicts` replace it
-# when bundles.json v2 ships (milestone H2).
+# Feasibility is evaluated per profile (haggler.bundles.evaluate): at home, from the requirements;
+# abroad, from a curated `verdicts` record for the profile, else composed from the bundle's own
+# route and its components' verdicts. A curated record can only make a verdict harder.
 
 # Providers: the official domains of each provider PER COUNTRY (a domain also covers its
 # subdomains; "host/path/" also needs the URL's path under that prefix). Every URL of a bundle
@@ -65,8 +66,6 @@ bundles:
       - {service_id: paramount_plus, inclusion: discount_pct, value: "30"}
       - {service_id: vix, inclusion: discount_pct, value: "30"}
     requirements: {local_id: cedula, local_line: unknown, local_payment: any_card}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: medium, evidence: user_report}
     evidence:
       - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: official}
       - {url: "https://www.enter.co/empresas/meli-asi-funciona-la-nueva-suscripcion-de-mercado-libre-en-colombia-con-planes-desde-9-900-envios-gratis-y-beneficios-en-streaming/", kind: press}
@@ -143,8 +142,6 @@ bundles:
       - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
       - {service_id: apple_tv, plan_id: standard, inclusion: included}
     requirements: {local_id: CURP, local_payment: unknown}
-    feasibility_from:
-      SE: {purchasable_remotely: unknown, usable_abroad: unknown, tos_risk: high, evidence: none}
     evidence:
       - {url: "https://expansion.mx/tecnologia/2026/02/24/mercado-libre-meli-mega-netflix-disney-hbo-max-apple-tv", kind: press}
     status: unverified
@@ -168,8 +165,6 @@ bundles:
       - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
       - {service_id: apple_tv, plan_id: standard, inclusion: included}
     requirements: {local_id: CPF, local_payment: unknown}
-    feasibility_from:
-      SE: {purchasable_remotely: "no", usable_abroad: unknown, tos_risk: high, evidence: none}
     evidence:
       - {url: "https://tecnoblog.net/noticias/meli-mega-novo-plano-inclui-disney-netflix-hbo-max-e-apple-tv/", kind: press}
     status: unverified
@@ -200,8 +195,6 @@ bundles:
       - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
     evidence:
       - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
          note: "edición 18 de la lista de precios; da 404 desde 2026-10-09 (reemplazada)"}
@@ -234,8 +227,6 @@ bundles:
     components:
       - {service_id: netflix, inclusion: included}
     requirements: {local_line: none, local_payment: unknown}
-    feasibility_from:
-      SE: {purchasable_remotely: unknown, usable_abroad: travel_only, tos_risk: medium, evidence: none}
     evidence:
       - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: official}
     status: unverified
@@ -261,8 +252,6 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     requirements: {local_payment: any_card}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
     status: unverified
     verified_by: search_summary
     watch:
@@ -287,8 +276,6 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     requirements: {local_payment: any_card}
-    feasibility_from:
-      SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
     status: unverified
     verified_by: search_summary
     watch:

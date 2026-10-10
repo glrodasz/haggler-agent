@@ -29,7 +29,10 @@ from urllib.parse import urlsplit
 
 from pydantic import TypeAdapter, ValidationError
 
-from haggler.compare import CANDIDATE_STATUSES, RISK_LEVELS, OfferRef, cheapest
+from haggler.bundles.evaluate import BundleAssessment, assess_bundle
+from haggler.bundles.pricing import price_bundle, regular_price, to_eur
+from haggler.bundles.status import BundleState, bundle_state
+from haggler.compare import RISK_LEVELS, OfferRef, cheapest
 from haggler.config import Settings
 from haggler.feasibility import (
     LABEL_INFO,
@@ -45,6 +48,7 @@ from haggler.models.curated import (
     BundleComponent,
     BundleRequirements,
     BundlesFile,
+    Evidence,
     FeasibilityFile,
     PaymentInstrumentsFile,
 )
@@ -84,8 +88,6 @@ CENT = Decimal("0.01")
 _PRICES = TypeAdapter(list[PublishedPrice])
 _COVERAGE = TypeAdapter(list[CoverageRow])
 _VALUE = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s+([A-Z]{3})(?:\s*/\s*(\w+))?\s*$")
-_CHANNEL_ORDER = {"web": 0, "ios_iap": 1}
-_PERIOD_ORDER = {"month": 0, "quarter": 1, "year": 2}
 
 
 class SyncError(Exception):
@@ -127,16 +129,6 @@ def _plain_amount(amount: Decimal) -> str:
 def format_value(row: PublishedPrice) -> str:
     """Change-log value: "amount currency/period" (e.g. "129 SEK/month")."""
     return f"{_plain_amount(row.amount)} {row.currency}/{row.billing_period}"
-
-
-def _to_eur(amount: Decimal | None, currency: str, fx: FxTable | None) -> Decimal | None:
-    """Unrounded EUR value, computed like haggler.compare (rounded once, at the end)."""
-    if amount is None or fx is None:
-        return None
-    per = fx.per_eur(currency)
-    if not per:
-        return None
-    return amount / per
 
 
 def _read_json_file(path: Path) -> Any | None:
@@ -612,8 +604,11 @@ def _project_url(url: str) -> str:
 
 
 def _services_json(catalog: Catalog, bundles: BundlesFile) -> list[dict[str, Any]]:
+    # Every service a bundle names: its components, its observed plan and what it covers (the
+    # site reaches a bundle from each of their pages).
     referenced = {c.service_id for b in bundles.bundles for c in b.components}
-    referenced |= {b.price.observed_service_id for b in bundles.bundles}
+    referenced |= {sid for b in bundles.bundles if (sid := b.price.observed_service_id)}
+    referenced |= {sid for b in bundles.bundles for sid in b.covered_services()}
     return [
         {
             "id": s.id,
@@ -670,7 +665,7 @@ def _offer_json(
         "amount": _round2(p.amount),
         "billing_period": p.billing_period,
         "monthly_equiv": _round2(p.monthly_equiv),
-        "monthly_eur": _round2(_to_eur(p.monthly_equiv, p.currency, fx)),
+        "monthly_eur": _round2(to_eur(p.monthly_equiv, p.currency, fx)),
         "vat_included": p.vat_included,
         "source_url": p.source_url,
         "source_kind": p.source_kind,
@@ -771,6 +766,11 @@ def _profile_assessments(
     return out
 
 
+def _public_profiles(profiles: ProfilesFile, default: Profile) -> list[Profile]:
+    """The profiles the site evaluates: the default one first, then the other public ones."""
+    return [default, *(p for p in profiles.public() if p.id != default.id)]
+
+
 def _feasibility_json(
     profiles: ProfilesFile, default: Profile, ctx: EvalContext, rows: list[PublishedPrice]
 ) -> dict[str, Any]:
@@ -783,7 +783,7 @@ def _feasibility_json(
         }
         for label in (*LABELS, UNKNOWN_LABEL)
     ]
-    public = [default, *(p for p in profiles.public() if p.id != default.id)]
+    public = _public_profiles(profiles, default)
     records = [_assessment_json(a) for p in public for a in _profile_assessments(p, ctx, rows)]
     records.sort(
         key=lambda r: (
@@ -866,89 +866,127 @@ def _cheapest_json(
     ]
 
 
-def _offer_order(p: PublishedPrice) -> tuple:
-    return (_CHANNEL_ORDER.get(p.channel, 9), _PERIOD_ORDER.get(p.billing_period, 9), p.obs_key)
+def _iso(day: date | None) -> str | None:
+    return day.isoformat() if day else None
 
 
-def _observed_price(bundle: Bundle, rows: list[PublishedPrice]) -> PublishedPrice | None:
-    """Today's published price of the plan an "observed" bundle points to (e.g. Apple One SE),
-    in the bundle's own country: web before App Store, monthly before yearly billing."""
-    matches = [
-        p
-        for p in rows
-        if p.service_id == bundle.price.observed_service_id
-        and p.plan_id == bundle.price.observed_plan_id
-        and p.country == bundle.country
-        and p.status in CANDIDATE_STATUSES
-    ]
-    return min(matches, key=_offer_order) if matches else None
-
-
-def _component_eur(
-    comp: BundleComponent, country: str, rows: list[PublishedPrice], fx: FxTable | None
-) -> Decimal | None:
-    """Cheapest monthly EUR price of an included component bought on its own in the bundle's
-    country. Without a plan id, the cheapest plan of the service: a lower bound, so the saving
-    shown is never overstated."""
-    costs = [
-        eur
-        for p in rows
-        if p.service_id == comp.service_id
-        and p.country == country
-        and (comp.plan_id is None or p.plan_id == comp.plan_id)
-        and p.status in CANDIDATE_STATUSES
-        and (eur := _to_eur(p.monthly_equiv, p.currency, fx)) is not None
-    ]
-    return min(costs) if costs else None
+def _known(value: str) -> str | None:
+    """A free-text or enum requirement, null when it is not established ("unknown")."""
+    return None if value.strip().lower() == "unknown" else value
 
 
 def _requirements_json(r: BundleRequirements) -> dict[str, Any]:
-    """The bundles.json v1 requirement keys. The v2 fields (billing_address, signup_presence,
-    new_customers_only) are published with the v2 contract (milestone H2); an unknown residency
-    stays null as in v1."""
     return {
-        "residency": None if r.residency == "unknown" else r.residency,
-        "local_id": r.local_id,
-        "local_line": r.local_line,
-        "local_payment": r.local_payment,
+        "local_id": _known(r.local_id),
+        "local_line": _known(r.local_line),
+        "local_payment": _known(r.local_payment),
         "credit_check": r.credit_check,
+        "residency": r.residency,
+        "billing_address": r.billing_address,
+        "signup_presence": r.signup_presence,
+        "new_customers_only": r.new_customers_only,
+    }
+
+
+def _bundle_verdict_json(a: BundleAssessment) -> dict[str, Any]:
+    return {
+        "profile": a.profile,
+        "provenance": a.provenance,
+        "label": a.label,
+        "rank": a.rank,
+        "eu_badge": a.eu_badge,
+        "legality": a.legality,
+        "tos": a.tos,
+        "practical": a.practical,
+        "confidence": a.confidence,
+        "status": a.status,
+        "notes_es": a.notes_es,
+        "steps": [s.model_dump(mode="json") for s in a.steps],
+        "assumptions_es": list(a.assumptions_es),
+        "reasons_es": list(a.reasons_es),
+        "components": [
+            {
+                "service_id": c.service_id,
+                "target_country": c.target_country,
+                "label": c.label,
+                "rank": c.rank,
+                "provenance": c.provenance,
+            }
+            for c in a.components
+        ],
+    }
+
+
+def _bundle_verdicts(
+    b: Bundle,
+    profiles: list[Profile],
+    ctx: EvalContext,
+    counted: tuple[BundleComponent, ...],
+    state: BundleState,
+) -> list[BundleAssessment]:
+    """One verdict per public profile (default first). As in feasibility.json, the variant with
+    findings still pending review follows its reviewed verdict only when it differs. An expired
+    bundle has none."""
+    out: list[BundleAssessment] = []
+    for profile in profiles:
+        reviewed = assess_bundle(b, profile, ctx, counted=counted, state=state)
+        if reviewed is None:
+            return []
+        out.append(reviewed)
+        pending = assess_bundle(b, profile, ctx, include_pending=True, counted=counted, state=state)
+        if (
+            pending is not None
+            and pending.provenance == "agent_pending"
+            and not reviewed.same_verdict(pending)
+        ):
+            out.append(pending)
+    return out
+
+
+def _bundle_evidence_json(e: Evidence) -> dict[str, Any]:
+    """A source listed in bundles.yaml. fact/via/edition/status come from the watcher
+    (milestone H7); until then a source is never verified."""
+    return {
+        "fact": None,
+        "url": str(e.url),
+        "kind": e.kind,
+        "quote": e.quote or None,
+        "retrieved_at": _iso(e.retrieved_at),
+        "verified": e.verified,
+        "via": None,
+        "edition": None,
+        "status": None,
     }
 
 
 def _bundle_json(
-    b: Bundle, *, rows: list[PublishedPrice], fx: FxTable | None, residence: str
-) -> dict[str, Any]:
-    amount, currency, period = b.price.amount, b.price.currency, b.price.period
-    if b.price.source == "observed":
-        obs = _observed_price(b, rows)
-        if obs is None:
-            amount = None
-        elif obs.billing_period == "year":
-            amount, currency, period = obs.amount, obs.currency, "year"
-        else:  # month, or quarter expressed per month
-            amount, currency, period = obs.monthly_equiv, obs.currency, "month"
-    # A telco add-on costs only its marginal amount on top of a plan the user already pays.
-    effective = b.price.marginal_amount if b.price.marginal_amount is not None else amount
-    if effective is not None and period == "year":
-        effective = effective / 12
-    monthly_eur = _round2(_to_eur(effective, currency, fx))
-
-    # Partial sums are kept (components without a published price are skipped): the result is a
-    # lower bound of the standalone cost, so saving_pct errs on the side of a smaller saving.
-    parts = [
-        eur
-        for comp in b.components
-        if comp.inclusion == "included"
-        and (eur := _component_eur(comp, b.country, rows, fx)) is not None
-    ]
-    standalone = _round2(sum(parts, Decimal(0))) if parts else None
-    saving_pct = None
-    if standalone and monthly_eur is not None:
-        # From the rounded figures the site shows, so a reader can recompute it.
-        total, price = Decimal(str(standalone)), Decimal(str(monthly_eur))
-        saving_pct = _round2((total - price) / total * 100)
-
-    feas = b.feasibility_from.get(residence)
+    b: Bundle,
+    *,
+    rows: list[PublishedPrice],
+    fx: FxTable | None,
+    residence_currency: str,
+    fx_fee_pct: float,
+    today: date,
+    as_of: date | None,
+    profiles: list[Profile],
+    ctx: EvalContext,
+) -> dict[str, Any] | None:
+    """bundles.json v2 (None once an expired bundle leaves the site)."""
+    regular = regular_price(b, rows, as_of=as_of)
+    state = bundle_state(b, today=today, price_missing=regular.amount is None)
+    if not state.published:
+        return None
+    pricing = price_bundle(
+        b,
+        rows,
+        fx,
+        residence_currency=residence_currency,
+        fx_fee_pct=fx_fee_pct,
+        today=today,
+        as_of=as_of,
+        verified=state.display_status == "verified",
+    )
+    p = b.price
     return {
         "bundle_id": b.bundle_id,
         "provider_id": b.provider_id,
@@ -957,14 +995,40 @@ def _bundle_json(
         "name": b.name,
         "tier": b.tier,
         "official_url": str(b.official_url),
+        "observed_service_id": p.observed_service_id if p.source == "observed" else None,
+        "covers": b.covered_services(),
         "price": {
-            "amount": _round2(amount),
-            "currency": currency,
-            "period": period,
-            "tax_included": b.price.tax_included,
-            "marginal_amount": _round2(b.price.marginal_amount),
+            "amount": _round2(pricing.regular.amount),
+            "currency": pricing.regular.currency,
+            "period": pricing.regular.period,
+            "tax_included": p.tax_included,
+            "source": p.source,
+            "observed_on": _iso(pricing.regular.observed_on),
+            "base_plan_name": p.base_plan_name,
+            "base_plan_amount": _round2(p.base_plan_amount),
+            "marginal_amount": _round2(pricing.marginal_amount),
+            "intro_amount": _round2(p.intro_amount),
+            "intro_months": p.intro_months,
+            "intro_valid_until": _iso(p.intro_valid_until),
+            "contract_months": p.contract_months,
         },
-        "monthly_eur": monthly_eur,
+        "monthly_eur": _round2(pricing.monthly_eur),
+        "full_monthly_eur": _round2(pricing.full_monthly_eur),
+        "monthly_eur_with_fee": _round2(pricing.monthly_eur_with_fee),
+        "first_year_monthly_eur": _round2(pricing.first_year_monthly_eur),
+        "saving_basis": pricing.saving_basis,
+        "standalone_sum_eur": _round2(pricing.standalone_sum_eur),
+        "standalone_missing": list(pricing.standalone_missing),
+        "saving_pct": _round2(pricing.saving_pct),
+        "optional_savings": [
+            {
+                "service_id": o.service_id,
+                "inclusion": o.inclusion,
+                "value": _round2(o.value),
+                "saving_month_eur": _round2(o.saving_month_eur),
+            }
+            for o in pricing.optional_savings
+        ],
         "components": [
             {
                 "service_id": c.service_id,
@@ -972,17 +1036,39 @@ def _bundle_json(
                 "inclusion": c.inclusion,
                 "value": _round2(c.value),
                 "ads": c.ads,
+                "choice_group_id": c.choice_group_id,
+                "choose_n": c.choose_n,
+                "standalone_eur": _round2(eur),
+                # Confirmed only by the watcher's anchors (milestone H7).
+                "confirmed": False,
             }
-            for c in b.components
+            for c, eur in zip(b.components, pricing.component_eur, strict=True)
         ],
-        "standalone_sum_eur": standalone,
-        "saving_pct": saving_pct,
         "requirements": _requirements_json(b.requirements),
-        "feasibility": feas.model_dump(mode="json") if feas else None,
-        "status": b.status,
+        "display_status": state.display_status,
+        "status_reasons_es": list(state.reasons_es),
+        "verified_by": b.verified_by,
+        "verified_at": _iso(state.verified_at),
+        "checked_at": _iso(state.checked_at),
+        "valid_from": _iso(b.valid_from),
+        "valid_until": _iso(b.valid_until),
+        "confidence": state.confidence,
+        "watch_mode": b.watch.mode,
+        "evidence": [_bundle_evidence_json(e) for e in b.evidence],
+        "verdicts": [
+            _bundle_verdict_json(a)
+            for a in _bundle_verdicts(b, profiles, ctx, pricing.counted, state)
+        ],
+        # Proposals of the watcher and the agent (milestone H8).
+        "pending_changes": [],
         "notes_es": b.notes_es.strip(),
         "last_verified": b.last_verified.isoformat(),
     }
+
+
+def _bundles_json(bundles: BundlesFile, **kwargs: Any) -> list[dict[str, Any]]:
+    """bundles.json v2, in bundles.yaml order (expired bundles past their window left out)."""
+    return [row for b in bundles.bundles if (row := _bundle_json(b, **kwargs)) is not None]
 
 
 def _change_value(value: Any) -> Any:
@@ -1115,9 +1201,10 @@ def build_site_data(
 
     as_of = latest.run.get("as_of")
     try:
-        anchor = date.fromisoformat(as_of) if as_of else now.date()
+        as_of_day = date.fromisoformat(as_of) if as_of else None
     except ValueError:
-        anchor = now.date()
+        as_of_day = None
+    anchor = as_of_day or now.date()
     display = list(dict.fromkeys([home_currency, "EUR", "USD"]))
     return {
         "meta": {
@@ -1147,9 +1234,17 @@ def build_site_data(
             fx_fee_pct=fee,
             verdicts=verdicts,
         ),
-        "bundles": [
-            _bundle_json(b, rows=rows, fx=latest.fx, residence=residence) for b in bundles.bundles
-        ],
+        "bundles": _bundles_json(
+            bundles,
+            rows=rows,
+            fx=latest.fx,
+            residence_currency=home_currency,
+            fx_fee_pct=fee,
+            today=now.date(),
+            as_of=as_of_day,
+            profiles=_public_profiles(profiles, default),
+            ctx=ctx,
+        ),
         "changes": load_changes(
             Path(data_dir) / "changes", since=anchor - timedelta(days=CHANGE_WINDOW_DAYS)
         ),

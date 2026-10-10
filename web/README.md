@@ -9,8 +9,8 @@ están en `src/i18n/es.ts`.
 | Ruta | Contenido |
 |---|---|
 | `/` | Comparador (única isla interactiva): servicios, plan, perfil de factibilidad, hallazgos pendientes de revisión (opcional), riesgo máximo aceptado, moneda, ahorro neto de comisión de cambio |
-| `/servicios/[id]/` | Precios por país y plan, factibilidad del perfil por defecto (fuente, evidencia, supuestos y motivos) y paquetes que incluyen el servicio |
-| `/paises/[cc]/` | Todas las ofertas de un país |
+| `/servicios/[id]/` | Precios por país y plan, factibilidad del perfil por defecto (fuente, evidencia, supuestos y motivos) y paquetes vigentes que incluyen el servicio (también por su precio observado o `covers`), más los que solo dan un descuento o meses gratis en él |
+| `/paises/[cc]/` | Todas las ofertas de un país, sus paquetes vigentes (estado, precio, ahorro y veredicto por perfil) y, plegadas, las ofertas vencidas |
 | `/cambios/` | Cambios de precio de los últimos 90 días |
 | `/metodologia/` | Fuentes, ejes de riesgo, supuestos arriesgados, cobertura, atribuciones y aviso legal |
 
@@ -56,7 +56,10 @@ Variables de entorno para el build: `SITE_URL` (por defecto `https://glrodasz.gi
   se eligen. `src/logic/contract.test.ts` comprueba que reproduce `cheapest.json` (filas, orden,
   elecciones, costes y ahorros) sobre `src/data-sample/` y sobre `src/data/` si existe; en CI, el
   job `contract` lo corre con la salida de `haggler site-data` generada desde los fixtures de
-  replay. El `cheapest.json` de ejemplo está calculado con `compare.py`.
+  replay. El `cheapest.json` de ejemplo está calculado con `compare.py`, y el `bundles.json` de
+  ejemplo con el `publish.py` real sobre las ofertas y los tipos de cambio de ejemplo (más una fila
+  vencida ilustrativa, `meli_plus_mx_mega_lanzamiento`, que solo existe en el ejemplo). Las mismas
+  pruebas comprueban las reglas de `bundles.json` v2 (costes, estado y veredictos) en ambos.
 - `src/logic/verdicts.ts` reetiqueta las ofertas para otro perfil de `feasibility.json` (o
   incluyendo los hallazgos pendientes de revisión): país de residencia → «Oficial», si no la ficha
   del perfil para (servicio, país), y sin ficha «Sin evaluar». Para el perfil por defecto sin

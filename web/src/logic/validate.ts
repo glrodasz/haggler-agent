@@ -5,13 +5,32 @@
  * "undefined" (or a page without links). assertSiteData calls it, so `astro build`, vitest and
  * CI's contract job all fail on that drift with the file, record and field at fault.
  *
- * It checks presence, JSON type and nullability of every field types.ts declares, not enum
- * values: the pages fall back to the raw value for an id they do not know. Two exceptions decide
- * what the comparator computes, so they are checked exactly: a record's provenance (pending
- * findings are only used on request) and the profile ids feasibility.json and meta.json refer to.
+ * It checks presence, JSON type and nullability of every field types.ts declares. Enum values
+ * are mostly left open (the pages fall back to the raw value for an id they do not know), except
+ * where they decide what is computed or shown as trustworthy, which are checked exactly: a
+ * record's provenance (pending findings are only used on request), the profile ids that
+ * feasibility.json, meta.json and bundles.json refer to, and every closed enum of bundles.json
+ * v2 (display status, saving basis, price source and period, provenance, watch mode, verified_by,
+ * confidence and the requirement values).
  */
 
-import { type DATA_FILES, PROVENANCES } from "./types";
+import {
+  BUNDLE_DISPLAY_STATUSES,
+  BUNDLE_INCLUSIONS,
+  BUNDLE_PERIODS,
+  BUNDLE_PRICE_SOURCES,
+  BUNDLE_PROVENANCES,
+  BUNDLE_VERIFIED_BY,
+  COMPONENT_PROVENANCES,
+  CONFIDENCES,
+  type DATA_FILES,
+  PROVENANCES,
+  REQUIREMENT_VALUES,
+  SAVING_BASES,
+  SIGNUP_PRESENCE_VALUES,
+  VERDICT_STATUSES,
+  WATCH_MODES,
+} from "./types";
 
 type DataFile = (typeof DATA_FILES)[number];
 type Check = (value: unknown, path: string, problems: string[]) => void;
@@ -161,6 +180,132 @@ const changeValue = anyOf(
   shape({ amount: num }, { currency: str }),
 );
 
+const step = shape({
+  type: str,
+  value: str,
+  requires_presence: bool,
+  requires_false_declaration: bool,
+});
+
+/** bundles.json v2 (Bundle in types.ts): every key present, null only where types.ts allows. */
+const bundle = shape({
+  bundle_id: str,
+  provider_id: str,
+  provider_type: str,
+  country: str,
+  name: str,
+  tier: str,
+  official_url: str,
+  observed_service_id: nullable(str),
+  covers: list(str),
+  price: shape({
+    amount: nullable(num),
+    currency: str,
+    period: oneOf(BUNDLE_PERIODS),
+    tax_included: bool,
+    source: oneOf(BUNDLE_PRICE_SOURCES),
+    observed_on: nullable(str),
+    base_plan_name: nullable(str),
+    base_plan_amount: nullable(num),
+    marginal_amount: nullable(num),
+    intro_amount: nullable(num),
+    intro_months: nullable(num),
+    intro_valid_until: nullable(str),
+    contract_months: nullable(num),
+  }),
+  monthly_eur: nullable(num),
+  full_monthly_eur: nullable(num),
+  monthly_eur_with_fee: nullable(num),
+  first_year_monthly_eur: nullable(num),
+  saving_basis: oneOf(SAVING_BASES),
+  standalone_sum_eur: nullable(num),
+  standalone_missing: list(str),
+  saving_pct: nullable(num),
+  optional_savings: list(
+    shape({
+      service_id: str,
+      inclusion: oneOf(BUNDLE_INCLUSIONS),
+      value: nullable(num),
+      saving_month_eur: nullable(num),
+    }),
+  ),
+  components: list(
+    shape({
+      service_id: str,
+      plan_id: nullable(str),
+      inclusion: oneOf(BUNDLE_INCLUSIONS),
+      value: nullable(num),
+      ads: nullable(bool),
+      choice_group_id: nullable(str),
+      choose_n: nullable(num),
+      standalone_eur: nullable(num),
+      confirmed: bool,
+    }),
+  ),
+  requirements: shape({
+    local_id: nullable(str),
+    local_line: nullable(str),
+    local_payment: nullable(str),
+    credit_check: nullable(bool),
+    residency: oneOf(REQUIREMENT_VALUES),
+    billing_address: oneOf(REQUIREMENT_VALUES),
+    signup_presence: oneOf(SIGNUP_PRESENCE_VALUES),
+    new_customers_only: nullable(bool),
+  }),
+  display_status: oneOf(BUNDLE_DISPLAY_STATUSES),
+  status_reasons_es: list(str),
+  verified_by: oneOf(BUNDLE_VERIFIED_BY),
+  verified_at: nullable(str),
+  checked_at: nullable(str),
+  valid_from: nullable(str),
+  valid_until: nullable(str),
+  confidence: oneOf(CONFIDENCES),
+  watch_mode: oneOf(WATCH_MODES),
+  evidence: list(
+    shape({
+      fact: nullable(str),
+      url: str,
+      kind: str,
+      quote: nullable(str),
+      retrieved_at: nullable(str),
+      verified: bool,
+      via: nullable(str),
+      edition: nullable(str),
+      status: nullable(str),
+    }),
+  ),
+  verdicts: list(
+    shape({
+      profile: str,
+      provenance: oneOf(BUNDLE_PROVENANCES),
+      label: str,
+      rank: num,
+      eu_badge: bool,
+      legality: str,
+      tos: str,
+      practical: str,
+      confidence: oneOf(CONFIDENCES),
+      status: oneOf(VERDICT_STATUSES),
+      notes_es: str,
+      steps: list(step),
+      assumptions_es: list(str),
+      reasons_es: list(str),
+      components: list(
+        shape({
+          service_id: str,
+          target_country: str,
+          label: str,
+          rank: num,
+          provenance: nullable(oneOf(COMPONENT_PROVENANCES)),
+        }),
+      ),
+    }),
+  ),
+  pending_changes: list(shape({})),
+  notes_es: str,
+  last_verified: nullable(str),
+});
+
 /** The contract per file name (without .json), mirroring types.ts. */
 export const SITE_DATA_SCHEMA = {
   meta: shape({
@@ -235,14 +380,7 @@ export const SITE_DATA_SCHEMA = {
           provenance: oneOf(PROVENANCES),
           notes_es: str,
           tos_clause_url: nullable(str),
-          steps: list(
-            shape({
-              type: str,
-              value: str,
-              requires_presence: bool,
-              requires_false_declaration: bool,
-            }),
-          ),
+          steps: list(step),
           evidence: list(
             shape({
               url: str,
@@ -269,52 +407,7 @@ export const SITE_DATA_SCHEMA = {
       savings_month_eur: byRisk(nullable(num)),
     }),
   ),
-  bundles: list(
-    shape({
-      bundle_id: str,
-      provider_id: str,
-      provider_type: str,
-      country: str,
-      name: str,
-      tier: str,
-      official_url: str,
-      price: shape({
-        amount: nullable(num),
-        currency: str,
-        period: str,
-        tax_included: nullable(bool),
-        marginal_amount: nullable(num),
-      }),
-      monthly_eur: nullable(num),
-      components: list(
-        shape({
-          service_id: str,
-          plan_id: nullable(str),
-          inclusion: str,
-          value: nullable(num),
-          ads: nullable(bool),
-        }),
-      ),
-      standalone_sum_eur: nullable(num),
-      saving_pct: nullable(num),
-      requirements: shape(
-        {},
-        {
-          residency: nullable(str),
-          local_id: str,
-          local_line: str,
-          local_payment: str,
-          credit_check: nullable(bool),
-        },
-      ),
-      feasibility: nullable(
-        shape({ purchasable_remotely: str, usable_abroad: str, tos_risk: str, evidence: str }),
-      ),
-      status: str,
-      notes_es: str,
-      last_verified: str,
-    }),
-  ),
+  bundles: list(bundle),
   changes: list(
     shape({
       date: str,
@@ -343,18 +436,38 @@ export const SITE_DATA_SCHEMA = {
 
 /**
  * Rules across files: offers.json and cheapest.json carry meta.profile's verdicts, which must be
- * the default profile of feasibility.json. Only checked once both fields are strings.
+ * the default profile of feasibility.json; every bundle verdict is for one of feasibility.json's
+ * profiles (the cards pick the default profile's verdict by id). Only checked once the fields
+ * involved are strings.
  */
 export function validateReferences(raw: Partial<Record<DataFile, unknown>>): string[] {
-  const { meta, feasibility } = raw;
+  const { meta, feasibility, bundles } = raw;
   if (!isObject(meta) || !isObject(feasibility)) return [];
+  const problems: string[] = [];
   const profile = meta.profile;
   const defaultProfile = feasibility.default_profile;
-  if (typeof profile !== "string" || typeof defaultProfile !== "string") return [];
-  if (profile === defaultProfile) return [];
-  return [
-    `meta.json.profile: "${profile}" no coincide con feasibility.json.default_profile "${defaultProfile}"`,
-  ];
+  if (typeof profile === "string" && typeof defaultProfile === "string") {
+    if (profile !== defaultProfile) {
+      problems.push(
+        `meta.json.profile: "${profile}" no coincide con feasibility.json.default_profile "${defaultProfile}"`,
+      );
+    }
+  }
+  if (Array.isArray(feasibility.profiles) && Array.isArray(bundles)) {
+    const ids = new Set(feasibility.profiles.map((p) => (isObject(p) ? p.id : undefined)));
+    bundles.forEach((b, i) => {
+      if (!isObject(b) || !Array.isArray(b.verdicts)) return;
+      b.verdicts.forEach((v, j) => {
+        const id = isObject(v) ? v.profile : undefined;
+        if (typeof id === "string" && !ids.has(id) && problems.length < MAX_PROBLEMS) {
+          problems.push(
+            `bundles.json[${i}].verdicts[${j}].profile: "${id}" no está en feasibility.json profiles`,
+          );
+        }
+      });
+    });
+  }
+  return problems;
 }
 
 /** Contract violations of one file's content, as "offers.json[3].source_url: ..." lines. */

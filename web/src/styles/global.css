@@ -423,6 +423,36 @@ tr.is-pending > * {
   color: var(--color-banner-fg);
   border: 1px dashed currentColor;
 }
+.provenance-home {
+  background: var(--risk-0-bg);
+  color: var(--risk-0-fg);
+}
+.provenance-composed {
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+/* A bundle's derived state (and a component's confirmation): always a word, never only colour. */
+.status-verified {
+  background: var(--risk-0-bg);
+  color: var(--risk-0-fg);
+}
+.status-manual {
+  background: var(--risk-1-bg);
+  color: var(--risk-1-fg);
+}
+.status-needs_review {
+  background: var(--color-banner-bg);
+  color: var(--color-banner-fg);
+}
+.status-unverified {
+  background: var(--risk-unknown-bg);
+  color: var(--risk-unknown-fg);
+  border-style: dashed;
+}
+.status-expired {
+  background: var(--risk-4-bg);
+  color: var(--risk-4-fg);
+}
 .flag {
   font-family: var(--font-sans);
 }
@@ -622,6 +652,34 @@ select:disabled {
 .card ul {
   padding-left: var(--space-5);
   font-size: var(--text-sm);
+}
+.card h4 {
+  margin-bottom: var(--space-2);
+}
+.status-reasons {
+  margin-top: 0;
+}
+.verdict {
+  border-left: 3px solid var(--color-border);
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  margin: var(--space-2) 0;
+}
+.verdict.is-pending {
+  border-left-style: dashed;
+  background: color-mix(in srgb, var(--color-banner-bg) 45%, transparent);
+}
+.verdict p {
+  margin: 0 0 var(--space-2);
+}
+.verdict .verdict-title {
+  font-weight: 600;
+}
+.verdict .evidence-heading {
+  margin: var(--space-2) 0 var(--space-1);
+}
+.verdict ul.small {
+  margin: 0;
+  padding-left: var(--space-5);
 }
 .toc {
   font-size: var(--text-sm);

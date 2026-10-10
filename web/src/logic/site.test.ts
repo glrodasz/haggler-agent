@@ -4,9 +4,17 @@ import { describe, expect, it } from "vitest";
 import { es } from "../i18n/es";
 import { cheapestFor } from "./compare";
 import { decodeState, defaultState, encodeState } from "./selection";
-import { assertSiteData, buildIndex, riskClass } from "./site";
+import {
+  assertSiteData,
+  bundleCoversService,
+  bundleDiscountsService,
+  buildIndex,
+  isActiveBundle,
+  riskClass,
+  splitBundleVerdicts,
+} from "./site";
 import { inlineJson, packOffers, unpackOffers } from "./transport";
-import type { ChangeRow, Offer, SiteData } from "./types";
+import type { Bundle, BundleComponent, BundleVerdict, ChangeRow, Offer, SiteData } from "./types";
 import { DATA_FILES } from "./types";
 import { routes, withBase } from "./paths";
 
@@ -43,8 +51,27 @@ describe("sample data integrity", () => {
         `${o.service_id}:${o.plan_id}:${o.country}:${o.channel}:${o.billing_period}`,
       );
     }
+    const profiles = new Set(data.feasibility.profiles.map((p) => p.id));
     for (const b of data.bundles) {
-      for (const c of b.components) expect(site.service(c.service_id), b.bundle_id).toBeDefined();
+      expect(site.country(b.country), b.bundle_id).toBeDefined();
+      const ids = [
+        ...b.components.map((c) => c.service_id),
+        ...b.covers,
+        ...b.standalone_missing,
+        ...b.optional_savings.map((o) => o.service_id),
+        ...b.verdicts.flatMap((v) => v.components.map((c) => c.service_id)),
+        ...(b.observed_service_id ? [b.observed_service_id] : []),
+      ];
+      for (const id of ids) expect(site.service(id), `${b.bundle_id}: ${id}`).toBeDefined();
+      for (const c of b.components) {
+        if (c.plan_id) {
+          expect(
+            site.service(c.service_id)?.plans.some((p) => p.id === c.plan_id),
+            `${b.bundle_id}: ${c.service_id}.${c.plan_id}`,
+          ).toBe(true);
+        }
+      }
+      for (const v of b.verdicts) expect(profiles.has(v.profile), b.bundle_id).toBe(true);
     }
   });
 
@@ -172,6 +199,129 @@ describe("SiteIndex", () => {
       reviewed.map((r) => site.serviceName(r.service_id)).sort((a, b) => a.localeCompare(b, "es")),
     );
     expect(site.feasibilityForCountry("TR")).toEqual([]);
+  });
+
+  it("lists active bundles by what they stand in for, never by a discount", () => {
+    const ids = (bundles: Bundle[]) => bundles.map((b) => b.bundle_id);
+    // Apple One has no component "apple_one": its bundles come from the observed price.
+    expect(ids(site.bundlesForService("apple_one"))).toEqual([
+      "apple_one_individual_se",
+      "apple_one_family_se",
+    ]);
+    expect(ids(site.bundlesForService("disney_plus"))).toEqual([
+      "meli_plus_co_total",
+      "meli_plus_mx_mega",
+      "meli_plus_br_mega",
+      "telia_se_obegransad_streaming",
+    ]);
+    // HBO Max is only a 30 % discount in Meli+ CO; the expired MX row is left out.
+    expect(ids(site.bundlesForService("hbo_max"))).toEqual([
+      "meli_plus_mx_mega",
+      "meli_plus_br_mega",
+      "telia_se_obegransad_streaming",
+    ]);
+    expect(site.bundlesForService("paramount_plus")).toEqual([]);
+    // ... but its page still leads to the bundles that discount it.
+    expect(ids(site.discountBundlesForService("paramount_plus"))).toEqual(["meli_plus_co_total"]);
+    expect(ids(site.discountBundlesForService("hbo_max"))).toEqual([
+      "meli_plus_co_total",
+      "meli_plus_co_esencial",
+    ]);
+    expect(site.discountBundlesForService("disney_plus")).toEqual([]);
+    for (const b of data.bundles) {
+      for (const id of b.covers) {
+        expect(bundleCoversService(b, id), `${b.bundle_id}: ${id}`).toBe(true);
+      }
+    }
+    const covers = (b: Partial<Bundle>) =>
+      bundleCoversService(
+        { observed_service_id: null, covers: [], components: [], ...b } as Bundle,
+        "spotify",
+      );
+    expect(covers({ covers: ["spotify"] })).toBe(true);
+    expect(covers({ observed_service_id: "spotify" })).toBe(true);
+    const component = data.bundles[0]!.components[0]!;
+    const as = (inclusion: BundleComponent["inclusion"]) => ({
+      components: [{ ...component, service_id: "spotify", inclusion }],
+    });
+    expect(covers(as("choose_n"))).toBe(true);
+    expect(covers(as("included"))).toBe(true);
+    expect(covers(as("free_months"))).toBe(false);
+    expect(covers(as("discount_pct"))).toBe(false);
+    const discounts = (b: Partial<Bundle>) =>
+      bundleDiscountsService(
+        { observed_service_id: null, covers: [], components: [], ...b } as Bundle,
+        "spotify",
+      );
+    expect(discounts(as("free_months"))).toBe(true);
+    expect(discounts(as("discount_pct"))).toBe(true);
+    expect(discounts(as("discount_abs"))).toBe(true);
+    expect(discounts(as("included"))).toBe(false);
+    // Covered and also discounted: listed once, among the bundles that include it.
+    expect(discounts({ ...as("discount_pct"), covers: ["spotify"] })).toBe(false);
+  });
+
+  it("keeps expired bundles apart from the active ones", () => {
+    const mx = site.bundlesForCountry("MX");
+    expect(mx.map((b) => b.bundle_id)).toEqual(["meli_plus_mx_mega"]);
+    expect(mx.every(isActiveBundle)).toBe(true);
+    const expired = site.expiredBundlesForCountry("MX");
+    expect(expired.map((b) => b.bundle_id)).toEqual(["meli_plus_mx_mega_lanzamiento"]);
+    expect(expired[0]).toMatchObject({ display_status: "expired", verdicts: [] });
+    expect(site.expiredBundlesForCountry("SE")).toEqual([]);
+    expect(site.bundlesForCountry("CO").map((b) => b.bundle_id)).toEqual([
+      "meli_plus_co_total",
+      "meli_plus_co_esencial",
+    ]);
+    const all = data.countries.flatMap((c) => [
+      ...site.bundlesForCountry(c.cc),
+      ...site.expiredBundlesForCountry(c.cc),
+    ]);
+    expect(all).toHaveLength(data.bundles.length);
+  });
+
+  it("puts the default profile's bundle verdict first, the others apart", () => {
+    const meli = data.bundles.find((b) => b.bundle_id === "meli_plus_co_total")!;
+    const { main, pending, others } = site.bundleVerdicts(meli);
+    expect(main).toMatchObject({
+      profile: "se_resident_co_citizen",
+      provenance: "curated",
+      label: "tos_breach_low_enforcement",
+      rank: 2,
+    });
+    expect(pending).toBeUndefined();
+    expect(others.map((v) => [v.profile, v.provenance, v.label, v.rank])).toEqual([
+      ["se_resident_eu_generic", "composed", "not_feasible", 4],
+    ]);
+    expect(others[0]!.reasons_es).toContain(
+      "Exige un documento de identidad de CO (cédula); el perfil no tiene uno.",
+    );
+
+    const reviewed = main!;
+    const withPending: BundleVerdict = { ...reviewed, provenance: "agent_pending", rank: 3 };
+    const split = splitBundleVerdicts([reviewed, withPending, ...others], reviewed.profile);
+    expect(split.main).toBe(reviewed);
+    expect(split.pending).toBe(withPending);
+    expect(split.others).toEqual(others);
+    expect(splitBundleVerdicts([], "x")).toEqual({
+      main: undefined,
+      pending: undefined,
+      others: [],
+    });
+  });
+
+  it("names profiles and counts days to the generation day", () => {
+    expect(site.profileName("se_resident_eu_generic")).toMatch(/Residente en/);
+    expect(site.profileName("gone")).toBe("gone");
+    expect(site.daysBeforeGeneration(data.meta.generated_at)).toBe(0);
+    expect(site.daysBeforeGeneration("2026-09-23")).toBe(15);
+    expect(site.daysBeforeGeneration(null)).toBeNull();
+    // The day Python dated the status on, even when the price run (as_of) is older.
+    const late = buildIndex({
+      ...data,
+      meta: { ...data.meta, as_of: "2026-10-01", generated_at: "2026-10-10T05:00:00Z" },
+    });
+    expect(late.daysBeforeGeneration("2026-10-05")).toBe(5);
   });
 
   it("maps ranks to CSS classes", () => {

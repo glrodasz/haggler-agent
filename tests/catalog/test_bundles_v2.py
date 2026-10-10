@@ -27,7 +27,6 @@ from haggler.catalog import (
 )
 from haggler.feasibility import axes_rank, record_rank
 from haggler.models.curated import (
-    BundleFeasibility,
     BundleRequirements,
     BundlesFile,
     FeasibilityStep,
@@ -63,7 +62,7 @@ BASE: dict[str, Any] = {
             "tier": "total",
             "aliases": ["Acme Total"],
             "official_url": PAGE,
-            "price": {"amount": "24900", "currency": "COP"},
+            "price": {"amount": "24900", "currency": "COP", "tax_included": True},
             "components": [
                 {"service_id": "netflix", "plan_id": "standard_with_ads", "inclusion": "included"},
                 {"service_id": "hbo_max", "inclusion": "discount_pct", "value": "30"},
@@ -231,6 +230,7 @@ def _then(*mutations: Callable[[dict, dict], Any]) -> Callable[[dict, dict], Non
 def _observed_price(plan_id: str) -> dict:
     return {
         "currency": "COP",
+        "tax_included": True,
         "source": "observed",
         "observed_service_id": "apple_one",
         "observed_plan_id": plan_id,
@@ -388,6 +388,7 @@ CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
         "observed price points to unknown plan",
     ),
     ("curated price without amount", _set("price.amount", None), "curated price needs an amount"),
+    ("price without tax_included", _set("price.tax_included", None), "price needs tax_included"),
     ("price in another currency", _set("price.currency", "USD"), "USD is not CO's COP"),
     (
         "component of an unknown plan",
@@ -541,9 +542,8 @@ TELIA_PDF = (
 # The value-bearing fields of every row as they were before the migration (commit 19d05c8):
 # (country, amount, currency, period, tax_included, marginal_amount, observed plan,
 #  [(service, plan, inclusion, value, ads)], valid_from, valid_until, last_verified,
-#  requirements, feasibility_from). The migration adds structure only.
-_YES_YES = {"purchasable_remotely": "yes", "usable_abroad": "yes"}
-_HIGH_NONE = {"tos_risk": "high", "evidence": "none"}
+#  requirements). The migration adds structure only; the v1 feasibility_from summary left the
+#  model in milestone H2, replaced by per-profile verdicts.
 _STREAMING_ADS = [
     ("netflix", "standard_with_ads", "included", None, True),
     ("disney_plus", "standard_with_ads", "included", None, True),
@@ -565,26 +565,22 @@ PRE_MIGRATION: dict[str, tuple] = {
         ],
         None, None, "2026-10-08",
         {"local_id": "cedula", "local_line": "unknown", "local_payment": "any_card"},
-        {"SE": {**_YES_YES, "tos_risk": "medium", "evidence": "user_report"}},
     ),
     "meli_plus_co_esencial": (
         "CO", "9900", "COP", "month", True, None, None,
         [("hbo_max", None, "discount_pct", "30", None)],
         None, None, "2026-10-08",
         {"local_id": "cedula", "local_payment": "any_card"},
-        {},
     ),
     "meli_plus_mx_mega": (
         "MX", "399", "MXN", "month", True, None, None, _STREAMING_ADS,
         "2026-02-11", None, "2026-10-08",
         {"local_id": "CURP", "local_payment": "unknown"},
-        {"SE": {"purchasable_remotely": "unknown", "usable_abroad": "unknown", **_HIGH_NONE}},
     ),
     "meli_plus_br_mega": (
         "BR", "74.90", "BRL", "month", True, None, None, _STREAMING_ADS,
         "2025-10-07", None, "2026-10-08",
         {"local_id": "CPF", "local_payment": "unknown"},
-        {"SE": {"purchasable_remotely": "no", "usable_abroad": "unknown", **_HIGH_NONE}},
     ),
     "telia_se_obegransad_streaming": (
         "SE", "699", "SEK", "month", True, "130", None,
@@ -600,28 +596,12 @@ PRE_MIGRATION: dict[str, tuple] = {
             "local_payment": "local_bank",
             "credit_check": True,
         },
-        {
-            "SE": {
-                "purchasable_remotely": "yes",
-                "usable_abroad": "travel_only",
-                "tos_risk": "low",
-                "evidence": "terms",
-            }
-        },
     ),
     "go3_lt_filmai_netflix": (
         "LT", "17.99", "EUR", "month", True, None, None,
         [("netflix", None, "included", None, None)],
         "2026-09-04", None, "2026-10-08",
         {"local_line": "none", "local_payment": "unknown"},
-        {
-            "SE": {
-                "purchasable_remotely": "unknown",
-                "usable_abroad": "travel_only",
-                "tos_risk": "medium",
-                "evidence": "none",
-            }
-        },
     ),
     "apple_one_individual_se": (
         "SE", None, "SEK", "month", True, None, "individual",
@@ -632,7 +612,6 @@ PRE_MIGRATION: dict[str, tuple] = {
         ],
         None, None, "2026-10-08",
         {"local_payment": "any_card"},
-        {"SE": {**_YES_YES, "tos_risk": "low", "evidence": "terms"}},
     ),
     "apple_one_family_se": (
         "SE", None, "SEK", "month", True, None, "family",
@@ -643,7 +622,6 @@ PRE_MIGRATION: dict[str, tuple] = {
         ],
         None, None, "2026-10-08",
         {"local_payment": "any_card"},
-        {"SE": {**_YES_YES, "tos_risk": "low", "evidence": "terms"}},
     ),
 }  # fmt: skip
 
@@ -657,7 +635,7 @@ def test_migration_keeps_every_value() -> None:
     assert set(rows) == set(PRE_MIGRATION)
     for bundle_id, expected in PRE_MIGRATION.items():
         b, p = rows[bundle_id], rows[bundle_id].price
-        *head, requirements, feasibility_from = expected
+        *head, requirements = expected
         assert [
             b.country,
             _str(p.amount),
@@ -672,9 +650,6 @@ def test_migration_keeps_every_value() -> None:
             _str(b.last_verified),
         ] == head, bundle_id
         assert b.requirements == BundleRequirements(**requirements), bundle_id
-        assert b.feasibility_from == {
-            cc: BundleFeasibility(**f) for cc, f in feasibility_from.items()
-        }, bundle_id
 
 
 def test_migration_adds_structure_but_no_values() -> None:

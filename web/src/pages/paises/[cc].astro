@@ -25,6 +25,7 @@ const site = getSite();
 const t = es.country;
 const offers = site.offersForCountry(country.cc);
 const bundles = site.bundlesForCountry(country.cc);
+const expired = site.expiredBundlesForCountry(country.cc);
 const records = site.feasibilityForCountry(country.cc);
 ---
 
@@ -92,6 +93,19 @@ const records = site.feasibilityForCountry(country.cc);
             <BundleCard bundle={b} />
           ))}
         </ul>
+      )
+    }
+    {
+      expired.length > 0 && (
+        <details class="expired-bundles">
+          <summary>{es.bundle.expiredTitle(expired.length)}</summary>
+          <p class="note">{es.bundle.expiredLead}</p>
+          <ul class="cards">
+            {expired.map((b) => (
+              <BundleCard bundle={b} />
+            ))}
+          </ul>
+        </details>
       )
     }
   </section>
