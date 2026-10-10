@@ -466,3 +466,218 @@ async def test_an_unknown_pair_is_reported_and_the_rest_researched():
     report = await run(deps, pairs=["netflix:CO"], services=["netflix"])
     assert report.by_status == {"researched": 1}
     assert "request: unknown pair netflix:CO" in report.errors
+
+
+# ------------------------------------------------------------------------- bundle watcher (H7)
+
+BUNDLE_PAGE = "https://www.acme.com.co/planes"
+BUNDLE_PRICE = "Acme Total cuesta $ 27.000 por mes con Disney+ incluido."
+BUNDLE_COMPONENT = "Disney+ Estándar con anuncios incluido en Acme Total."
+
+
+def watched_bundles(*pages: str, provider_domains: list[str] | None = None) -> Any:
+    from haggler.models.curated import BundlesFile
+
+    url = pages[0] if pages else BUNDLE_PAGE
+    return BundlesFile.model_validate(
+        {
+            "providers": [
+                {
+                    "id": "acme",
+                    "name": "Acme",
+                    "domains": {"CO": provider_domains or ["acme.com.co"]},
+                }
+            ],
+            "bundles": [
+                {
+                    "bundle_id": "acme_total",
+                    "provider_id": "acme",
+                    "provider_type": "marketplace",
+                    "country": "CO",
+                    "name": "Acme Total",
+                    "tier": "total",
+                    "official_url": url,
+                    "price": {"amount": "27000", "currency": "COP"},
+                    "components": [
+                        {
+                            "service_id": "disney_plus",
+                            "plan_id": "standard_with_ads",
+                            "inclusion": "included",
+                        }
+                    ],
+                    "watch": {
+                        "mode": "auto",
+                        "pages": [{"url": u} for u in (pages or (BUNDLE_PAGE,))],
+                        "anchors": [
+                            {"fact": "price", "url": url, "text": BUNDLE_PRICE},
+                            {
+                                "fact": "component",
+                                "service_id": "disney_plus",
+                                "url": url,
+                                "text": BUNDLE_COMPONENT,
+                            },
+                        ],
+                    },
+                    "last_verified": "2026-10-01",
+                }
+            ],
+        }
+    )
+
+
+BUNDLE_HTML = f"<html><body><p>{BUNDLE_PRICE}</p><p>{BUNDLE_COMPONENT}</p></body></html>"
+
+
+def watch_of(store: Any) -> Any:
+    watch, errors = io.load_watch(store)
+    assert not errors and watch is not None
+    return watch
+
+
+@pytest.mark.parametrize("mode", ["guard", "no_llm", "max_jobs_0", "watch_only"])
+async def test_the_watcher_always_runs(mode: str):
+    store = prices_store()
+    if mode == "guard":
+        io.add_usage(store, "2026-10", calls=300, queries=1500)
+    llm = GroundedGemini(responder=default_responder)
+    deps = make_deps(
+        model=None if mode == "no_llm" else llm,
+        store=store,
+        routes={**PAGES, BUNDLE_PAGE: BUNDLE_HTML},
+    )
+    deps.bundles = watched_bundles()
+    opts = {"max_jobs": 0} if mode == "max_jobs_0" else {"watch_only": True}
+    report = await run(deps, **(opts if mode in ("max_jobs_0", "watch_only") else {}))
+    assert llm.requests == [] and report.budget.queries == 0
+    if mode == "watch_only":
+        assert report.planned == [] and "--watch-only" in report.skipped_reasons["*"]
+    assert deps.fetcher.calls.count(BUNDLE_PAGE) == 1
+    (state,) = watch_of(store).bundles
+    assert state.outcome == "ok" and {a.status for a in state.anchors} == {"verified"}
+    assert state.checked_at == TODAY and watch_of(store).run_id == report.run_id
+    manifest = json.loads(store.blobs["research/latest/run.json"])
+    assert manifest["files"]["bundle_watch.json"] == io.sha256_hex(
+        store.blobs["research/latest/bundle_watch.json"]
+    )
+    assert manifest["report"]["bundle_watch"]["outcomes"] == {"ok": 1}
+    assert "research/latest/bundle_watch.json" in report.outputs
+    assert store.writes[-1] == "research/latest/run.json"
+
+
+async def test_watch_only_dry_run_writes_nothing():
+    store = prices_store()
+    before = dict(store.blobs)
+    deps = make_deps(model=None, store=store, routes={BUNDLE_PAGE: BUNDLE_HTML})
+    deps.bundles = watched_bundles()
+    report = await run(deps, watch_only=True, dry_run=True)
+    assert report.dry_run and report.outputs == [] and deps.fetcher.calls == [BUNDLE_PAGE]
+    assert store.blobs == before  # no latest file, no raw page, no usage
+
+
+async def test_the_watcher_and_verify_evidence_share_one_fetch_per_page():
+    """A page both watched and cited by a claim is fetched once in the run."""
+    llm = GroundedGemini(responder=default_responder)
+    deps = make_deps(model=llm)
+    deps.bundles = watched_bundles(PAY_CO, provider_domains=["help.netflix.com"])
+    await run(deps)
+    assert deps.fetcher.calls.count(PAY_CO) == 1
+    pair = latest(deps.store)["pair:netflix:CO"]
+    assert pair.claims[0].check.status == "verified"
+    (state,) = watch_of(deps.store).bundles
+    # The page is real, the bundle's excerpts are not on it.
+    assert state.pages[0].status == "ok" and state.outcome == "changed"
+
+
+async def test_the_next_run_carries_the_watch_state():
+    store = prices_store()
+    routes = {BUNDLE_PAGE: BlockedError("bot wall", status=403, url=BUNDLE_PAGE)}
+    for n, day in enumerate((TODAY, date(2026, 10, 16), date(2026, 10, 23)), 1):
+        deps = make_deps(model=None, store=store, routes=routes, day=day)
+        deps.bundles = watched_bundles()
+        await run(deps, watch_only=True)
+        page = watch_of(store).bundles[0].pages[0]
+        assert page.status == "blocked" and page.unreadable_runs == n
+    assert page.paused_until == date(2026, 11, 20)
+
+
+class SwappingFetcher(FixtureFetcher):
+    """Another run finishes while this one fetches: research/latest/run.json changes."""
+
+    def __init__(self, routes: dict[str, Any], store: Any) -> None:
+        super().__init__(routes)
+        self.store = store
+
+    async def fetch(self, url: str, **kw: Any) -> RawResponse:
+        self.store.write_bytes(
+            "research/latest/run.json",
+            json.dumps({"schema_version": 1, "run_id": "other-run", "files": {}}).encode(),
+        )
+        return await super().fetch(url, **kw)
+
+
+async def test_pages_left_out_by_the_page_budget_are_reported():
+    """The newest edition of a superseded PDF is the page H8 needs: a budget that leaves it
+    out says so in the report and in run.json, like any other page."""
+    from haggler.models.curated import BundlesFile
+
+    index = "https://www.acme.com.co/listas"
+    pdf18 = "https://www.acme.com.co/lista_18.pdf"
+    pdf19 = "https://www.acme.com.co/lista_19.pdf"
+    data = watched_bundles().model_dump(mode="json")
+    watch = data["bundles"][0]["watch"]
+    watch["pages"] = [
+        {"url": pdf18, "kind": "pdf", "index_url": index, "link_pattern": r"lista_(?P<edition>\d+)"}
+    ]
+    for anchor in watch["anchors"]:
+        anchor["url"] = pdf18
+    store = prices_store()
+    routes = {index: f'<html><body><a href="{pdf18}">18</a><a href="{pdf19}">19</a></body></html>'}
+    deps = make_deps(model=None, store=store, routes=routes, bundle_watch_max_pages=1)
+    deps.bundles = BundlesFile.model_validate(data)
+    report = await run(deps, watch_only=True)
+    assert deps.fetcher.calls == [index]
+    assert f"bundle watch: page budget of 1 spent; not fetched: acme_total {pdf19}" in report.errors
+    manifest = json.loads(store.blobs["research/latest/run.json"])
+    assert manifest["report"]["bundle_watch"]["pages_over_budget"] == 1
+    assert manifest["report"]["bundle_watch"]["outcomes"] == {"new_document": 1}
+
+
+async def test_persist_guard_leaves_latest_alone_when_another_run_finished():
+    store = prices_store()
+    deps = make_deps(model=GroundedGemini(responder=default_responder), store=store)
+    await run(deps)
+    services = store.blobs["research/latest/services.json"]
+    deps = make_deps(model=None, store=store)
+    deps.fetcher = SwappingFetcher({BUNDLE_PAGE: BUNDLE_HTML}, store)
+    deps.bundles = watched_bundles()
+    report = await run(deps, watch_only=True)
+    assert report.outputs == [f"research/runs/2026-10-09/{report.run_id}/report.json"]
+    assert any("another run finished meanwhile" in e for e in report.errors)
+    assert f"research/runs/2026-10-09/{report.run_id}/report.json" in store.blobs
+    # Nothing in latest/ was overwritten by this run.
+    assert json.loads(store.blobs["research/latest/run.json"])["run_id"] == "other-run"
+    assert store.blobs["research/latest/services.json"] == services
+    assert "research/latest/bundle_watch.json" in store.blobs  # the first run's
+    from haggler.jobs.research import persisted
+
+    assert not persisted(report)
+
+
+async def test_a_watcher_crash_keeps_the_previous_watch_file(monkeypatch):
+    from haggler.bundles import watch as bundle_watch
+
+    store = prices_store()
+    deps = make_deps(model=None, store=store, routes={BUNDLE_PAGE: BUNDLE_HTML})
+    deps.bundles = watched_bundles()
+    await run(deps, watch_only=True)
+    before = store.blobs["research/latest/bundle_watch.json"]
+
+    async def boom(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("watcher bug")
+
+    monkeypatch.setattr(bundle_watch, "watch_bundles", boom)
+    report = await run(make_deps(model=None, store=store), watch_only=True)
+    assert any(e.startswith("bundle watch: internal: RuntimeError") for e in report.errors)
+    assert store.blobs["research/latest/bundle_watch.json"] == before
+    manifest = json.loads(store.blobs["research/latest/run.json"])
+    assert manifest["files"]["bundle_watch.json"] == io.sha256_hex(before)

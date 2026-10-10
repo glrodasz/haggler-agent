@@ -31,7 +31,13 @@ from pydantic import TypeAdapter, ValidationError
 
 from haggler.bundles.evaluate import BundleAssessment, assess_bundle
 from haggler.bundles.pricing import price_bundle, regular_price, to_eur
-from haggler.bundles.status import BundleState, bundle_state
+from haggler.bundles.status import (
+    BundleState,
+    anchor_checks,
+    anchor_confirmed,
+    bundle_state,
+    watched,
+)
 from haggler.compare import RISK_LEVELS, OfferRef, cheapest
 from haggler.config import Settings
 from haggler.feasibility import (
@@ -42,8 +48,10 @@ from haggler.feasibility import (
     Verdict,
 )
 from haggler.fx import ecb, frankfurter, open_er_api
+from haggler.models.bundles import AnchorCheck, BundleWatchState, WatchFile
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
+    Anchor,
     Bundle,
     BundleComponent,
     BundleRequirements,
@@ -461,7 +469,11 @@ class ResearchSyncResult:
 
 
 def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
-    """Copy research/latest/{services,pairs,instruments}.json into data/research (run.json last).
+    """Copy research/latest/{services,pairs,instruments}.json into data/research (run.json last),
+    plus the optional files (research.io.OPTIONAL_DATA_FILES: bundle_watch.json, and bundles.json
+    from milestone H8) when the run's manifest lists them. An older run.json that does not list
+    them is not an error: they are simply not copied (and a stale local copy is removed, so
+    data/research always matches its own manifest).
 
     None when the source has no research yet. Raises SyncError when run.json or a listed file is
     broken (nothing is written then); an older research run than the published one is skipped
@@ -501,6 +513,27 @@ def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
             problems.append(f"{name}: formato inesperado ({str(exc)[:200]})")
             continue
         blobs[name] = rio.subject_files(rows)[name]
+    optional: dict[str, bytes] = {}
+    for name in rio.OPTIONAL_DATA_FILES:
+        if name not in files:
+            continue
+        data = source.read_bytes(f"{rio.LATEST}/{name}")
+        if data is None:
+            problems.append(f"{name}: listado en run.json pero no existe")
+            continue
+        if sha256_hex(data) != str(files[name]).strip().lower():
+            problems.append(f"{name}: sha256 no coincide con run.json")
+            continue
+        try:
+            if name == rio.WATCH_FILE:
+                rio.parse_watch_bytes(data)
+            elif not isinstance(json.loads(data), list):
+                # bundles.json (the bundle kind's facts, milestone H8): a JSON array for now.
+                raise ValueError("no es una lista JSON")
+        except (ValidationError, ValueError) as exc:
+            problems.append(f"{name}: formato inesperado ({str(exc)[:200]})")
+            continue
+        optional[name] = data
     if problems:
         raise SyncError(f"investigación {run_id}: " + "; ".join(problems))
 
@@ -525,12 +558,19 @@ def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
         _write_atomic(target / name, blobs[name])
         result.written.append(target / name)
         result.subjects += len(json.loads(blobs[name]))
+    for name in rio.OPTIONAL_DATA_FILES:
+        if name in optional:
+            _write_atomic(target / name, optional[name])
+            result.written.append(target / name)
+        else:
+            (target / name).unlink(missing_ok=True)
+    blobs |= optional
     manifest = {
         "schema_version": rio.RUN_SCHEMA_VERSION,
         "run_id": run_id,
         "as_of": as_of.isoformat(),
         "finished_at": run.get("finished_at"),
-        "files": {name: sha256_hex(blobs[name]) for name in rio.DATA_FILES},
+        "files": {name: sha256_hex(blobs[name]) for name in (*rio.DATA_FILES, *optional)},
         "report": run.get("report", {}),
     }
     _write_atomic(target / "run.json", dumps_pretty(manifest))
@@ -943,9 +983,33 @@ def _bundle_verdicts(
     return out
 
 
+def _anchor_evidence_json(
+    anchor: Anchor, check: AnchorCheck | None, watch: BundleWatchState | None, today: date
+) -> dict[str, Any]:
+    """An anchor of bundles.yaml with what the watcher found of it (bundle_watch.json): its
+    literal excerpt, the last date our fetch verified it, and whether that still confirms the
+    value (haggler.bundles.status.anchor_confirmed). via: "text" (visible text of an HTML page),
+    "pdf" (a PDF's text) or "embedded" (only in the page's embedded data)."""
+    page = watch.page(check.url) if watch is not None and check is not None else None
+    via = None
+    if check is not None and check.via is not None:
+        is_pdf = page is not None and (page.kind == "pdf" or "pdf" in page.content_type)
+        via = "embedded" if check.via == "embedded" else "pdf" if is_pdf else "text"
+    return {
+        "fact": anchor.fact,
+        "url": str(anchor.url),
+        "kind": "official",
+        "quote": " ".join(anchor.text.split()),
+        "retrieved_at": _iso(check.last_verified_at) if check else None,
+        "verified": anchor_confirmed(check, today),
+        "via": via,
+        "edition": check.edition if check else None,
+        "status": check.status if check else "not_checked",
+    }
+
+
 def _bundle_evidence_json(e: Evidence) -> dict[str, Any]:
-    """A source listed in bundles.yaml. fact/via/edition/status come from the watcher
-    (milestone H7); until then a source is never verified."""
+    """A source listed in bundles.yaml (a plain link: the watcher checks anchors, not these)."""
     return {
         "fact": None,
         "url": str(e.url),
@@ -970,10 +1034,19 @@ def _bundle_json(
     as_of: date | None,
     profiles: list[Profile],
     ctx: EvalContext,
+    watch: BundleWatchState | None = None,
 ) -> dict[str, Any] | None:
-    """bundles.json v2 (None once an expired bundle leaves the site)."""
+    """bundles.json v2 (None once an expired bundle leaves the site). `watch`: the bundle's
+    state in data/research/bundle_watch.json."""
     regular = regular_price(b, rows, as_of=as_of)
-    state = bundle_state(b, today=today, price_missing=regular.amount is None)
+    state = bundle_state(
+        b,
+        today=today,
+        price_missing=regular.amount is None,
+        watch=watch,
+        price_observed_on=regular.observed_on,
+        service_names={svc.id: svc.name for svc in ctx.catalog.services},
+    )
     if not state.published:
         return None
     pricing = price_bundle(
@@ -984,8 +1057,10 @@ def _bundle_json(
         fx_fee_pct=fx_fee_pct,
         today=today,
         as_of=as_of,
-        verified=state.display_status == "verified",
+        # The first-year cost needs a verified bundle AND a confirmed intro anchor.
+        verified=state.display_status == "verified" and state.intro_confirmed,
     )
+    counted_watch = watched(b, watch)
     p = b.price
     return {
         "bundle_id": b.bundle_id,
@@ -1039,8 +1114,8 @@ def _bundle_json(
                 "choice_group_id": c.choice_group_id,
                 "choose_n": c.choose_n,
                 "standalone_eur": _round2(eur),
-                # Confirmed only by the watcher's anchors (milestone H7).
-                "confirmed": False,
+                # A component anchor of its service confirmed by the watcher.
+                "confirmed": c.service_id in state.confirmed_components,
             }
             for c, eur in zip(b.components, pricing.component_eur, strict=True)
         ],
@@ -1054,7 +1129,13 @@ def _bundle_json(
         "valid_until": _iso(b.valid_until),
         "confidence": state.confidence,
         "watch_mode": b.watch.mode,
-        "evidence": [_bundle_evidence_json(e) for e in b.evidence],
+        "evidence": [
+            *(
+                _anchor_evidence_json(a, check, counted_watch, today)
+                for a, check in anchor_checks(b, counted_watch)
+            ),
+            *(_bundle_evidence_json(e) for e in b.evidence),
+        ],
         "verdicts": [
             _bundle_verdict_json(a)
             for a in _bundle_verdicts(b, profiles, ctx, pricing.counted, state)
@@ -1066,9 +1147,16 @@ def _bundle_json(
     }
 
 
-def _bundles_json(bundles: BundlesFile, **kwargs: Any) -> list[dict[str, Any]]:
+def _bundles_json(
+    bundles: BundlesFile, *, watch: WatchFile | None = None, **kwargs: Any
+) -> list[dict[str, Any]]:
     """bundles.json v2, in bundles.yaml order (expired bundles past their window left out)."""
-    return [row for b in bundles.bundles if (row := _bundle_json(b, **kwargs)) is not None]
+    states = {s.bundle_id: s for s in watch.bundles} if watch is not None else {}
+    return [
+        row
+        for b in bundles.bundles
+        if (row := _bundle_json(b, watch=states.get(b.bundle_id), **kwargs)) is not None
+    ]
 
 
 def _change_value(value: Any) -> Any:
@@ -1151,7 +1239,7 @@ def build_site_data(
     one profile is synthesized from feasibility.yaml for (residence, profile)."""
     from haggler.catalog import synthesize_profiles
     from haggler.research.evaluate import EvalContext, verdict_fn
-    from haggler.research.io import load_data_dir
+    from haggler.research.io import load_data_dir, load_data_watch
 
     try:
         home_currency = catalog.country(residence).currency
@@ -1171,7 +1259,8 @@ def build_site_data(
     fee = Settings().fx_fee_pct if fx_fee_pct is None else fx_fee_pct
     now = now or datetime.now(UTC)
     subjects, research_run, research_errors = load_data_dir(data_dir)
-    for message in research_errors:
+    watch, watch_errors = load_data_watch(data_dir)
+    for message in (*research_errors, *watch_errors):
         log.warning("site-data: %s", message)
     ctx = EvalContext.build(
         catalog=catalog,
@@ -1244,6 +1333,7 @@ def build_site_data(
             as_of=as_of_day,
             profiles=_public_profiles(profiles, default),
             ctx=ctx,
+            watch=watch,
         ),
         "changes": load_changes(
             Path(data_dir) / "changes", since=anchor - timedelta(days=CHANGE_WINDOW_DAYS)

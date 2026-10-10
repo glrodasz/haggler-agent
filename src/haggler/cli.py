@@ -1,7 +1,8 @@
 """`haggler` command line (console script).
 
   haggler daily [...]            daily job; arguments are parsed by haggler.jobs.daily.main
-  haggler research run [...]     weekly feasibility research (haggler.jobs.research.main)
+  haggler research run [...]     weekly feasibility research and bundle watcher
+                                 (haggler.jobs.research.main; --watch-only: the watcher alone)
   haggler research review|accept|reject [...]   review research findings (haggler.research.cli)
   haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]

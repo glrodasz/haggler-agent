@@ -12,7 +12,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+import haggler.fetch.client
+import haggler.research.deps
+from conftest import FixtureFetcher
 from haggler import cli
+from haggler.catalog import load_bundles
 from haggler.config import Settings, llm_credentials_available
 from haggler.publish import SITE_FILES
 from haggler.store import LocalStore
@@ -413,9 +417,41 @@ def test_research_without_action_prints_usage(capsys) -> None:
     assert cli.main(["research", "nope"]) == 2
 
 
-def test_research_run_plan_only(capsys, monkeypatch) -> None:
+@pytest.fixture
+def offline_fetcher(monkeypatch) -> FixtureFetcher:
+    """`haggler research run` always runs the bundle watcher: these tests never reach a vendor
+    site, whatever watch.mode the real bundles.yaml has (a fetcher without routes: 404)."""
+    fetcher = FixtureFetcher()
+    monkeypatch.setattr(haggler.fetch.client, "HttpFetcher", lambda settings: fetcher)
+    return fetcher
+
+
+def test_research_run_plan_only(capsys, monkeypatch, offline_fetcher) -> None:
     monkeypatch.setenv("HAGGLER_LLM", "off")
     assert cli.main(["research", "run", "--store", "memory", "--no-llm", "--dry-run"]) == 0
     out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert out["ok"] and out["dry_run"] and not out["persisted"]
     assert out["planned"] and out["by_status"] == {"skipped": len(out["planned"])}
+
+
+def test_research_run_watch_only(capsys, monkeypatch, offline_fetcher) -> None:
+    monkeypatch.setenv("HAGGLER_LLM", "off")
+    # One real bundle switched to auto: the watcher reads its pages, through the test's fetcher.
+    real = load_bundles()
+    auto = real.model_copy(
+        update={
+            "bundles": [
+                b.model_copy(update={"watch": b.watch.model_copy(update={"mode": "auto"})})
+                if b.bundle_id == "telia_se_obegransad_streaming"
+                else b
+                for b in real.bundles
+            ]
+        }
+    )
+    monkeypatch.setattr(haggler.research.deps, "load_bundles", lambda: auto)
+    argv = ["research", "run", "--store", "memory", "--watch-only", "--dry-run"]
+    assert cli.main(argv) == 0
+    out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    # The watcher alone: nothing planned for the agents, no search query.
+    assert out["ok"] and out["planned"] == [] and out["budget"]["queries"] == 0
+    assert offline_fetcher.calls and all("telia.se" in u for u in offline_fetcher.calls)

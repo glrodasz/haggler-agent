@@ -13,6 +13,8 @@ from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING, Any
 
 from haggler.catalog import (
+    default_bundles,
+    load_bundles,
     load_catalog,
     load_feasibility,
     load_payment_instruments,
@@ -22,14 +24,18 @@ from haggler.catalog import (
 from haggler.config import Settings
 from haggler.fetch import Fetcher
 from haggler.llm.budget import LlmBudget
+from haggler.models.bundles import WatchFile
 from haggler.models.catalog import Catalog
-from haggler.models.curated import FeasibilityFile, PaymentInstrumentsFile
+from haggler.models.curated import BundlesFile, FeasibilityFile, PaymentInstrumentsFile
+from haggler.models.fx import FxTable
 from haggler.models.profiles import ProfilesFile
 from haggler.research.io import Latest
 from haggler.store import Store, store_from_settings
 
 if TYPE_CHECKING:
     from google.adk.models.base_llm import BaseLlm
+
+    from haggler.research.evidence import PageCache
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +62,13 @@ class ResearchBuffer:
     budget: LlmBudget = field(default_factory=lambda: LlmBudget(max_calls=0))
     latest: Latest = field(default_factory=Latest)
     errors: list[str] = field(default_factory=list)
+    # The run's pages: one fetch per URL, shared by the bundle watcher and verify_evidence.
+    pages: PageCache | None = None
+    # latest/fx.json of the daily job (the watcher's plausibility check of price hints).
+    fx: FxTable | None = None
+    # The previous run's bundle_watch.json, and this run's (None until the watcher ran).
+    watch_previous: WatchFile | None = None
+    watch: WatchFile | None = None
 
 
 @dataclass
@@ -70,6 +83,8 @@ class ResearchDeps:
     # None disables the agents (no credentials, HAGGLER_LLM=off, --no-llm).
     model: str | BaseLlm | None
     now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
+    # data/curated/bundles.yaml as deployed in the image (the bundle watcher's input).
+    bundles: BundlesFile = field(default_factory=lambda: default_bundles())
     fetch_timeout_s: float = 90.0
     buffer: ResearchBuffer = field(default_factory=ResearchBuffer)
 
@@ -114,6 +129,7 @@ def build_default_research_deps(settings: Settings | None = None) -> ResearchDep
         feasibility=feasibility,
         instruments=load_payment_instruments(),
         profiles=profiles,
+        bundles=load_bundles(),
         fetcher=LazyFetcher(make_fetcher),
         store=LazyStore(lambda: store_from_settings(settings)),
         model=model,

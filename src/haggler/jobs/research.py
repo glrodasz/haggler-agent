@@ -2,8 +2,12 @@
 
 Runs the research Workflow once (in-memory session; everything durable goes to the Store) and
 prints one JSON summary line on stdout. Exit code 0 once research/latest/run.json was written
-(or a --dry-run reported), 1 when the run crashed or produced no report. The Cloud Run Job runs
+(or a --dry-run reported), 1 when the run crashed, produced no report or found that another run
+replaced research/latest/ meanwhile (only its report is written then). The Cloud Run Job runs
 with --max-retries 0: a retry would spend the search budget again.
+
+--watch-only runs the bundle watcher alone (no agent: 0 search queries); with --dry-run it
+writes nothing. The watcher also runs in every other run, --no-llm and --max-jobs 0 included.
 """
 
 from __future__ import annotations
@@ -38,6 +42,8 @@ class ResearchOptions:
     max_jobs: int | None = None
     dry_run: bool = False
     no_llm: bool = False
+    # The bundle watcher only: no subject is planned for the agents.
+    watch_only: bool = False
     # local | gcs | memory; None = HAGGLER_STORE.
     store: str | None = None
 
@@ -50,6 +56,7 @@ class ResearchOptions:
             "instruments": self.instruments,
             "max_jobs": self.max_jobs,
             "dry_run": self.dry_run,
+            "watch_only": self.watch_only,
         }
 
 
@@ -128,6 +135,11 @@ def add_run_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument("--date", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
     parser.add_argument("--dry-run", action="store_true", help="plan and research, write nothing")
     parser.add_argument("--no-llm", action="store_true", help="never call the model (plan only)")
+    parser.add_argument(
+        "--watch-only",
+        action="store_true",
+        help="only the bundle watcher: no agent, 0 search queries",
+    )
     return parser
 
 
@@ -140,6 +152,7 @@ def options_from_args(ns: argparse.Namespace) -> ResearchOptions:
         max_jobs=ns.max_jobs,
         dry_run=ns.dry_run,
         no_llm=ns.no_llm,
+        watch_only=ns.watch_only,
         store=ns.store,
     )
 

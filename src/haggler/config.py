@@ -90,6 +90,11 @@ class Settings:
     research_max_instruments: int = field(
         default_factory=lambda: _env_int("HAGGLER_RESEARCH_MAX_INSTRUMENTS", 2)
     )
+    # Bundle watcher (phase 3, inside the weekly research job): distinct URLs it may fetch per
+    # run (index pages and PDFs included); pages over the cap are reported, never dropped silently.
+    bundle_watch_max_pages: int = field(
+        default_factory=lambda: _env_int("HAGGLER_BUNDLE_WATCH_MAX_PAGES", 40)
+    )
 
     # Fetching etiquette
     user_agent: str = field(

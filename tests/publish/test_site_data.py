@@ -223,6 +223,14 @@ BUNDLE_VERDICT_KEYS = {
 }
 VERDICT_COMPONENT_KEYS = {"service_id", "target_country", "label", "rank", "provenance"}
 DISPLAY_STATUSES = {"verified", "needs_review", "manual", "unverified", "expired"}
+ANCHOR_STATUSES = {
+    "verified",
+    "missing",
+    "unreadable",
+    "embedded_only",
+    "outdated_document",
+    "not_checked",
+}
 BUNDLE_PROVENANCES = {"home", "curated", "composed", "agent_reviewed", "agent_pending"}
 REQUIREMENT_VALUES = {"required", "not_required", "unknown"}
 CHANGE_KEYS = {
@@ -300,7 +308,7 @@ def check_bundle(b: dict[str, Any], *, label_ids: set[str], profile_ids: list[st
     for comp in b["components"]:
         assert set(comp) == COMPONENT_KEYS
         assert is_money(comp["standalone_eur"], nullable=True)
-        assert comp["confirmed"] is False  # the watcher confirms components (H7)
+        assert isinstance(comp["confirmed"], bool)
     req = b["requirements"]
     assert set(req) == BUNDLE_REQUIREMENT_KEYS
     assert req["residency"] in REQUIREMENT_VALUES
@@ -318,6 +326,14 @@ def check_bundle(b: dict[str, Any], *, label_ids: set[str], profile_ids: list[st
     for e in b["evidence"]:
         assert set(e) == BUNDLE_EVIDENCE_KEYS
         assert isinstance(e["verified"], bool)
+        assert is_date(e["retrieved_at"], nullable=True)
+        if e["fact"] is not None:  # an anchor, with what the watcher found of it
+            assert e["fact"] in {"price", "base_price", "intro", "component", "validity"}
+            assert e["kind"] == "official" and e["quote"]
+            assert e["status"] in ANCHOR_STATUSES
+            assert e["via"] in {None, "text", "pdf", "embedded"}
+            if e["verified"]:
+                assert e["retrieved_at"] is not None and e["status"] != "missing"
     if b["display_status"] == "expired":
         assert b["verdicts"] == []
     else:
@@ -1141,3 +1157,232 @@ def test_bundle_pending_variant_is_listed_only_when_it_differs(
         ("se_resident_eu_generic", "composed", 99),
         ("se_resident_eu_generic", "agent_pending", 4),
     ]
+
+
+# ---------------------------------------------------------------- watcher replay (H7)
+
+WATCH_DAY = datetime(2026, 10, 7, 5, 23, tzinfo=UTC)
+ACME_URL = "https://www.acme.com.co/planes"
+ACME_PRICE = (
+    "Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. "
+    "Precio anterior: $ 21.900 pesos por mes."
+)
+ACME_NETFLIX = "Netflix Estándar con anuncios incluido en Acme Total."
+TELCO_INDEX = "https://www.telco.se/om/priser"
+TELCO_PDF = "https://www.telco.se/priser/TSP-4667_18_0701_Prislista.pdf"
+TELCO_ROW = "Telco Plus med Netflix Standard 699 kr/mån"
+
+
+def watched_bundles_file() -> Any:
+    """Two auto-watched bundles: an HTML page (price, intro and component anchors) and a
+    versioned price-list PDF behind an index page."""
+    from haggler.models.curated import BundlesFile
+
+    return BundlesFile.model_validate(
+        {
+            "providers": [
+                {"id": "acme", "name": "Acme", "domains": {"CO": ["acme.com.co"]}},
+                {"id": "telco", "name": "Telco", "domains": {"SE": ["telco.se"]}},
+            ],
+            "bundles": [
+                {
+                    "bundle_id": "acme_total_co",
+                    "provider_id": "acme",
+                    "provider_type": "marketplace",
+                    "country": "CO",
+                    "name": "Acme Total",
+                    "tier": "total",
+                    "aliases": ["Acme Total"],
+                    "official_url": ACME_URL,
+                    "price": {
+                        "amount": "21900",
+                        "currency": "COP",
+                        "tax_included": True,
+                        "intro_amount": "19900",
+                        "intro_months": 2,
+                    },
+                    "components": [
+                        {
+                            "service_id": "netflix",
+                            "plan_id": "standard_with_ads",
+                            "inclusion": "included",
+                        }
+                    ],
+                    "verified_by": "official_fetch",
+                    "watch": {
+                        "mode": "auto",
+                        "pages": [{"url": ACME_URL}],
+                        "anchors": [
+                            {"fact": "price", "url": ACME_URL, "text": ACME_PRICE},
+                            {"fact": "intro", "url": ACME_URL, "text": ACME_PRICE},
+                            {
+                                "fact": "component",
+                                "service_id": "netflix",
+                                "url": ACME_URL,
+                                "text": ACME_NETFLIX,
+                            },
+                        ],
+                    },
+                    "last_verified": "2026-10-01",
+                },
+                {
+                    "bundle_id": "telco_plus_se",
+                    "provider_id": "telco",
+                    "provider_type": "telco_mobile",
+                    "country": "SE",
+                    "name": "Telco Plus",
+                    "tier": "plus",
+                    "official_url": "https://www.telco.se/mobil",
+                    "price": {"amount": "699", "currency": "SEK", "tax_included": True},
+                    "components": [
+                        {"service_id": "netflix", "plan_id": "standard", "inclusion": "included"}
+                    ],
+                    "verified_by": "official_fetch",
+                    "watch": {
+                        "mode": "auto",
+                        "pages": [
+                            {
+                                "url": TELCO_PDF,
+                                "kind": "pdf",
+                                "index_url": TELCO_INDEX,
+                                "link_pattern": r"TSP-4667_(?P<edition>\d+)_\d{4}_Prislista\.pdf",
+                            }
+                        ],
+                        "anchors": [
+                            {"fact": "price", "url": TELCO_PDF, "text": TELCO_ROW},
+                            {
+                                "fact": "component",
+                                "service_id": "netflix",
+                                "url": TELCO_PDF,
+                                "text": TELCO_ROW,
+                            },
+                        ],
+                    },
+                    "last_verified": "2026-10-01",
+                },
+            ],
+        }
+    )
+
+
+def watcher_replay(tmp_path: Path) -> tuple[Path, Any]:
+    """`haggler research run --watch-only` over canned pages (an HTML page and a PDF built
+    here), then `haggler sync` of its research into a data/ directory that also holds the
+    fixture day's prices: the data/ the site is built from."""
+    import asyncio
+    import dataclasses
+    import shutil
+
+    from conftest import FixtureFetcher
+    from haggler.catalog import load_payment_instruments, load_profiles
+    from haggler.config import Settings
+    from haggler.fetch import RawResponse
+    from haggler.jobs.research import ResearchOptions, run_research
+    from haggler.publish import sync_research
+    from haggler.research.deps import ResearchDeps
+    from haggler.store import LocalStore
+    from pdf_support import build_pdf
+
+    body = build_pdf([["Telco Prislista 18", TELCO_ROW, "Telco Bas 299 kr/mån"]])
+    routes = {
+        ACME_URL: (
+            f"<html><body><main><h2>Acme Total</h2><p>{ACME_PRICE}</p>"
+            f"<p>{ACME_NETFLIX}</p></main></body></html>"
+        ),
+        TELCO_INDEX: (
+            '<html><body><a href="/priser/TSP-4667_17_0101_Prislista.pdf">17</a>'
+            '<a href="/priser/TSP-4667_18_0701_Prislista.pdf">18</a></body></html>'
+        ),
+        TELCO_PDF: RawResponse(
+            url=TELCO_PDF,
+            final_url=TELCO_PDF,
+            status_code=200,
+            text=body.decode("utf-8", "replace"),
+            content_type="application/pdf",
+            body=body,
+        ),
+    }
+    bundles = watched_bundles_file()
+    store = LocalStore(tmp_path / "store")
+    deps = ResearchDeps(
+        settings=dataclasses.replace(Settings(), store="local"),
+        catalog=load_catalog(),
+        feasibility=load_feasibility(),
+        instruments=load_payment_instruments(),
+        profiles=load_profiles(),
+        fetcher=FixtureFetcher(routes),
+        store=store,
+        model=None,
+        now=lambda: WATCH_DAY,
+        bundles=bundles,
+    )
+    report = asyncio.run(run_research(ResearchOptions(watch_only=True), deps))
+    assert report is not None and "research/latest/bundle_watch.json" in report.outputs
+    data = tmp_path / "data"
+    shutil.copytree(FIXTURES / "data", data)
+    result = sync_research(store, data)
+    assert result is not None and data / "research" / "bundle_watch.json" in result.written
+    return data, bundles
+
+
+def test_site_data_with_watcher_evidence(tmp_path: Path, catalog, feasibility) -> None:
+    from haggler.catalog import load_profiles
+
+    data, bundles = watcher_replay(tmp_path)
+    site = build_site_data(
+        data,
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=catalog,
+        feasibility=feasibility,
+        bundles=bundles,
+        profiles=load_profiles(),
+        now=NOW,
+    )
+    check_contract(site)
+    rows = by(site["bundles"], "bundle_id")
+    acme = rows["acme_total_co"]
+    assert (acme["display_status"], acme["status_reasons_es"]) == ("verified", [])
+    assert (acme["verified_at"], acme["checked_at"], acme["confidence"]) == (
+        "2026-10-07",
+        "2026-10-07",
+        "high",
+    )
+    assert [c["confirmed"] for c in acme["components"]] == [True]
+    # A verified intro anchor: the first-year cost can be shown.
+    assert acme["first_year_monthly_eur"] is not None
+    assert acme["first_year_monthly_eur"] < acme["monthly_eur"]
+    anchors = [e for e in acme["evidence"] if e["fact"] is not None]
+    assert [(e["fact"], e["status"], e["verified"], e["via"]) for e in anchors] == [
+        ("price", "verified", True, "text"),
+        ("intro", "verified", True, "text"),
+        ("component", "verified", True, "text"),
+    ]
+    assert all(e["kind"] == "official" and e["retrieved_at"] == "2026-10-07" for e in anchors)
+    assert anchors[0]["quote"] == ACME_PRICE
+
+    telco = rows["telco_plus_se"]
+    assert telco["display_status"] == "verified" and telco["confidence"] == "high"
+    assert [(e["via"], e["edition"]) for e in telco["evidence"]] == [("pdf", "18"), ("pdf", "18")]
+    assert [c["confirmed"] for c in telco["components"]] == [True]
+
+
+def test_site_data_without_watch_data_lists_anchors_unchecked(
+    tmp_path: Path, catalog, feasibility
+) -> None:
+    site = build_site_data(
+        tmp_path / "empty",
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=catalog,
+        feasibility=feasibility,
+        bundles=watched_bundles_file(),
+        now=NOW,
+    )
+    check_contract(site)
+    for b in site["bundles"]:
+        assert b["display_status"] == "unverified"
+        assert b["status_reasons_es"][-1] == "El vigilante aún no ha leído sus páginas oficiales."
+        assert {e["status"] for e in b["evidence"]} == {"not_checked"}
+        assert not any(e["verified"] for e in b["evidence"])
+        assert b["first_year_monthly_eur"] is None

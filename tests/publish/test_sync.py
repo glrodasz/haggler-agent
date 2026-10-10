@@ -595,3 +595,96 @@ def test_older_research_is_not_copied(tmp_path: Path, day1: LocalStore, day2: Lo
     result = sync(day1, data, today=DAY2, allow_older=True)
     assert any("más antigua" in w for w in result.warnings)
     assert json.loads((data / "research" / "run.json").read_text())["run_id"] == "r2"
+
+
+def _watch_file(run_id: str):
+    from haggler.models.bundles import BundleWatchState, WatchFile
+
+    return WatchFile(
+        run_id=run_id,
+        bundles=[BundleWatchState(bundle_id="meli_plus_co_total", outcome="manual")],
+    )
+
+
+def test_an_old_research_run_without_the_optional_files_still_syncs(
+    tmp_path: Path, day1: LocalStore
+) -> None:
+    # A run.json written before phase 3 lists neither bundle_watch.json nor bundles.json.
+    write_research(day1, run_id="r1", as_of=DAY1, keys=["service:netflix"])
+    run = json.loads(day1.read_bytes("research/latest/run.json"))
+    assert set(run["files"]) == {"services.json", "pairs.json", "instruments.json", "state.json"}
+    data = tmp_path / "data"
+    result = sync(day1, data, today=DAY1)
+    assert result.research_run_id == "r1"
+    assert not any("investigación" in w for w in result.warnings)
+    assert not (data / "research" / "bundle_watch.json").exists()
+
+
+def test_bundle_watch_is_copied_when_the_manifest_lists_it(
+    tmp_path: Path, day1: LocalStore, day2: LocalStore
+) -> None:
+    from haggler.models.research import ResearchState
+    from haggler.research import io as rio
+
+    rio.write_latest(
+        day1,
+        subjects=[_facts("service:netflix", DAY1)],
+        state=ResearchState(run_id="r1"),
+        run_id="r1",
+        as_of=DAY1.isoformat(),
+        finished_at=None,
+        report_summary={},
+        watch=_watch_file("r1"),
+    )
+    data = tmp_path / "data"
+    result = sync(day1, data, today=DAY1)
+    copied = data / "research" / "bundle_watch.json"
+    assert copied in result.written
+    assert copied.read_bytes() == day1.read_bytes("research/latest/bundle_watch.json")
+    manifest = json.loads((data / "research" / "run.json").read_text())
+    assert manifest["files"]["bundle_watch.json"] == hashlib.sha256(copied.read_bytes()).hexdigest()
+    watch, errors = rio.load_data_watch(data)
+    assert not errors and watch is not None and watch.bundles[0].outcome == "manual"
+
+    # A later run that does not list it: the stale copy goes, data/research matches its manifest.
+    write_research(day2, run_id="r2", as_of=DAY2, keys=["service:netflix"])
+    sync(day2, data, today=DAY2)
+    assert not copied.exists()
+    assert (
+        "bundle_watch.json" not in json.loads((data / "research" / "run.json").read_text())["files"]
+    )
+
+
+@pytest.mark.parametrize("problem", ["hash", "missing", "invalid"])
+def test_a_broken_listed_watch_file_is_a_research_sync_error(
+    tmp_path: Path, day1: LocalStore, problem: str
+) -> None:
+    from haggler.models.research import ResearchState
+    from haggler.research import io as rio
+
+    rio.write_latest(
+        day1,
+        subjects=[],
+        state=ResearchState(run_id="r1"),
+        run_id="r1",
+        as_of=DAY1.isoformat(),
+        finished_at=None,
+        report_summary={},
+        watch=_watch_file("r1"),
+    )
+    key = "research/latest/bundle_watch.json"
+    if problem == "hash":
+        day1.write_bytes(key, b'{"schema_version": 1, "bundles": []}')
+    elif problem == "missing":
+        (Path(day1.root) / key).unlink()
+    else:
+        bad = b'{"schema_version": 1, "bundles": [{"bundle_id": "x"}]}'
+        day1.write_bytes(key, bad)
+        run = json.loads(day1.read_bytes("research/latest/run.json"))
+        run["files"]["bundle_watch.json"] = hashlib.sha256(bad).hexdigest()
+        day1.write_bytes("research/latest/run.json", json.dumps(run).encode())
+    result = sync(day1, tmp_path / "data", today=DAY1)
+    # Research is optional for the price sync: a warning, nothing of research written.
+    assert result.prices == len(DAY1_PRICES) and result.research_run_id is None
+    assert any("bundle_watch.json" in w for w in result.warnings)
+    assert not (tmp_path / "data" / "research").exists()

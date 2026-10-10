@@ -4,6 +4,8 @@ Store (GCS or local, written by the research job):
     research/runs/{date}/{run_id}/report.json      one per run
     research/latest/{services,pairs,instruments}.json   SubjectFacts lists (one per line)
     research/latest/state.json                      ResearchState
+    research/latest/bundle_watch.json               WatchFile: the bundle watcher's state
+                                                    (haggler.models.bundles)
     research/latest/run.json                        written LAST; sha256 of every latest file
     research/usage/{YYYY-MM}.json                   calls and search queries spent in the month
                                                     (dry runs included): the monthly guard
@@ -11,7 +13,13 @@ Store (GCS or local, written by the research job):
     raw/research/{date}/{sha}.pdf                   every key under raw/research/)
 
 Repo (written by `haggler sync`, read by `haggler site-data`):
-    data/research/{services,pairs,instruments}.json, data/research/run.json
+    data/research/{services,pairs,instruments}.json, data/research/run.json, and the optional
+    files (OPTIONAL_DATA_FILES: bundle_watch.json, and bundles.json for the bundle facts of
+    milestone H8), copied only when the run's manifest lists them
+
+Concurrency: one writer of research/latest/* (the research job). A run whose plan saw another
+run_id in research/latest/run.json than the one there when it persists (another run finished
+meanwhile) writes only its own report (research.nodes persist).
 """
 
 from __future__ import annotations
@@ -26,6 +34,7 @@ from typing import Any
 import pydantic
 from pydantic import TypeAdapter
 
+from haggler.models.bundles import WatchFile
 from haggler.models.research import ResearchState, SubjectFacts
 from haggler.research.kinds import KINDS, SubjectKind
 from haggler.store import Store, dumps, dumps_lines
@@ -36,6 +45,10 @@ LATEST = f"{PREFIX}/latest"
 KIND_FILES: dict[SubjectKind, str] = {kind: spec.data_file for kind, spec in KINDS.items()}
 LATEST_FILES = (*KIND_FILES.values(), "state.json")
 DATA_FILES = tuple(KIND_FILES.values())
+WATCH_FILE = "bundle_watch.json"
+# Copied by `haggler sync` only when the run's manifest lists them: an older run.json without
+# them is still a valid research run (no RUN_SCHEMA_VERSION bump).
+OPTIONAL_DATA_FILES = ("bundles.json", WATCH_FILE)
 RUN_SCHEMA_VERSION = 1
 
 _SUBJECTS = TypeAdapter(list[SubjectFacts])
@@ -139,6 +152,49 @@ def load_latest(store: Store) -> Latest:
     return latest
 
 
+def latest_run_id(store: Store) -> str | None:
+    """run_id of research/latest/run.json right now (None: no run yet, or unreadable)."""
+    data = store.read_bytes(f"{LATEST}/run.json")
+    if data is None:
+        return None
+    try:
+        run = json.loads(data)
+    except ValueError:
+        return None
+    run_id = run.get("run_id") if isinstance(run, dict) else None
+    return run_id if isinstance(run_id, str) else None
+
+
+def parse_watch_bytes(data: bytes) -> WatchFile:
+    """Strict parse of a bundle_watch.json (sync): raises on anything invalid."""
+    return WatchFile.model_validate_json(data)
+
+
+def _load_watch(data: bytes | None, name: str, errors: list[str]) -> WatchFile | None:
+    if data is None:
+        return None
+    try:
+        return parse_watch_bytes(data)
+    except (ValueError, pydantic.ValidationError) as exc:
+        errors.append(f"{name}: ignored ({str(exc)[:200]})")
+        return None
+
+
+def load_watch(store: Store) -> tuple[WatchFile | None, list[str]]:
+    """research/latest/bundle_watch.json of the store (None on a first run, or when broken)."""
+    errors: list[str] = []
+    name = f"{LATEST}/{WATCH_FILE}"
+    return _load_watch(store.read_bytes(name), name, errors), errors
+
+
+def load_data_watch(data_dir: Path) -> tuple[WatchFile | None, list[str]]:
+    """data/research/bundle_watch.json (from `haggler sync`); None when there is none yet."""
+    errors: list[str] = []
+    path = Path(data_dir) / PREFIX / WATCH_FILE
+    data = path.read_bytes() if path.exists() else None
+    return _load_watch(data, f"data/research/{WATCH_FILE}", errors), errors
+
+
 def subject_files(subjects: Iterable[SubjectFacts]) -> dict[str, bytes]:
     """{file name: bytes} of every kind's subject file, sorted by key (stable git diffs)."""
     by_kind: dict[str, list[SubjectFacts]] = {k: [] for k in KIND_FILES}
@@ -159,13 +215,19 @@ def write_latest(
     as_of: str,
     finished_at: str | None,
     report_summary: dict[str, Any],
+    watch: WatchFile | None = None,
 ) -> dict[str, str]:
-    """research/latest/*, then run.json last; returns {file: sha256}."""
+    """research/latest/*, then run.json last; returns {file: sha256}. `watch` adds
+    bundle_watch.json to the files and the manifest."""
     files = subject_files(subjects)
     files["state.json"] = dumps(state)
-    for name in LATEST_FILES:
+    names = list(LATEST_FILES)
+    if watch is not None:
+        files[WATCH_FILE] = dumps(watch.model_dump(mode="json"))
+        names.append(WATCH_FILE)
+    for name in names:
         store.write_bytes(f"{LATEST}/{name}", files[name])
-    hashes = {name: sha256_hex(files[name]) for name in LATEST_FILES}
+    hashes = {name: sha256_hex(files[name]) for name in names}
     manifest = {
         "schema_version": RUN_SCHEMA_VERSION,
         "run_id": run_id,

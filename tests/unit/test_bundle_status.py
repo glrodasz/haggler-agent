@@ -1,4 +1,5 @@
-"""A bundle's derived display state (haggler.bundles.status), from bundles.yaml alone (H2)."""
+"""A bundle's derived display state (haggler.bundles.status): from bundles.yaml alone (H2), then
+with the watcher's evidence (bundle_watch.json, H7)."""
 
 from __future__ import annotations
 
@@ -10,11 +11,13 @@ import pytest
 from haggler.bundles.status import (
     EXPIRED_KEEP_DAYS,
     MANUAL_MAX_AGE_DAYS,
+    anchor_confirmed,
     bundle_state,
     expired_on,
     is_expired,
 )
 from haggler.catalog import load_bundles
+from haggler.models.bundles import AnchorCheck, BundleWatchState, PageCheck, anchor_hash
 from haggler.models.curated import Bundle
 
 TODAY = date(2026, 10, 10)
@@ -153,3 +156,213 @@ def test_real_bundles_are_unverified_with_reasons() -> None:
         s = bundle_state(b, today=TODAY)
         assert s.display_status == "unverified", b.bundle_id
         assert s.reasons_es and s.confidence == "low"
+
+
+# ------------------------------------------------------------------ watcher data (H7)
+
+URL = "https://www.acme.com.co/planes"
+PRICE_TEXT = "Acme Total cuesta $ 27.000 por mes con Netflix incluido."
+NETFLIX_TEXT = "Netflix Estándar incluido en Acme Total."
+
+
+def watched_bundle(**overrides: Any) -> Bundle:
+    data: dict[str, Any] = {
+        "watch": {
+            "mode": "auto",
+            "pages": [{"url": URL}],
+            "anchors": [
+                {"fact": "price", "url": URL, "text": PRICE_TEXT},
+                {"fact": "component", "service_id": "netflix", "url": URL, "text": NETFLIX_TEXT},
+            ],
+        },
+        "official_url": URL,
+    }
+    data.update(overrides)
+    return bundle(**data)
+
+
+def watch_state(
+    b: Bundle,
+    *,
+    statuses: dict[str, str] | None = None,
+    verified_on: date | None = TODAY,
+    outcome: str = "ok",
+    page: dict[str, Any] | None = None,
+) -> BundleWatchState:
+    statuses = statuses or {}
+    anchors = []
+    for a in b.watch.anchors:
+        status = statuses.get(a.fact, "verified")
+        anchors.append(
+            AnchorCheck(
+                anchor_hash=anchor_hash(a),
+                fact=a.fact,
+                service_id=a.service_id,
+                url=str(a.url),
+                status=status,
+                via="lines" if status == "verified" else None,
+                last_verified_at=verified_on,
+                checked_at=TODAY,
+            )
+        )
+    pages = [PageCheck(url=URL, status="ok", checked_at=TODAY, last_ok_at=TODAY, **(page or {}))]
+    return BundleWatchState(
+        bundle_id=b.bundle_id, outcome=outcome, pages=pages, anchors=anchors, checked_at=TODAY
+    )
+
+
+def test_every_decisive_anchor_verified_is_verified() -> None:
+    b = watched_bundle()
+    s = bundle_state(b, today=TODAY, watch=watch_state(b, verified_on=TODAY - timedelta(days=3)))
+    assert (s.display_status, s.reasons_es, s.confidence) == ("verified", (), "high")
+    assert s.verified_at == TODAY - timedelta(days=3) and s.checked_at == TODAY
+    assert s.confirmed_components == {"netflix"} and not s.intro_confirmed
+
+
+def test_verification_lasts_15_days_then_says_the_last_confirmed_value() -> None:
+    b = watched_bundle()
+    w = watch_state(b, verified_on=date(2026, 9, 25))
+    assert bundle_state(b, today=date(2026, 10, 10), watch=w).display_status == "verified"
+    s = bundle_state(b, today=date(2026, 10, 11), watch=w)
+    assert s.display_status == "unverified" and s.checked_at == TODAY
+    assert (
+        "Último valor confirmado 27.000 COP el 25 de septiembre de 2026; ya no se confirma."
+        in s.reasons_es
+    )
+    assert s.confirmed_components == frozenset()
+
+
+def test_a_missing_decisive_anchor_needs_review() -> None:
+    b = watched_bundle()
+    w = watch_state(b, statuses={"component": "missing"}, outcome="changed")
+    s = bundle_state(b, today=TODAY, watch=w)
+    assert s.display_status == "needs_review" and s.confidence == "low"
+    assert s.reasons_es == ("El componente netflix ya no aparece en acme.com.co.",)
+    assert s.verified_at is None and s.checked_at == TODAY
+
+
+@pytest.mark.parametrize("kind", ["missing", "embedded_only", "outdated_document"])
+def test_an_unconfirmed_anchor_confirms_nothing_until_a_read_verifies_it(kind: str) -> None:
+    """An unreadable page within the 15 days keeps an earlier verification, unless a read since
+    then undid it (AnchorCheck.unconfirmed, carried across the runs that cannot read it)."""
+    b = watched_bundle()
+    w = watch_state(b, statuses={"price": "unreadable"}, verified_on=TODAY - timedelta(days=7))
+    assert bundle_state(b, today=TODAY, watch=w).display_status == "verified"
+    undone = w.anchors[0].model_copy(
+        update={"unconfirmed": kind, "unconfirmed_on": TODAY - timedelta(days=3)}
+    )
+    assert not anchor_confirmed(undone, TODAY)
+    w.anchors[0] = undone
+    s = bundle_state(b, today=TODAY, watch=w)
+    assert s.display_status == ("needs_review" if kind == "missing" else "unverified")
+    assert s.confidence == "low" and s.verified_at is None
+    assert (
+        "Último valor confirmado 27.000 COP el 3 de octubre de 2026; ya no se confirma."
+        in s.reasons_es
+    )
+
+
+def test_a_curated_price_needs_a_price_anchor_and_every_included_component_one() -> None:
+    b = watched_bundle(
+        components=[
+            {"service_id": "netflix", "inclusion": "included"},
+            {"service_id": "spotify", "inclusion": "included"},
+        ],
+        watch={
+            "mode": "auto",
+            "pages": [{"url": URL}],
+            "anchors": [
+                {"fact": "component", "service_id": "netflix", "url": URL, "text": NETFLIX_TEXT}
+            ],
+        },
+    )
+    s = bundle_state(b, today=TODAY, watch=watch_state(b))
+    assert s.display_status == "unverified"
+    assert "El precio no tiene un ancla que el vigilante pueda buscar." in s.reasons_es
+    assert "Falta el ancla de 1 componente incluido." in s.reasons_es
+    assert s.confirmed_components == {"netflix"}
+
+
+def test_an_observed_price_stands_in_for_the_price_anchor() -> None:
+    b = watched_bundle(
+        price={
+            "currency": "COP",
+            "source": "observed",
+            "observed_service_id": "apple_one",
+            "observed_plan_id": "individual",
+        },
+        watch={
+            "mode": "auto",
+            "pages": [{"url": URL}],
+            "anchors": [
+                {"fact": "component", "service_id": "netflix", "url": URL, "text": NETFLIX_TEXT}
+            ],
+        },
+    )
+    w = watch_state(b, verified_on=TODAY - timedelta(days=2))
+    s = bundle_state(b, today=TODAY, watch=w, price_observed_on=TODAY)
+    assert s.display_status == "verified" and s.verified_at == TODAY - timedelta(days=2)
+    missing = bundle_state(b, today=TODAY, watch=w, price_missing=True)
+    assert missing.display_status == "unverified"
+    assert "Aún no hay un precio publicado de este plan en los datos diarios." in missing.reasons_es
+    old = bundle_state(b, today=TODAY, watch=w, price_observed_on=TODAY - timedelta(days=20))
+    assert "El precio observado no es de los datos diarios recientes." in old.reasons_es
+
+
+def test_watcher_data_only_counts_in_auto_mode() -> None:
+    b = watched_bundle()
+    manual = watched_bundle(watch={**b.watch.model_dump(mode="json"), "mode": "manual"})
+    s = bundle_state(manual, today=TODAY, watch=watch_state(manual))
+    assert s.display_status == "unverified" and s.checked_at is None
+    assert s.reasons_es[-1] == "Se revisa a mano: sus páginas no están en la vigilancia automática."
+    off = watch_state(b, outcome="off")
+    assert bundle_state(b, today=TODAY, watch=off).display_status == "unverified"
+
+
+def test_a_manual_verification_also_says_what_the_watcher_found() -> None:
+    b = watched_bundle(verified_by="user_report", user_report={"date": TODAY.isoformat()})
+    w = watch_state(b, verified_on=None, statuses={"price": "unreadable"})
+    w.pages[0] = w.pages[0].model_copy(update={"status": "robots_disallowed"})
+    s = bundle_state(b, today=TODAY, watch=w)
+    assert s.display_status == "manual"
+    assert s.reasons_es == (
+        "Verificación manual: no cuenta como fuente oficial.",
+        "robots.txt no permite leer acme.com.co.",
+    )
+
+
+def test_the_intro_counts_only_with_a_confirmed_intro_anchor() -> None:
+    intro_text = "Acme Total cuesta $ 19.000 por mes durante los primeros 2 meses."
+    b = watched_bundle(
+        price={"amount": "27000", "currency": "COP", "intro_amount": "19000", "intro_months": 2},
+        watch={
+            "mode": "auto",
+            "pages": [{"url": URL}],
+            "anchors": [
+                {"fact": "price", "url": URL, "text": PRICE_TEXT},
+                {"fact": "intro", "url": URL, "text": intro_text},
+                {"fact": "component", "service_id": "netflix", "url": URL, "text": NETFLIX_TEXT},
+            ],
+        },
+    )
+    s = bundle_state(b, today=TODAY, watch=watch_state(b))
+    assert s.display_status == "verified" and s.intro_confirmed
+    s = bundle_state(b, today=TODAY, watch=watch_state(b, statuses={"intro": "missing"}))
+    # The intro is not decisive: still verified, without the first-year figure.
+    assert s.display_status == "verified" and not s.intro_confirmed
+
+
+def test_a_page_the_yaml_no_longer_watches_has_no_say() -> None:
+    b = watched_bundle()
+    w = watch_state(b)
+    old = PageCheck(
+        url="https://www.acme.com.co/lista-18.pdf",
+        kind="pdf",
+        status="superseded",
+        edition="18",
+        newest_edition="19",
+        checked_at=TODAY,
+    )
+    w.pages.append(old)
+    # The YAML moved to the new list (the next run checks it): no stale "new edition" review.
+    assert bundle_state(b, today=TODAY, watch=w).display_status == "verified"

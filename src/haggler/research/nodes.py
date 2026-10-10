@@ -1,15 +1,25 @@
 """The research Workflow: a straight chain, like the daily one.
 
-    START -> plan_research -> research -> verify_evidence -> persist
+    START -> plan_research -> watch_bundles -> research -> verify_evidence -> persist
 
-* plan_research: previous facts and state, the latest published prices, plan.select().
+* plan_research: previous facts and state, the previous bundle_watch.json, the latest published
+  prices, plan.select(). With watch_only (`haggler research run --watch-only`) nothing is
+  planned for the agents: 0 search queries.
+* watch_bundles: the bundle watcher (haggler.bundles.watch, no LLM) over data/curated/bundles.yaml.
+  It ALWAYS runs: with the monthly search guard spent, without a model (--no-llm), with
+  --max-jobs 0 and with --watch-only. Its pages go through the run's PageCache, which
+  verify_evidence reuses (one fetch per URL per run).
 * research: one agent run per subject (google_search + response schema), within the run's call
   and search-query budget (haggler.llm.budget).
 * verify_evidence: every claim checked by our own fetch (research.evidence); previous facts the
   agents did not report again are re-checked against their page. Fetched text never goes back
   to the model.
-* persist: research/runs/{date}/{run_id}/report.json, then research/latest/*, run.json last.
-  A subject whose research failed keeps its previous facts.
+* persist: research/runs/{date}/{run_id}/report.json, then research/latest/* (bundle_watch.json
+  included), run.json last. A subject whose research failed keeps its previous facts; a watcher
+  that crashed keeps the previous bundle_watch.json. Concurrency guard: when the run_id of
+  research/latest/run.json is no longer the one plan_research saw (another run finished
+  meanwhile), only the report is written and the run reports an error: nothing in latest/ is
+  overwritten. A dry run writes nothing (the month's search usage excepted).
 """
 
 from __future__ import annotations
@@ -26,6 +36,7 @@ import pydantic
 from google.adk import Context, Workflow
 from google.adk.workflow import START, node
 
+from haggler.bundles import watch as bundle_watch
 from haggler.llm.runner import AgentJob, run_agent_jobs
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
@@ -75,7 +86,7 @@ def _as_list(value: Any) -> list[str]:
 
 def parse_request(node_input: Any) -> dict[str, Any]:
     """The START message: free text = defaults, or a JSON object with date, services, pairs
-    ("netflix:CO"), instruments, max_jobs and dry_run."""
+    ("netflix:CO"), instruments, max_jobs, dry_run and watch_only."""
     data: Any = node_input
     if isinstance(data, str):
         text = data.strip()
@@ -90,16 +101,21 @@ def parse_request(node_input: Any) -> dict[str, Any]:
         data = {}
     raw_date = data.get("date")
     max_jobs = data.get("max_jobs")
-    dry = data.get("dry_run", False)
+
+    def flag(name: str) -> bool:
+        value = data.get(name, False)
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes"}
+        return bool(value)
+
     return {
         "date": date.fromisoformat(str(raw_date)).isoformat() if raw_date else None,
         "services": _as_list(data.get("services")),
         "pairs": [f"{s}:{c}" for s, c in parse_pairs(_as_list(data.get("pairs")))],
         "instruments": _as_list(data.get("instruments")),
         "max_jobs": int(max_jobs) if max_jobs not in (None, "") else None,
-        "dry_run": dry.strip().lower() in {"1", "true", "yes"}
-        if isinstance(dry, str)
-        else bool(dry),
+        "dry_run": flag("dry_run"),
+        "watch_only": flag("watch_only"),
     }
 
 
@@ -220,11 +236,26 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         buf.run_id = run_id
         buf.latest = io.load_latest(deps.store)
         buf.errors.extend(buf.latest.errors)
+        buf.watch_previous, watch_errors = io.load_watch(deps.store)
+        buf.errors.extend(watch_errors)
         # The guard follows the real clock: a backdated --date run spends this month's queries.
         usage_month = month_of(started.date())
         used = io.read_usage(deps.store, usage_month)["queries"]
         buf.budget = research_budget(settings, month_queries_used=used)
         prices, fx = load_prices(deps, buf.errors)
+        buf.fx = fx
+        ctx.state["run"] = {
+            "run_id": run_id,
+            "run_date": run_date.isoformat(),
+            "started_at": started.isoformat(),
+            "dry_run": request["dry_run"],
+            "usage_month": usage_month,
+            # What research/latest/run.json said when this run started (persist's guard).
+            "latest_run_id": buf.latest.run.get("run_id"),
+        }
+        if request["watch_only"]:
+            log.info("research run %s: --watch-only, no subject planned", run_id)
+            return {"subjects": [], "skipped": {"*": "--watch-only: bundle watcher only"}}
         selection = select(
             catalog=deps.catalog,
             feasibility=deps.feasibility,
@@ -258,15 +289,59 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             for s in subjects[max(0, cap) :]:
                 skipped[s.key] = "over --max-jobs"
             subjects = subjects[: max(0, cap)]
-        ctx.state["run"] = {
-            "run_id": run_id,
-            "run_date": run_date.isoformat(),
-            "started_at": started.isoformat(),
-            "dry_run": request["dry_run"],
-            "usage_month": usage_month,
-        }
         log.info("research run %s: %d subject(s) planned", run_id, len(subjects))
         return {"subjects": [s.as_dict() for s in subjects], "skipped": skipped}
+
+    def page_cache(run: dict[str, Any]) -> PageCache:
+        """The run's PageCache (created by the first node that needs it). A dry run keeps no
+        raw page."""
+        if deps.buffer.pages is not None:
+            return deps.buffer.pages
+
+        def store_raw(url: str, data: str | bytes) -> str:
+            if isinstance(data, bytes):  # a PDF: its bytes, as fetched
+                key = io.raw_key(run["run_date"], url, "pdf")
+                return deps.store.write_bytes(key, data, content_type="application/pdf")
+            return write_text_gz(deps.store, io.raw_key(run["run_date"], url), data)
+
+        deps.buffer.pages = PageCache(
+            deps.fetcher,
+            timeout_s=deps.fetch_timeout_s,
+            store_raw=None if run.get("dry_run") else store_raw,
+        )
+        return deps.buffer.pages
+
+    async def watch_bundles(node_input: dict[str, Any], run: dict[str, Any]) -> dict[str, Any]:
+        buf = deps.buffer
+        try:
+            buf.watch = await bundle_watch.watch_bundles(
+                deps.bundles,
+                pages=page_cache(run),
+                previous=buf.watch_previous,
+                today=date.fromisoformat(run["run_date"]),
+                now=deps.now(),
+                run_id=run["run_id"],
+                catalog=deps.catalog,
+                fx=buf.fx,
+                max_pages=settings.bundle_watch_max_pages,
+            )
+        except Exception as exc:  # a watcher bug never fails the research run
+            log.exception("bundle watch failed")
+            buf.watch = None
+            buf.errors.append(f"bundle watch: internal: {type(exc).__name__}: {exc}"[:300])
+            return node_input
+        run_date = date.fromisoformat(run["run_date"])
+        skipped = [
+            f"{b.bundle_id} {url}"
+            for b in buf.watch.bundles
+            for url in bundle_watch.pages_over_budget(b, run_date)
+        ]
+        if skipped:
+            buf.errors.append(
+                f"bundle watch: page budget of {settings.bundle_watch_max_pages} spent; "
+                f"not fetched: {', '.join(skipped)}"[:600]
+            )
+        return node_input
 
     @node(rerun_on_resume=True)
     async def research(node_input: Any, ctx: Context, run: dict[str, Any]) -> dict[str, Any]:
@@ -315,17 +390,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
 
         buf = deps.buffer
         run_date = date.fromisoformat(run["run_date"])
-        dry = bool(run.get("dry_run"))
-
-        def store_raw(url: str, data: str | bytes) -> str:
-            if isinstance(data, bytes):  # a PDF: its bytes, as fetched
-                key = io.raw_key(run["run_date"], url, "pdf")
-                return deps.store.write_bytes(key, data, content_type="application/pdf")
-            return write_text_gz(deps.store, io.raw_key(run["run_date"], url), data)
-
-        pages = PageCache(
-            deps.fetcher, timeout_s=deps.fetch_timeout_s, store_raw=None if dry else store_raw
-        )
+        pages = page_cache(run)
         subjects = [PlannedSubject.from_dict(d) for d in node_input.get("subjects", [])]
         answers: dict[str, dict[str, Any]] = node_input.get("answers", {})
         sem = asyncio.Semaphore(VERIFY_CONCURRENCY)
@@ -456,6 +521,29 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         records = [rec for recs in budget.grounding.values() for rec in recs]
         prefix = io.run_prefix(run["run_date"], run_id)
         dry = bool(run.get("dry_run"))
+        # This run's watcher state; when the watcher crashed, the previous one unchanged.
+        watch = buf.watch if buf.watch is not None else buf.watch_previous
+        concurrent = False
+        # Best effort: a check, then the writes (the Store has no conditional write). It
+        # catches a run that finished while this one worked; two runs reaching persist within
+        # the same few seconds can still interleave their latest/ files (the next sync then
+        # fails on a sha256 mismatch rather than publishing them).
+        if not dry:
+            seen, now_id = run.get("latest_run_id"), io.latest_run_id(deps.store)
+            if now_id != seen:
+                concurrent = True
+                message = (
+                    f"{io.LATEST}/run.json changed while this run worked (run {now_id!r}, it "
+                    f"started on {seen!r}): another run finished meanwhile; only this run's "
+                    f"report was written, {io.LATEST}/ is left as it is"
+                )
+                log.error("research run %s: %s", run_id, message)
+                buf.errors.append(message)
+        latest_outputs = [
+            *(f"{io.LATEST}/{n}" for n in io.LATEST_FILES),
+            *([f"{io.LATEST}/{io.WATCH_FILE}"] if watch is not None else []),
+            f"{io.LATEST}/run.json",
+        ]
         report = ResearchReport(
             run_id=run_id,
             run_date=run_date,
@@ -487,15 +575,22 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             errors=list(buf.errors),
             outputs=[]
             if dry
-            else [
-                f"{prefix}/report.json",
-                *(f"{io.LATEST}/{n}" for n in io.LATEST_FILES),
-                f"{io.LATEST}/run.json",
-            ],
+            else [f"{prefix}/report.json", *([] if concurrent else latest_outputs)],
         )
         if dry:
             return report.model_dump(mode="json")
         deps.store.write_bytes(f"{prefix}/report.json", dumps(report))
+        if concurrent:
+            return report.model_dump(mode="json")
+        summary: dict[str, Any] = {
+            "planned": len(report.planned),
+            "by_status": report.by_status,
+            "claims_verified": report.claims_verified,
+            "queries": report.budget.queries,
+            "errors": len(report.errors),
+        }
+        if watch is not None:
+            summary["bundle_watch"] = bundle_watch.summary(watch)
         io.write_latest(
             deps.store,
             subjects=subjects.values(),
@@ -503,17 +598,12 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             run_id=run_id,
             as_of=run_date.isoformat(),
             finished_at=report.finished_at.isoformat() if report.finished_at else None,
-            report_summary={
-                "planned": len(report.planned),
-                "by_status": report.by_status,
-                "claims_verified": report.claims_verified,
-                "queries": report.budget.queries,
-                "errors": len(report.errors),
-            },
+            report_summary=summary,
+            watch=watch,
         )
         return report.model_dump(mode="json")
 
     return Workflow(
         name=WORKFLOW_NAME,
-        edges=[(START, plan_research, research, verify_evidence, persist)],
+        edges=[(START, plan_research, watch_bundles, research, verify_evidence, persist)],
     )
