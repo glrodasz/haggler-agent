@@ -4,7 +4,7 @@
  */
 
 import { es } from "../i18n/es";
-import { formatPrice } from "./format";
+import { documentName, formatDate, formatPercent, formatPrice, periodSuffix } from "./format";
 import type {
   Bundle,
   BundleVerdict,
@@ -13,6 +13,7 @@ import type {
   CountryInfo,
   FeasibilityView,
   Offer,
+  PendingValueType,
   Profile,
   RiskLabel,
   ServiceInfo,
@@ -309,6 +310,50 @@ export function bundleSavingNotes(
     ...(bundle.saving_basis === "marginal" ? [es.bundle.marginalSaving] : []),
     ...(bundle.display_status !== "verified" ? [es.bundle.unverifiedSaving] : []),
   ];
+}
+
+const MONEY_CODE = /^(\d+(?:\.\d+)?) ([A-Z]{3})(?:\/([a-z]+))?$/;
+
+/**
+ * Display text of a pending change's value, a research vocabulary code (PENDING_VALUE_TYPES in
+ * types.ts): "21900 COP/month" -> "21.900 COP/mes", "disney_plus.standard_with_ads" -> the
+ * service and plan names, "hbo_max:30" -> "30 % en HBO Max". A code that does not parse is
+ * shown as is; null is "sin registrar".
+ */
+export function pendingValueText(
+  valueType: PendingValueType,
+  value: string | null,
+  names: Pick<SiteIndex, "serviceName" | "planLabel">,
+): string {
+  if (value === null) return es.bundle.pendingNone;
+  switch (valueType) {
+    case "money": {
+      const [, amount, currency, period] = MONEY_CODE.exec(value) ?? [];
+      if (amount === undefined || currency === undefined) return value;
+      return formatPrice(Number(amount), currency) + (period ? periodSuffix(period) : "");
+    }
+    case "int":
+      return /^\d+$/.test(value) ? es.bundle.pendingMonths(Number(value)) : value;
+    case "date":
+      return formatDate(value);
+    case "service_ref": {
+      const [serviceId = value, planId] = value.split(".", 2);
+      const name = names.serviceName(serviceId);
+      return planId ? `${name} (${names.planLabel(serviceId, planId)})` : name;
+    }
+    case "service_pct": {
+      const [serviceId, pct] = value.split(":", 2);
+      const n = Number(pct);
+      if (!serviceId || pct === undefined || !Number.isFinite(n)) return value;
+      return es.bundle.pendingDiscount(names.serviceName(serviceId), formatPercent(n, { digits: 2 }));
+    }
+    case "bool":
+      return value === "true" ? es.common.yes : value === "false" ? es.common.no : value;
+    case "url": // a new edition of a price list lives on the same host
+      return documentName(value);
+    default:
+      return value;
+  }
 }
 
 /** CSS modifier of a saving: positive, negative, or none (zero or unknown). */

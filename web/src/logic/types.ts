@@ -413,6 +413,51 @@ export interface BundleVerdict {
   components: BundleVerdictComponent[];
 }
 
+/** Who proposed a value change: the deterministic watcher, or the research agent. */
+export const PENDING_SOURCES = ["watcher", "agent"] as const;
+export type PendingSource = (typeof PENDING_SOURCES)[number];
+
+/**
+ * The form of a pending change's values (research vocabulary codes, never prose):
+ * money "21900 COP/month", int "2", date "2026-12-31", service_ref "disney_plus" or
+ * "disney_plus.standard_with_ads", service_pct "hbo_max:30", bool "true" | "false",
+ * url an https URL.
+ */
+export const PENDING_VALUE_TYPES = [
+  "money",
+  "int",
+  "date",
+  "service_ref",
+  "service_pct",
+  "bool",
+  "url",
+] as const;
+export type PendingValueType = (typeof PENDING_VALUE_TYPES)[number];
+
+/**
+ * A value an official page of the bundle's country states and bundles.yaml does not: a watcher
+ * price hint or an agent finding whose value check passed. It disappears once the YAML holds
+ * the value (or when it is rejected); the YAML stays the only source of the bundle's values.
+ */
+export interface BundlePendingChange {
+  id: string;
+  source: PendingSource;
+  /** The research field (bundle_price, bundle_intro_price, bundle_includes…). */
+  field: string;
+  value_type: PendingValueType;
+  /** The YAML value it would replace (same form); null when the YAML has none. */
+  current: string | null;
+  proposed: string;
+  /** Literal excerpt of the official page that states the proposed value. */
+  quote: string;
+  url: string;
+  /** Date of our own fetch of the page (YYYY-MM-DD). */
+  retrieved_at: string | null;
+  first_seen: string | null;
+  /** More than 50 % away from the YAML value (money fields). */
+  big_change: boolean;
+}
+
 /**
  * bundles.json v2. Costs are monthly EUR rounded to 2 decimals: monthly_eur is the regular cost
  * basis of the saving (the marginal cost when the bundle sits on a base plan, yearly prices /12,
@@ -464,8 +509,8 @@ export interface Bundle {
    * follows its reviewed one only when it differs. Empty when the bundle expired.
    */
   verdicts: BundleVerdict[];
-  /** Proposed value changes awaiting review (filled from milestone H8). */
-  pending_changes: Record<string, unknown>[];
+  /** Official, value-checked changes awaiting review (the card lists them). */
+  pending_changes: BundlePendingChange[];
   notes_es: string;
   /** Last human review of the YAML row (YYYY-MM-DD). */
   last_verified: string | null;

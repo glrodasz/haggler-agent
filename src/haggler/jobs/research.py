@@ -8,6 +8,9 @@ with --max-retries 0: a retry would spend the search budget again.
 
 --watch-only runs the bundle watcher alone (no agent: 0 search queries); with --dry-run it
 writes nothing. The watcher also runs in every other run, --no-llm and --max-jobs 0 included.
+--bundles a,b researches exactly those bundles (haggler.bundles.plan: a manual bundle too,
+freshness ignored), like --services / --pairs / --instruments an explicit request: nothing else
+is planned automatically.
 """
 
 from __future__ import annotations
@@ -39,6 +42,8 @@ class ResearchOptions:
     # "netflix:CO"
     pairs: list[str] = field(default_factory=list)
     instruments: list[str] = field(default_factory=list)
+    # Bundle ids of data/curated/bundles.yaml.
+    bundles: list[str] = field(default_factory=list)
     max_jobs: int | None = None
     dry_run: bool = False
     no_llm: bool = False
@@ -54,6 +59,7 @@ class ResearchOptions:
             "services": self.services,
             "pairs": self.pairs,
             "instruments": self.instruments,
+            "bundles": self.bundles,
             "max_jobs": self.max_jobs,
             "dry_run": self.dry_run,
             "watch_only": self.watch_only,
@@ -131,6 +137,12 @@ def add_run_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     parser.add_argument("--services", type=_csv, default=[], help="service ids, comma-separated")
     parser.add_argument("--pairs", type=_csv, default=[], help="service:CC pairs, comma-separated")
     parser.add_argument("--instruments", type=_csv, default=[], help="instrument ids")
+    parser.add_argument(
+        "--bundles",
+        type=_csv,
+        default=[],
+        help="bundle ids, comma-separated (explicit: freshness ignored, manual bundles too)",
+    )
     parser.add_argument("--max-jobs", type=int, default=None, help="cap on researched subjects")
     parser.add_argument("--date", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
     parser.add_argument("--dry-run", action="store_true", help="plan and research, write nothing")
@@ -149,6 +161,7 @@ def options_from_args(ns: argparse.Namespace) -> ResearchOptions:
         services=list(ns.services),
         pairs=list(ns.pairs),
         instruments=list(ns.instruments),
+        bundles=list(ns.bundles),
         max_jobs=ns.max_jobs,
         dry_run=ns.dry_run,
         no_llm=ns.no_llm,

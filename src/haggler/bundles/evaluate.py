@@ -23,9 +23,11 @@ assess_bundle(bundle, profile, ctx) applies, in order:
 3. composed (T != R, no curated record):
    - an observed bundle (price.source observed) takes the research verdict of its observed service
      in T (haggler.research.evaluate.assess) for the bundle as a whole;
-   - any other bundle takes its own route: ToS from the bundle subject's facts
-     (bundle_residence_clause, bundle_enforcement_event, bundle_foreign_offer_allowed through
-     research.evaluate.tos_axis; compliant only with official claims; unknown without facts);
+   - any other bundle takes its own route: ToS from the bundle subject's facts (research kind
+     "bundle", key bundle:<bundle_id>, in ctx.facts like every research subject: accepted
+     findings, and pending ones with include_pending; bundle_residence_clause,
+     bundle_enforcement_event, bundle_foreign_offer_allowed through research.evaluate.tos_axis;
+     compliant only with official claims; unknown without facts);
    - the curated requirements are gates on both: local_id -> a document of T; local_line
      mobile/fixed/both -> a phone / a real address of T; local_payment local_card -> a card issued
      in T, held or obtainable online; local_bank -> an instrument with an IBAN of T, held or
@@ -55,7 +57,7 @@ assess_bundle(bundle, profile, ctx) applies, in order:
    rank below 2 that rests on assumptions -> unknown: improvements need facts.
 
 Provenance: home | curated | composed; agent_reviewed / agent_pending once the bundle subject's
-own research facts decide its ToS (milestone H8). With include_pending, a verdict that used a
+own research facts decide its ToS. With include_pending, a verdict that used a
 finding still pending review (in a component, the observed service or the bundle subject) is
 agent_pending; publish lists it only when it differs from the reviewed one.
 
@@ -88,7 +90,7 @@ from haggler.models.curated import (
     FeasibilityStep,
 )
 from haggler.models.profiles import Profile
-from haggler.models.research import subject_key
+from haggler.models.research import SubjectKind, subject_key
 from haggler.research.evaluate import (
     UNKNOWN_AXIS,
     Assessment,
@@ -102,7 +104,7 @@ from haggler.research.evaluate import (
     tos_axis,
 )
 
-BUNDLE_SUBJECT = "bundle"
+BUNDLE_SUBJECT: SubjectKind = "bundle"
 _NO_ID = frozenset({"", "none", "unknown"})
 _ID_NAMES = {"cedula": "cédula", "curp": "CURP", "cpf": "CPF"}
 _CONFIDENCE_ORDER = ("low", "medium", "high")
@@ -425,7 +427,7 @@ def _observed(
 
 def _own_route(bundle: Bundle, profile: Profile, facts: Facts) -> _Route:
     w = Work()
-    key = f"{BUNDLE_SUBJECT}:{bundle.bundle_id}"
+    key = subject_key(BUNDLE_SUBJECT, bundle.bundle_id)
     tos, claims = tos_axis(
         facts,
         w,

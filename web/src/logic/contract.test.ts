@@ -200,10 +200,26 @@ describe.each(datasets)("bundles.json v2 rules (%s)", (_name, dir) => {
         expect(b.status_reasons_es.length, b.bundle_id).toBeGreaterThan(0);
       }
       if (b.display_status === "expired") expect(b.verdicts, b.bundle_id).toEqual([]);
-      expect(
-        b.pending_changes.every((p) => typeof p === "object"),
-        b.bundle_id,
-      ).toBe(true);
+    }
+  });
+
+  it.skipIf(!present)("pending changes: each differs from the YAML and puts the bundle in review", () => {
+    for (const b of site().bundles) {
+      const seen = new Set<string>();
+      for (const c of b.pending_changes) {
+        const where = `${b.bundle_id}: ${c.id}`;
+        // A proposal the YAML already holds resolves itself and is never published.
+        expect(c.proposed, where).not.toBe(c.current);
+        expect(c.quote.length, where).toBeGreaterThan(0);
+        expect(c.url.startsWith("https://"), where).toBe(true);
+        // One entry per change, whichever source found it first.
+        const key = `${c.field}=${c.proposed}`;
+        expect(seen.has(key), where).toBe(false);
+        seen.add(key);
+      }
+      if (b.pending_changes.length > 0) {
+        expect(["needs_review", "expired"], b.bundle_id).toContain(b.display_status);
+      }
     }
   });
 

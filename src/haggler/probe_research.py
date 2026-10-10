@@ -9,9 +9,12 @@ Targets (one per line or ';'-separated):
     netflix                   the service's general rules
     spotify CO [US ...]       pairs (service x country)
     instrument revolut_eea    a payment instrument
+    bundle meli_plus_co_total a bundle of data/curated/bundles.yaml (explicit: a manual one too)
 
 Gate: when fewer than GATE_RATIO of the official citations verify, the plan adds a tool-less
 quote extraction pass over our own page text (see docs). The summary says which side we are on.
+A bundle value claim whose quote verified but whose value did not (value_not_in_quote,
+implausible) counts as grounded: the gate measures quotes, not values.
 
 Output: <out>/summary.{json,md} quote claims (<= QUOTE_CHARS chars each), never whole pages; the
 store with the fetched pages stays in <out>/raw/.
@@ -28,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from haggler.catalog import (
+    load_bundles,
     load_catalog,
     load_feasibility,
     load_payment_instruments,
@@ -38,6 +42,8 @@ from haggler.config import Settings, llm_credentials_available
 from haggler.research.evidence import host_of
 
 GATE_RATIO = 0.6
+# Check statuses (models.research CheckStatus) of an official citation whose quote verified.
+QUOTE_GROUNDED = ("verified", "value_not_in_quote", "implausible")
 QUOTE_CHARS = 160
 REDIRECT_PROBE_URL = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/probe"
 _FLASH = re.compile(r"^gemini-(\d+(?:\.\d+)?)-flash(?:-preview)?(?:-\d{2}-\d{4})?$")
@@ -48,15 +54,17 @@ class ResearchTargets:
     services: list[str] = dataclasses.field(default_factory=list)
     pairs: list[str] = dataclasses.field(default_factory=list)
     instruments: list[str] = dataclasses.field(default_factory=list)
+    bundles: list[str] = dataclasses.field(default_factory=list)
     errors: list[str] = dataclasses.field(default_factory=list)
 
     def empty(self) -> bool:
-        return not (self.services or self.pairs or self.instruments)
+        return not (self.services or self.pairs or self.instruments or self.bundles)
 
 
 def parse_research_targets(text: str) -> ResearchTargets:
     cat = load_catalog()
     instruments = {i.id for i in load_payment_instruments().instruments}
+    bundles = {b.bundle_id for b in load_bundles().bundles}
     services = {s.id for s in cat.services}
     ccs = set(cat.country_codes())
     out = ResearchTargets()
@@ -69,6 +77,12 @@ def parse_research_targets(text: str) -> ResearchTargets:
             for iid in rest:
                 (out.instruments if iid in instruments else out.errors).append(
                     iid if iid in instruments else f"unknown instrument {iid}"
+                )
+            continue
+        if head == "bundle":
+            for bid in rest:
+                (out.bundles if bid in bundles else out.errors).append(
+                    bid if bid in bundles else f"unknown bundle {bid}"
                 )
             continue
         if head not in services:
@@ -187,6 +201,7 @@ async def _run(settings: Settings, targets: ResearchTargets, store_dir: Path, to
         "services": targets.services,
         "pairs": targets.pairs,
         "instruments": targets.instruments,
+        "bundles": targets.bundles,
     }
     try:
         final = await run_workflow_once(
@@ -285,9 +300,7 @@ def probe_research(
         except Exception as exc:
             error = f"{type(exc).__name__}: {str(exc)[:400]}"
     rows = _subject_rows(store_dir, report.get("planned", [])) if report else []
-    official = (report or {}).get("checks", {}).get("official", {})
-    total_official = sum(official.values())
-    ratio = official.get("verified", 0) / total_official if total_official else None
+    ratio = official_grounded_ratio((report or {}).get("checks", {}).get("official", {}))
     summary = {
         "mode": "research",
         "llm": llm,
@@ -306,6 +319,13 @@ def probe_research(
         "subjects": rows,
     }
     return summary, render_md(summary, today)
+
+
+def official_grounded_ratio(official: dict[str, int]) -> float | None:
+    """The share of official citations whose quote verified on our fetch (QUOTE_GROUNDED);
+    None without any."""
+    total = sum(official.values())
+    return sum(official.get(s, 0) for s in QUOTE_GROUNDED) / total if total else None
 
 
 def render_md(summary: dict[str, Any], today: date) -> str:

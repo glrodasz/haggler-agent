@@ -6,7 +6,7 @@ Pure (no I/O, no ADK). For a profile P living in R and a target country T:
    returned as is (provenance "curated"). Otherwise only research claims count, minus rejected
    ones (review), minus subjects older than STALE_AFTER_DAYS; without include_pending only
    accepted claims count. Forum sources never count; press sources only for negative facts
-   (values not in POSITIVE_VALUES) and never for instruments.
+   (values not in POSITIVE_VALUES) and never for instruments nor official_only fields.
 2. Field resolution. A single-valued field resolves to its least favourable claimed value
    (fields.FieldSpec.values order). Multi-valued fields keep every claimed value.
 3. Payment. An instrument's card country is its curated observed BIN country, else a verified
@@ -92,6 +92,14 @@ POSITIVE_VALUES: dict[str, frozenset[str]] = {
     "billing_address": frozenset({"not_required"}),
     "local_id_required": frozenset({"false"}),
     "local_phone_required": frozenset({"false"}),
+    # The bundle twins (research.fields) and the bundle-only requirement fields.
+    "bundle_foreign_offer_allowed": frozenset({"true"}),
+    "bundle_signup_location": frozenset({"not_checked"}),
+    "bundle_billing_address": frozenset({"not_required"}),
+    "bundle_local_id_required": frozenset({"false"}),
+    "bundle_local_line": frozenset({"none"}),
+    "bundle_payment_method": frozenset({"any_card"}),
+    "bundle_credit_check": frozenset({"false"}),
 }
 EU_LEGAL_BASIS = LegalBasis(
     instrument="Reglamento (UE) 2018/302 (geobloqueo)",
@@ -238,7 +246,9 @@ class Facts:
             if cls == "forum":
                 continue
             if cls != "official" and (
-                s.kind == "instrument" or c.value in POSITIVE_VALUES.get(field_name, frozenset())
+                s.kind == "instrument"
+                or c.value in POSITIVE_VALUES.get(field_name, frozenset())
+                or (field_name in FIELD_SPECS and FIELD_SPECS[field_name].official_only)
             ):
                 continue
             out.append(c)

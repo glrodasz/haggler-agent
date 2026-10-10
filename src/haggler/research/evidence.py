@@ -20,7 +20,20 @@ For each ClaimDraft of a subject:
 4. Source class of the page that verified: forum first (community.*, reddit..., and user or
    third-party content on official domains: groups/sites/docs.google.com, youtube.com/watch,
    apps.apple.com...), official when the host is one of the subject's official domains, press
-   otherwise. Model-chosen URLs must name a public host (no IP literal or internal name).
+   otherwise. Model-chosen URLs must name a public host (no IP literal or internal name). An
+   official domain entry may carry a path prefix ("www.apple.com/se/", a bundle provider's
+   domains for one country): the page's path must then be under it.
+5. Bundle subjects (research.kinds "bundle"): a field that is official_only (the bundle VALUES
+   of research.fields) only verifies on an official page (the provider's domains for the
+   bundle's country): a quote found elsewhere is looked for on the fallbacks, and stays
+   "invalid" when no official page has it. Then, ONLY for a bundle value field with a
+   value_check, the value hook: research.values.check_value with the field's kind, the page's
+   context lines around the quote (Page.locate) and the bundle (ValueContext: country, currency,
+   period, provider, its sibling bundles, catalog and the FX table when there is one) must find
+   the claimed value in the quote; else the claim is "value_not_in_quote" or "implausible" and,
+   like any other failed check, not persisted. A url value must also be the document the quote
+   came from. A value more than research.values.BIG_CHANGE away from the YAML value keeps
+   Claim.big_change (and is logged). The bundle's feasibility twins take the Phase 2 checks only.
 
 Fetched pages (PDF text included) are never sent back to the model. Raw pages can be kept
 (store_raw: the text of an HTML page, the bytes of a PDF) for audits.
@@ -31,11 +44,12 @@ from __future__ import annotations
 import asyncio
 import bisect
 import ipaddress
+import logging
 import re
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlsplit, urlunsplit
 
 from haggler.fetch import Fetcher, RawResponse
@@ -56,6 +70,7 @@ from haggler.models.research import (
     claim_id,
 )
 from haggler.research.fields import FIELD_SPECS, FIELDS_BY_LEVEL, normalize_value, parse_event_date
+from haggler.research.values import ValueCheck, check_value
 from haggler.text import (
     contains_normalized,
     html_to_lines,
@@ -64,6 +79,13 @@ from haggler.text import (
     text_hash,
     text_node_lines,
 )
+
+if TYPE_CHECKING:
+    from haggler.models.catalog import Catalog
+    from haggler.models.curated import Bundle, Provider
+    from haggler.models.fx import FxTable
+
+log = logging.getLogger(__name__)
 
 MIN_QUOTE = 20
 MAX_GROUNDING_TRIES = 3
@@ -118,6 +140,21 @@ def host_matches(host: str, domains: Iterable[str]) -> bool:
     return any(host == d or host.endswith("." + d) for d in domains)
 
 
+def on_official(url: str, domains: Iterable[str]) -> bool:
+    """The URL's host is one of `domains` (or a subdomain); an entry with a path prefix
+    ("www.apple.com/se/") also needs the URL's path under it (haggler.catalog.on_domains)."""
+    host = host_of(url)
+    path = urlsplit(url).path
+    for entry in domains:
+        domain, slash, rest = entry.partition("/")
+        if not host_matches(host, (domain,)):
+            continue
+        prefix = slash + rest
+        if not slash or path == prefix.rstrip("/") or path.startswith(prefix):
+            return True
+    return False
+
+
 def site_of(host: str) -> str:
     """Rough registrable domain (last two labels; three for co.uk-style suffixes)."""
     labels = host.split(".")
@@ -135,7 +172,7 @@ def source_class(url: str, official_domains: Iterable[str]) -> SourceClass:
         or FORUM_PATHS.search(path)
     ):
         return "forum"
-    if host_matches(host, official_domains):
+    if on_official(url, official_domains):
         return "official"
     return "press"
 
@@ -397,6 +434,64 @@ class PageCache:
             page.detail = f"raw page not stored: {type(exc).__name__}"
 
 
+# research.fields value field -> the bundles.yaml price attribute its big_change compares with.
+_CURRENT_PRICE = {
+    "bundle_price": "amount",
+    "bundle_intro_price": "intro_amount",
+    "bundle_base_price": "base_plan_amount",
+}
+
+
+@dataclass(frozen=True)
+class ValueContext:
+    """What the bundle value hook checks one bundle subject's value claims against."""
+
+    bundle: Bundle
+    provider: Provider | None
+    # Every curated bundle (the tier rule looks for the bundle's siblings among them).
+    bundles: tuple[Bundle, ...]
+    catalog: Catalog | None = None
+    fx: FxTable | None = None
+
+    def current(self, field_name: str) -> object:
+        """The YAML value a researched one would replace (money fields: big_change)."""
+        attr = _CURRENT_PRICE.get(field_name)
+        return getattr(self.bundle.price, attr) if attr else None
+
+    def check(self, field_name: str, value: str, quote: str, page: Page) -> ValueCheck:
+        """check_value of the field's kind on `quote` found on `page`, with the page's context
+        lines; a url value must be that page (as requested or after its redirects)."""
+        kind = FIELD_SPECS[field_name].value_check
+        if kind is None:
+            return ValueCheck("ok", "no value check for this field")
+        b = self.bundle
+        located = page.locate(quote)
+        url = page.final_url or page.url
+        result = check_value(
+            kind,
+            value,
+            quote,
+            context_lines=located[1] if located else (),
+            country=b.country,
+            currency=b.price.currency,
+            period=b.price.period,
+            provider=self.provider,
+            bundle=b,
+            bundles=self.bundles,
+            catalog=self.catalog,
+            fx=self.fx,
+            current=self.current(field_name),
+            url=url,
+        )
+        if result.ok and kind == "url":
+            documents = {canonical_url(url), canonical_url(page.url)}
+            if canonical_url(value) not in documents:
+                return ValueCheck(
+                    "value_not_in_quote", f"the quote is not in the document it names ({value})"
+                )
+        return result
+
+
 @dataclass
 class Verification:
     claims: list[Claim] = field(default_factory=list)
@@ -432,7 +527,10 @@ async def verify_subject(
     today: date,
     previous: SubjectFacts | None = None,
     known_pages: list[str] | None = None,
+    value_context: ValueContext | None = None,
 ) -> Verification:
+    """`value_context`: the bundle of a bundle subject (the value hook, rule 5); a bundle value
+    claim without one fails closed (value_not_in_quote)."""
     out = Verification()
     first_seen = {c.id: c.first_seen for c in (previous.claims if previous else [])}
     kept: dict[str, Claim] = {}
@@ -452,15 +550,27 @@ async def verify_subject(
             )
             out.checks.append((source_class(draft.url, official_domains), "invalid"))
             continue
+        spec = FIELD_SPECS[valid.field]
+
+        def verifies(p: Page, spec=spec, valid=valid) -> bool:
+            """The quote is on the page, and the page is official when the field needs it."""
+            if not p.contains(valid.quote):
+                return False
+            return not spec.official_only or (
+                source_class(p.final_url or p.url, official_domains) == "official"
+            )
+
         if host_matches(host_of(valid.url), REDIRECT_HOSTS):
             page = Page(
                 url=valid.url, status="invalid", detail="search redirect link, not the page"
             )
         else:
             page = await pages.get(valid.url)
-        status: CheckStatus = page.status or (
-            "verified" if page.contains(valid.quote) else "quote_not_found"
-        )
+        status: CheckStatus = page.status or ("verified" if verifies(page) else "quote_not_found")
+        detail = page.detail
+        if status == "quote_not_found" and page.contains(valid.quote):
+            status = "invalid"
+            detail = f"{valid.field}: only an official page of the subject states it"
         via = "cited"
         if status != "verified":
             site = site_of(host_of(valid.url))
@@ -474,12 +584,24 @@ async def verify_subject(
             fallbacks += [("known_page", u) for u in known_pages or [] if u != valid.url]
             for kind_, uri in fallbacks:
                 alt = await pages.get(uri)
-                if alt.status is not None or not alt.contains(valid.quote):
+                if alt.status is not None or not verifies(alt):
                     continue
                 if kind_ == "grounding" and site_of(host_of(alt.final_url or "")) != site:
                     continue
-                page, status, via = alt, "verified", kind_
+                page, status, via, detail = alt, "verified", kind_, alt.detail
                 break
+        big_change = False
+        if status == "verified" and kind == "bundle" and spec.value_check is not None:
+            # The value hook (rule 5): the quote must state the claimed value.
+            if value_context is None:
+                status, detail = "value_not_in_quote", "no curated bundle to check the value"
+            else:
+                vc = value_context.check(valid.field, valid.value, valid.quote, page)
+                if not vc.ok:
+                    status, detail = vc.status, vc.reason
+                elif vc.big_change:
+                    big_change = True
+                    log.info("%s %s=%s: big change (%s)", key, valid.field, valid.value, vc.reason)
         final = page.final_url or valid.url
         cls = source_class(final if status == "verified" else valid.url, official_domains)
         out.checks.append((cls, status))
@@ -492,7 +614,7 @@ async def verify_subject(
                     quote=valid.quote,
                     cited_url=valid.url,
                     status=status,
-                    detail=page.detail,
+                    detail=detail[:300],
                 )
             )
             continue
@@ -509,6 +631,7 @@ async def verify_subject(
                 update={"final_url": url}
             ),
             first_seen=first_seen.get(cid, today),
+            big_change=big_change,
         )
         # One claim per id: official beats press beats forum; the first one wins ties.
         prev = kept.get(cid)
@@ -520,11 +643,17 @@ async def verify_subject(
 
 
 async def reverify(
-    c: Claim, *, pages: PageCache, official_domains: list[str]
+    c: Claim,
+    *,
+    pages: PageCache,
+    official_domains: list[str],
+    value_context: ValueContext | None = None,
 ) -> tuple[str, Claim | None]:
     """Re-fetch a stored claim's page: ("verified", refreshed claim), ("unchecked", claim) when
     the page could not be read today, ("gone", None) for 404/410, ("changed", None) when the
-    page loaded without the quote (or now redirects elsewhere)."""
+    page loaded without the quote (or now redirects elsewhere). With `value_context` (a bundle
+    subject), a value claim's quote must also still state its value on the page as it is today:
+    else (the check's status, None)."""
     page = await pages.get(c.url)
     if page.status == "not_found":
         return "gone", None
@@ -532,6 +661,13 @@ async def reverify(
         return "unchecked", c
     if not (page.contains(c.quote) and canonical_url(page.final_url or c.url) == c.url):
         return "changed", None
+    spec = FIELD_SPECS.get(c.field)
+    big_change = c.big_change
+    if value_context is not None and spec is not None and spec.value_check is not None:
+        vc = value_context.check(c.field, c.value, c.quote, page)
+        if not vc.ok:
+            return vc.status, None
+        big_change = vc.big_change
     check = c.check.model_copy(
         update={
             "retrieved_at": page.retrieved_at,
@@ -540,23 +676,38 @@ async def reverify(
             "source_class": source_class(c.url, official_domains),
         }
     )
-    return "verified", c.model_copy(update={"check": check})
+    return "verified", c.model_copy(update={"check": check, "big_change": big_change})
+
+
+_DROPPED: dict[str, tuple[CheckStatus, str]] = {
+    "gone": ("not_found", "the page no longer exists"),
+    "changed": ("quote_not_found", "no longer on the page"),
+    "value_not_in_quote": ("value_not_in_quote", "the quote no longer states the value"),
+    "implausible": ("implausible", "the value is no longer plausible"),
+}
 
 
 async def recheck_claims(
-    claims: list[Claim], *, pages: PageCache, official_domains: list[str]
+    claims: list[Claim],
+    *,
+    pages: PageCache,
+    official_domains: list[str],
+    value_context: ValueContext | None = None,
 ) -> tuple[list[Claim], list[UnverifiedClaim]]:
     """Previous facts the agent did not report again: re-fetch their page. A quote that is gone
     from a page that loaded, or a page that no longer exists, drops the fact; a page that could
-    not be read keeps it as it was (the evaluator ignores it once it is a year old)."""
+    not be read keeps it as it was (the evaluator ignores it once it is a year old). With
+    `value_context`, a bundle value that its quote no longer states is dropped too (reverify)."""
     kept: list[Claim] = []
     dropped: list[UnverifiedClaim] = []
     for c in claims:
-        status, again = await reverify(c, pages=pages, official_domains=official_domains)
+        status, again = await reverify(
+            c, pages=pages, official_domains=official_domains, value_context=value_context
+        )
         if again is not None:
             kept.append(again)
             continue
-        gone = status == "gone"
+        check_status, detail = _DROPPED.get(status, _DROPPED["changed"])
         dropped.append(
             UnverifiedClaim(
                 field=c.field,
@@ -564,8 +715,8 @@ async def recheck_claims(
                 event_date=c.event_date.isoformat() if c.event_date else "",
                 quote=c.quote,
                 cited_url=c.url,
-                status="not_found" if gone else "quote_not_found",
-                detail="the page no longer exists" if gone else "no longer on the page",
+                status=check_status,
+                detail=detail,
             )
         )
     return kept, dropped

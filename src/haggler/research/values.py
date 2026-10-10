@@ -103,6 +103,10 @@ Kinds (what H8's bundle fields map to):
         plan word of the catalog that no plan of the service has ("Paramount+ Básico") is an
         unknown plan. Naming ANOTHER plan, or an unknown one, fails; naming none passes (plan
         aliases and labels are incomplete across languages).
+  * discount_pct (bundle_discount): a component value "service_id:N" whose N, found by the
+    component rule above, must also be a percentage ("%", "por ciento", "procent", "percent"
+    right after it): "2 meses gratis de HBO Max", "HBO Max para 2 dispositivos" and "Ahorra
+    US$ 5 en HBO Max" give HBO Max a number but no percentage discount.
   * url: a URL has nothing to find in a quote: ok only when it is https on the provider's
     domains for the bundle's country (haggler.catalog.on_domains).
 
@@ -205,6 +209,7 @@ ValueKind = Literal[
     "date_from",
     "date_until",
     "component",
+    "discount_pct",
     "url",
 ]
 ValueStatus = Literal["ok", "value_not_in_quote", "implausible"]
@@ -1383,6 +1388,19 @@ def _big_change(
         return False, "; change not measured"
 
 
+def big_change(
+    amount: Decimal,
+    period: str | None,
+    current: object,
+    currency: str,
+    current_period: str | None = None,
+) -> bool:
+    """Whether `amount` per `period` is more than BIG_CHANGE away from `current` (the YAML
+    value, per `current_period`) in monthly terms; False when they cannot be compared. The
+    review side (haggler.bundles.proposals) measures a stored finding against today's YAML."""
+    return _big_change(amount, period, current, currency, current_period)[0]
+
+
 def _check_money(
     kind: ValueKind,
     value: object,
@@ -1621,7 +1639,7 @@ class _ComponentText:
     folded: str
     clauses: _Clauses
     spans: list[_ServiceSpan]
-    numbers: list[list[tuple[Decimal, int]]]  # per clause: (value, raw offset)
+    numbers: list[list[tuple[Decimal, int, int]]]  # per clause: (value, raw start, raw end)
     bare: list[bool]
 
     @classmethod
@@ -1629,9 +1647,9 @@ class _ComponentText:
         folded, index = _fold_map(quote)
         clauses = _Clauses.of(quote)
         spans = _service_spans(quote, folded, index, catalog.services)
-        numbers: list[list[tuple[Decimal, int]]] = [[] for _ in range(len(clauses))]
-        for n, s, _e in _number_hits(quote):
-            numbers[clauses.of_pos(s)].append((n, s))
+        numbers: list[list[tuple[Decimal, int, int]]] = [[] for _ in range(len(clauses))]
+        for n, s, e in _number_hits(quote):
+            numbers[clauses.of_pos(s)].append((n, s, e))
         bare = []
         for k in range(len(clauses)):
             cs, ce = clauses.span(k)
@@ -1663,7 +1681,7 @@ class _ComponentText:
         while j > 0 and self.bare[j] and not self.clauses.sentence[j]:
             j -= 1
             if self.numbers[j]:
-                first = min(pos for _n, pos in self.numbers[j])
+                first = min(pos for _n, pos, _end in self.numbers[j])
                 others = [sp for sp in self.services_in(j) if sp.service_id != service_id]
                 if any(sp.start < first for sp in others):
                     return None  # "Disney+ con 30% OFF": Disney+'s number
@@ -1811,9 +1829,13 @@ def _check_component(
     bundle: Bundle | None,
     bundles: Iterable[Bundle] | None,
     country: str,
+    unit: NumberUnit = "any",
 ) -> ValueCheck:
+    """`unit` "pct": the value's number must be a percentage (kind discount_pct)."""
     raw_value = str(value).strip()
     service_id, _, number = raw_value.partition(":")
+    if unit != "any" and not number:
+        return _missing(f"value {raw_value[:40]!r} has no number (service_id:N)")
     service_id, _, plan_id = service_id.partition(".")
     try:
         svc = catalog.service(service_id)
@@ -1837,9 +1859,12 @@ def _check_component(
         n = _decimal(number)
         if n is None:
             return _missing(f"value {raw_value[:40]!r}: {number[:40]!r} is not a number")
-        given = (ct.number_clause(k, svc.id) for k in clause_of)
-        if not any(j is not None and any(v == n for v, _pos in ct.numbers[j]) for j in given):
+        given = [j for k in clause_of if (j := ct.number_clause(k, svc.id)) is not None]
+        same = [(s, e) for j in given for v, s, e in ct.numbers[j] if v == n]
+        if not same:
             return _missing(f"the quote does not give {svc.name} the number {number}")
+        if not any(_unit_ok(q, s, e, unit) for s, e in same):
+            return _missing(f"the quote gives {svc.name} {number}, but not as a percentage")
     else:
         for k in clause_of:
             j = ct.number_clause(k, svc.id)
@@ -1980,7 +2005,7 @@ def check_value(
         return _check_number(kind, value, quote)
     if kind in DATE_KINDS:
         return _check_date(kind, value, quote)
-    if kind == "component":
+    if kind in ("component", "discount_pct"):
         if catalog is None:
             from haggler.catalog import default_catalog
 
@@ -1993,6 +2018,7 @@ def check_value(
             bundle=bundle,
             bundles=bundles,
             country=country,
+            unit="pct" if kind == "discount_pct" else "any",
         )
     if kind == "url":
         if provider is None:

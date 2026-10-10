@@ -204,6 +204,19 @@ BUNDLE_EVIDENCE_KEYS = {
     "edition",
     "status",
 }
+BUNDLE_PENDING_KEYS = {
+    "id",
+    "source",
+    "field",
+    "value_type",
+    "current",
+    "proposed",
+    "quote",
+    "url",
+    "retrieved_at",
+    "first_seen",
+    "big_change",
+}
 BUNDLE_VERDICT_KEYS = {
     "profile",
     "provenance",
@@ -352,7 +365,23 @@ def check_bundle(b: dict[str, Any], *, label_ids: set[str], profile_ids: list[st
             assert isinstance(c["rank"], int)
             # null: nothing evaluated the component's service in that country.
             assert c["provenance"] in {None, "home", "curated", "agent_reviewed", "agent_pending"}
-    assert b["pending_changes"] == []
+    for c in b["pending_changes"]:
+        assert set(c) == BUNDLE_PENDING_KEYS, b["bundle_id"]
+        assert c["source"] in {"watcher", "agent"}
+        assert c["value_type"] in {
+            "money",
+            "int",
+            "date",
+            "service_ref",
+            "service_pct",
+            "bool",
+            "url",
+        }
+        assert c["proposed"] != c["current"] and c["quote"] and c["url"].startswith("https://")
+        assert isinstance(c["big_change"], bool)
+        assert all(c[k] is None or is_date(c[k]) for k in ("retrieved_at", "first_seen"))
+    if b["pending_changes"]:
+        assert b["display_status"] in {"needs_review", "expired"}, b["bundle_id"]
     assert is_date(b["last_verified"])
 
 
@@ -1386,3 +1415,101 @@ def test_site_data_without_watch_data_lists_anchors_unchecked(
         assert {e["status"] for e in b["evidence"]} == {"not_checked"}
         assert not any(e["verified"] for e in b["evidence"])
         assert b["first_year_monthly_eur"] is None
+
+
+def test_site_data_publishes_official_value_checked_pending_changes(
+    tmp_path: Path, catalog, feasibility
+) -> None:
+    """bundles.json pending_changes (H8): the agent's value findings that differ from the YAML,
+    official and value-checked only; a rejected one is hidden; one puts the bundle in review."""
+    from haggler.catalog import load_profiles
+    from haggler.models.research import (
+        Claim,
+        ReviewDecision,
+        ReviewFile,
+        SourceCheck,
+        SubjectFacts,
+        claim_hash,
+        claim_id,
+    )
+    from haggler.research import io as rio
+
+    data, bundles = watcher_replay(tmp_path)
+    key = "bundle:acme_total_co"
+
+    def claim(field: str, value: str, quote: str) -> Claim:
+        return Claim(
+            id=claim_id(key, field, value),
+            hash=claim_hash(field, value, None, quote, ACME_URL),
+            field=field,
+            value=value,
+            quote=quote,
+            check=SourceCheck(
+                cited_url=ACME_URL,
+                final_url=ACME_URL,
+                source_class="official",
+                status="verified",
+                retrieved_at=WATCH_DAY,
+            ),
+            first_seen=WATCH_DAY.date(),
+        )
+
+    price = claim("bundle_price", "22900 COP/month", "Acme Total cuesta $ 22.900 por mes.")
+    rejected = claim("bundle_intro_price", "18900 COP/month", "Acme Total: $ 18.900 por 2 meses.")
+    unchecked = claim("bundle_available", "false", "Acme Total ya no se vende en Colombia.")
+    held = claim("bundle_includes", "netflix", ACME_NETFLIX)  # the YAML already says so
+    subject = SubjectFacts(
+        key=key,
+        kind="bundle",
+        researched_on=WATCH_DAY.date(),
+        run_id="r1",
+        status="researched",
+        claims=[price, rejected, unchecked, held],
+    )
+    (data / "research" / "bundles.json").write_bytes(rio.subject_files([subject])["bundles.json"])
+    review = ReviewFile(
+        decisions=[
+            ReviewDecision(
+                id=rejected.id, hash=rejected.hash, decision="reject", decided_on=NOW.date()
+            )
+        ]
+    )
+    site = build_site_data(
+        data,
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=catalog,
+        feasibility=feasibility,
+        bundles=bundles,
+        profiles=load_profiles(),
+        review=review,
+        now=NOW,
+    )
+    check_contract(site)
+    rows = by(site["bundles"], "bundle_id")
+    acme = rows["acme_total_co"]
+    assert acme["pending_changes"] == [
+        {
+            "id": price.id,
+            "source": "agent",
+            "field": "bundle_price",
+            "value_type": "money",
+            "current": "21900 COP/month",
+            "proposed": "22900 COP/month",
+            "quote": "Acme Total cuesta $ 22.900 por mes.",
+            "url": ACME_URL,
+            "retrieved_at": "2026-10-07",
+            "first_seen": "2026-10-07",
+            "big_change": False,
+        }
+    ]
+    # The watcher verified every anchor, but the official page now states another price.
+    assert acme["display_status"] == "needs_review" and acme["confidence"] == "low"
+    assert acme["status_reasons_es"] == [
+        "Cambios pendientes de revisión: precio del paquete (según la investigación "
+        "automática, en la página oficial)."
+    ]
+    assert [c["confirmed"] for c in acme["components"]] == [True]
+    assert acme["first_year_monthly_eur"] is None
+    telco = rows["telco_plus_se"]
+    assert (telco["display_status"], telco["pending_changes"]) == ("verified", [])

@@ -3,6 +3,8 @@
 Store (GCS or local, written by the research job):
     research/runs/{date}/{run_id}/report.json      one per run
     research/latest/{services,pairs,instruments}.json   SubjectFacts lists (one per line)
+    research/latest/bundles.json                    the bundle kind's SubjectFacts (optional kind:
+                                                    written only when there is a bundle subject)
     research/latest/state.json                      ResearchState
     research/latest/bundle_watch.json               WatchFile: the bundle watcher's state
                                                     (haggler.models.bundles)
@@ -14,8 +16,8 @@ Store (GCS or local, written by the research job):
 
 Repo (written by `haggler sync`, read by `haggler site-data`):
     data/research/{services,pairs,instruments}.json, data/research/run.json, and the optional
-    files (OPTIONAL_DATA_FILES: bundle_watch.json, and bundles.json for the bundle facts of
-    milestone H8), copied only when the run's manifest lists them
+    files (OPTIONAL_DATA_FILES: bundles.json, the facts of the optional kinds of research.kinds,
+    and bundle_watch.json), copied only when the run's manifest lists them
 
 Concurrency: one writer of research/latest/* (the research job). A run whose plan saw another
 run_id in research/latest/run.json than the one there when it persists (another run finished
@@ -43,12 +45,14 @@ PREFIX = "research"
 LATEST = f"{PREFIX}/latest"
 # Kind -> its facts file, in registry order (research.kinds).
 KIND_FILES: dict[SubjectKind, str] = {kind: spec.data_file for kind, spec in KINDS.items()}
-LATEST_FILES = (*KIND_FILES.values(), "state.json")
-DATA_FILES = tuple(KIND_FILES.values())
+# The facts files every run writes and every sync requires, and those of the optional kinds.
+DATA_FILES = tuple(spec.data_file for spec in KINDS.values() if not spec.optional)
+OPTIONAL_KIND_FILES = tuple(spec.data_file for spec in KINDS.values() if spec.optional)
+LATEST_FILES = (*DATA_FILES, "state.json")
 WATCH_FILE = "bundle_watch.json"
 # Copied by `haggler sync` only when the run's manifest lists them: an older run.json without
 # them is still a valid research run (no RUN_SCHEMA_VERSION bump).
-OPTIONAL_DATA_FILES = ("bundles.json", WATCH_FILE)
+OPTIONAL_DATA_FILES = (*OPTIONAL_KIND_FILES, WATCH_FILE)
 RUN_SCHEMA_VERSION = 1
 
 _SUBJECTS = TypeAdapter(list[SubjectFacts])
@@ -206,6 +210,19 @@ def subject_files(subjects: Iterable[SubjectFacts]) -> dict[str, bytes]:
     }
 
 
+def latest_names(subjects: Iterable[SubjectFacts], *, watch: bool) -> list[str]:
+    """The research/latest/ files a run writes, in write order (run.json, written last, aside):
+    every required kind's file and state.json, the file of an optional kind that has subjects,
+    and bundle_watch.json when there is a watch state."""
+    kinds_with_subjects = {s.kind for s in subjects}
+    optional = [
+        spec.data_file
+        for kind, spec in KINDS.items()
+        if spec.optional and kind in kinds_with_subjects
+    ]
+    return [*LATEST_FILES, *optional, *([WATCH_FILE] if watch else [])]
+
+
 def write_latest(
     store: Store,
     *,
@@ -217,14 +234,15 @@ def write_latest(
     report_summary: dict[str, Any],
     watch: WatchFile | None = None,
 ) -> dict[str, str]:
-    """research/latest/*, then run.json last; returns {file: sha256}. `watch` adds
+    """research/latest/*, then run.json last; returns {file: sha256}. An optional kind's file
+    (bundles.json) is written and listed only when the kind has subjects; `watch` adds
     bundle_watch.json to the files and the manifest."""
+    subjects = list(subjects)
     files = subject_files(subjects)
     files["state.json"] = dumps(state)
-    names = list(LATEST_FILES)
+    names = latest_names(subjects, watch=watch is not None)
     if watch is not None:
         files[WATCH_FILE] = dumps(watch.model_dump(mode="json"))
-        names.append(WATCH_FILE)
     for name in names:
         store.write_bytes(f"{LATEST}/{name}", files[name])
     hashes = {name: sha256_hex(files[name]) for name in names}
@@ -241,12 +259,12 @@ def write_latest(
 
 
 def load_data_dir(data_dir: Path) -> tuple[list[SubjectFacts], dict[str, Any], list[str]]:
-    """data/research/* (from `haggler sync`): subjects, run.json and parse errors. A missing
-    directory is not an error (no research yet)."""
+    """data/research/* (from `haggler sync`): subjects (an optional kind's file only when it
+    exists), run.json and parse errors. A missing directory is not an error (no research yet)."""
     base = Path(data_dir) / PREFIX
     errors: list[str] = []
     subjects: list[SubjectFacts] = []
-    for name in DATA_FILES:
+    for name in (*DATA_FILES, *OPTIONAL_KIND_FILES):
         path = base / name
         if path.exists():
             subjects += _parse_subjects(path.read_bytes(), f"data/research/{name}", errors)

@@ -1764,6 +1764,27 @@ def test_component_numbers_and_short_aliases(value: str, quote: str, ok: bool, c
     assert _ok(result) is ok, result
 
 
+@pytest.mark.parametrize(
+    ("value", "quote", "ok"),
+    [
+        ("hbo_max:30", MELI_COMPONENTS, True),
+        ("vix:30", MELI_COMPONENTS, True),
+        ("hbo_max:30", "30 por ciento de descuento en HBO Max", True),
+        ("disney_plus:20", "20% OFF en Disney+ y 30% OFF en HBO Max", True),
+        ("hbo_max:20", MELI_COMPONENTS, False),
+        ("hbo_max:3", "3 meses gratis de HBO Max", False),  # free months
+        ("hbo_max:2", "Incluye HBO Max para 2 dispositivos a la vez.", False),  # a count
+        ("hbo_max:5", "Ahorra US$ 5 en HBO Max cada mes.", False),  # money
+        ("hbo_max", MELI_COMPONENTS, False),  # a discount needs its percentage
+    ],
+)
+def test_discount_pct_is_a_component_whose_number_is_a_percentage(
+    value: str, quote: str, ok: bool, cat
+) -> None:
+    result = _check("discount_pct", value, quote, catalog=cat)
+    assert _ok(result) is ok, result
+
+
 # --------------------------------------------------------------------------- urls
 
 

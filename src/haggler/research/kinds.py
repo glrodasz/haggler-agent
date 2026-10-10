@@ -5,6 +5,7 @@ A subject is what one research agent run looks at, named by a key "<kind>:<id>[:
     service      service:<service_id>               service:netflix
     pair         pair:<service_id>:<country>        pair:netflix:CO
     instrument   instrument:<instrument_id>         instrument:revolut_eea
+    bundle       bundle:<bundle_id>                 bundle:meli_plus_co_total
 
 Keys are built and read leniently, as they always were: the builder joins the ids without
 checking them and the readers split stored keys without rejecting malformed ones ("pair:netflix:",
@@ -12,11 +13,18 @@ checking them and the readers split stored keys without rejecting malformed ones
 the review CLI. Only the number of ids a builder is given is checked (a call-site bug).
 
 Everything that differs per kind and is not prose is declared here, once: the key layout, the
-facts file (research/latest/ and data/research/), the freshness window, the agent's name, the
-vocabulary level (FieldSpec.level), the position in a run and which pair verdicts the kind's
-facts can change. Derived from it: fields.FIELDS_BY_LEVEL, io.KIND_FILES / LATEST_FILES /
-DATA_FILES, plan._WINDOWS, agents.AGENT_NAMES, nodes.KIND_ORDER, review.select_claims and the
-review CLI's affected pairs.
+facts file (research/latest/ and data/research/) and whether it is optional, the freshness
+window, the agent's name, the vocabulary level (FieldSpec.level), the position in a run and which
+pair verdicts the kind's facts can change. Derived from it: fields.FIELDS_BY_LEVEL,
+io.KIND_FILES / LATEST_FILES / DATA_FILES / OPTIONAL_DATA_FILES, plan._WINDOWS,
+agents.AGENT_NAMES, nodes.KIND_ORDER, review.select_claims and the review CLI's affected pairs.
+
+An optional kind's file (bundle: bundles.json) is written to research/latest/ only when the kind
+has subjects, and `haggler sync` copies it only when the run's manifest lists it, so a run.json
+written before the kind existed is still a valid research run. The bundle kind runs last: when a
+run's call or search-query budget runs out, its subjects are the first ones skipped. Its window
+is the default; haggler.bundles.plan shortens it for a bundle whose offer ends soon or whose
+pages changed.
 
 Adding a kind = its name in SubjectKind and one KindSpec in _SPECS, plus its vocabulary
 (fields.FIELDS with level = the kind) and its prompt (agents.INSTRUCTIONS); the module checks
@@ -30,7 +38,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, get_args
 
-SubjectKind = Literal["service", "pair", "instrument"]
+SubjectKind = Literal["service", "pair", "instrument", "bundle"]
 # Which researched pairs' verdicts a subject's facts can change: "self" (the pair the subject
 # is), "service" (every pair of the subject's service), "all" (every pair), "none".
 PairScope = Literal["self", "service", "all", "none"]
@@ -71,6 +79,9 @@ class KindSpec:
     # get the call and search-query budget first.
     run_order: int
     pair_scope: PairScope
+    # The data file is optional (see the module docstring): written and synced only when there
+    # is something in it.
+    optional: bool = False
 
     @property
     def prefix(self) -> str:
@@ -130,6 +141,18 @@ _SPECS: tuple[KindSpec, ...] = (
         run_order=2,
         pair_scope="all",
     ),
+    KindSpec(
+        name="bundle",
+        parts=("bundle_id",),
+        data_file="bundles.json",
+        window_days=28,
+        agent_name="bundle_researcher",
+        # Last: the Phase 2 subjects never wait for the budget a bundle spent.
+        run_order=3,
+        # A bundle's verdicts are its own (haggler.bundles.evaluate), never a pair's.
+        pair_scope="none",
+        optional=True,
+    ),
 )
 
 
@@ -176,7 +199,8 @@ def kind_of(key: str) -> SubjectKind:
 
 
 def subject_key(kind: SubjectKind, *ids: str) -> str:
-    """ "service:netflix", "pair:netflix:CO", "instrument:revolut_eea"."""
+    """ "service:netflix", "pair:netflix:CO", "instrument:revolut_eea",
+    "bundle:meli_plus_co_total"."""
     return KINDS[kind].key(*ids)
 
 

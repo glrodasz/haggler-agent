@@ -9,8 +9,12 @@ Derived, never typed: bundles.yaml only says `status: unverified|expired`. Prece
                 component anchor missing on a page that loaded (from the first miss: the excerpt
                 is gone, or no longer states the YAML value; it stays so through the runs that
                 cannot read the page, until a read verifies the anchor again or the YAML anchor
-                is edited), or a newer edition of a versioned PDF. (Official proposals that
-                differ from the YAML join in milestone H8.)
+                is edited), or a newer edition of a versioned PDF, or a pending change: an
+                official proposal whose value check passed and that differs from the YAML
+                (haggler.bundles.proposals.pending_changes: a watcher hint or an agent value
+                finding; it resolves itself once the YAML holds the value, and a rejection
+                hides it). It outranks verified and manual: the YAML no longer says what the
+                official page says.
 3. verified     (watcher data) every decisive anchor (price, base_price, component) confirmed:
                 verified by the watcher within VERIFY_MAX_AGE_DAYS (a page unreadable since then
                 does not undo it; a missing, embedded-only or outdated anchor does, until a read
@@ -40,14 +44,18 @@ verified; manual is medium at most.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
 from haggler.models.bundles import AnchorCheck, BundleWatchState, PageCheck, anchor_hash
 from haggler.models.curated import Anchor, Bundle
+
+if TYPE_CHECKING:
+    from haggler.bundles.proposals import Proposal
 
 EXPIRED_KEEP_DAYS = 90
 MANUAL_MAX_AGE_DAYS = 45
@@ -385,6 +393,28 @@ def _watch_view(
     )
 
 
+# ------------------------------------------------------------------ pending changes
+
+_PENDING_SOURCES_ES = {"watcher": "el vigilante", "agent": "la investigación automática"}
+
+
+def _join_es(items: Sequence[str]) -> str:
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} y {items[-1]}"
+
+
+def _pending_reasons(changes: Sequence[Proposal]) -> list[str]:
+    """One reason naming the fields with a pending change and who proposed them (the card
+    lists the values under "Cambios pendientes de revisión")."""
+    if not changes:
+        return []
+    labels = list(dict.fromkeys(c.label_es[:1].lower() + c.label_es[1:] for c in changes))
+    sources = list(dict.fromkeys(_PENDING_SOURCES_ES[c.source] for c in changes))
+    return [
+        f"Cambios pendientes de revisión: {_join_es(labels)} (según {_join_es(sources)}, en la "
+        "página oficial)."
+    ]
+
+
 # ------------------------------------------------------------------ state
 
 
@@ -396,11 +426,13 @@ def bundle_state(
     watch: BundleWatchState | None = None,
     price_observed_on: date | None = None,
     service_names: Mapping[str, str] | None = None,
+    pending_changes: Sequence[Proposal] = (),
 ) -> BundleState:
     """`price_missing`: the bundle has no regular price today (an observed plan without a
     published row, or no amount in the YAML). `watch`: the watcher's state of the bundle
     (bundle_watch.json); `price_observed_on`: the date of the daily row an observed price comes
-    from; `service_names`: {service_id: name} for the reasons (the id when absent)."""
+    from; `service_names`: {service_id: name} for the reasons (the id when absent);
+    `pending_changes`: haggler.bundles.proposals.pending_changes of the bundle."""
     if is_expired(bundle, today):
         reasons: list[str] = []
         if bundle.valid_until is not None and bundle.valid_until < today:
@@ -423,6 +455,22 @@ def bundle_state(
         price_observed_on=price_observed_on,
         names=service_names or {},
     )
+    pending_why = _pending_reasons(pending_changes)
+    if pending_why:
+        decided = view.decision
+        if decided is not None and decided.display_status == "needs_review":
+            reasons = (*decided.reasons_es, *pending_why)
+            return replace(decided, reasons_es=tuple(dict.fromkeys(reasons)))
+        # Outranks verified (its anchors still count as confirmed) and manual.
+        return BundleState(
+            display_status="needs_review",
+            reasons_es=tuple(dict.fromkeys([*pending_why, *view.reasons])),
+            confidence="low",
+            checked_at=decided.checked_at if decided else view.checked_at,
+            confirmed_components=(
+                decided.confirmed_components if decided else view.confirmed_components
+            ),
+        )
     if view.decision is not None:
         return view.decision
     extra = {

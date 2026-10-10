@@ -724,6 +724,19 @@ def test_research_targets_and_flash_models():
     assert flash_models(names) == ["gemini-3.1-flash", "gemini-3-flash-preview", "gemini-2.5-flash"]
 
 
+def test_research_targets_name_bundles():
+    from haggler.probe_research import parse_research_targets
+
+    t = parse_research_targets("bundle meli_plus_co_total nope\n# bundle telia_se_x")
+    assert t.bundles == ["meli_plus_co_total"] and not t.empty()
+    assert t.errors == ["unknown bundle nope"]
+    # The committed targets file still parses (its bundle line is a comment).
+    from haggler.config import repo_root
+
+    text = (repo_root() / "probe" / "research_targets.txt").read_text(encoding="utf-8")
+    assert parse_research_targets(text).errors == []
+
+
 def test_research_probe_without_llm(tmp_path, monkeypatch):
     from haggler import probe_research
     from haggler.config import Settings
@@ -754,6 +767,16 @@ def test_research_probe_without_llm(tmp_path, monkeypatch):
     assert summary["llm"] is False and summary["report"] is None and summary["gate"] is None
     assert "robots.txt de las redirecciones de grounding: allowed" in md
     assert "Páginas oficiales conocidas (1/1 legibles)" in md
+
+
+def test_research_gate_counts_a_rejected_value_with_a_grounded_quote():
+    from haggler.probe_research import official_grounded_ratio
+
+    assert official_grounded_ratio({}) is None
+    assert official_grounded_ratio({"verified": 1, "quote_not_found": 1}) == 0.5
+    # The quote was on the page; only the value check refused it.
+    grounded = {"verified": 2, "value_not_in_quote": 1, "implausible": 1, "quote_not_found": 1}
+    assert official_grounded_ratio(grounded) == 0.8
 
 
 def test_research_probe_markdown_reports_the_gate():

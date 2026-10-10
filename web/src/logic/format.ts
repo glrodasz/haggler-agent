@@ -128,6 +128,26 @@ export function hostOf(url: string): string {
   }
 }
 
+/**
+ * The document a link names, for telling two editions of a price list apart: the last segment of
+ * its path ("…/TSP-4667_19_0701.pdf" -> "TSP-4667_19_0701.pdf"), the host when the path has
+ * none, the text itself when it is not a URL.
+ */
+export function documentName(url: string): string {
+  let segment: string | undefined;
+  try {
+    segment = new URL(url).pathname.split("/").filter(Boolean).pop();
+  } catch {
+    return url;
+  }
+  if (!segment) return hostOf(url);
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 /** Whether a link points to a PDF document (by its path, the only thing the data says). */
 export function isPdfUrl(url: string): boolean {
   try {

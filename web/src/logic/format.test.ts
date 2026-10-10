@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DASH,
+  documentName,
   flagEmoji,
   formatDate,
   formatDateLong,
@@ -101,6 +102,19 @@ describe("periodSuffix and flagEmoji", () => {
     expect(flagEmoji("se")).toBe("🇸🇪");
     expect(flagEmoji("XYZ")).toBe("");
     expect(flagEmoji("")).toBe("");
+  });
+});
+
+describe("documentName", () => {
+  it("names the file a link ends in, else its host", () => {
+    expect(documentName("https://www.telia.se/dam/TSP-4667_19_0701.pdf")).toBe(
+      "TSP-4667_19_0701.pdf",
+    );
+    expect(documentName("https://www.telia.se/priser/")).toBe("priser");
+    expect(documentName("https://www.telia.se/lista%20precios.pdf?v=2")).toBe("lista precios.pdf");
+    expect(documentName("https://www.telia.se")).toBe("telia.se");
+    expect(documentName("https://www.telia.se/%E0%A4%A.pdf")).toBe("%E0%A4%A.pdf");
+    expect(documentName("no es una url")).toBe("no es una url");
   });
 });
 

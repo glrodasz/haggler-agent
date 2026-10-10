@@ -567,6 +567,101 @@ def test_a_pending_component_finding_gives_an_agent_pending_variant() -> None:
     assert [c.provenance for c in pending.components] == ["agent_pending"]
 
 
+# ------------------------------------------- the bundle subject's own research facts (H8)
+
+
+def _accept(*claims: Claim, decision: str = "accept") -> ReviewFile:
+    return ReviewFile(
+        decisions=[
+            ReviewDecision(id=c.id, hash=c.hash, decision=decision, decided_on=TODAY)  # type: ignore[arg-type]
+            for c in claims
+        ]
+    )
+
+
+def test_accepted_bundle_facts_decide_the_own_route_tos() -> None:
+    clause = _claim("bundle:acme_co", "bundle_residence_clause", "must_reside")
+    facts = _subject("bundle:acme_co", clause)
+    b = bundle()
+    # Pending: the reviewed verdict does not use it; the pending variant does.
+    reviewed = assess_bundle(b, EU, context(facts))
+    pending = assess_bundle(b, EU, context(facts), include_pending=True)
+    assert reviewed is not None and pending is not None
+    assert (reviewed.provenance, reviewed.tos) == ("composed", "unknown")
+    assert (pending.provenance, pending.tos) == ("agent_pending", "breach_unenforced")
+    # Accepted for its hash: the reviewed verdict rests on it.
+    accepted = assess_bundle(b, EU, context(facts, review=_accept(clause)))
+    assert accepted is not None
+    assert (accepted.provenance, accepted.tos) == ("agent_reviewed", "breach_unenforced")
+    # Rejected: never used, pending or not.
+    rejected = assess_bundle(
+        b, EU, context(facts, review=_accept(clause, decision="reject")), include_pending=True
+    )
+    assert rejected is not None and (rejected.provenance, rejected.tos) == ("composed", "unknown")
+
+
+def test_a_foreign_offer_is_only_allowed_on_an_official_bundle_finding() -> None:
+    allowed = _claim("bundle:acme_co", "bundle_foreign_offer_allowed", "true")
+    press = allowed.model_copy(
+        update={"check": allowed.check.model_copy(update={"source_class": "press"})}
+    )
+    a = assess_bundle(
+        bundle(), EU, context(_subject("bundle:acme_co", allowed), review=_accept(allowed))
+    )
+    assert a is not None and a.tos == "compliant"
+    b = assess_bundle(
+        bundle(), EU, context(_subject("bundle:acme_co", press), review=_accept(press))
+    )
+    assert b is not None and b.tos == "unknown"
+
+
+def test_bundle_value_findings_never_change_a_verdict() -> None:
+    # Values are accepted by editing bundles.yaml: a value claim is not a feasibility fact.
+    price = _claim("bundle:acme_co", "bundle_price", "1000 COP/month")
+    ctx = context(_subject("bundle:acme_co", price), review=_accept(price))
+    a, base = assess_bundle(bundle(), EU, ctx), assess_bundle(bundle(), EU, CTX)
+    assert a is not None and base is not None and a.same_verdict(base)
+    assert a.provenance == base.provenance == "composed"
+
+
+def test_bundle_facts_reach_site_data_through_data_research(tmp_path: Path) -> None:
+    from haggler.research import io as rio
+
+    key = "bundle:meli_plus_co_total"
+    clause = _claim(key, "bundle_residence_clause", "must_reside")
+    data = tmp_path / "data"
+    (data / "research").mkdir(parents=True)
+    files = rio.subject_files([_subject(key, clause)])
+    (data / "research" / "bundles.json").write_bytes(files["bundles.json"])
+    subjects, _run, errors = rio.load_data_dir(data)
+    assert [s.key for s in subjects] == [key] and not errors
+    out = tmp_path / "site"
+    site_data(
+        data,
+        out,
+        residence="SE",
+        profile=CO.id,
+        catalog=CAT,
+        feasibility=FEAS,
+        bundles=load_bundles(),
+        profiles=PROFILES,
+        instruments=INSTRUMENTS,
+        review=_accept(clause),
+        now=datetime(2026, 10, 10, 5, 0, tzinfo=UTC),
+    )
+    rows = json.loads((out / "bundles.json").read_text(encoding="utf-8"))
+    (row,) = [r for r in rows if r["bundle_id"] == "meli_plus_co_total"]
+    eu = next(v for v in row["verdicts"] if v["profile"] == EU.id)
+    # The accepted clause decides the bundle's own ToS (its unevaluated components keep the
+    # axis unknown); the cédula still makes it not feasible for this profile.
+    assert (eu["provenance"], eu["rank"]) == ("agent_reviewed", 4)
+    without = assess_bundle(REAL["meli_plus_co_total"], EU, CTX)
+    assert without is not None and without.provenance == "composed"
+    # The curated record of the other profile is used as is (decision 2).
+    co = next(v for v in row["verdicts"] if v["profile"] == CO.id)
+    assert co["provenance"] == "curated"
+
+
 # ---------------------------------------------------------------- wording blacklist
 
 # Nothing published may suggest a way around a requirement (user principle 5).

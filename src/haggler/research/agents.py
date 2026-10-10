@@ -42,7 +42,7 @@ Rules (all mandatory):
    evade a check. Report only what the service or issuer itself says or does.
 5. status "nothing_found" with an empty claims list when no page states any listed fact.
 6. open_questions: up to 3 short questions that the sources left open. notes: one short
-   sentence or "". suggested_instruments: [] unless the job asks for it.
+   sentence or "". suggestions: [] unless the job asks for it.
 
 Answer with the JSON object of the response schema and nothing else.
 """
@@ -80,8 +80,40 @@ issuer_entity, official_domains, residence_country). Find on the provider's offi
 the legal entity that issues the card, the country where the card is issued, the IBAN country,
 which countries of residence may open an account, whether onboarding is fully online, which ID
 documents are accepted, and whether an address in the issuer's country is required.
-suggested_instruments: up to 3 other providers the official pages or press present as options
-for residents of that country (names only).
+suggestions: up to 3 other providers the official pages or press present as options for
+residents of that country (names only).
+
+Vocabulary (field: allowed values):
+{vocabulary}
+
+{rules}""",
+    "bundle": """\
+You research ONE bundle: a package of subscriptions that ONE provider sells in ONE country (the
+user message is a JSON job: subject, bundle_id, name, tier, aliases, provider, country,
+country_name, currency, official_url, official_domains, known_pages, components, requirements,
+yaml_values, service_ids). yaml_values are the values we have on file, which may be outdated or
+wrong: confirm or correct each one with a quote. Find, on the provider's OFFICIAL pages FOR THAT
+COUNTRY ONLY (official_domains; known_pages are official pages we already know, price-list PDFs
+included): the regular monthly price, the introductory price and how many months it lasts or
+when it ends, the base plan price when the bundle is sold on top of a plan, the minimum contract,
+the last day the offer is sold, which services it includes (and which plan of each) or
+discounts, whether it is still sold, and the official price list. Then what the bundle's terms
+say about residence, subscribing from another country, what fixes the account country, checks
+at sign-up, billing address, local ID, a line of the provider, the payment method, credit checks
+and use while travelling.
+Value fields (prices, months, dates, included services, discounts, availability, the price list)
+count ONLY with a quote from an official page of the job's country: pages of another country,
+resellers, comparison sites and press never confirm one. The quote must contain the amount, date
+or service name exactly as the page prints it (for a price: the amount with its currency sign
+and the tier name or the line that names it); write the value in the format the vocabulary
+gives, converting the page's notation ("$ 21.900/mes" -> "21900 COP/month"). Report a value even
+when it equals yaml_values, and report each different value you find with its own quote.
+Services are named by the ids of service_ids (bundle_includes / bundle_discount); a service that
+is not listed there cannot be reported. bundle_discount is a percentage printed with "%" (or "por
+ciento"): free months, a number of devices or an amount saved are not discounts, do not report
+them as one.
+suggestions: up to 3 other bundles of the same provider in the same country that its official
+pages list (names as printed), or [].
 
 Vocabulary (field: allowed values):
 {vocabulary}

@@ -145,7 +145,7 @@ def test_normalize_value(field: str, raw: str, expected: str | None):
 
 
 def test_vocabulary_is_closed_and_ordered():
-    assert set(F.FIELDS_BY_LEVEL) == {"service", "pair", "instrument"}
+    assert set(F.FIELDS_BY_LEVEL) == {"service", "pair", "instrument", "bundle"}
     assert sum(len(v) for v in F.FIELDS_BY_LEVEL.values()) == len(F.FIELDS)
     for spec in F.FIELDS:
         if spec.value_type in ("enum", "bool"):

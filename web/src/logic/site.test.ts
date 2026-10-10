@@ -17,6 +17,7 @@ import {
   groupBundlesByVerdict,
   isActiveBundle,
   otherProfileVerdicts,
+  pendingValueText,
   riskClass,
   savingClass,
   splitBundleVerdicts,
@@ -613,6 +614,49 @@ describe("bundles page (/paquetes) and the watched table", () => {
     expect(savingClass(-4.22)).toBe("negative");
     expect(savingClass(0)).toBe("");
     expect(savingClass(null)).toBe("");
+  });
+});
+
+describe("pending changes of a bundle", () => {
+  const text = (type: Parameters<typeof pendingValueText>[0], value: string | null) =>
+    pendingValueText(type, value, site);
+
+  it("formats each vocabulary code for the card", () => {
+    expect(text("money", "21900 COP/month")).toBe(`${"21.900\u00a0COP"}/mes`);
+    expect(text("money", "4.90 EUR/year")).toBe("4,90\u00a0€/año");
+    expect(text("int", "2")).toBe("2 meses");
+    expect(text("int", "1")).toBe("1 mes");
+    expect(text("date", "2026-12-31")).toBe("31 dic 2026");
+    expect(text("service_ref", "disney_plus")).toBe(site.serviceName("disney_plus"));
+    expect(text("service_ref", "disney_plus.standard_with_ads")).toBe(
+      `${site.serviceName("disney_plus")} (${site.planLabel("disney_plus", "standard_with_ads")})`,
+    );
+    expect(text("service_pct", "hbo_max:30")).toBe(`30\u00a0% en ${site.serviceName("hbo_max")}`);
+    expect(text("bool", "true")).toBe(es.common.yes);
+    expect(text("url", "https://www.telia.se/priser/lista.pdf")).toBe("lista.pdf");
+    // Two editions of a versioned price list on the same host read apart.
+    expect(text("url", "https://www.telia.se/dam/TSP-4667_18_0701.pdf")).toBe(
+      "TSP-4667_18_0701.pdf",
+    );
+    expect(text("url", "https://www.telia.se/")).toBe("telia.se");
+    expect(text("money", null)).toBe(es.bundle.pendingNone);
+  });
+
+  it("shows a code that does not parse as it is", () => {
+    expect(text("money", "21.900 pesos")).toBe("21.900 pesos");
+    expect(text("service_pct", "hbo_max")).toBe("hbo_max");
+    expect(text("int", "dos")).toBe("dos");
+  });
+
+  it("the sample lists one, which puts its bundle in review", () => {
+    const withChanges = data.bundles.filter((b) => b.pending_changes.length > 0);
+    expect(withChanges.map((b) => b.bundle_id)).toEqual(["meli_plus_co_total"]);
+    const [meli] = withChanges;
+    expect(meli?.display_status).toBe("needs_review");
+    expect(es.bundle.pendingTitle(1)).toBe("Cambios pendientes de revisión (1)");
+    expect(meli?.pending_changes.map((c) => es.bundle.pendingFields[c.field])).toEqual([
+      "Precio",
+    ]);
   });
 });
 

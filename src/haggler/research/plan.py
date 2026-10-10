@@ -16,6 +16,8 @@
   (research/usage/, real clock, dry runs included) reach Limits.max_month_queries.
 * An explicit request (CLI filters) replaces the automatic choice and ignores freshness and
   pauses, but not the monthly guard.
+* Bundles are planned by haggler.bundles.plan (after the bundle watcher, last in the run);
+  Request.bundles only makes the request explicit here.
 """
 
 from __future__ import annotations
@@ -63,9 +65,10 @@ class PlannedSubject:
     country: str | None = None
     instrument_id: str | None = None
     saving_eur: Decimal | None = None
+    bundle_id: str | None = None
 
     def as_dict(self) -> dict[str, object]:
-        return {
+        out: dict[str, object] = {
             "key": self.key,
             "kind": self.kind,
             "reason": self.reason,
@@ -74,6 +77,9 @@ class PlannedSubject:
             "instrument_id": self.instrument_id,
             "saving_eur": str(self.saving_eur) if self.saving_eur is not None else None,
         }
+        if self.bundle_id is not None:
+            out["bundle_id"] = self.bundle_id
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, object]) -> PlannedSubject:
@@ -86,20 +92,24 @@ class PlannedSubject:
             country=d.get("country"),  # type: ignore[arg-type]
             instrument_id=d.get("instrument_id"),  # type: ignore[arg-type]
             saving_eur=Decimal(str(saving)) if saving is not None else None,
+            bundle_id=d.get("bundle_id"),  # type: ignore[arg-type]
         )
 
 
 @dataclass(frozen=True)
 class Request:
-    """Explicit subjects from the CLI ("netflix", "netflix:CO", "revolut_eea")."""
+    """Explicit subjects from the CLI ("netflix", "netflix:CO", "revolut_eea",
+    "meli_plus_co_total"). Bundles are planned by haggler.bundles.plan; naming one still makes
+    the whole request explicit (no automatic subject of any kind)."""
 
     services: tuple[str, ...] = ()
     pairs: tuple[tuple[str, str], ...] = ()
     instruments: tuple[str, ...] = ()
+    bundles: tuple[str, ...] = ()
 
     @property
     def explicit(self) -> bool:
-        return bool(self.services or self.pairs or self.instruments)
+        return bool(self.services or self.pairs or self.instruments or self.bundles)
 
 
 @dataclass
@@ -114,8 +124,16 @@ def month_of(day: date) -> str:
     return day.strftime("%Y-%m")
 
 
-def due(key: str, facts: dict[str, SubjectFacts], state: ResearchState, today: date) -> str | None:
-    """Why the subject is due ("new", "stale"), or None when it is fresh or paused."""
+def due(
+    key: str,
+    facts: dict[str, SubjectFacts],
+    state: ResearchState,
+    today: date,
+    *,
+    window: int | None = None,
+) -> str | None:
+    """Why the subject is due ("new", "stale"), or None when it is fresh or paused. `window`
+    replaces the kind's freshness window (haggler.bundles.plan shortens a bundle's)."""
     st = state.subjects.get(key)
     if st is not None and st.paused_until is not None and st.paused_until > today:
         return None
@@ -124,7 +142,7 @@ def due(key: str, facts: dict[str, SubjectFacts], state: ResearchState, today: d
         last = facts[key].researched_on
     if last is None:
         return "new"
-    if (today - last).days >= _WINDOWS[kind_of(key)]:
+    if (today - last).days >= (window if window is not None else _WINDOWS[kind_of(key)]):
         return "stale"
     return None
 

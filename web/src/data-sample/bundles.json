@@ -110,10 +110,9 @@
       "signup_presence": "unknown",
       "new_customers_only": null
     },
-    "display_status": "unverified",
+    "display_status": "needs_review",
     "status_reasons_es": [
-      "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
-      "Se revisa a mano: sus páginas no están en la vigilancia automática."
+      "Cambios pendientes de revisión: precio del paquete (según la investigación automática, en la página oficial)."
     ],
     "verified_by": "search_summary",
     "verified_at": null,
@@ -220,7 +219,21 @@
         ]
       }
     ],
-    "pending_changes": [],
+    "pending_changes": [
+      {
+        "id": "bundle:meli_plus_co_total:bundle_price:21900 COP/month",
+        "source": "agent",
+        "field": "bundle_price",
+        "value_type": "money",
+        "current": "24900 COP/month",
+        "proposed": "21900 COP/month",
+        "quote": "Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes.",
+        "url": "https://www.mercadolibre.com.co/suscripciones/melimas/planes",
+        "retrieved_at": "2026-10-05",
+        "first_seen": "2026-10-05",
+        "big_change": false
+      }
+    ],
     "notes_es": "Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.",
     "last_verified": "2026-10-08"
   },

@@ -298,6 +298,11 @@ describe("site data contract (runtime)", () => {
         ["home", "curated", "agent_reviewed", "agent_pending"],
         (b, v) => (b.verdicts[0].components[0].provenance = v),
       ],
+      [["watcher", "agent"], (b, v) => (b.pending_changes[0].source = v)],
+      [
+        ["money", "int", "date", "service_ref", "service_pct", "bool", "url"],
+        (b, v) => (b.pending_changes[0].value_type = v),
+      ],
     ];
     for (const [allowed, set] of values) {
       for (const value of allowed) {
@@ -420,6 +425,26 @@ describe("site data contract (runtime)", () => {
       [(b) => (b.standalone_missing = null), /\[0\]\.standalone_missing: se esperaba una lista/],
       [(b) => (b.status_reasons_es = [1]), /\[0\]\.status_reasons_es\[0\]: se esperaba string/],
       [(b) => (b.pending_changes = {}), /\[0\]\.pending_changes: se esperaba una lista/],
+      [
+        (b) => (b.pending_changes[0].source = "human"),
+        /\.pending_changes\[0\]\.source: se esperaba watcher \| agent/,
+      ],
+      [
+        (b) => (b.pending_changes[0].value_type = "text"),
+        /\.pending_changes\[0\]\.value_type: se esperaba money \| int/,
+      ],
+      [
+        (b) => delete b.pending_changes[0].quote,
+        /\.pending_changes\[0\]: falta el campo "quote"/,
+      ],
+      [
+        (b) => (b.pending_changes[0].proposed = null),
+        /\.pending_changes\[0\]\.proposed: se esperaba string, hay null/,
+      ],
+      [
+        (b) => (b.pending_changes[0].big_change = "no"),
+        /\.pending_changes\[0\]\.big_change: se esperaba boolean/,
+      ],
       [
         (b) => (b.price.tax_included = null),
         /\.price\.tax_included: se esperaba boolean, hay null/,

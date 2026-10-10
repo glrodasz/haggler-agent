@@ -243,6 +243,10 @@ async def test_a_missing_price_anchor_is_a_change_and_the_new_amount_a_hint() ->
     assert st.display_status == "needs_review"
     assert st.reasons_es[0] == "El precio ya no aparece en acme.com.co."
     assert "Último valor confirmado 21.900 COP el 12 de octubre de 2026" in st.reasons_es[1]
+    # The hint is a proposal from the day it was first found, carried while it is found again.
+    assert hint.first_seen == later
+    again, _ = await watch(bf, {ACME: changed}, previous=out, today=later + timedelta(days=7))
+    assert [h.first_seen for h in again.bundles[0].hints] == [later]
     again, _ = await watch(bf, {ACME: changed}, previous=out, today=later + timedelta(days=7))
     assert anchors_by_fact(again.bundles[0])["price"].misses == 2
 

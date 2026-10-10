@@ -31,6 +31,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from haggler.bundles.evaluate import BundleAssessment, assess_bundle
 from haggler.bundles.pricing import price_bundle, regular_price, to_eur
+from haggler.bundles.proposals import Proposal, bundle_proposals, pending_changes
 from haggler.bundles.status import (
     BundleState,
     anchor_checks,
@@ -63,9 +64,10 @@ from haggler.models.curated import (
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
 from haggler.models.profiles import Profile, ProfilesFile
-from haggler.models.research import ReviewFile
+from haggler.models.research import ReviewFile, subject_key
 from haggler.models.run import CoverageRow
 from haggler.research.evaluate import UNKNOWN_RANK, Assessment, EvalContext, assess
+from haggler.research.fields import FIELD_SPECS
 from haggler.store import Store, dumps_lines
 
 log = logging.getLogger(__name__)
@@ -470,10 +472,11 @@ class ResearchSyncResult:
 
 def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
     """Copy research/latest/{services,pairs,instruments}.json into data/research (run.json last),
-    plus the optional files (research.io.OPTIONAL_DATA_FILES: bundle_watch.json, and bundles.json
-    from milestone H8) when the run's manifest lists them. An older run.json that does not list
-    them is not an error: they are simply not copied (and a stale local copy is removed, so
-    data/research always matches its own manifest).
+    plus the optional files (research.io.OPTIONAL_DATA_FILES: bundles.json, the bundle kind's
+    facts, and bundle_watch.json) when the run's manifest lists them. An older run.json that does
+    not list them is not an error: they are simply not copied (and a stale local copy is removed,
+    so data/research always matches its own manifest). A facts file, optional or not, is copied
+    as rewritten from its parsed rows (sorted, one per line).
 
     None when the source has no research yet. Raises SyncError when run.json or a listed file is
     broken (nothing is written then); an older research run than the published one is skipped
@@ -527,9 +530,8 @@ def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
         try:
             if name == rio.WATCH_FILE:
                 rio.parse_watch_bytes(data)
-            elif not isinstance(json.loads(data), list):
-                # bundles.json (the bundle kind's facts, milestone H8): a JSON array for now.
-                raise ValueError("no es una lista JSON")
+            else:  # an optional kind's facts (bundles.json)
+                data = rio.subject_files(rio.parse_subjects_bytes(data))[name]
         except (ValidationError, ValueError) as exc:
             problems.append(f"{name}: formato inesperado ({str(exc)[:200]})")
             continue
@@ -562,6 +564,8 @@ def sync_research(source: Store, data_dir: Path) -> ResearchSyncResult | None:
         if name in optional:
             _write_atomic(target / name, optional[name])
             result.written.append(target / name)
+            if name in rio.OPTIONAL_KIND_FILES:
+                result.subjects += len(json.loads(optional[name]))
         else:
             (target / name).unlink(missing_ok=True)
     blobs |= optional
@@ -1023,6 +1027,25 @@ def _bundle_evidence_json(e: Evidence) -> dict[str, Any]:
     }
 
 
+def _pending_change_json(p: Proposal) -> dict[str, Any]:
+    """A value change an official page states and bundles.yaml does not (yet): current and
+    proposed in the research vocabulary form ("21900 COP/month", "2026-12-31",
+    "disney_plus.standard_with_ads", "hbo_max:30"), read by value_type."""
+    return {
+        "id": p.id,
+        "source": p.source,
+        "field": p.field,
+        "value_type": FIELD_SPECS[p.field].value_type,
+        "current": p.current,
+        "proposed": p.proposed,
+        "quote": " ".join(p.quote.split()),
+        "url": p.url,
+        "retrieved_at": _iso(p.retrieved_at),
+        "first_seen": _iso(p.first_seen),
+        "big_change": p.big_change,
+    }
+
+
 def _bundle_json(
     b: Bundle,
     *,
@@ -1039,6 +1062,15 @@ def _bundle_json(
     """bundles.json v2 (None once an expired bundle leaves the site). `watch`: the bundle's
     state in data/research/bundle_watch.json."""
     regular = regular_price(b, rows, as_of=as_of)
+    changes = pending_changes(
+        bundle_proposals(
+            b,
+            watch=watch,
+            facts=ctx.facts.get(subject_key("bundle", b.bundle_id)),
+            review=ctx.review,
+            today=today,
+        )
+    )
     state = bundle_state(
         b,
         today=today,
@@ -1046,6 +1078,7 @@ def _bundle_json(
         watch=watch,
         price_observed_on=regular.observed_on,
         service_names={svc.id: svc.name for svc in ctx.catalog.services},
+        pending_changes=changes,
     )
     if not state.published:
         return None
@@ -1140,8 +1173,8 @@ def _bundle_json(
             _bundle_verdict_json(a)
             for a in _bundle_verdicts(b, profiles, ctx, pricing.counted, state)
         ],
-        # Proposals of the watcher and the agent (milestone H8).
-        "pending_changes": [],
+        # Official, value-checked proposals of the watcher and the agent (bundles.proposals).
+        "pending_changes": [_pending_change_json(p) for p in changes],
         "notes_es": b.notes_es.strip(),
         "last_verified": b.last_verified.isoformat(),
     }

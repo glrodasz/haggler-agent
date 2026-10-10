@@ -55,7 +55,8 @@ bundle and that differs from the YAML value (the regular amount, the base plan a
 amount; the intro amount). In a PDF (a price list of many products, whose columns are not
 understood) the line itself must also name the bundle (its aliases or name). An observed price
 (price.source observed) comes from the daily data: no regular hints. At most MAX_HINTS per
-bundle, deduplicated.
+bundle, deduplicated; a hint found again keeps its first_seen. Hints are proposals for review
+(haggler.bundles.proposals), never values.
 
 Outcome: changed when a price, base_price or component anchor is missing on a page that was
 read; else new_document when a versioned PDF is superseded; else unreadable when no page could
@@ -500,6 +501,12 @@ def _hints(job: _Job, env: _Env) -> list[PriceHint]:
             sources.append(slot.newest_page)
     out: list[PriceHint] = []
     seen: set[tuple[str, Decimal]] = set()
+    # A hint found again keeps the day it was first found.
+    first_seen = {
+        (h.role, h.amount): h.first_seen
+        for h in (job.prev.hints if job.prev else [])
+        if h.currency == currency
+    }
     for page in sources:
         lines = page.lines()
         url = canonical_url(page.final_url or page.url)
@@ -544,6 +551,7 @@ def _hints(job: _Job, env: _Env) -> list[PriceHint]:
                             line=_hint_line(line, money.raw),
                             reason=_clip(result.reason),
                             big_change=result.big_change,
+                            first_seen=first_seen.get((role, money.amount)) or env.today,
                         )
                     )
                     break

@@ -11,7 +11,7 @@
  * record's provenance (pending findings are only used on request), the profile ids that
  * feasibility.json, meta.json and bundles.json refer to, and every closed enum of bundles.json
  * v2 (display status, saving basis, price source and period, provenance, watch mode, verified_by,
- * confidence and the requirement values).
+ * confidence, the requirement values and a pending change's source and value type).
  */
 
 import {
@@ -24,6 +24,8 @@ import {
   COMPONENT_PROVENANCES,
   CONFIDENCES,
   type DATA_FILES,
+  PENDING_SOURCES,
+  PENDING_VALUE_TYPES,
   PROVENANCES,
   REQUIREMENT_VALUES,
   SAVING_BASES,
@@ -301,7 +303,21 @@ const bundle = shape({
       ),
     }),
   ),
-  pending_changes: list(shape({})),
+  pending_changes: list(
+    shape({
+      id: str,
+      source: oneOf(PENDING_SOURCES),
+      field: str,
+      value_type: oneOf(PENDING_VALUE_TYPES),
+      current: nullable(str),
+      proposed: str,
+      quote: str,
+      url: str,
+      retrieved_at: nullable(str),
+      first_seen: nullable(str),
+      big_change: bool,
+    }),
+  ),
   notes_es: str,
   last_verified: nullable(str),
 });

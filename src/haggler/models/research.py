@@ -1,18 +1,23 @@
 """Research facts: what the agents answer, what survives verification, and the review log.
 
 Only VERIFIED claims are persisted as facts (Claim): our own fetch of the cited page found the
-literal quote. Everything else is kept as UnverifiedClaim for the run report and never affects a
-verdict. Facts do not depend on any profile; verdicts are computed from them at site-data time
+literal quote and, for a bundle VALUE (research.fields yaml_value), the value check found the
+value in it (research.values.check_value: "value_not_in_quote" / "implausible" otherwise).
+Everything else is kept as UnverifiedClaim for the run report and never affects a verdict. Facts
+do not depend on any profile; verdicts are computed from them at site-data time
 (haggler.research.evaluate).
+
+Fields added after Phase 2 (Claim.big_change, SubjectFacts.rechecked_on) are left out of the
+JSON while unset, so the facts of the Phase 2 kinds serialize exactly as before.
 """
 
 from __future__ import annotations
 
 import hashlib
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from haggler.research import kinds
 from haggler.research.kinds import SubjectKind, SubjectRef
@@ -28,6 +33,10 @@ CheckStatus = Literal[
     "blocked",
     "unsupported_content",
     "invalid",
+    # The bundle value hook (research.evidence): the quote verified on the page but does not
+    # state the claimed value, or the value is not a plausible price.
+    "value_not_in_quote",
+    "implausible",
 ]
 SubjectStatus = Literal["researched", "nothing_found", "failed"]
 ReviewChoice = Literal["accept", "reject"]
@@ -61,10 +70,20 @@ class ResearchAnswer(BaseModel):
     open_questions: list[str] = Field(
         description="Up to 3 short questions the sources left open, or []."
     )
-    suggested_instruments: list[str] = Field(
-        description="Payment providers worth researching next (names only), or []."
+    suggestions: list[str] = Field(
+        description="What the job asks to suggest for research next (names only), or []."
     )
     notes: str = Field(description="One short sentence, or ''.")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _old_suggestions_key(cls, data: Any) -> Any:
+        """Answers stored before the rename called the list `suggested_instruments`."""
+        if isinstance(data, dict) and "suggested_instruments" in data:
+            data = dict(data)
+            old = data.pop("suggested_instruments")
+            data.setdefault("suggestions", old)
+        return data
 
 
 # ---------------------------------------------------------------- persisted facts
@@ -122,6 +141,8 @@ class Claim(_Strict):
     quote: str = Field(max_length=MAX_QUOTE)
     check: SourceCheck
     first_seen: date
+    # A bundle value more than research.values.BIG_CHANGE away from the bundles.yaml value.
+    big_change: bool = Field(default=False, exclude_if=lambda v: not v)
 
     @property
     def url(self) -> str:
@@ -152,6 +173,10 @@ class SubjectFacts(_Strict):
     unverified: list[UnverifiedClaim] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
     error: str | None = None
+    # The last run that re-checked the claims on their pages without researching the subject
+    # (the bundle watcher's recheck); researched_on and the state's last_success stay as they
+    # were.
+    rechecked_on: date | None = Field(default=None, exclude_if=lambda v: v is None)
 
     def claim(self, claim_id_: str) -> Claim | None:
         return next((c for c in self.claims if c.id == claim_id_), None)
@@ -233,6 +258,9 @@ class ResearchReport(_Strict):
     checks: dict[str, dict[str, int]] = Field(default_factory=dict)
     budget: BudgetUsage
     open_questions: dict[str, list[str]] = Field(default_factory=dict)
+    # What the service, pair and instrument agents suggested (Phase 2: payment providers).
     suggested_instruments: list[str] = Field(default_factory=list)
+    # Every agent's suggestions, by subject kind (bundle: other bundles of the same provider).
+    suggestions: dict[str, list[str]] = Field(default_factory=dict, exclude_if=lambda v: not v)
     errors: list[str] = Field(default_factory=list)
     outputs: list[str] = Field(default_factory=list)

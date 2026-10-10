@@ -3,13 +3,29 @@
     haggler research review [--subject netflix] [--profile P] [--all]
         read-only: the findings in data/research with their review state and, per profile, how
         each affected verdict changes when the pending findings are accepted
+    haggler research review --subject <bundle_id> | --bundles [--summary]
+        read-only, per bundle (haggler.bundles.review): its state, the watcher's anchors and
+        hints, the value proposals (before -> after), the feasibility findings, the verdict of
+        each profile without and with the pending findings, and a ready-to-paste bundles.yaml
+        snippet per proposal. --bundles: every bundle with something to review; --summary: one
+        line of counts (the publish.yml job summary)
     haggler research accept SELECTOR... [--note TEXT] [--by NAME] [--date YYYY-MM-DD]
     haggler research reject SELECTOR... [--note TEXT] [--by NAME] [--date YYYY-MM-DD]
         append one decision per matching claim to data/curated/research_review.yaml (the file is
         appended to, never re-dumped, so comments and history stay)
 
-SELECTOR: a claim id, a subject key ("pair:netflix:CO"), or a bare service/instrument id
-("netflix" = the service's subject and every pair of that service; see research.kinds).
+SELECTOR: a claim id, a subject key ("pair:netflix:CO"), or a bare service/instrument/bundle id
+("netflix" = the service's subject and every pair of that service; see research.kinds), or the
+id of a watcher proposal ("watch:<bundle_id>:<field>:<value>", haggler.bundles.proposals).
+
+Bundles: bundles.yaml is the only source of a bundle's values and nothing here edits it.
+* accept of a bundle VALUE (a value finding, research.fields yaml_value, or a watcher proposal)
+  is refused with exit 2 and prints the snippet to paste into the YAML instead;
+* accept of a bundle's FEASIBILITY findings takes their claim ids: a bare bundle id or a
+  "bundle:<id>" key is refused (exit 2);
+* reject works for every bundle finding and proposal (by id, or the whole bundle by its id): it
+  hides the proposal until new evidence (a new hash) brings it back.
+A refused accept writes nothing, not even the other selectors' decisions.
 """
 
 from __future__ import annotations
@@ -23,7 +39,10 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
+from haggler.bundles.proposals import Proposal, bundle_proposals, resolved, snippet
+from haggler.bundles.review import report_lines, review_all, summary_line
 from haggler.catalog import (
+    load_bundles,
     load_catalog,
     load_feasibility,
     load_payment_instruments,
@@ -33,16 +52,16 @@ from haggler.catalog import (
 )
 from haggler.config import repo_root
 from haggler.feasibility import LABEL_INFO
-from haggler.models.research import Claim, ReviewDecision, ReviewFile, SubjectFacts
+from haggler.models.bundles import WatchFile
+from haggler.models.curated import Bundle, BundlesFile
+from haggler.models.research import ReviewDecision, ReviewFile, SubjectFacts, subject_key
 from haggler.research.evaluate import EvalContext, assess
-from haggler.research.fields import FIELD_SPECS, value_label_es
-from haggler.research.io import load_data_dir
-from haggler.research.kinds import KINDS
-from haggler.research.review import ReviewIndex, select_claims
+from haggler.research.fields import FIELD_SPECS
+from haggler.research.io import load_data_dir, load_data_watch
+from haggler.research.kinds import KINDS, parse_key
+from haggler.research.review import ReviewIndex, claim_lines, select_claims
 
 REVIEW_FILE = "research_review.yaml"
-STATUS_ES = {"accepted": "aceptada", "rejected": "rechazada", "pending": "pendiente"}
-CLASS_ES = {"official": "oficial", "press": "prensa", "forum": "foro"}
 
 
 def _err(message: str) -> None:
@@ -51,20 +70,6 @@ def _err(message: str) -> None:
 
 def _label(label: str) -> str:
     return LABEL_INFO.get(label, (label, ""))[0]
-
-
-def _claim_line(claim: Claim, status: str) -> list[str]:
-    spec = FIELD_SPECS.get(claim.field)
-    field_es = spec.label_es if spec else claim.field
-    when = f" ({claim.event_date.isoformat()})" if claim.event_date else ""
-    retrieved = claim.check.retrieved_at.date().isoformat() if claim.check.retrieved_at else "—"
-    return [
-        f"  [{STATUS_ES[status]}] {claim.id}  hash={claim.hash}",
-        f"      {field_es}: {value_label_es(claim.field, claim.value)}{when}",
-        f"      fuente {CLASS_ES.get(claim.check.source_class, claim.check.source_class)}, "
-        f"consultada el {retrieved}: {claim.url}",
-        f"      “{claim.quote}”",
-    ]
 
 
 def _affected_pairs(subjects: list[SubjectFacts], ctx: EvalContext) -> set[tuple[str, str]]:
@@ -107,32 +112,125 @@ def _context(args: argparse.Namespace, review: ReviewFile) -> tuple[EvalContext,
     return ctx, [p for p in profiles.public()]
 
 
+def _load_bundles(args: argparse.Namespace) -> BundlesFile:
+    """bundles.yaml (none when the curated directory has no bundles file)."""
+    base = args.curated_dir or repo_root() / "data" / "curated"
+    if not (base / "bundles.yaml").exists():
+        return BundlesFile(bundles=[])
+    return load_bundles(args.curated_dir)
+
+
+def _load_watch(args: argparse.Namespace) -> WatchFile | None:
+    watch, errors = load_data_watch(args.data_dir)
+    for e in errors:
+        _err(f"aviso: {e}")
+    return watch
+
+
+def _bundle_named(selector: str, bundles: BundlesFile, subjects: list[SubjectFacts]) -> str | None:
+    """The bundle a selector names: its id, its subject key, a claim id of its subject or a
+    watcher proposal id ("watch:<bundle_id>:..."); None for anything else."""
+    ids = {b.bundle_id for b in bundles.bundles}
+    if selector in ids:
+        return selector
+    ref = parse_key(selector)
+    if ref is not None and ref.kind == "bundle":
+        return ref.owner
+    if selector.startswith("watch:"):
+        return selector.split(":")[1] or None
+    for subject, _claim in select_claims(subjects, selector):
+        if subject.kind == "bundle":
+            return subject.ref.owner
+    return None
+
+
+def _review_bundles(
+    args: argparse.Namespace,
+    ctx: EvalContext,
+    profiles: list,
+    bundles: BundlesFile,
+    bundle_id: str | None,
+) -> int:
+    reviews = review_all(bundles, watch=_load_watch(args), ctx=ctx)
+    if args.summary:
+        print(summary_line(reviews))
+        return 0
+    if bundle_id is not None:
+        chosen = [r for r in reviews if r.bundle.bundle_id == bundle_id]
+        if not chosen:
+            _err(f"el paquete {bundle_id} no está en bundles.yaml")
+            return 2
+    else:
+        chosen = [r for r in reviews if r.needs_review]
+        if not chosen:
+            print("Ningún paquete tiene nada pendiente de revisión.")
+            return 0
+    for i, r in enumerate(chosen):
+        if i:
+            print()
+        print("\n".join(report_lines(r, ctx, profiles, bundles=bundles, show_all=args.all)))
+    return 0
+
+
+def _bundle_pointer(args: argparse.Namespace, ctx: EvalContext, bundles: BundlesFile) -> None:
+    """After the general review: the bundles with something to review (their own report)."""
+    reviews = review_all(bundles, watch=_load_watch(args), ctx=ctx) if bundles.bundles else []
+    flagged = [r.bundle.bundle_id for r in reviews if r.needs_review]
+    if flagged:
+        print(
+            f"Paquetes por revisar: {', '.join(flagged)} (haggler research review --subject <id>)."
+        )
+
+
+def _is_bundle_value(field_name: str) -> bool:
+    spec = FIELD_SPECS.get(field_name)
+    return spec is not None and spec.yaml_value
+
+
 def cmd_review(args: argparse.Namespace) -> int:
+    if args.summary and not args.bundles:
+        _err("--summary va con --bundles")
+        return 2
     review = load_review(args.curated_dir)
     ctx, profiles = _context(args, review)
     index = ReviewIndex(review)
     subjects = sorted(ctx.facts.values(), key=lambda s: s.key)
-    if args.subject:
-        keys = {s.key for s, _ in select_claims(subjects, args.subject)}
-        subjects = [s for s in subjects if s.key in keys or s.key == args.subject]
     if args.profile:
         profiles = [p for p in profiles if p.id == args.profile]
         if not profiles:
             _err(f"perfil desconocido: {args.profile}")
             return 2
+    bundles = _load_bundles(args)
+    bundle_id = _bundle_named(args.subject, bundles, subjects) if args.subject else None
+    if args.bundles or bundle_id is not None:
+        return _review_bundles(args, ctx, profiles, bundles, bundle_id)
+    if args.subject:
+        keys = {s.key for s, _ in select_claims(subjects, args.subject)}
+        subjects = [s for s in subjects if s.key in keys or s.key == args.subject]
     if not subjects:
         print("No hay hallazgos de investigación en data/research para esa selección.")
+        if not args.subject:
+            _bundle_pointer(args, ctx, bundles)
         return 0
     pending_total = 0
     for s in subjects:
-        claims = [(c, index.status(c)) for c in s.claims]
+        # A bundle's VALUE findings are proposals, never decided here: the bundle's own report
+        # lists the open ones (the YAML may already hold the value) and the pointer below
+        # names the bundles that have any.
+        values = {c.id for c in s.claims if s.kind == "bundle" and _is_bundle_value(c.field)}
+        claims = [(c, index.status(c)) for c in s.claims if c.id not in values]
         shown = [(c, st) for c, st in claims if args.all or st == "pending"]
         pending_total += sum(1 for _, st in claims if st == "pending")
         print(f"{s.key} — investigado el {s.researched_on.isoformat()} ({s.status})")
         if not shown:
             print("  sin hallazgos pendientes")
         for c, st in shown:
-            print("\n".join(_claim_line(c, st)))
+            print("\n".join(claim_lines(c, st)))
+        if values:
+            print(
+                f"  valores del paquete: propuestas en haggler research review --subject "
+                f"{s.ref.owner}"
+            )
         for q in s.open_questions:
             print(f"  ? {q}")
     print()
@@ -149,6 +247,8 @@ def cmd_review(args: argparse.Namespace) -> int:
     if not changed:
         print("  ningún veredicto cambia")
     print(f"\n{pending_total} hallazgo(s) pendiente(s).")
+    if not args.subject:
+        _bundle_pointer(args, ctx, bundles)
     return 0
 
 
@@ -196,6 +296,105 @@ def append_decisions(path: Path, decisions: list[ReviewDecision]) -> None:
         raise ValueError(f"{path}: las decisiones no quedaron al final de la lista; no se modificó")
 
 
+class _BundleSide:
+    """bundles.yaml, the watch state and the bundles' proposals, loaded on first use (a
+    decision on Phase 2 findings never reads them)."""
+
+    def __init__(
+        self,
+        args: argparse.Namespace,
+        subjects: list[SubjectFacts],
+        index: ReviewIndex,
+        today: date,
+    ) -> None:
+        self.args, self.subjects, self.index, self.today = args, subjects, index, today
+        self._bundles: BundlesFile | None = None
+        self._watch: WatchFile | None = None
+        self._props: dict[str, list[Proposal]] = {}
+
+    @property
+    def bundles(self) -> BundlesFile:
+        if self._bundles is None:
+            self._bundles = _load_bundles(self.args)
+            self._watch = _load_watch(self.args)
+        return self._bundles
+
+    def bundle(self, bundle_id: str | None) -> Bundle | None:
+        return next((b for b in self.bundles.bundles if b.bundle_id == bundle_id), None)
+
+    def proposals(self, bundle_id: str | None) -> list[Proposal]:
+        """Open proposals of a bundle, rejected ones included (to say "ya estaba")."""
+        b = self.bundle(bundle_id)
+        if b is None:
+            return []
+        if b.bundle_id not in self._props:
+            facts = {s.key: s for s in self.subjects}.get(subject_key("bundle", b.bundle_id))
+            self._props[b.bundle_id] = bundle_proposals(
+                b,
+                watch=self._watch.get(b.bundle_id) if self._watch else None,
+                facts=facts,
+                review=self.index,
+                today=self.today,
+                include_rejected=True,
+            )
+        return self._props[b.bundle_id]
+
+    def value_refusal(
+        self, bundle_id: str | None, id_: str, hash_: str, field: str, value: str
+    ) -> str:
+        head = (
+            f"no se acepta aquí: {id_} es un valor del paquete {bundle_id}; se acepta editando "
+            "data/curated/bundles.yaml (pega este snippet en la fila del paquete, en un PR):"
+        )
+        b = self.bundle(bundle_id)
+        if b is None:
+            return f"{head}\n  el paquete {bundle_id} no está en bundles.yaml"
+        if resolved(b, field, value, self.today):
+            return (
+                f"no se acepta aquí: {id_} es un valor del paquete {bundle_id}, y "
+                "data/curated/bundles.yaml ya lo tiene: no hay nada que aceptar"
+            )
+        p = next((p for p in self.proposals(bundle_id) if (p.id, p.hash) == (id_, hash_)), None)
+        if p is None:
+            return f"{head}\n  sin propuesta abierta para {id_}"
+        text = snippet(b, p, bundles=self.bundles).text()
+        return head + "\n" + "\n".join(f"    {line}" for line in text.splitlines())
+
+    def whole_refusal(self, selector: str, bundle_id: str | None) -> str:
+        key = subject_key("bundle", bundle_id or "")
+        pending = [
+            c.id
+            for s in self.subjects
+            if s.key == key
+            for c in s.claims
+            if not (spec := FIELD_SPECS.get(c.field)) or not spec.yaml_value
+            if self.index.status(c) == "pending"
+        ]
+        lines = [
+            f"no se acepta {selector!r} entero: en un paquete, cada hallazgo de factibilidad se "
+            "acepta por su id y cada valor editando data/curated/bundles.yaml (haggler research "
+            f"review --subject {bundle_id})"
+        ]
+        lines += [f"  hallazgo de factibilidad pendiente: {cid}" for cid in pending]
+        return "\n".join(lines)
+
+
+def _whole_bundle(selector: str, matched: list, side: _BundleSide) -> str | None:
+    """The bundle id when the selector names a whole bundle (its id or its subject key)."""
+    ref = parse_key(selector)
+    if ref is not None and ref.kind == "bundle":
+        return ref.owner
+    if any(s.kind == "bundle" and selector == s.ref.owner for s, _c in matched):
+        return selector
+    if (
+        not matched
+        and not selector.startswith("watch:")
+        and any(b.bundle_id == selector for b in side.bundles.bundles)
+    ):
+        return selector
+    return None
+
+
 def cmd_decide(args: argparse.Namespace, choice: str) -> int:
     path = (args.curated_dir or repo_root() / "data" / "curated") / REVIEW_FILE
     review = load_review(args.curated_dir)
@@ -204,37 +403,74 @@ def cmd_decide(args: argparse.Namespace, choice: str) -> int:
     for e in errors:
         _err(f"aviso: {e}")
     on = args.date or datetime.now(UTC).date()
+    side = _BundleSide(args, subjects, index, on)
     decisions: list[ReviewDecision] = []
+    refusals: list[str] = []
     seen: set[tuple[str, str]] = set()
+
+    def decide(id_: str, hash_: str, exact: bool) -> None:
+        current = index.lookup(id_, hash_)
+        if current is not None and current.decision == choice:
+            print(f"ya estaba: {choice} {id_}")
+            return
+        if current is not None and not exact:
+            # A subject-wide selector only decides pending findings; changing an earlier
+            # decision takes the exact claim id.
+            print(f"ya revisado ({current.decision}), se deja igual: {id_}")
+            return
+        decisions.append(
+            ReviewDecision(
+                id=id_,
+                hash=hash_,
+                decision=choice,  # type: ignore[arg-type]
+                decided_on=on,
+                by=args.by or "",
+                note=args.note or "",
+            )
+        )
+
     for selector in args.selectors:
         matched = select_claims(subjects, selector)
-        if not matched:
+        whole = _whole_bundle(selector, matched, side)
+        if whole is not None and choice == "accept":
+            refusals.append(side.whole_refusal(selector, whole))
+            continue
+        hints: list[Proposal] = []
+        if selector.startswith("watch:"):
+            bundle_id = selector.split(":")[1]
+            hints = [p for p in side.proposals(bundle_id) if p.id == selector]
+        elif whole is not None:
+            hints = [p for p in side.proposals(whole) if p.source == "watcher"]
+        if not matched and not hints:
             _err(f"ningún hallazgo coincide con {selector!r}")
             return 2
-        for _subject, claim in matched:
+        for subject, claim in matched:
             key = (claim.id, claim.hash)
             if key in seen:
                 continue
             seen.add(key)
-            current = index.decision(claim)
-            if current is not None and current.decision == choice:
-                print(f"ya estaba: {choice} {claim.id}")
-                continue
-            if current is not None and selector != claim.id:
-                # A subject-wide selector only decides pending findings; changing an earlier
-                # decision takes the exact claim id.
-                print(f"ya revisado ({current.decision}), se deja igual: {claim.id}")
-                continue
-            decisions.append(
-                ReviewDecision(
-                    id=claim.id,
-                    hash=claim.hash,
-                    decision=choice,  # type: ignore[arg-type]
-                    decided_on=on,
-                    by=args.by or "",
-                    note=args.note or "",
+            spec = FIELD_SPECS.get(claim.field)
+            if choice == "accept" and spec is not None and spec.yaml_value:
+                refusals.append(
+                    side.value_refusal(
+                        subject.ref.owner, claim.id, claim.hash, claim.field, claim.value
+                    )
                 )
-            )
+                continue
+            decide(claim.id, claim.hash, exact=selector == claim.id)
+        for p in hints:
+            if (p.id, p.hash) in seen:
+                continue
+            seen.add((p.id, p.hash))
+            if choice == "accept":
+                refusals.append(side.value_refusal(p.bundle_id, p.id, p.hash, p.field, p.proposed))
+                continue
+            decide(p.id, p.hash, exact=selector == p.id)
+    if refusals:
+        for r in refusals:
+            print(r)
+        print("No se añadió ninguna decisión.")
+        return 2
     if not decisions:
         print("Sin cambios.")
         return 0
@@ -265,6 +501,12 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--subject", default=None, help="id de servicio, instrumento o sujeto")
     review.add_argument("--profile", default=None)
     review.add_argument("--all", action="store_true", help="incluye los ya revisados")
+    review.add_argument(
+        "--bundles", action="store_true", help="todos los paquetes con algo por revisar"
+    )
+    review.add_argument(
+        "--summary", action="store_true", help="con --bundles: una línea de recuentos"
+    )
     for name in ("accept", "reject"):
         p = sub.add_parser(name, help=f"{name} hallazgos (añade a {REVIEW_FILE})")
         common(p)

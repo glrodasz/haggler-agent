@@ -3,20 +3,31 @@
     START -> plan_research -> watch_bundles -> research -> verify_evidence -> persist
 
 * plan_research: previous facts and state, the previous bundle_watch.json, the latest published
-  prices, plan.select(). With watch_only (`haggler research run --watch-only`) nothing is
-  planned for the agents: 0 search queries.
+  prices, plan.select() for the service, pair and instrument subjects. With watch_only
+  (`haggler research run --watch-only`) or the monthly guard spent nothing is planned for the
+  agents: 0 search queries.
 * watch_bundles: the bundle watcher (haggler.bundles.watch, no LLM) over data/curated/bundles.yaml.
   It ALWAYS runs: with the monthly search guard spent, without a model (--no-llm), with
   --max-jobs 0 and with --watch-only. Its pages go through the run's PageCache, which
-  verify_evidence reuses (one fetch per URL per run).
+  verify_evidence reuses (one fetch per URL per run). Then the bundle subjects are planned with
+  this run's watch outcomes (haggler.bundles.plan: --bundles, HAGGLER_RESEARCH_MAX_BUNDLES, and
+  whatever --max-jobs leaves after the other subjects), appended LAST.
 * research: one agent run per subject (google_search + response schema), within the run's call
-  and search-query budget (haggler.llm.budget).
-* verify_evidence: every claim checked by our own fetch (research.evidence); previous facts the
-  agents did not report again are re-checked against their page. Fetched text never goes back
-  to the model.
-* persist: research/runs/{date}/{run_id}/report.json, then research/latest/* (bundle_watch.json
-  included), run.json last. A subject whose research failed keeps its previous facts; a watcher
-  that crashed keeps the previous bundle_watch.json. Concurrency guard: when the run_id of
+  and search-query budget (haggler.llm.budget), kind by kind in KIND_ORDER (bundles last: they
+  are the first ones a spent budget skips).
+* verify_evidence: every claim checked by our own fetch (research.evidence); a bundle value
+  claim also by the value hook (research.evidence rule 5); previous facts the agents did not
+  report again are re-checked against their page. Fetched text never goes back to the model.
+  Then the pending findings of every bundle subject this run did NOT research (not planned, or
+  planned but skipped by the budget, without a model, or failed) are re-checked on their pages
+  without the model (research.evidence.recheck_claims), for the bundles the run may fetch on
+  its own (haggler.bundles.plan.automatic: watch.mode auto, a provider that allows automated
+  access, not expired): only those claims and the subject's rechecked_on change, never
+  researched_on nor the state's last_success.
+* persist: research/runs/{date}/{run_id}/report.json, then research/latest/* (bundles.json when
+  there are bundle subjects, bundle_watch.json), run.json last. A subject whose research failed
+  keeps its previous facts; a watcher that crashed keeps the previous bundle_watch.json.
+  Concurrency guard: when the run_id of
   research/latest/run.json is no longer the one plan_research saw (another run finished
   meanwhile), only the report is written and the run reports an error: nothing in latest/ is
   overwritten. A dry run writes nothing (the month's search usage excepted).
@@ -36,7 +47,9 @@ import pydantic
 from google.adk import Context, Workflow
 from google.adk.workflow import START, node
 
+from haggler.bundles import research as bundle_research
 from haggler.bundles import watch as bundle_watch
+from haggler.bundles.plan import automatic, plan_bundles
 from haggler.llm.runner import AgentJob, run_agent_jobs
 from haggler.models.fx import FxTable
 from haggler.models.observations import PublishedPrice
@@ -51,8 +64,14 @@ from haggler.models.research import (
 from haggler.research import io
 from haggler.research.agents import build_researcher
 from haggler.research.deps import ResearchDeps, research_budget
-from haggler.research.evidence import PageCache, recheck_claims, reverify, verify_subject
-from haggler.research.kinds import RUN_ORDER
+from haggler.research.evidence import (
+    PageCache,
+    ValueContext,
+    recheck_claims,
+    reverify,
+    verify_subject,
+)
+from haggler.research.kinds import RUN_ORDER, kind_of
 from haggler.research.plan import (
     PAUSE_AFTER_FAILURES,
     Limits,
@@ -63,6 +82,7 @@ from haggler.research.plan import (
     pause_after,
     select,
 )
+from haggler.research.review import ReviewIndex
 from haggler.store import dumps, read_json, write_text_gz
 
 log = logging.getLogger(__name__)
@@ -86,7 +106,7 @@ def _as_list(value: Any) -> list[str]:
 
 def parse_request(node_input: Any) -> dict[str, Any]:
     """The START message: free text = defaults, or a JSON object with date, services, pairs
-    ("netflix:CO"), instruments, max_jobs, dry_run and watch_only."""
+    ("netflix:CO"), instruments, bundles (bundle ids), max_jobs, dry_run and watch_only."""
     data: Any = node_input
     if isinstance(data, str):
         text = data.strip()
@@ -113,6 +133,7 @@ def parse_request(node_input: Any) -> dict[str, Any]:
         "services": _as_list(data.get("services")),
         "pairs": [f"{s}:{c}" for s, c in parse_pairs(_as_list(data.get("pairs")))],
         "instruments": _as_list(data.get("instruments")),
+        "bundles": _as_list(data.get("bundles")),
         "max_jobs": int(max_jobs) if max_jobs not in (None, "") else None,
         "dry_run": flag("dry_run"),
         "watch_only": flag("watch_only"),
@@ -154,10 +175,37 @@ def load_prices(deps: ResearchDeps, errors: list[str]) -> tuple[list[PublishedPr
     return prices, fx
 
 
+def _bundle(deps: ResearchDeps, subject: PlannedSubject) -> Any:
+    """The curated bundle of a bundle subject (KeyError when bundles.yaml no longer has it)."""
+    b = bundle_research.find_bundle(deps.bundles, subject.bundle_id)
+    if b is None:
+        raise KeyError(f"bundle {subject.bundle_id!r} is not in bundles.yaml")
+    return b
+
+
+def _watch_state(deps: ResearchDeps, bundle_id: str) -> Any:
+    watch = deps.buffer.watch or deps.buffer.watch_previous
+    return watch.get(bundle_id) if watch else None
+
+
+def value_context(deps: ResearchDeps, subject: PlannedSubject) -> ValueContext | None:
+    """What a bundle subject's value claims are checked against (None for the other kinds, and
+    for a bundle bundles.yaml no longer has: its value claims then fail closed)."""
+    if subject.kind != "bundle":
+        return None
+    b = bundle_research.find_bundle(deps.bundles, subject.bundle_id)
+    if b is None:
+        return None
+    return bundle_research.value_context(deps.bundles, b, deps.catalog, deps.buffer.fx)
+
+
 def payload(deps: ResearchDeps, subject: PlannedSubject) -> str:
     cat = deps.catalog
     job: dict[str, Any] = {"subject": subject.key}
-    if subject.kind in ("service", "pair") and subject.service_id:
+    if subject.kind == "bundle":
+        b = _bundle(deps, subject)
+        job |= bundle_research.job(deps.bundles, b, cat, _watch_state(deps, b.bundle_id))
+    elif subject.kind in ("service", "pair") and subject.service_id:
         svc = cat.service(subject.service_id)
         job |= {
             "service": svc.name,
@@ -181,7 +229,11 @@ def payload(deps: ResearchDeps, subject: PlannedSubject) -> str:
 
 
 def known_pages(deps: ResearchDeps, subject: PlannedSubject) -> list[str]:
-    """The subject's known official pages (catalog / instrument research_urls)."""
+    """The subject's known official pages (catalog / instrument research_urls; a bundle's
+    official URL and watch pages)."""
+    if subject.kind == "bundle":
+        b = bundle_research.find_bundle(deps.bundles, subject.bundle_id)
+        return bundle_research.known_pages(b, _watch_state(deps, b.bundle_id)) if b else []
     if subject.service_id:
         try:
             return list(deps.catalog.service(subject.service_id).research_urls)
@@ -192,6 +244,10 @@ def known_pages(deps: ResearchDeps, subject: PlannedSubject) -> list[str]:
 
 
 def official_domains(deps: ResearchDeps, subject: PlannedSubject) -> list[str]:
+    """A bundle's: its provider's domains for the bundle's country only."""
+    if subject.kind == "bundle":
+        b = bundle_research.find_bundle(deps.bundles, subject.bundle_id)
+        return bundle_research.official_domains(deps.bundles, b) if b else []
     if subject.service_id:
         try:
             return list(deps.catalog.service(subject.service_id).official_domains)
@@ -256,6 +312,12 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         if request["watch_only"]:
             log.info("research run %s: --watch-only, no subject planned", run_id)
             return {"subjects": [], "skipped": {"*": "--watch-only: bundle watcher only"}}
+        explicit = Request(
+            services=tuple(request["services"]),
+            pairs=parse_pairs(request["pairs"]),
+            instruments=tuple(request["instruments"]),
+            bundles=tuple(request["bundles"]),
+        )
         selection = select(
             catalog=deps.catalog,
             feasibility=deps.feasibility,
@@ -272,11 +334,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 max_instruments=settings.research_max_instruments,
                 max_month_queries=settings.research_max_month_queries,
             ),
-            request=Request(
-                services=tuple(request["services"]),
-                pairs=parse_pairs(request["pairs"]),
-                instruments=tuple(request["instruments"]),
-            ),
+            request=explicit,
             fx_fee_pct=settings.fx_fee_pct,
             month_queries_used=used,
             month=usage_month,
@@ -290,7 +348,15 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 skipped[s.key] = "over --max-jobs"
             subjects = subjects[: max(0, cap)]
         log.info("research run %s: %d subject(s) planned", run_id, len(subjects))
-        return {"subjects": [s.as_dict() for s in subjects], "skipped": skipped}
+        out: dict[str, Any] = {"subjects": [s.as_dict() for s in subjects], "skipped": skipped}
+        if used < settings.research_max_month_queries:
+            # watch_bundles plans the bundle subjects once the watcher ran (its outcomes count).
+            out["bundle_plan"] = {
+                "requested": request["bundles"],
+                "explicit": explicit.explicit,
+                "slots": None if cap is None else max(0, cap - len(subjects)),
+            }
+        return out
 
     def page_cache(run: dict[str, Any]) -> PageCache:
         """The run's PageCache (created by the first node that needs it). A dry run keeps no
@@ -313,12 +379,13 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
 
     async def watch_bundles(node_input: dict[str, Any], run: dict[str, Any]) -> dict[str, Any]:
         buf = deps.buffer
+        run_date = date.fromisoformat(run["run_date"])
         try:
             buf.watch = await bundle_watch.watch_bundles(
                 deps.bundles,
                 pages=page_cache(run),
                 previous=buf.watch_previous,
-                today=date.fromisoformat(run["run_date"]),
+                today=run_date,
                 now=deps.now(),
                 run_id=run["run_id"],
                 catalog=deps.catalog,
@@ -329,19 +396,91 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
             log.exception("bundle watch failed")
             buf.watch = None
             buf.errors.append(f"bundle watch: internal: {type(exc).__name__}: {exc}"[:300])
-            return node_input
-        run_date = date.fromisoformat(run["run_date"])
-        skipped = [
-            f"{b.bundle_id} {url}"
-            for b in buf.watch.bundles
-            for url in bundle_watch.pages_over_budget(b, run_date)
-        ]
-        if skipped:
-            buf.errors.append(
-                f"bundle watch: page budget of {settings.bundle_watch_max_pages} spent; "
-                f"not fetched: {', '.join(skipped)}"[:600]
+        else:
+            skipped = [
+                f"{b.bundle_id} {url}"
+                for b in buf.watch.bundles
+                for url in bundle_watch.pages_over_budget(b, run_date)
+            ]
+            if skipped:
+                buf.errors.append(
+                    f"bundle watch: page budget of {settings.bundle_watch_max_pages} spent; "
+                    f"not fetched: {', '.join(skipped)}"[:600]
+                )
+        return plan_bundle_subjects(node_input, run_date)
+
+    def plan_bundle_subjects(node_input: dict[str, Any], run_date: date) -> dict[str, Any]:
+        """The bundle subjects (haggler.bundles.plan), after every other subject."""
+        buf = deps.buffer
+        out = {k: v for k, v in node_input.items() if k != "bundle_plan"}
+        plan = node_input.get("bundle_plan")
+        if plan is None:
+            return out
+        try:
+            sel = plan_bundles(
+                deps.bundles,
+                facts=buf.latest.subjects,
+                state=buf.latest.state,
+                # This run's outcomes only: a crashed watcher's previous ones are no change.
+                watch=buf.watch,
+                today=run_date,
+                max_bundles=settings.research_max_bundles,
+                requested=plan.get("requested", []),
+                explicit=bool(plan.get("explicit")),
             )
-        return node_input
+        except Exception as exc:  # a planning bug never fails the run
+            log.exception("bundle planning failed")
+            buf.errors.append(f"bundle plan: internal: {type(exc).__name__}: {exc}"[:300])
+            return out
+        buf.errors.extend(sel.errors)
+        skipped = dict(out.get("skipped", {})) | sel.skipped
+        subjects = sel.subjects
+        slots = plan.get("slots")
+        if slots is not None and len(subjects) > slots:
+            for s in subjects[slots:]:
+                skipped[s.key] = "over --max-jobs"
+            subjects = subjects[:slots]
+        if subjects:
+            log.info("research run: %d bundle subject(s) planned", len(subjects))
+        out["subjects"] = [*out.get("subjects", []), *(s.as_dict() for s in subjects)]
+        out["skipped"] = skipped
+        return out
+
+    async def recheck_bundles(researched: set[str], run: dict[str, Any], on: date) -> None:
+        """Pending findings of the bundle subjects this run did not research: re-checked on
+        their pages (no model), for the bundles the run may fetch on its own. Only those claims
+        and rechecked_on change."""
+        buf = deps.buffer
+        review = ReviewIndex(deps.review)
+        for key, facts in sorted(buf.latest.subjects.items()):
+            if facts.kind != "bundle" or key in researched:
+                continue
+            pending = [c for c in facts.claims if review.status(c) == "pending"]
+            subject = PlannedSubject(key=key, kind="bundle", reason="", bundle_id=facts.ref.owner)
+            bundle = bundle_research.find_bundle(deps.bundles, subject.bundle_id)
+            if not pending or bundle is None or not automatic(bundle, deps.bundles, on):
+                # Nothing pending, a bundle no longer curated, or one the run may not fetch on
+                # its own (manual, off, expired, a provider that forbids it): left as it is.
+                continue
+            try:
+                kept, dropped = await recheck_claims(
+                    pending,
+                    pages=page_cache(run),
+                    official_domains=official_domains(deps, subject),
+                    value_context=value_context(deps, subject),
+                )
+            except Exception as exc:  # a recheck bug never fails the run
+                log.exception("bundle recheck failed: %s", key)
+                buf.errors.append(f"{key}: recheck: {type(exc).__name__}: {exc}"[:300])
+                continue
+            others = [c for c in facts.claims if review.status(c) != "pending"]
+            buf.rechecked[key] = facts.model_copy(
+                update={
+                    "claims": sorted([*others, *kept], key=lambda c: c.id),
+                    "unverified": [*facts.unverified, *dropped],
+                    "rechecked_on": on,
+                }
+            )
 
     @node(rerun_on_resume=True)
     async def research(node_input: Any, ctx: Context, run: dict[str, Any]) -> dict[str, Any]:
@@ -412,6 +551,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 return {"key": s.key, "outcome": "failed", "error": f"ValidationError: {exc}"[:300]}
             domains = official_domains(deps, s)
             grounding = [GroundingSource.model_validate(g) for g in ans.get("sources", [])]
+            values = value_context(deps, s)
             async with sem:
                 try:
                     v = await verify_subject(
@@ -424,6 +564,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                         today=run_date,
                         previous=previous,
                         known_pages=known_pages(deps, s),
+                        value_context=values,
                     )
                     prev_by_id = {c.id: c for c in (previous.claims if previous else [])}
                     # Same fact, new evidence: keep the previous claim (and its review decision)
@@ -433,7 +574,10 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                         before = prev_by_id.get(c.id)
                         if before is not None and before.hash != c.hash:
                             status, again = await reverify(
-                                before, pages=pages, official_domains=domains
+                                before,
+                                pages=pages,
+                                official_domains=domains,
+                                value_context=values,
                             )
                             if status == "verified" and again is not None:
                                 fresh.append(again)
@@ -442,7 +586,9 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                     v.claims = fresh
                     new_ids = {c.id for c in v.claims}
                     old = [c for c in prev_by_id.values() if c.id not in new_ids]
-                    kept, dropped = await recheck_claims(old, pages=pages, official_domains=domains)
+                    kept, dropped = await recheck_claims(
+                        old, pages=pages, official_domains=domains, value_context=values
+                    )
                 except Exception as exc:  # a verification bug fails this subject only
                     return {
                         "key": s.key,
@@ -468,10 +614,14 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 "outcome": status,
                 "facts": facts.model_dump(mode="json"),
                 "checks": v.checks,
-                "suggested": [x.strip()[:80] for x in answer.suggested_instruments if x.strip()],
+                "suggested": [x.strip()[:80] for x in answer.suggestions if x.strip()],
             }
 
         results = await asyncio.gather(*(one(s) for s in subjects))
+        # After the agents: a planned bundle the budget skipped (or that failed) is not
+        # researched either, and gets the recheck too.
+        researched = {r["key"] for r in results if r["outcome"] in ("researched", "nothing_found")}
+        await recheck_bundles(researched, run, run_date)
         return {**node_input, "results": list(results), "fetches": pages.fetches}
 
     def persist(node_input: dict[str, Any], run: dict[str, Any]) -> dict[str, Any]:
@@ -479,12 +629,13 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         run_date = date.fromisoformat(run["run_date"])
         run_id = run["run_id"]
         results: list[dict[str, Any]] = node_input.get("results", [])
-        subjects = dict(buf.latest.subjects)
+        # The bundle subjects the watcher re-checked (none of them researched this run).
+        subjects = dict(buf.latest.subjects) | buf.rechecked
         state = buf.latest.state.model_copy(deep=True)
         by_status: Counter[str] = Counter()
         checks: dict[str, Counter[str]] = {}
         open_q: dict[str, list[str]] = {}
-        suggested: list[str] = []
+        suggested: dict[str, list[str]] = {}
         for r in results:
             key, outcome = r["key"], r["outcome"]
             by_status[outcome.split(":", 1)[0]] += 1
@@ -507,7 +658,7 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                     open_q[key] = facts.open_questions
                 for cls, status in r.get("checks", []):
                     checks.setdefault(cls, Counter())[status] += 1
-                suggested += r.get("suggested", [])
+                suggested.setdefault(kind_of(key), []).extend(r.get("suggested", []))
             state.subjects[key] = st
         verified = sum(c.get("verified", 0) for c in checks.values())
         unverified = sum(n for c in checks.values() for n in c.values()) - verified
@@ -540,8 +691,10 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 log.error("research run %s: %s", run_id, message)
                 buf.errors.append(message)
         latest_outputs = [
-            *(f"{io.LATEST}/{n}" for n in io.LATEST_FILES),
-            *([f"{io.LATEST}/{io.WATCH_FILE}"] if watch is not None else []),
+            *(
+                f"{io.LATEST}/{n}"
+                for n in io.latest_names(subjects.values(), watch=watch is not None)
+            ),
             f"{io.LATEST}/run.json",
         ]
         report = ResearchReport(
@@ -571,7 +724,13 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
                 tool_prompt_tokens=sum(r.tool_prompt_tokens for r in records),
             ),
             open_questions=open_q,
-            suggested_instruments=sorted(set(suggested))[:20],
+            # Phase 2's list: what the service, pair and instrument agents suggested.
+            suggested_instruments=sorted(
+                {x for kind, xs in suggested.items() if kind != "bundle" for x in xs}
+            )[:20],
+            suggestions={
+                kind: sorted(set(xs))[:20] for kind, xs in sorted(suggested.items()) if xs
+            },
             errors=list(buf.errors),
             outputs=[]
             if dry

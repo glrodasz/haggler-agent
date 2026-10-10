@@ -10,8 +10,13 @@ import {
   periodSuffix,
 } from "../logic/format";
 import { bundleAnchor, routes } from "../logic/paths";
-import { bundleSavingNotes, savingClass } from "../logic/site";
-import type { Bundle, BundleComponent, BundleEvidence } from "../logic/types";
+import { bundleSavingNotes, pendingValueText, savingClass } from "../logic/site";
+import type {
+  Bundle,
+  BundleComponent,
+  BundleEvidence,
+  BundlePendingChange,
+} from "../logic/types";
 import BundleVerdict from "./BundleVerdict.astro";
 import CountryLabel from "./CountryLabel.astro";
 
@@ -132,6 +137,13 @@ const confirmation = (confirmed: boolean) =>
   confirmed
     ? { css: "badge status-verified", title: t.confirmedTitle, text: t.confirmed }
     : { css: "badge status-unverified", title: t.unconfirmedTitle, text: t.unconfirmed };
+
+/** "24.900 COP/mes → 21.900 COP/mes": what the curated data says, then what the page says. */
+const pendingText = (c: BundlePendingChange): string =>
+  t.pendingChange(
+    pendingValueText(c.value_type, c.current, site),
+    pendingValueText(c.value_type, c.proposed, site),
+  );
 
 const evidenceMeta = (e: BundleEvidence): string[] =>
   [
@@ -364,6 +376,50 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
                       f.unverifiedQuote
                     )}
                   </>
+                )}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )
+  }
+
+  {
+    b.pending_changes.length > 0 && (
+      <details class="evidence pending-changes">
+        <summary>{t.pendingTitle(b.pending_changes.length)}</summary>
+        <p class="small muted">{t.pendingLead}</p>
+        <ul class="evidence-list">
+          {b.pending_changes.map((c) => (
+            <li>
+              <p>
+                <strong>{lookup(t.pendingFields, c.field)}</strong>: {pendingText(c)}
+                {c.big_change && (
+                  <>
+                    {" "}
+                    <span class="badge status-needs_review" title={t.pendingBigChangeTitle}>
+                      {t.pendingBigChange}
+                    </span>
+                  </>
+                )}
+              </p>
+              <blockquote cite={c.url}>{c.quote}</blockquote>
+              <p class="small muted">
+                <a
+                  href={c.url}
+                  rel="nofollow noopener noreferrer external"
+                  aria-label={f.evidenceLinkLabel(
+                    hostOf(c.url),
+                    lookup(es.evidenceKinds, "official"),
+                  )}
+                >
+                  {hostOf(c.url)}
+                </a>
+                {" · "}
+                {t.pendingSeen(
+                  lookup(t.pendingSources, c.source),
+                  formatDate(c.retrieved_at ?? c.first_seen),
                 )}
               </p>
             </li>

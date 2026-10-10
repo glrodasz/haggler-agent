@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import shutil
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
+import yaml
 
 from haggler import cli
 from haggler.catalog import load_review
 from haggler.config import repo_root
+from haggler.models.bundles import BundleWatchState, PriceHint, WatchFile
 from haggler.models.research import Claim, SourceCheck, SubjectFacts, claim_hash, claim_id
 from haggler.research import io as rio
 from haggler.research.review import select_claims
@@ -188,3 +191,229 @@ def test_append_follows_the_file_layout(dirs, content):
     assert integrity_errors(load_catalog(), review=review) == []
     text = (curated / "research_review.yaml").read_text(encoding="utf-8")
     assert text.startswith(content.split("decisions:")[0])
+
+
+# --------------------------------------------------------------- bundle findings (H8)
+
+BUNDLE = "meli_plus_co_total"
+BUNDLE_KEY = f"bundle:{BUNDLE}"
+PLANES = "https://www.mercadolibre.com.co/suscripciones/melimas/planes"
+PRICE_QUOTE = "Meli+ Total cuesta $ 21.900 por mes."
+CLAUSE_QUOTE = "Meli+ está disponible únicamente para residentes en Colombia."
+HINT_LINE = "Plan Total: $ 22.900 por mes."
+
+
+def bundle_claim(field: str, value: str, quote: str) -> Claim:
+    return Claim(
+        id=claim_id(BUNDLE_KEY, field, value),
+        hash=claim_hash(field, value, None, quote, PLANES),
+        field=field,
+        value=value,
+        quote=quote,
+        check=SourceCheck(
+            cited_url=PLANES,
+            final_url=PLANES,
+            source_class="official",
+            status="verified",
+            retrieved_at=datetime(2026, 10, 6, tzinfo=UTC),
+        ),
+        first_seen=date(2026, 10, 6),
+    )
+
+
+PRICE = bundle_claim("bundle_price", "21900 COP/month", PRICE_QUOTE)
+CLAUSE = bundle_claim("bundle_residence_clause", "must_reside", CLAUSE_QUOTE)
+
+
+def bundle_subjects() -> list[SubjectFacts]:
+    return [
+        SubjectFacts(
+            key=BUNDLE_KEY,
+            kind="bundle",
+            researched_on=date(2026, 10, 6),
+            run_id="r1",
+            status="researched",
+            claims=[PRICE, CLAUSE],
+        )
+    ]
+
+
+@pytest.fixture
+def bundle_dirs(dirs: tuple[Path, Path]) -> tuple[Path, Path]:
+    """The Phase 2 findings plus a researched bundle (a value and a feasibility finding) and a
+    watcher hint for it; the bundle is put in auto watch so the hint counts."""
+    data, curated = dirs
+    for name, blob in rio.subject_files([*subjects(), *bundle_subjects()]).items():
+        (data / "research" / name).write_bytes(blob)
+    watch = WatchFile(
+        bundles=[
+            BundleWatchState(
+                bundle_id=BUNDLE,
+                outcome="ok",
+                checked_at=date(2026, 10, 5),
+                hints=[
+                    PriceHint(
+                        url=PLANES,
+                        amount=Decimal("22900"),
+                        currency="COP",
+                        period="month",
+                        role="regular",
+                        line=HINT_LINE,
+                        first_seen=date(2026, 9, 28),
+                    )
+                ],
+            )
+        ]
+    )
+    (data / "research" / "bundle_watch.json").write_text(watch.model_dump_json(), "utf-8")
+    raw = yaml.safe_load((curated / "bundles.yaml").read_text(encoding="utf-8"))
+    row = next(b for b in raw["bundles"] if b["bundle_id"] == BUNDLE)
+    row["watch"]["mode"] = "auto"
+    (curated / "bundles.yaml").write_text(yaml.safe_dump(raw, allow_unicode=True), "utf-8")
+    return data, curated
+
+
+def snippets(out: str) -> list[dict]:
+    """The YAML snippets in a CLI output: each starts at its "# data/curated/bundles.yaml"
+    comment and runs while the lines keep its indentation."""
+    blocks: list[list[str]] = []
+    pad: str | None = None
+    for line in out.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("# data/curated/bundles.yaml, paquete"):
+            pad = line[: len(line) - len(stripped)]
+            blocks.append([])
+        elif pad is not None and line.strip() and line.startswith(pad):
+            if not stripped.startswith("#"):
+                blocks[-1].append(line[len(pad) :])
+        else:
+            pad = None
+    return [yaml.safe_load("\n".join(b)) for b in blocks]
+
+
+def test_review_of_a_bundle_shows_proposals_impact_and_snippets(bundle_dirs, capsys):
+    yaml_before = (bundle_dirs[1] / "bundles.yaml").read_text(encoding="utf-8")
+    assert run("review", "--subject", BUNDLE, dirs=bundle_dirs) == 0
+    out = capsys.readouterr().out
+    assert out.startswith(f"Paquete {BUNDLE} — Meli+ Total (CO) · vigilancia auto")
+    assert "estado: requiere revisión" in out
+    # The watcher's hint first, then the agent's value finding, each before -> after.
+    assert f"[vigilante] watch:{BUNDLE}:bundle_price:22900 COP/month" in out
+    assert "Precio del paquete: 24900 COP/month -> 22900 COP/month" in out
+    assert f"[pendiente] {PRICE.id}  hash={PRICE.hash}" in out
+    assert "Precio del paquete: 24900 COP/month -> 21900 COP/month" in out
+    # The feasibility finding, accepted by id; the verdict per profile.
+    assert f"[pendiente] {CLAUSE.id}" in out
+    assert "Impacto por perfil (sin pendientes → aceptando los pendientes):" in out
+    assert "  se_resident_co_citizen: " in out and "  se_resident_eu_generic: " in out
+    # One snippet per proposal: the value at its path and the literal quote as the anchor.
+    hint_snippet, price_snippet = snippets(out)
+    assert price_snippet == {
+        "price": {"amount": "21900"},
+        "watch": {"anchors": [{"fact": "price", "url": PLANES, "text": PRICE_QUOTE}]},
+    }
+    assert hint_snippet["price"] == {"amount": "22900"}
+    assert hint_snippet["watch"]["anchors"][0]["text"] == HINT_LINE
+    # Read-only: bundles.yaml is never edited.
+    assert (bundle_dirs[1] / "bundles.yaml").read_text(encoding="utf-8") == yaml_before
+    # Any selector of the bundle opens its report: its subject key or a proposal id.
+    for selector in (BUNDLE_KEY, PRICE.id, f"watch:{BUNDLE}:bundle_price:22900 COP/month"):
+        assert run("review", "--subject", selector, dirs=bundle_dirs) == 0
+        assert capsys.readouterr().out.startswith(f"Paquete {BUNDLE} —")
+
+
+def test_accept_of_a_bundle_value_is_refused_with_the_snippet(bundle_dirs, capsys):
+    _data, curated = bundle_dirs
+    before = (curated / "research_review.yaml").read_text(encoding="utf-8")
+    for selector in (PRICE.id, f"watch:{BUNDLE}:bundle_price:22900 COP/month"):
+        assert run("accept", selector, dirs=bundle_dirs) == 2
+        out = capsys.readouterr().out
+        assert f"no se acepta aquí: {selector} es un valor del paquete" in out
+        assert "No se añadió ninguna decisión." in out
+        (snip,) = snippets(out)
+        assert snip["watch"]["anchors"][0]["url"] == PLANES
+    # A refused selector refuses the whole command: the Phase 2 id next to it is not decided.
+    phase2 = subjects()[0].claims[0].id
+    assert run("accept", phase2, PRICE.id, dirs=bundle_dirs) == 2
+    assert (curated / "research_review.yaml").read_text(encoding="utf-8") == before
+
+
+def test_bundle_feasibility_is_accepted_by_explicit_id_only(bundle_dirs, capsys):
+    _data, curated = bundle_dirs
+    for selector in (BUNDLE, BUNDLE_KEY):
+        assert run("accept", selector, dirs=bundle_dirs) == 2
+        out = capsys.readouterr().out
+        assert f"no se acepta {selector!r} entero" in out
+        assert f"hallazgo de factibilidad pendiente: {CLAUSE.id}" in out
+    assert load_review(curated).decisions == []
+    assert run("accept", CLAUSE.id, dirs=bundle_dirs) == 0
+    assert [(d.id, d.hash, d.decision) for d in load_review(curated).decisions] == [
+        (CLAUSE.id, CLAUSE.hash, "accept")
+    ]
+
+
+def test_reject_hides_value_proposals_of_both_sources(bundle_dirs, capsys):
+    _data, curated = bundle_dirs
+    hint_id = f"watch:{BUNDLE}:bundle_price:22900 COP/month"
+    assert run("reject", hint_id, PRICE.id, "--note", "no es este nivel", dirs=bundle_dirs) == 0
+    decisions = load_review(curated).decisions
+    assert [(d.id, d.decision, d.note) for d in decisions] == [
+        (hint_id, "reject", "no es este nivel"),
+        (PRICE.id, "reject", "no es este nivel"),
+    ]
+    capsys.readouterr()
+    assert run("reject", hint_id, dirs=bundle_dirs) == 0
+    assert f"ya estaba: reject {hint_id}" in capsys.readouterr().out
+    assert run("review", "--subject", BUNDLE, dirs=bundle_dirs) == 0
+    out = capsys.readouterr().out
+    assert (
+        "Propuestas de valor (antes -> después; se aceptan editando bundles.yaml):\n  ninguna"
+        in (out)
+    )
+    assert snippets(out) == []
+    # The feasibility finding is still pending; a whole-bundle reject decides it.
+    assert run("reject", BUNDLE, dirs=bundle_dirs) == 0
+    assert load_review(curated).decisions[-1].id == CLAUSE.id
+
+
+def test_bundles_summary_line(bundle_dirs, capsys):
+    assert run("review", "--bundles", "--summary", dirs=bundle_dirs) == 0
+    assert capsys.readouterr().out == (
+        "Paquetes: 2 propuestas de valor pendientes, 1 hallazgo de factibilidad pendiente; "
+        f"1 paquete por revisar: {BUNDLE}.\n"
+    )
+    assert run("reject", BUNDLE, dirs=bundle_dirs) == 0
+    capsys.readouterr()
+    assert run("review", "--bundles", "--summary", dirs=bundle_dirs) == 0
+    assert capsys.readouterr().out == "Paquetes: nada pendiente de revisión.\n"
+    assert run("review", "--summary", dirs=bundle_dirs) == 2
+
+
+def test_general_review_points_to_the_bundles(bundle_dirs, capsys):
+    assert run("review", dirs=bundle_dirs) == 0
+    out = capsys.readouterr().out
+    assert out.rstrip().endswith(
+        f"Paquetes por revisar: {BUNDLE} (haggler research review --subject <id>)."
+    )
+    # The Phase 2 part is unchanged.
+    assert "se_resident_eu_generic · netflix CO: Sin evaluar → No factible" in out
+    # The bundle's feasibility finding is listed and counted; its value finding is a proposal
+    # of the bundle's own report (never accepted here, maybe already in the YAML): neither.
+    assert f"[pendiente] {CLAUSE.id}" in out and PRICE.id not in out
+    assert f"valores del paquete: propuestas en haggler research review --subject {BUNDLE}" in out
+    assert "4 hallazgo(s) pendiente(s)." in out  # the 3 Phase 2 ones and the clause
+
+
+def test_a_value_finding_the_yaml_holds_is_not_pending_anywhere(dirs, capsys):
+    data, _curated = dirs
+    # The agent confirmed the YAML's own price: nothing to review in any listing.
+    same = bundle_claim("bundle_price", "24900 COP/month", "Meli+ Total cuesta $ 24.900 por mes.")
+    facts = bundle_subjects()[0].model_copy(update={"claims": [same]})
+    for name, blob in rio.subject_files([*subjects(), facts]).items():
+        (data / "research" / name).write_bytes(blob)
+    assert run("review", dirs=dirs) == 0
+    out = capsys.readouterr().out
+    assert same.id not in out and "3 hallazgo(s) pendiente(s)." in out
+    assert "Paquetes por revisar" not in out
+    assert run("review", "--bundles", "--summary", dirs=dirs) == 0
+    assert capsys.readouterr().out == "Paquetes: nada pendiente de revisión.\n"

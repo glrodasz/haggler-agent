@@ -688,3 +688,53 @@ def test_a_broken_listed_watch_file_is_a_research_sync_error(
     assert result.prices == len(DAY1_PRICES) and result.research_run_id is None
     assert any("bundle_watch.json" in w for w in result.warnings)
     assert not (tmp_path / "data" / "research").exists()
+
+
+def test_bundle_facts_are_copied_when_the_manifest_lists_them(
+    tmp_path: Path, day1: LocalStore, day2: LocalStore
+) -> None:
+    # H8: the bundle kind's facts live in the optional bundles.json, written only when a run
+    # has bundle subjects.
+    from haggler.research import io as rio
+
+    write_research(
+        day1, run_id="r1", as_of=DAY1, keys=["service:netflix", "bundle:meli_plus_co_total"]
+    )
+    run = json.loads(day1.read_bytes("research/latest/run.json"))
+    assert set(run["files"]) == {
+        "services.json",
+        "pairs.json",
+        "instruments.json",
+        "state.json",
+        "bundles.json",
+    }
+    data = tmp_path / "data"
+    result = sync(day1, data, today=DAY1)
+    assert result.research_subjects == 2
+    copied = data / "research" / "bundles.json"
+    assert copied.read_bytes() == day1.read_bytes("research/latest/bundles.json")
+    manifest = json.loads((data / "research" / "run.json").read_text())
+    assert manifest["files"]["bundles.json"] == hashlib.sha256(copied.read_bytes()).hexdigest()
+    subjects, _manifest, errors = rio.load_data_dir(data)
+    assert {s.key for s in subjects} == {"service:netflix", "bundle:meli_plus_co_total"}
+    assert not errors
+
+    # A later run without bundle subjects: the stale copy goes.
+    write_research(day2, run_id="r2", as_of=DAY2, keys=["service:netflix"])
+    sync(day2, data, today=DAY2)
+    assert not copied.exists()
+
+
+def test_a_broken_listed_bundles_file_is_a_research_sync_error(
+    tmp_path: Path, day1: LocalStore
+) -> None:
+    write_research(day1, run_id="r1", as_of=DAY1, keys=["bundle:meli_plus_co_total"])
+    bad = b'[{"key": "bundle:x"}]\n'
+    day1.write_bytes("research/latest/bundles.json", bad)
+    run = json.loads(day1.read_bytes("research/latest/run.json"))
+    run["files"]["bundles.json"] = hashlib.sha256(bad).hexdigest()
+    day1.write_bytes("research/latest/run.json", json.dumps(run).encode())
+    result = sync(day1, tmp_path / "data", today=DAY1)
+    assert result.research_run_id is None
+    assert any("bundles.json: formato inesperado" in w for w in result.warnings)
+    assert not (tmp_path / "data" / "research").exists()

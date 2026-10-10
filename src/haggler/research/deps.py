@@ -19,6 +19,7 @@ from haggler.catalog import (
     load_feasibility,
     load_payment_instruments,
     load_profiles,
+    load_review,
     synthesize_profiles,
 )
 from haggler.config import Settings
@@ -29,6 +30,7 @@ from haggler.models.catalog import Catalog
 from haggler.models.curated import BundlesFile, FeasibilityFile, PaymentInstrumentsFile
 from haggler.models.fx import FxTable
 from haggler.models.profiles import ProfilesFile
+from haggler.models.research import ReviewFile, SubjectFacts
 from haggler.research.io import Latest
 from haggler.store import Store, store_from_settings
 
@@ -69,6 +71,9 @@ class ResearchBuffer:
     # The previous run's bundle_watch.json, and this run's (None until the watcher ran).
     watch_previous: WatchFile | None = None
     watch: WatchFile | None = None
+    # Bundle subjects not researched this run whose pending findings verify_evidence re-checked
+    # (key -> the facts with their rechecked_on); persist writes them.
+    rechecked: dict[str, SubjectFacts] = field(default_factory=dict)
 
 
 @dataclass
@@ -85,6 +90,9 @@ class ResearchDeps:
     now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     # data/curated/bundles.yaml as deployed in the image (the bundle watcher's input).
     bundles: BundlesFile = field(default_factory=lambda: default_bundles())
+    # data/curated/research_review.yaml as deployed: which bundle findings are still pending
+    # (the watcher re-checks those of the bundles it does not research).
+    review: ReviewFile = field(default_factory=lambda: load_review())
     fetch_timeout_s: float = 90.0
     buffer: ResearchBuffer = field(default_factory=ResearchBuffer)
 
@@ -130,6 +138,7 @@ def build_default_research_deps(settings: Settings | None = None) -> ResearchDep
         instruments=load_payment_instruments(),
         profiles=profiles,
         bundles=load_bundles(),
+        review=load_review(),
         fetcher=LazyFetcher(make_fetcher),
         store=LazyStore(lambda: store_from_settings(settings)),
         model=model,

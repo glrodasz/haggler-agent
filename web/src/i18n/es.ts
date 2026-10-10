@@ -324,7 +324,7 @@ export const es = {
       verified:
         "Precio y componentes encontrados hace 15 días o menos en una página oficial del país del paquete.",
       needs_review:
-        "La página oficial ya no muestra algún valor registrado o publicó un documento nuevo: falta revisarlo.",
+        "La página oficial ya no muestra algún valor registrado, muestra uno distinto o publicó un documento nuevo: falta revisarlo.",
       manual: "Una persona lo comprobó a mano hace 45 días o menos. No cuenta como fuente oficial.",
       unverified: "Ningún valor está confirmado en una página oficial.",
       expired: "La oferta terminó; se muestra solo como referencia.",
@@ -369,6 +369,34 @@ export const es = {
       outdated_document: "documento desactualizado",
       not_checked: "sin comprobar",
     } as Record<string, string>,
+    /** pending_changes: official values that differ from the curated data, awaiting review. */
+    pendingTitle: (count: number) => `Cambios pendientes de revisión (${count})`,
+    pendingLead:
+      "Valores que una página oficial del país del paquete indica y los datos curados aún no. No cambian nada hasta que una persona los revisa y edita los datos.",
+    pendingFields: {
+      bundle_price: "Precio",
+      bundle_intro_price: "Precio de introducción",
+      bundle_base_price: "Precio del plan base",
+      bundle_intro_months: "Meses del precio de introducción",
+      bundle_contract_months: "Permanencia",
+      bundle_intro_until: "Fin del precio de introducción",
+      bundle_offer_until: "Fin de la oferta",
+      bundle_includes: "Servicio incluido",
+      bundle_discount: "Descuento",
+      bundle_available: "Se sigue vendiendo",
+      bundle_price_list_url: "Lista de precios",
+    } as Record<string, string>,
+    pendingSources: {
+      watcher: "el vigilante",
+      agent: "la investigación automática",
+    } as Record<string, string>,
+    pendingNone: "sin registrar",
+    pendingChange: (current: string, proposed: string) => `${current} → ${proposed}`,
+    pendingMonths: (months: number) => `${months} ${months === 1 ? "mes" : "meses"}`,
+    pendingDiscount: (service: string, pct: string) => `${pct} en ${service}`,
+    pendingSeen: (source: string, date: string) => `según ${source}, ${date}`,
+    pendingBigChange: "cambio grande",
+    pendingBigChangeTitle: "Más del 50 % de diferencia con el valor registrado.",
     /** watch_mode: how the bundle's official pages are checked. */
     watchModes: {
       auto: "Automática",

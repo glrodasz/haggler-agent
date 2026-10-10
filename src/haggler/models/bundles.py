@@ -52,6 +52,8 @@ AnchorCheck   one anchor of bundles.yaml. anchor_hash = sha256(fact|normalize(te
               while set the anchor confirms nothing, however recent last_verified_at is.
 PriceHint     an amount in the bundle's currency on one of its pages that check_value reads as a
               regular (or intro) price of the bundle and that differs from the YAML value.
+              first_seen: the first run that found it (carried while each run finds it again);
+              a hint is a proposal (haggler.bundles.proposals), reviewed like an agent finding.
 BundleWatchState  outcome: ok | changed (a price, base_price or component anchor missing on a
               page that loaded) | new_document | unreadable (no page could be read) | manual |
               off (watch.mode, or a provider whose terms forbid automated access; nothing
@@ -165,6 +167,8 @@ class PriceHint(_Strict):
     reason: str = ""
     # More than haggler.research.values.BIG_CHANGE away from the YAML value.
     big_change: bool = False
+    # The first run that found this amount in this role (None in a file written before H8).
+    first_seen: date | None = None
 
 
 class BundleWatchState(_Strict):

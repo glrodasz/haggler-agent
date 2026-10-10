@@ -23,7 +23,12 @@ from haggler.research.evaluate import EvalContext
 from haggler.research.kinds import KINDS, RUN_ORDER, SubjectRef, kind_of, parse_key
 from haggler.research.review import select_claims
 
-SAMPLE_IDS = {"service": ("netflix",), "pair": ("netflix", "CO"), "instrument": ("revolut_eea",)}
+SAMPLE_IDS = {
+    "service": ("netflix",),
+    "pair": ("netflix", "CO"),
+    "instrument": ("revolut_eea",),
+    "bundle": ("meli_plus_co_total",),
+}
 
 
 # ------------------------------------------------------------------ registry
@@ -42,7 +47,16 @@ def test_one_subject_kind_definition():
 
 
 def test_registry_matches_subject_kind():
-    assert tuple(KINDS) == get_args(kinds.SubjectKind) == ("service", "pair", "instrument")
+    assert (
+        tuple(KINDS)
+        == get_args(kinds.SubjectKind)
+        == (
+            "service",
+            "pair",
+            "instrument",
+            "bundle",
+        )
+    )
     for name, spec in KINDS.items():
         assert spec.name == name
         assert spec.prefix == f"{name}:"
@@ -69,7 +83,8 @@ def test_every_kind_has_a_file_window_agent_fields_and_instructions():
 def test_run_order():
     assert sorted(RUN_ORDER) == sorted(KINDS)
     assert [KINDS[k].run_order for k in RUN_ORDER] == sorted(s.run_order for s in KINDS.values())
-    assert RUN_ORDER == ("pair", "service", "instrument")
+    # Bundles last: a spent budget skips them before any Phase 2 subject.
+    assert RUN_ORDER == ("pair", "service", "instrument", "bundle")
 
 
 @pytest.mark.parametrize(
@@ -120,7 +135,9 @@ def test_pinned_keys():
 @pytest.mark.parametrize(
     "key",
     [
-        "bundle:meli_plus",
+        "bundle:meli_plus:x",
+        "bundle",
+        "offer:x",
         "pair:netflix",
         "pair:netflix:CO:x",
         "service",
@@ -156,7 +173,7 @@ def test_key_builder_and_kind_of_reject_bad_input():
     with pytest.raises(ValueError):
         KINDS["service"].key("netflix", "CO")
     with pytest.raises(ValueError):
-        kind_of("bundle:x")
+        kind_of("offer:x")
     assert KINDS["pair"].parse("service:netflix") is None
 
 
@@ -178,32 +195,41 @@ def test_subject_facts_ref_splits_unchecked_under_its_own_kind():
 
 
 def test_derived_constants_equal_their_previous_literals():
+    # The Phase 2 kinds keep their files, order, windows and names; the bundle kind (phase 3)
+    # comes after them, with an OPTIONAL file (written and synced only when listed).
     assert io.KIND_FILES == {
         "service": "services.json",
         "pair": "pairs.json",
         "instrument": "instruments.json",
+        "bundle": "bundles.json",
     }
-    assert list(io.KIND_FILES) == ["service", "pair", "instrument"]
+    assert list(io.KIND_FILES) == ["service", "pair", "instrument", "bundle"]
     assert io.LATEST_FILES == ("services.json", "pairs.json", "instruments.json", "state.json")
     assert io.DATA_FILES == ("services.json", "pairs.json", "instruments.json")
-    assert plan._WINDOWS == {"service": 90, "pair": 60, "instrument": 120}
+    assert io.OPTIONAL_KIND_FILES == ("bundles.json",)
+    assert io.OPTIONAL_DATA_FILES == ("bundles.json", "bundle_watch.json")
+    assert [k for k, s in KINDS.items() if s.optional] == ["bundle"]
+    assert plan._WINDOWS == {"service": 90, "pair": 60, "instrument": 120, "bundle": 28}
     assert (plan.SERVICE_DAYS, plan.PAIR_DAYS, plan.INSTRUMENT_DAYS) == (90, 60, 120)
     assert agents.AGENT_NAMES == {
         "service": "service_researcher",
         "pair": "pair_researcher",
         "instrument": "instrument_researcher",
+        "bundle": "bundle_researcher",
     }
-    assert nodes.KIND_ORDER == ("pair", "service", "instrument")
+    assert nodes.KIND_ORDER == ("pair", "service", "instrument", "bundle")
     assert {k: s.pair_scope for k, s in KINDS.items()} == {
         "service": "service",
         "pair": "self",
         "instrument": "all",
+        "bundle": "none",
     }
 
 
 def test_fields_by_level_equals_its_previous_literal():
-    assert list(fields.FIELDS_BY_LEVEL) == ["service", "pair", "instrument"]
-    assert fields.FIELDS_BY_LEVEL == {
+    assert list(fields.FIELDS_BY_LEVEL) == ["service", "pair", "instrument", "bundle"]
+    phase2 = {k: v for k, v in fields.FIELDS_BY_LEVEL.items() if k != "bundle"}
+    assert phase2 == {
         "service": (
             "account_country_basis",
             "residence_clause",
