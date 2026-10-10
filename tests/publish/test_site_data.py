@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 
 from haggler.catalog import load_bundles, load_catalog, load_feasibility
+from haggler.models.curated import BundleRequirements
 from haggler.publish import SITE_FILES, build_site_data, site_data
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -546,6 +547,37 @@ def test_bundles(written: dict[str, Any]) -> None:
     assert yearly["saving_pct"] == -43.06
     assert yearly["status"] == "expired"
     assert yearly["last_verified"] == "2026-09-01"
+
+
+def test_bundle_requirements_keep_the_v1_keys(fx_catalog, fx_feasibility, fx_bundles) -> None:
+    """The bundles.yaml v2 requirement fields stay out of bundles.json v1 until the v2 contract
+    (milestone H2). (An unknown residency is still null: see the golden file.)"""
+    v2 = BundleRequirements(
+        residency="required",
+        local_id="cedula",
+        billing_address="required",
+        signup_presence="not_required",
+        new_customers_only=True,
+    )
+    bundles = fx_bundles.model_copy(
+        update={"bundles": [b.model_copy(update={"requirements": v2}) for b in fx_bundles.bundles]}
+    )
+    site = build_site_data(
+        FIXTURES / "data",
+        residence=RESIDENCE,
+        profile=PROFILE,
+        catalog=fx_catalog,
+        feasibility=fx_feasibility,
+        bundles=bundles,
+        now=NOW,
+    )
+    assert site["bundles"][0]["requirements"] == {
+        "residency": "required",
+        "local_id": "cedula",
+        "local_line": "unknown",
+        "local_payment": "unknown",
+        "credit_check": None,
+    }
 
 
 def test_changes_window_dedupe_and_order(written: dict[str, Any]) -> None:

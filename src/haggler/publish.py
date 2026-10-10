@@ -43,6 +43,7 @@ from haggler.models.catalog import Catalog
 from haggler.models.curated import (
     Bundle,
     BundleComponent,
+    BundleRequirements,
     BundlesFile,
     FeasibilityFile,
     PaymentInstrumentsFile,
@@ -901,6 +902,19 @@ def _component_eur(
     return min(costs) if costs else None
 
 
+def _requirements_json(r: BundleRequirements) -> dict[str, Any]:
+    """The bundles.json v1 requirement keys. The v2 fields (billing_address, signup_presence,
+    new_customers_only) are published with the v2 contract (milestone H2); an unknown residency
+    stays null as in v1."""
+    return {
+        "residency": None if r.residency == "unknown" else r.residency,
+        "local_id": r.local_id,
+        "local_line": r.local_line,
+        "local_payment": r.local_payment,
+        "credit_check": r.credit_check,
+    }
+
+
 def _bundle_json(
     b: Bundle, *, rows: list[PublishedPrice], fx: FxTable | None, residence: str
 ) -> dict[str, Any]:
@@ -963,7 +977,7 @@ def _bundle_json(
         ],
         "standalone_sum_eur": standalone,
         "saving_pct": saving_pct,
-        "requirements": b.requirements.model_dump(mode="json"),
+        "requirements": _requirements_json(b.requirements),
         "feasibility": feas.model_dump(mode="json") if feas else None,
         "status": b.status,
         "notes_es": b.notes_es.strip(),

@@ -1,4 +1,26 @@
-# Bundle fixture for the publish tests: one of each pricing shape.
+# Bundle fixture for the publish tests: one of each pricing shape (bundles.yaml v2; the
+# site-data output is still the bundles.json v1 contract).
+providers:
+  - id: mercado_libre
+    name: Mercado Libre
+    domains:
+      # Only the countries of the fixture catalog (no MX/BR there).
+      CO: [mercadolibre.com.co]
+  - id: telia_se
+    name: Telia
+    domains:
+      SE: [telia.se]
+  - id: go3
+    name: Go3
+    domains:
+      # example.com: the fictional yearly row below.
+      LT: [go3.lt, static3.go3.tv, example.com]
+  - id: apple
+    name: Apple
+    domains:
+      SE: [www.apple.com]
+      CO: [www.apple.com, one.apple.com]
+
 bundles:
   # Price observed from the daily data; one component (Apple Arcade) has no price source.
   - bundle_id: apple_one_individual_se
@@ -7,6 +29,7 @@ bundles:
     country: SE
     name: Apple One Individual
     tier: individual
+    aliases: [Personligt]
     official_url: https://www.apple.com/se/apple-one/
     price: {currency: SEK, period: month, tax_included: true, source: observed,
             observed_service_id: apple_one, observed_plan_id: individual}
@@ -17,6 +40,11 @@ bundles:
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     feasibility_from:
       SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/se/apple-one/", kind: html}
     last_verified: 2026-10-08
 
   # Observed price that is not in the data yet.
@@ -26,11 +54,13 @@ bundles:
     country: SE
     name: Apple One Familj
     tier: family
+    aliases: [Familj]
     official_url: https://www.apple.com/se/apple-one/
     price: {currency: SEK, period: month, source: observed,
             observed_service_id: apple_one, observed_plan_id: family}
     components:
       - {service_id: apple_music, plan_id: family, inclusion: included}
+    verified_by: search_summary
     last_verified: 2026-10-08
 
   # Curated monthly price in a foreign currency; a discount component is not counted.
@@ -50,6 +80,10 @@ bundles:
       SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: medium, evidence: user_report}
     notes_es: >-
       Precio en conflicto.
+    verified_by: search_summary
+    verdicts:
+      - {profile: se_resident_co_citizen, legality: lawful, tos: breach_unenforced,
+         practical: remote, last_verified: 2026-10-08}
     last_verified: 2026-10-08
 
   # Telco add-on: only the marginal amount counts.
@@ -60,13 +94,16 @@ bundles:
     name: Telia + Netflix y Spotify
     tier: plus
     official_url: https://www.telia.se/privat/mobilt/abonnemang
-    price: {amount: "699", currency: SEK, period: month, tax_included: true, marginal_amount: "130"}
+    price: {amount: "699", currency: SEK, period: month, tax_included: true,
+            base_plan_name: Telia Plus, base_plan_amount: "569", marginal_amount: "130"}
     components:
       - {service_id: netflix, plan_id: standard, inclusion: included}
       - {service_id: spotify, plan_id: individual, inclusion: included}
     requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
     feasibility_from:
       SE: {purchasable_remotely: "yes", usable_abroad: travel_only, tos_risk: low, evidence: terms}
+    verified_by: search_summary
+    watch: {mode: "off"}
     last_verified: 2026-10-08
 
   # Yearly price; the included Netflix plan is unknown (cheapest plan of the country is used).
@@ -81,4 +118,6 @@ bundles:
     components:
       - {service_id: netflix, inclusion: included}
     status: expired
+    valid_until: 2026-09-01
+    verified_by: search_summary
     last_verified: 2026-09-01

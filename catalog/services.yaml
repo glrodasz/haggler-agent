@@ -6,6 +6,8 @@
 # plausible_monthly_eur bounds are deliberately wide; they only catch parse errors.
 # iap_patterns are case-insensitive regexes over App Store in-app purchase names; exactly one
 # plan must match, otherwise the item goes to the LLM for mapping.
+# A service's aliases are the names official and bundle pages print for it (bundles.yaml anchors
+# name a component by its name or one of these).
 
 services:
   - id: netflix
@@ -113,6 +115,8 @@ services:
     eu_geo_class: audiovisual_excluded
     homepage: https://www.hbomax.com
     official_domains: [hbomax.com, max.com]
+    # Sold as "Max" in 2023-2025; bundle pages print either name.
+    aliases: [HBO Max, Max]
     default_plan: standard
     plans:
       - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
@@ -252,6 +256,8 @@ services:
     eu_geo_class: audiovisual_excluded
     homepage: https://www.apple.com/apple-tv/
     official_domains: [apple.com]
+    # "Apple TV+" until 2025.
+    aliases: [Apple TV, Apple TV+]
     research_urls:
       - https://www.apple.com/legal/internet-services/itunes/us/terms.html
     default_plan: standard
@@ -298,6 +304,7 @@ services:
     eu_geo_class: audiovisual_excluded
     homepage: https://vix.com
     official_domains: [vix.com]
+    aliases: [ViX Premium, ViX]
     default_plan: premium
     plans:
       - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [0.5, 20]}

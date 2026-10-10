@@ -1,0 +1,499 @@
+"""bundles.yaml v2 (phase 3, milestone H1): the model, its integrity rules and the migration.
+
+Every integrity rule has one negative case, built from a small valid file (BASE) so the cases do
+not change when the real bundles.yaml is edited; the real file and the publish fixture are
+checked as they are.
+"""
+
+from __future__ import annotations
+
+import copy
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+import pytest
+import yaml
+from pydantic import ValidationError
+
+from haggler.catalog import (
+    integrity_errors,
+    load_bundles,
+    load_catalog,
+    load_feasibility,
+    load_payment_instruments,
+    load_profiles,
+)
+from haggler.feasibility import axes_rank, record_rank
+from haggler.models.curated import BundlesFile
+
+PUBLISH_FIXTURES = Path(__file__).parents[1] / "publish" / "fixtures"
+PAGE = "https://www.acme.com.co/planes"
+INDEX = "https://www.acme.com.co/precios"
+PDF = "https://cdn.acme.com.co/precios_12.pdf"
+WAVE_1 = {
+    "meli_plus_co_total",
+    "meli_plus_co_esencial",
+    "telia_se_obegransad_streaming",
+    "apple_one_individual_se",
+    "apple_one_family_se",
+}
+
+BASE: dict[str, Any] = {
+    "providers": [
+        {
+            "id": "acme",
+            "name": "Acme",
+            "domains": {"CO": ["acme.com.co"], "MX": ["acme.com.mx"]},
+        }
+    ],
+    "bundles": [
+        {
+            "bundle_id": "acme_co_total",
+            "provider_id": "acme",
+            "provider_type": "marketplace",
+            "country": "CO",
+            "name": "Acme Total",
+            "tier": "total",
+            "aliases": ["Acme Total"],
+            "official_url": PAGE,
+            "price": {"amount": "24900", "currency": "COP"},
+            "components": [
+                {"service_id": "netflix", "plan_id": "standard_with_ads", "inclusion": "included"},
+                {"service_id": "hbo_max", "inclusion": "discount_pct", "value": "30"},
+            ],
+            "verified_by": "official_fetch",
+            "watch": {
+                "mode": "auto",
+                "pages": [
+                    {"url": PAGE, "kind": "html"},
+                    {
+                        "url": PDF,
+                        "kind": "pdf",
+                        "index_url": INDEX,
+                        "link_pattern": r"precios_(?P<edition>\d+)\.pdf",
+                    },
+                ],
+                "anchors": [
+                    {
+                        "fact": "price",
+                        "url": PAGE,
+                        "text": "Acme Total: $ 24.900/mes, envío gratis",
+                    },
+                    {
+                        "fact": "component",
+                        "service_id": "netflix",
+                        "url": PDF,
+                        "text": "Incluye Netflix Estándar con anuncios",
+                    },
+                ],
+            },
+            "verdicts": [
+                {
+                    "profile": "se_resident_co_citizen",
+                    "legality": "lawful",
+                    "tos": "breach_unenforced",
+                    "practical": "remote",
+                    "last_verified": "2026-10-08",
+                }
+            ],
+            "last_verified": "2026-10-08",
+        }
+    ],
+}
+
+
+@pytest.fixture(scope="module")
+def cat():
+    return load_catalog()
+
+
+@pytest.fixture(scope="module")
+def profiles():
+    return load_profiles()
+
+
+@pytest.fixture(scope="module")
+def instruments():
+    return load_payment_instruments()
+
+
+def _errors(data: dict, cat, profiles, instruments) -> list[str]:
+    return integrity_errors(
+        cat,
+        bundles=BundlesFile.model_validate(data),
+        instruments=instruments,
+        profiles=profiles,
+    )
+
+
+def _mutated(mutate: Callable[[dict, dict], Any]) -> dict:
+    data = copy.deepcopy(BASE)
+    mutate(data, data["bundles"][0])
+    return data
+
+
+def _second_bundle(data: dict, bundle_id: str = "acme_co_esencial", **changes: Any) -> dict:
+    other = copy.deepcopy(data["bundles"][0])
+    other.update(bundle_id=bundle_id, name="Acme Esencial", tier="esencial", **changes)
+    other["aliases"] = ["Acme Esencial"]
+    other["verdicts"] = []
+    data["bundles"].append(other)
+    return other
+
+
+def _set(path: str, value: Any) -> Callable[[dict, dict], None]:
+    """Set bundle[a][b]...= value for a dotted path (integers index lists)."""
+
+    def mutate(_data: dict, bundle: dict) -> None:
+        *parents, last = path.split(".")
+        node: Any = bundle
+        for key in parents:
+            node = node[int(key)] if key.isdigit() else node[key]
+        node[int(last) if last.isdigit() else last] = value
+
+    return mutate
+
+
+def test_base_is_valid(cat, profiles, instruments) -> None:
+    assert _errors(BASE, cat, profiles, instruments) == []
+
+
+# ------------------------------------------------------------- integrity rules
+
+
+def _shared_url_without_aliases(data: dict, _b: dict) -> None:
+    _second_bundle(data)["aliases"] = []
+
+
+def _shared_url_same_alias(data: dict, _b: dict) -> None:
+    _second_bundle(data)["aliases"] = ["ACME TOTAL"]
+
+
+def _duplicate_verdict(_data: dict, b: dict) -> None:
+    b["verdicts"].append(copy.deepcopy(b["verdicts"][0]))
+
+
+def _choose_n(n_first: int, n_second: int) -> Callable[[dict, dict], None]:
+    def mutate(_data: dict, b: dict) -> None:
+        b["components"] += [
+            {"service_id": "vix", "inclusion": "choose_n", "choice_group_id": "g", "choose_n": n}
+            for n in (n_first, n_second)
+        ]
+
+    return mutate
+
+
+def _forbidden_provider(data: dict, _b: dict) -> None:
+    data["providers"][0]["automated_access"] = "forbidden"
+
+
+def _provider_domain(cc: str, domains: list[str]) -> Callable[[dict, dict], None]:
+    def mutate(data: dict, _b: dict) -> None:
+        data["providers"][0]["domains"][cc] = domains
+
+    return mutate
+
+
+def _duplicate_provider(data: dict, _b: dict) -> None:
+    data["providers"].append(copy.deepcopy(data["providers"][0]))
+
+
+def _in_sweden(data: dict, b: dict) -> None:
+    """The same bundle sold in SE, where the verdict's profile lives."""
+    data["providers"][0]["domains"]["SE"] = ["acme.se"]
+    b.update(country="SE", official_url="https://www.acme.se/planes", watch={"mode": "off"})
+    b["price"]["currency"] = "SEK"
+    b["verified_by"] = "search_summary"
+
+
+CASES: list[tuple[str, Callable[[dict, dict], Any], str]] = [
+    # provider and domains
+    ("unknown provider", _set("provider_id", "nope"), "unknown provider nope"),
+    (
+        "official_url on another country's domain",
+        _set("official_url", "https://www.acme.com.mx/planes"),
+        "official_url 'https://www.acme.com.mx/planes' is not https on a CO domain",
+    ),
+    (
+        "watch page over http",
+        _set("watch.pages.0.url", "http://www.acme.com.co/planes"),
+        "watch page 'http://www.acme.com.co/planes' is not https",
+    ),
+    (
+        "index_url off the provider's domains",
+        _set("watch.pages.1.index_url", "https://acme-precios.example.org/"),
+        "watch index_url 'https://acme-precios.example.org/' is not https on a CO domain",
+    ),
+    (
+        "anchor url off the provider's domains",
+        _set("watch.anchors.0.url", "https://www.acme.com.mx/planes"),
+        "anchor url 'https://www.acme.com.mx/planes' is not https on a CO domain",
+    ),
+    ("provider country unknown", _provider_domain("XX", ["acme.xx"]), "unknown country XX"),
+    ("provider bad domain", _provider_domain("MX", ["https://acme.mx"]), "bad official domain"),
+    ("provider IP host", _provider_domain("MX", ["10.0.0.1"]), "is not a public host"),
+    ("provider without domains", _provider_domain("MX", []), "provider acme/MX: no domains"),
+    ("duplicate provider", _duplicate_provider, "duplicate provider id"),
+    ("link_pattern does not compile", _set("watch.pages.1.link_pattern", "(?P<edition"), "bad"),
+    (
+        "link_pattern without the edition group",
+        _set("watch.pages.1.link_pattern", r"precios_(\d+)\.pdf"),
+        "has no group 'edition'",
+    ),
+    (
+        "link_pattern without index_url",
+        _set("watch.pages.1.index_url", None),
+        "needs an index_url",
+    ),
+    ("watch auto without pages", _set("watch", {"mode": "auto"}), "needs at least one page"),
+    ("forbidden provider watched", _forbidden_provider, "forbids automated access"),
+    # anchors
+    ("anchor too short", _set("watch.anchors.0.text", "$ 24.900/mes"), "between 20 and 400"),
+    ("anchor too long", _set("watch.anchors.0.text", "Acme Total " * 40), "between 20 and 400"),
+    (
+        "anchor with three dots",
+        _set("watch.anchors.0.text", "Acme Total: $ 24.900/mes, envío..."),
+        "ellipsis",
+    ),
+    (
+        "anchor with an ellipsis character",
+        _set("watch.anchors.0.text", "…Acme Total: $ 24.900/mes, envío gratis"),
+        "ellipsis",
+    ),
+    (
+        "anchor on a page that is not watched",
+        _set("watch.anchors.0.url", "https://www.acme.com.co/otra"),
+        "is not one of the watch pages",
+    ),
+    (
+        "component anchor without a component service",
+        _set("watch.anchors.1.service_id", "spotify"),
+        "component anchor needs the service_id of a component",
+    ),
+    # price and components
+    (
+        "marginal is not amount - base",
+        _set(
+            "price",
+            {
+                "amount": "699",
+                "currency": "COP",
+                "base_plan_amount": "569",
+                "marginal_amount": "120",
+            },
+        ),
+        "marginal_amount 120 is not amount 699 - base_plan_amount 569",
+    ),
+    (
+        "observed price with an amount",
+        _set(
+            "price",
+            {
+                "amount": "195",
+                "currency": "COP",
+                "source": "observed",
+                "observed_service_id": "apple_one",
+                "observed_plan_id": "individual",
+            },
+        ),
+        "observed price takes its amount from the daily data",
+    ),
+    ("curated price without amount", _set("price.amount", None), "curated price needs an amount"),
+    ("price in another currency", _set("price.currency", "USD"), "USD is not CO's COP"),
+    ("discount without value", _set("components.1.value", None), "needs a value > 0"),
+    (
+        "free months without value",
+        _set("components.1", {"service_id": "vix", "inclusion": "free_months"}),
+        "free_months component vix needs a value > 0",
+    ),
+    ("discount over 100 %", _set("components.1.value", "130"), "is over 100"),
+    (
+        "choose_n without group",
+        _set("components.1", {"service_id": "vix", "inclusion": "choose_n", "choose_n": 1}),
+        "needs choice_group_id and choose_n",
+    ),
+    ("choose_n larger than the group", _choose_n(3, 3), "has 2 options, choose_n 3"),
+    ("choose_n differs within the group", _choose_n(1, 2), "different choose_n values"),
+    # state and verification
+    ("official_fetch without price anchor", _set("watch.anchors", []), "needs a price anchor"),
+    (
+        "official_fetch without component anchor",
+        _set("watch.anchors.1.service_id", "hbo_max"),
+        "needs a component anchor for netflix",
+    ),
+    ("user_report without report", _set("verified_by", "user_report"), "needs user_report"),
+    (
+        "valid_until before valid_from",
+        lambda _d, b: b.update(valid_from="2026-10-01", valid_until="2026-09-01"),
+        "is before valid_from",
+    ),
+    ("covers an unknown service", _set("covers", ["nope"]), "covers unknown service nope"),
+    # identity
+    ("bundle id is a service id", _set("bundle_id", "netflix"), "is also a service id"),
+    (
+        "bundle id is an instrument id",
+        _set("bundle_id", "user_co_card"),
+        "is also a payment instrument id",
+    ),
+    ("shared official_url without aliases", _shared_url_without_aliases, "needs aliases"),
+    ("shared official_url, same alias", _shared_url_same_alias, "is also acme_co_total's"),
+    # curated verdicts
+    ("verdict for an unknown profile", _set("verdicts.0.profile", "nope"), "unknown profile nope"),
+    ("verdict for a profile at home", _in_sweden, "who lives in SE"),
+    ("two verdicts for one profile", _duplicate_verdict, "two verdicts for profile"),
+]
+
+
+@pytest.mark.parametrize(("mutate", "expected"), [c[1:] for c in CASES], ids=[c[0] for c in CASES])
+def test_integrity_rule(mutate, expected: str, cat, profiles, instruments) -> None:
+    errors = _errors(_mutated(mutate), cat, profiles, instruments)
+    assert any(expected in e for e in errors), errors
+
+
+def test_anchor_may_quote_the_index_page(cat, profiles, instruments) -> None:
+    data = _mutated(_set("watch.anchors.1.url", INDEX))
+    assert _errors(data, cat, profiles, instruments) == []
+
+
+def test_observed_price_needs_no_price_anchor(cat, profiles, instruments) -> None:
+    def observed(_data: dict, b: dict) -> None:
+        b["price"] = {
+            "currency": "COP",
+            "source": "observed",
+            "observed_service_id": "apple_one",
+            "observed_plan_id": "individual",
+        }
+        b["watch"]["anchors"] = b["watch"]["anchors"][1:]
+
+    assert _errors(_mutated(observed), cat, profiles, instruments) == []
+
+
+def test_user_report_with_a_date_is_valid(cat, profiles, instruments) -> None:
+    def reported(_data: dict, b: dict) -> None:
+        b["verified_by"] = "user_report"
+        b["user_report"] = {"date": "2026-10-08", "note": "precio visto en la app"}
+
+    assert _errors(_mutated(reported), cat, profiles, instruments) == []
+
+
+# ---------------------------------------------------- typed state is rejected
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        _set("status", "verified"),
+        _set("evidence", [{"url": PAGE, "kind": "official", "verified": True}]),
+        _set("evidence", [{"url": PAGE, "kind": "official", "retrieved_at": "2026-10-08"}]),
+        _set("requirements", {"residency": "yes"}),
+        _set("price.requires_base_plan_id", "telia_obegransad_plus"),
+        _set("price.promo_valid_until", "2026-12-31"),
+        _set("watch.mode", False),  # what a bare `mode: off` reads as in YAML
+        _set("verdicts.0.rank", 2),
+    ],
+    ids=[
+        "status verified",
+        "evidence verified",
+        "evidence retrieved_at",
+        "residency enum",
+        "requires_base_plan_id removed",
+        "promo_valid_until renamed",
+        "unquoted off",
+        "typed rank",
+    ],
+)
+def test_model_rejects(mutate) -> None:
+    with pytest.raises(ValidationError):
+        BundlesFile.model_validate(_mutated(mutate))
+
+
+def test_bare_off_in_yaml_is_rejected() -> None:
+    text = yaml.safe_dump(BASE).replace("mode: auto", "mode: off")
+    with pytest.raises(ValidationError):
+        BundlesFile.model_validate(yaml.safe_load(text))
+
+
+# -------------------------------------------------------------- migrated files
+
+
+def test_real_bundles_pass_integrity(cat, profiles, instruments) -> None:
+    bundles = load_bundles()
+    assert integrity_errors(cat, bundles=bundles, instruments=instruments, profiles=profiles) == []
+
+
+def test_publish_fixture_passes_integrity() -> None:
+    fixture_catalog = load_catalog(PUBLISH_FIXTURES / "catalog")
+    bundles = load_bundles(PUBLISH_FIXTURES / "curated")
+    assert integrity_errors(fixture_catalog, bundles=bundles) == []
+
+
+def test_migration_adds_structure_but_no_values() -> None:
+    bundles = load_bundles()
+    rows = {b.bundle_id: b for b in bundles.bundles}
+    assert {p.id for p in bundles.providers} == {"mercado_libre", "telia_se", "go3", "apple"}
+    assert all(b.verified_by == "search_summary" for b in rows.values())
+    assert all(b.status == "unverified" and b.user_report is None for b in rows.values())
+    # Anchors come from the bundles probe's output (milestone H10), never typed before.
+    assert all(not b.watch.anchors for b in rows.values())
+    assert {i for i, b in rows.items() if b.watch.mode == "manual"} == WAVE_1
+    assert {i for i, b in rows.items() if b.watch.mode == "off"} == set(rows) - WAVE_1
+    for bundle_id in WAVE_1:
+        assert str(rows[bundle_id].watch.pages[0].url) == str(rows[bundle_id].official_url)
+    telia = rows["telia_se_obegransad_streaming"]
+    assert [p.kind for p in telia.watch.pages] == ["html", "pdf"]
+    assert str(telia.watch.pages[1].url) == str(telia.evidence[0].url)
+    price = telia.price
+    assert (price.base_plan_name, price.amount, price.base_plan_amount, price.marginal_amount) == (
+        "Telia Obegränsad Plus",
+        699,
+        569,
+        130,
+    )
+    go3 = bundles.provider("go3")
+    assert "static3.go3.tv" in go3.domains["LT"]
+
+
+def test_meli_co_curated_verdicts_rank_2() -> None:
+    """User decision 2: Meli+ CO Total and Esencial for se_resident_co_citizen."""
+    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    for bundle_id in ("meli_plus_co_total", "meli_plus_co_esencial"):
+        (v,) = rows[bundle_id].verdicts
+        assert (v.profile, v.legality, v.tos, v.practical) == (
+            "se_resident_co_citizen",
+            "lawful",
+            "breach_unenforced",
+            "remote",
+        )
+        assert (v.status, v.confidence) == ("unverified", "low")
+        assert v.notes_es == "según uso propio; sin cita de los términos"
+        assert axes_rank(v.legality, v.tos, v.practical, v.steps) == 2
+    others = [
+        b for i, b in rows.items() if i not in {"meli_plus_co_total", "meli_plus_co_esencial"}
+    ]
+    assert all(not b.verdicts for b in others)
+
+
+def test_covered_services_default_to_included_components() -> None:
+    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    assert rows["meli_plus_co_total"].covered_services() == ["disney_plus"]
+    assert rows["meli_plus_co_esencial"].covered_services() == []
+
+
+def test_service_aliases() -> None:
+    cat = load_catalog()
+    assert cat.service("hbo_max").aliases == ["HBO Max", "Max"]
+    assert "ViX" in cat.service("vix").aliases
+
+
+# ------------------------------------------------------------------- axes_rank
+
+
+@pytest.mark.parametrize(
+    "curated_dir", [None, PUBLISH_FIXTURES / "curated"], ids=["real", "fixture"]
+)
+def test_axes_rank_matches_record_rank(curated_dir) -> None:
+    records = load_feasibility(curated_dir).records
+    assert records
+    for r in records:
+        assert axes_rank(r.legality, r.tos, r.practical, r.steps) == record_rank(r), r.id

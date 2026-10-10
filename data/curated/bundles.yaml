@@ -1,5 +1,51 @@
 # Promotional bundles. Every row is unverified until an official page is re-fetched with a
 # retrieval date. Savings are computed from the daily price data, never typed here.
+#
+# This file is the ONLY source of a bundle's values (price, base plan, components, dates,
+# requirements); no job writes it. A value counts as confirmed only through the watcher's
+# evidence for an anchor (a literal excerpt of our own fetch of an official page of the bundle's
+# country), so a row never types a verified state: status is unverified|expired, evidence has
+# no verified/retrieved_at, and verified_by says where the values come from
+# (official_fetch | user_report | search_summary | agent_research).
+# watch.mode: auto (the weekly watcher reads the pages) | manual (checked by hand) | off.
+# Quote "off": YAML reads a bare off as false.
+# feasibility_from is DEPRECATED (the v1 per-residence summary): per-profile `verdicts` replace it
+# when bundles.json v2 ships (milestone H2).
+
+# Providers: the official domains of each provider PER COUNTRY (a domain also covers its
+# subdomains). Every URL of a bundle (official_url, watch pages, anchors) must be https on its
+# provider's domains for the bundle's country. automated_access: forbidden (the provider's terms
+# forbid automated access) forces watch.mode off.
+providers:
+  - id: mercado_libre
+    name: Mercado Libre
+    domains:
+      CO: [mercadolibre.com.co]
+      MX: [mercadolibre.com.mx]
+      BR: [mercadolivre.com.br]
+    automated_access: allowed
+
+  - id: telia_se
+    name: Telia
+    domains:
+      SE: [telia.se]
+    automated_access: allowed
+
+  - id: go3
+    name: Go3
+    domains:
+      # static3.go3.tv is the CDN host that serves the Lithuanian price-list PDF.
+      LT: [go3.lt, static3.go3.tv]
+    automated_access: allowed
+
+  - id: apple
+    name: Apple
+    domains:
+      # apple.com serves every country under a path (/se/, /co/): the host cannot tell the
+      # countries apart, the page's currency does (the watcher reports wrong_country).
+      SE: [www.apple.com]
+      CO: [www.apple.com, one.apple.com]
+    automated_access: allowed
 
 bundles:
   - bundle_id: meli_plus_co_total
@@ -8,6 +54,7 @@ bundles:
     country: CO
     name: Meli+ Total
     tier: total
+    aliases: [Meli+ Total]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "24900", currency: COP, period: month, tax_included: true}
     components:
@@ -22,6 +69,25 @@ bundles:
       - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: official}
       - {url: "https://www.enter.co/empresas/meli-asi-funciona-la-nueva-suscripcion-de-mercado-libre-en-colombia-con-planes-desde-9-900-envios-gratis-y-beneficios-en-streaming/", kind: press}
     status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+    # User decision 2 (phase 3): own use from Sweden with a Colombian card. The rank comes from
+    # the axes (haggler.feasibility.axes_rank: 2) and never ends below the worst component's;
+    # without a verified tos_clause it is shown as unverified/low.
+    verdicts:
+      - profile: se_resident_co_citizen
+        legality: lawful
+        tos: breach_unenforced
+        practical: remote
+        steps:
+          - {type: payment_country, value: CO}
+        status: unverified
+        confidence: low
+        last_verified: 2026-10-08
+        notes_es: según uso propio; sin cita de los términos
     last_verified: 2026-10-08
     notes_es: >-
       Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia
@@ -33,12 +99,30 @@ bundles:
     country: CO
     name: Meli+ Esencial
     tier: esencial
+    aliases: [Meli+ Esencial]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "9900", currency: COP, period: month, tax_included: true}
     components:
       - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
     requirements: {local_id: cedula, local_payment: any_card}
     status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+    # User decision 2 (phase 3), as for Meli+ Total.
+    verdicts:
+      - profile: se_resident_co_citizen
+        legality: lawful
+        tos: breach_unenforced
+        practical: remote
+        steps:
+          - {type: payment_country, value: CO}
+        status: unverified
+        confidence: low
+        last_verified: 2026-10-08
+        notes_es: según uso propio; sin cita de los términos
     last_verified: 2026-10-08
     notes_es: Envíos gratis; sin streaming incluido.
 
@@ -48,6 +132,7 @@ bundles:
     country: MX
     name: Meli+ Mega (con anuncios)
     tier: mega
+    aliases: [Meli+ Mega]
     official_url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
     price: {amount: "399", currency: MXN, period: month, tax_included: true}
     components:
@@ -62,6 +147,8 @@ bundles:
       - {url: "https://expansion.mx/tecnologia/2026/02/24/mercado-libre-meli-mega-netflix-disney-hbo-max-apple-tv", kind: press}
     status: unverified
     valid_from: 2026-02-11
+    verified_by: search_summary
+    watch: {mode: "off"}
     last_verified: 2026-10-08
 
   - bundle_id: meli_plus_br_mega
@@ -70,6 +157,7 @@ bundles:
     country: BR
     name: Meli+ Mega
     tier: mega
+    aliases: [Meli+ Mega]
     official_url: https://www.mercadolivre.com.br/assinaturas/melimais
     price: {amount: "74.90", currency: BRL, period: month, tax_included: true}
     components:
@@ -84,6 +172,8 @@ bundles:
       - {url: "https://tecnoblog.net/noticias/meli-mega-novo-plano-inclui-disney-netflix-hbo-max-e-apple-tv/", kind: press}
     status: unverified
     valid_from: 2025-10-07
+    verified_by: search_summary
+    watch: {mode: "off"}
     last_verified: 2026-10-08
 
   - bundle_id: telia_se_obegransad_streaming
@@ -98,7 +188,9 @@ bundles:
       currency: SEK
       period: month
       tax_included: true
-      requires_base_plan_id: telia_obegransad_plus
+      # Sold on top of Obegränsad Plus: marginal_amount = amount - base_plan_amount.
+      base_plan_name: Telia Obegränsad Plus
+      base_plan_amount: "569"
       marginal_amount: "130"
     components:
       - {service_id: netflix, plan_id: standard, inclusion: included}
@@ -110,6 +202,12 @@ bundles:
     evidence:
       - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official}
     status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telia.se/privat/mobilt/abonnemang", kind: html}
+        - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: pdf}
     last_verified: 2026-10-08
     notes_es: >-
       Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres
@@ -132,6 +230,8 @@ bundles:
       - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: official}
     status: unverified
     valid_from: 2026-09-04
+    verified_by: search_summary
+    watch: {mode: "off"}
     last_verified: 2026-10-08
     notes_es: El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.
 
@@ -141,6 +241,7 @@ bundles:
     country: SE
     name: Apple One Individual
     tier: individual
+    aliases: [Personligt, personliga abonnemanget]
     official_url: https://www.apple.com/se/apple-one/
     price: {currency: SEK, period: month, tax_included: true, source: observed,
             observed_service_id: apple_one, observed_plan_id: individual}
@@ -153,6 +254,11 @@ bundles:
     feasibility_from:
       SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
     status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/se/apple-one/", kind: html}
     last_verified: 2026-10-08
 
   - bundle_id: apple_one_family_se
@@ -161,6 +267,7 @@ bundles:
     country: SE
     name: Apple One Familj
     tier: family
+    aliases: [Familj, familjeabonnemanget]
     official_url: https://www.apple.com/se/apple-one/
     price: {currency: SEK, period: month, tax_included: true, source: observed,
             observed_service_id: apple_one, observed_plan_id: family}
@@ -173,4 +280,9 @@ bundles:
     feasibility_from:
       SE: {purchasable_remotely: "yes", usable_abroad: "yes", tos_risk: low, evidence: terms}
     status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/se/apple-one/", kind: html}
     last_verified: 2026-10-08

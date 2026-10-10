@@ -73,6 +73,8 @@ class ServiceDef(_Strict):
     official_domains: list[str] = Field(default_factory=list)
     # Known official pages (terms, help) where research quotes are also looked for.
     research_urls: list[str] = Field(default_factory=list)
+    # Names official and bundle pages print for the service (e.g. "Max" for HBO Max).
+    aliases: list[str] = Field(default_factory=list)
     notes_es: str = ""
 
     @model_validator(mode="after")

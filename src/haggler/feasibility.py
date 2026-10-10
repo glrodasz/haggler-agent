@@ -4,7 +4,8 @@ Axis ranks:
   legality:  lawful=0, contestable_eu_right=1, requires_misrepresentation=2
   tos:       compliant=0, breach_unenforced=2, breach_enforced=3
   practical: remote=0, presence_once=1, presence_periodic=2, impossible=4
-rank = max(axis ranks); any step with requires_false_declaration forces rank >= 2.
+rank = max(axis ranks); any step with requires_false_declaration forces rank >= 2
+(axes_rank; record_rank applies it to a feasibility record).
 Labels by rank: 0 official_home, 1 eu_right_untested, 2 tos_breach_low_enforcement,
 3 tos_breach_enforced, 4 not_feasible. No record -> "unknown" (rank UNKNOWN_RANK, never chosen as
 cheapest). target_country == residence_country -> official_home (rank 0) without a record.
@@ -18,9 +19,10 @@ lowering the label (it is an untested argument, not a guarantee). The record's `
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
-from haggler.models.curated import FeasibilityFile, FeasibilityRecord
+from haggler.models.curated import FeasibilityFile, FeasibilityRecord, FeasibilityStep
 
 LABELS = (
     "official_home",
@@ -104,15 +106,20 @@ class Verdict:
     provenance: str | None = None
 
 
-def record_rank(record: FeasibilityRecord) -> int:
-    rank = max(
-        LEGALITY_RANK[record.legality],
-        TOS_RANK[record.tos],
-        PRACTICAL_RANK[record.practical],
-    )
-    if any(step.requires_false_declaration for step in record.steps):
+def axes_rank(
+    legality: str, tos: str, practical: str, steps: Iterable[FeasibilityStep] = ()
+) -> int:
+    """The rank of three curated axes: the worst axis wins, and a step that needs a false
+    declaration forces at least FALSE_DECLARATION_MIN_RANK. Shared by feasibility records and
+    the curated bundle verdicts (bundles.yaml `verdicts`)."""
+    rank = max(LEGALITY_RANK[legality], TOS_RANK[tos], PRACTICAL_RANK[practical])
+    if any(step.requires_false_declaration for step in steps):
         rank = max(rank, FALSE_DECLARATION_MIN_RANK)
     return rank
+
+
+def record_rank(record: FeasibilityRecord) -> int:
+    return axes_rank(record.legality, record.tos, record.practical, record.steps)
 
 
 def eu_badge(record: FeasibilityRecord) -> bool:
