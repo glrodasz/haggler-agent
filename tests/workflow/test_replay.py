@@ -15,8 +15,10 @@ from haggler.fetch.errors import (
     RobotsDisallowedError,
     TransientFetchError,
 )
+from haggler.fetch.pdf import extract_pdf_text
 from haggler.fetch.replay import ReplayFetcher
 from haggler.jobs import daily
+from pdf_support import build_pdf
 
 
 def write_index(root: Path, index: dict) -> None:
@@ -82,6 +84,41 @@ async def test_replay_errors_match_the_http_fetcher(tmp_path: Path) -> None:
         await rf.fetch("https://x/wall")
     with pytest.raises(TransientFetchError):
         await rf.fetch("https://x/oops")
+
+
+async def test_replay_binary_entries(tmp_path: Path) -> None:
+    pdf = build_pdf([["Prislista 299 kr/mån"]])
+    (tmp_path / "list.pdf").write_bytes(pdf)
+    (tmp_path / "list.pdf.gz").write_bytes(gzip.compress(pdf))
+    (tmp_path / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe")
+    (tmp_path / "page.html").write_text("<p>%PDF-1.4 129 kr</p>", encoding="utf-8")
+    write_index(
+        tmp_path,
+        {
+            "https://x/declared.pdf": {
+                "file": "list.pdf",
+                "binary": True,
+                "content_type": "application/pdf",
+            },
+            "https://x/download": {"file": "list.pdf.gz", "binary": True},
+            "https://x/image": {"file": "image.png", "binary": True, "content_type": "image/png"},
+            "https://x/page": {"file": "page.html"},
+        },
+    )
+    rf = ReplayFetcher(tmp_path)
+    declared = await rf.fetch("https://x/declared.pdf")
+    assert (declared.body, declared.content_type) == (pdf, "application/pdf")
+    assert declared.text == pdf.decode("utf-8", errors="replace")
+    # No content type: octet-stream, and the "%PDF-" signature still keeps the bytes.
+    download = await rf.fetch("https://x/download")
+    assert (download.body, download.content_type) == (pdf, "application/octet-stream")
+    image = await rf.fetch("https://x/image")
+    assert image.body == b"" and image.text.startswith("\ufffdPNG")
+    page = await rf.fetch("https://x/page")
+    assert (page.body, page.text, page.content_type) == (b"", "<p>%PDF-1.4 129 kr</p>", "text/html")
+    # The bytes reach the extractor like an HttpFetcher download.
+    text = await extract_pdf_text(download.body)
+    assert text.lines == ("Prislista 299 kr/mån",)
 
 
 def test_replay_rejects_bad_index(tmp_path: Path) -> None:

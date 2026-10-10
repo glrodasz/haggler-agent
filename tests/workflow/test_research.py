@@ -19,6 +19,7 @@ from google.genai import types
 from conftest import FixtureFetcher, _request_text
 from haggler.catalog import load_catalog, load_feasibility, load_payment_instruments, load_profiles
 from haggler.config import Settings
+from haggler.fetch import RawResponse
 from haggler.fetch.errors import BlockedError, RobotsDisallowedError
 from haggler.jobs.research import ResearchOptions, run_research
 from haggler.models.observations import PublishedPrice
@@ -26,6 +27,7 @@ from haggler.models.research import SubjectFacts
 from haggler.research import io
 from haggler.research.deps import ResearchDeps
 from haggler.store import dumps, dumps_lines
+from pdf_support import build_pdf
 
 TODAY = date(2026, 10, 9)
 TERMS = "https://help.netflix.com/legal/termsofuse"
@@ -243,6 +245,30 @@ async def test_full_run_persists_only_verified_claims():
     assert manifest["files"]["services.json"] == io.sha256_hex(
         store.blobs["research/latest/services.json"]
     )
+
+
+async def test_quote_in_an_official_pdf_verifies_and_its_bytes_are_kept():
+    # Phase 3 (H4) changes Phase 2 on purpose: a PDF used to be "unsupported_content".
+    pdf = build_pdf([["Netflix Terms of Use", f"4.3 {CLAUSE}."]])
+    routes = dict(PAGES)
+    routes[TERMS] = RawResponse(
+        url=TERMS,
+        final_url=TERMS,
+        status_code=200,
+        text=pdf.decode("utf-8", "replace"),
+        content_type="application/pdf",
+        body=pdf,
+    )
+    deps = make_deps(model=GroundedGemini(responder=default_responder), routes=routes)
+    await run(deps)
+    svc = latest(deps.store)["service:netflix"]
+    clause = next(c for c in svc.claims if c.field == "residence_clause")
+    assert clause.check.status == "verified" and clause.check.source_class == "official"
+    # The PDF's bytes are kept as fetched, under the same 30-day raw/research/ prefix.
+    key = io.raw_key("2026-10-09", TERMS, "pdf")
+    assert key.startswith("raw/research/2026-10-09/") and key.endswith(".pdf")
+    assert deps.store.blobs[key] == pdf
+    assert io.raw_key("2026-10-09", TERMS) == key.removesuffix("pdf") + "html.gz"
 
 
 async def test_same_day_rerun_plans_nothing():

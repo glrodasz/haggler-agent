@@ -143,11 +143,8 @@ async def known_pages(settings: Settings) -> list[dict[str, Any]]:
     try:
         for url, who in owners.items():
             page = await pages.get(url)
-            text_chars = 0
-            if page.status is None:
-                from haggler.text import html_to_lines
-
-                text_chars = len(" ".join(html_to_lines(page.text)))
+            # Rendered lines: html_to_lines for HTML, the extracted text for a PDF.
+            text_chars = len(" ".join(page.lines())) if page.status is None else 0
             rows.append(
                 {
                     "url": url,

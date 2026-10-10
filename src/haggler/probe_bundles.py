@@ -6,8 +6,10 @@ HTTP status, final host (still the requested site?), content type, walls, the vi
 carry an amount in the country's currency, the lines naming the bundle or its services, and the
 price-like values inside embedded JSON. The readability matrix it prints decides each bundle's
 watch mode (only a `readable` page may be `auto`), and the watcher's anchors are copied from it.
-Unreadable pages (bot or login walls, robots.txt, JavaScript-only prices, PDFs until H4) are
-reported with their reason and left to a manual check: they are never worked around.
+A PDF is read as its extracted text (haggler.fetch.pdf: pypdf in a sandboxed worker, layout-mode
+lines) and gets the same amount and component lines, plus its extraction status and page count.
+Unreadable pages (bot or login walls, robots.txt, JavaScript-only prices, encrypted or scanned
+PDFs) are reported with their reason and left to a manual check: they are never worked around.
 
 Targets file (probe/bundle_targets.txt): one target per non-comment line, "<label> <CC> <url>":
   label  a bundle_id of data/curated/bundles.yaml, or a free snake_case label for a page that is
@@ -20,9 +22,10 @@ next to whitespace also separates targets, like the probe.yml override.
 
 Output: <out>/summary.{json,md} quote at most QUOTE_BUDGET characters of page text per target
 (title, amount lines, component lines, embedded snippets, JSON script ids; each line at most
-LINE_CHARS) and are the only files meant to be published. Raw bodies go under <out>/raw/bundles/
-for local debugging only; PDF bodies are neither saved nor quoted until text extraction exists
-(milestone H4).
+LINE_CHARS) and are the only files meant to be published. Raw bodies (a PDF's bytes too) go
+under <out>/raw/bundles/ for local debugging only. A PDF's text is quoted only through the same
+amount and component lines, within the same budget. `pdf_pending` is left for a PDF whose
+bytes the fetcher did not deliver (nothing to extract).
 """
 
 from __future__ import annotations
@@ -47,6 +50,7 @@ from haggler.catalog import load_bundles
 from haggler.config import Settings
 from haggler.fetch import Fetcher, RawResponse
 from haggler.fetch.client import looks_like_bot_wall
+from haggler.fetch.pdf import PdfText, extract_pdf_text
 from haggler.models.catalog import Catalog, CountryDef
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.money import find_prices
@@ -91,6 +95,7 @@ READABILITY = (
     "readable",
     "embedded_only",
     "no_amounts",
+    "pdf_unreadable",
     "pdf_pending",
     "wrong_country",
     "blocked",
@@ -388,8 +393,9 @@ def _distinct_hits(found: Iterator[str]) -> tuple[list[str], int]:
 
 
 def is_pdf(resp: RawResponse) -> bool:
-    """A PDF by content type, or by its "%PDF-" signature (servers often say octet-stream)."""
-    if "pdf" in (resp.content_type or "").lower():
+    """A PDF by its kept bytes, its content type, or its "%PDF-" signature (servers often say
+    octet-stream)."""
+    if resp.body or "pdf" in (resp.content_type or "").lower():
         return True
     return resp.text.lstrip(_PDF_LEAD).startswith("%PDF-")
 
@@ -445,6 +451,10 @@ def _base_row(target: BundleTarget, catalog: Catalog, bundle: Bundle | None) -> 
         "content_type": None,
         "page_len": 0,
         "pdf": False,
+        # Extraction status (ok, pdf_encrypted, pdf_no_text, pdf_limit, pdf_error; None when the
+        # fetcher kept no bytes) and page count of a PDF.
+        "pdf_status": None,
+        "pdf_pages": 0,
         "text_chars": 0,
         "thin_page": False,
         "wall": None,
@@ -483,7 +493,9 @@ async def probe_target(
         row.update(_fetch_failure(exc))
     else:
         try:
-            _inspect(row, target, resp, catalog, bundle, raw_dir, index)
+            # Never raises for a bad PDF: the status says what happened.
+            pdf = await extract_pdf_text(resp.body) if is_pdf(resp) and resp.body else None
+            _inspect(row, target, resp, catalog, bundle, raw_dir, index, pdf)
         except RecursionError:
             # HTML nested thousands of levels deep: the page's doing, a finding and not a bug.
             row.update(
@@ -507,6 +519,7 @@ def _inspect(
     bundle: Bundle | None,
     raw_dir: Path,
     index: int,
+    pdf: PdfText | None = None,
 ) -> None:
     final_host = host_of(resp.final_url)
     row.update(
@@ -524,38 +537,47 @@ def _inspect(
         wanted = _country_segment(urlsplit(target.url).path, country)
         if wanted and _country_segment(urlsplit(resp.final_url).path, country) is None:
             row["lost_country_segment"] = wanted
+    name = f"{index + 1:02d}_{_safe_name(target.label)}_{target.country}"
     if is_pdf(resp):
-        # The decoded body of a PDF is binary garbage: neither saved nor quoted (H4 adds text).
+        # The decoded body of a PDF is binary garbage: only its extracted text is read.
         row["pdf"] = True
-        row["notes"].append("PDF: la extracción de texto llega con H4; el cuerpo no se cita")
+        if pdf is None:
+            row["notes"].append("PDF sin bytes del fetcher: no hay texto que extraer ni citar")
+            return
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        raw_path = raw_dir / f"{name}.pdf"
+        raw_path.write_bytes(resp.body)
+        row.update(
+            page_len=len(resp.body),
+            raw_file=f"raw/bundles/{raw_path.name}",
+            pdf_status=pdf.status,
+            pdf_pages=pdf.pages,
+        )
+        if not pdf.ok:
+            row["notes"].append(f"PDF ilegible, detalle del lector: {pdf.reason}")
+            return
+        if pdf.detail:
+            row["notes"].append(f"PDF: {pdf.detail}")
+        _scan_lines(row, list(pdf.lines), catalog, bundle)
+        if _login_wall(target.url, resp.final_url):
+            row["wall"] = "login"
+        else:
+            row["wall"] = page_wall(resp.headers, "", [], False)
         return
     currency = row["currency"]
     is_json = "json" in (resp.content_type or "").lower()
     raw_dir.mkdir(parents=True, exist_ok=True)
-    name = f"{index + 1:02d}_{_safe_name(target.label)}_{target.country}"
     raw_path = raw_dir / f"{name}.{'json' if is_json else 'html'}"
     raw_path.write_text(resp.text, encoding="utf-8")
     row["raw_file"] = f"raw/bundles/{raw_path.name}"
     lines = [] if is_json else page_lines(resp.text)
-    row["text_chars"] = sum(len(ln) for ln in lines)
-    row["thin_page"] = not is_json and row["text_chars"] < THIN_TEXT_CHARS
+    row["thin_page"] = not is_json and sum(len(ln) for ln in lines) < THIN_TEXT_CHARS
     if not is_json:
         row["page_title"] = page_title(resp.text)
         # Page-controlled attribute text: one line each, clipped, and counted in QUOTE_BUDGET.
         ids = (_clip(_WS.sub(" ", i).strip(), width=PATH_CHARS) for i in json_script_ids(resp.text))
         row["json_script_ids"] = list(dict.fromkeys(ids))[:MAX_SCRIPT_IDS]
-    scan = amount_lines(lines, currency)
-    row["amount_lines_total"] = len(scan.lines)
-    row["amount_lines"] = scan.lines[:MAX_AMOUNT_LINES]
-    row["other_currencies"] = dict(sorted(scan.others.items()))
-    if scan.below_floor:
-        row["notes"].append(
-            f'{scan.below_floor} importe(s) con "$" por debajo de {_DOLLAR_FLOOR[currency]} no se '
-            f"cuentan como {currency}: probablemente están en otra moneda"
-        )
-    if bundle is not None:
-        terms = component_terms(bundle, catalog)
-        row["component_lines"] = component_lines(lines, terms, scan.source)[:MAX_COMPONENT_LINES]
+    _scan_lines(row, lines, catalog, bundle)
     if is_json:
         snippets, total = _distinct_hits(_blob_hits("body", resp.text, True, currency))
     else:
@@ -574,6 +596,27 @@ def _inspect(
         )
 
 
+def _scan_lines(
+    row: dict[str, Any], lines: list[str], catalog: Catalog, bundle: Bundle | None
+) -> None:
+    """Text size, amount lines, other currencies and component lines of the visible lines (an
+    HTML page's rendered lines or a PDF's extracted ones)."""
+    currency = row["currency"]
+    row["text_chars"] = sum(len(ln) for ln in lines)
+    scan = amount_lines(lines, currency)
+    row["amount_lines_total"] = len(scan.lines)
+    row["amount_lines"] = scan.lines[:MAX_AMOUNT_LINES]
+    row["other_currencies"] = dict(sorted(scan.others.items()))
+    if scan.below_floor:
+        row["notes"].append(
+            f'{scan.below_floor} importe(s) con "$" por debajo de {_DOLLAR_FLOOR[currency]} no se '
+            f"cuentan como {currency}: probablemente están en otra moneda"
+        )
+    if bundle is not None:
+        terms = component_terms(bundle, catalog)
+        row["component_lines"] = component_lines(lines, terms, scan.source)[:MAX_COMPONENT_LINES]
+
+
 def _classify(row: dict[str, Any]) -> None:
     """Derive readability and the suggested watch mode (auto only for `readable`)."""
     status = row["status"]
@@ -587,8 +630,10 @@ def _classify(row: dict[str, Any]) -> None:
         readability = "blocked"
     elif not row["same_site"] or row["lost_country_segment"]:
         readability = "wrong_country"
-    elif row["pdf"]:
+    elif row["pdf"] and row["pdf_status"] is None:
         readability = "pdf_pending"
+    elif row["pdf"] and row["pdf_status"] != "ok":
+        readability = "pdf_unreadable"
     elif row["amount_lines_total"]:
         readability = "readable"
     elif row["other_currencies"]:
@@ -617,7 +662,10 @@ def _reason(readability: str, row: dict[str, Any]) -> str:
         thin = " (texto visible muy corto: probablemente JavaScript)" if row["thin_page"] else ""
         return f"sin importes en {cur} en la página{thin}"
     if readability == "pdf_pending":
-        return "PDF: sin extracción de texto hasta H4; volver a correr el probe después"
+        return "PDF: el fetcher no entregó sus bytes, así que no hay texto que leer"
+    if readability == "pdf_unreadable":
+        why = _PDF_UNREADABLE_ES.get(row["pdf_status"], "no se pudo leer")
+        return f"PDF {why} ({row['pdf_status']}): comprobación manual"
     if readability == "wrong_country":
         if row["same_site"] is False:
             wanted = site_of(host_of(row["url"]))
@@ -634,6 +682,14 @@ def _reason(readability: str, row: dict[str, Any]) -> str:
         return "robots.txt no permite esta URL a nuestro user agent: se respeta"
     return "la descarga o el análisis falló" + (f" ({row['error']})" if row["error"] else "")
 
+
+# Why a PDF could not be read, by extraction status (haggler.fetch.pdf).
+_PDF_UNREADABLE_ES = {
+    "pdf_encrypted": "cifrado o sin permiso de extracción de texto: no se fuerza",
+    "pdf_no_text": "sin capa de texto (probablemente escaneado)",
+    "pdf_limit": "por encima de un tope (tamaño, páginas, texto, memoria o CPU)",
+    "pdf_error": "dañado o ilegible para el lector",
+}
 
 _QUOTED_LISTS = ("amount_lines", "component_lines", "embedded_amount_snippets", "json_script_ids")
 
@@ -766,10 +822,16 @@ def _details(n: int, row: dict[str, Any]) -> list[str]:
     if row["http_status"] is not None:
         status += f", HTTP {row['http_status']}"
     if final:
-        text = "PDF" if row["pdf"] else f"texto visible: {row['text_chars']}"
         same = "sí" if row["same_site"] else "no"
         ctype = _code(row["content_type"]) if row["content_type"] else "—"
-        status += f", {ctype}, {row['page_len']} caracteres ({text}), mismo sitio: {same}"
+        if row["pdf"] and row["pdf_status"]:
+            size = f"{row['page_len']} bytes (PDF {row['pdf_status']}: {row['pdf_pages']} "
+            size += f"páginas, texto: {row['text_chars']})"
+        elif row["pdf"]:
+            size = f"{row['page_len']} caracteres (PDF sin bytes)"
+        else:
+            size = f"{row['page_len']} caracteres (texto visible: {row['text_chars']})"
+        status += f", {ctype}, {size}, mismo sitio: {same}"
     out.append(status)
     if row["page_title"]:
         out.append(f"- Título: {_code(row['page_title'])}")

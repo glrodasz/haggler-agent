@@ -14,6 +14,7 @@ dependencies = [
   "pyyaml>=6.0",
   "selectolax>=0.3.21",
   "babel>=2.16",
+  "pypdf>=6.20.0",
 ]
 
 [project.scripts]
@@ -38,6 +39,8 @@ packages = ["src/haggler"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# Slow tests still run by default (each well under 10 s); `-m "not slow"` skips them.
+markers = ["slow: takes seconds (PDF sandbox limits); still part of the default run"]
 filterwarnings = [
   "ignore::DeprecationWarning:google.*",
   "ignore:.*EXPERIMENTAL.*:UserWarning",

@@ -314,12 +314,16 @@ def build_research_workflow(deps: ResearchDeps) -> Workflow:
         buf = deps.buffer
         run_date = date.fromisoformat(run["run_date"])
         dry = bool(run.get("dry_run"))
-        store_raw = (
-            None
-            if dry
-            else lambda url, text: write_text_gz(deps.store, io.raw_key(run["run_date"], url), text)
+
+        def store_raw(url: str, data: str | bytes) -> str:
+            if isinstance(data, bytes):  # a PDF: its bytes, as fetched
+                key = io.raw_key(run["run_date"], url, "pdf")
+                return deps.store.write_bytes(key, data, content_type="application/pdf")
+            return write_text_gz(deps.store, io.raw_key(run["run_date"], url), data)
+
+        pages = PageCache(
+            deps.fetcher, timeout_s=deps.fetch_timeout_s, store_raw=None if dry else store_raw
         )
-        pages = PageCache(deps.fetcher, timeout_s=deps.fetch_timeout_s, store_raw=store_raw)
         subjects = [PlannedSubject.from_dict(d) for d in node_input.get("subjects", [])]
         answers: dict[str, dict[str, Any]] = node_input.get("answers", {})
         sem = asyncio.Semaphore(VERIFY_CONCURRENCY)

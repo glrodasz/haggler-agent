@@ -12,6 +12,7 @@ from haggler.fetch.errors import BlockedError, FetchError, RobotsDisallowedError
 from haggler.llm.grounding import GroundingSource
 from haggler.models.research import ClaimDraft, SubjectFacts
 from haggler.research.evidence import (
+    Page,
     PageCache,
     canonical_url,
     site_of,
@@ -19,6 +20,8 @@ from haggler.research.evidence import (
     validate_draft,
     verify_subject,
 )
+from haggler.text import text_hash
+from pdf_support import TWO_COLUMN_ROWS, blank_pdf, build_pdf, encrypted_pdf, two_column_pdf
 
 TODAY = date(2026, 10, 9)
 TERMS = "https://help.netflix.com/legal/termsofuse"
@@ -192,12 +195,177 @@ async def test_fetch_failures_end_unverified(error, status):
     assert out.claims == [] and out.unverified[0].status == status
 
 
-async def test_pdf_is_unsupported():
-    pdf = RawResponse(
-        url=TERMS, final_url=TERMS, status_code=200, text="%PDF", content_type="application/pdf"
+def pdf_response(body: bytes, *, content_type: str = "application/pdf") -> RawResponse:
+    return RawResponse(
+        url=TERMS,
+        final_url=TERMS,
+        status_code=200,
+        text=body.decode("utf-8", errors="replace"),
+        content_type=content_type,
+        body=body,
     )
-    out, _ = await verify([draft()], {TERMS: pdf})
-    assert out.unverified[0].status == "unsupported_content"
+
+
+# Phase 2 behaviour change (Phase 3, H4): a quote in an official PDF verifies; until then every
+# PDF was "unsupported_content".
+TERMS_PDF = [
+    "Netflix Terms of Use",
+    "4.3. You may use the Netflix service primarily within the country in which you have estab-",
+    "lished your account and only in geographic locations where we offer our service.",
+]
+
+
+# "text/html": what HttpFetcher returns for a PDF served without a Content-Type (the Accept
+# fallback), the bytes in body: PageCache checks for a PDF before the text types.
+@pytest.mark.parametrize(
+    "content_type", ["application/pdf", "application/octet-stream", "text/html"]
+)
+async def test_quote_in_a_pdf_is_verified(content_type):
+    raw: list[tuple[str, object]] = []
+    out, _ = await verify(
+        [draft()],
+        {TERMS: pdf_response(build_pdf([TERMS_PDF]), content_type=content_type)},
+        store_raw=lambda url, data: raw.append((url, data)) or "raw/x.pdf",
+    )
+    assert [c.check.status for c in out.claims] == ["verified"]
+    check = out.claims[0].check
+    assert check.source_class == "official" and check.final_url == TERMS
+    # page_hash is over the extracted text, the hyphenated line break joined.
+    text = "\n".join([TERMS_PDF[0], TERMS_PDF[1][:-1] + TERMS_PDF[2]])
+    assert check.page_hash == text_hash(text)
+    # The PDF's bytes are what is kept for audits.
+    assert raw == [(TERMS, build_pdf([TERMS_PDF]))]
+
+
+@pytest.mark.parametrize(
+    ("body", "reason"),
+    [
+        (encrypted_pdf([QUOTE]), "pdf_encrypted"),
+        (blank_pdf(), "pdf_no_text"),
+        (blank_pdf(61), "pdf_limit"),
+        (b"%PDF-1.4 broken", "pdf_error"),
+        (b"", "pdf_error"),  # declared as a PDF, but the fetcher kept no bytes
+    ],
+    ids=["encrypted", "blank", "61_pages", "broken", "no_bytes"],
+)
+async def test_unreadable_pdf_is_unsupported_with_its_reason(body, reason):
+    raw: list[str] = []
+    out, _ = await verify(
+        [draft()], {TERMS: pdf_response(body)}, store_raw=lambda url, data: raw.append(url)
+    )
+    assert out.claims == [] and raw == []
+    (u,) = out.unverified
+    assert u.status == "unsupported_content" and u.detail.startswith(reason)
+
+
+async def test_other_binary_content_is_still_unsupported():
+    image = RawResponse(
+        url=TERMS, final_url=TERMS, status_code=200, text="\ufffdPNG", content_type="image/png"
+    )
+    out, _ = await verify([draft()], {TERMS: image})
+    assert (out.unverified[0].status, out.unverified[0].detail) == (
+        "unsupported_content",
+        "image/png",
+    )
+
+
+async def test_pdf_page_cache_fields():
+    pages = PageCache(FixtureFetcher({TERMS: pdf_response(build_pdf([TERMS_PDF, ["Page 2"]]))}))
+    page = await pages.get(TERMS)
+    assert (page.status, page.is_pdf, page.pdf_pages) == (None, True, 2)
+    assert page.lines()[-1] == "Page 2" and page.text == "\n".join(page.lines())
+    assert page.contains(QUOTE) == "lines" and page.embedded() == []
+
+
+async def test_pdf_plain_mode_lines_are_the_fallback_search():
+    # Layout-mode lines are Page.lines(); plain mode (content-stream order) is Page.nodes().
+    pages = PageCache(FixtureFetcher({TERMS: pdf_response(two_column_pdf())}))
+    page = await pages.get(TERMS)
+    assert page.status is None and page.lines() == list(TWO_COLUMN_ROWS)
+    assert page.contains("Telia Mobil 20 GB 299 kr/mån") == "lines"
+    assert page.contains("Telia Mobil 20 GB Telia Mobil 50 GB") == "nodes"
+    assert page.locate("Telia Mobil 50 GB 299 kr/mån") == (1, page.nodes()[0:4])
+    out, _ = await verify(
+        [draft(quote="Telia Mobil 20 GB Telia Mobil 50 GB")],
+        {TERMS: pdf_response(two_column_pdf())},
+    )
+    assert [c.check.status for c in out.claims] == ["verified"]
+
+
+async def test_pdf_with_a_broken_cmap_is_hashed_and_verified():
+    # A ToUnicode CMap mapping "A" to a lone surrogate: the text is still valid Unicode, so
+    # page_hash (a UTF-8 encode) never raises and the rest of the page still verifies.
+    body = build_pdf([[*TERMS_PDF, "ABBA 299 kr"]], to_unicode={"41": "D800"})
+    out, _ = await verify([draft()], {TERMS: pdf_response(body)})
+    assert [c.check.status for c in out.claims] == ["verified"]
+    pages = PageCache(FixtureFetcher({TERMS: pdf_response(body)}))
+    page = await pages.get(TERMS)
+    assert page.lines()[-1] == "\ufffdBB\ufffd 299 kr" and page.page_hash == text_hash(page.text)
+
+
+# ------------------------------------------------------------------ Page.contains / locate
+
+NEXT_PAGE = """<html><head>
+<script type="application/ld+json">
+{"@type": "Offer", "description": "Meli+ Total por $ 24.900 al mes"}</script>
+<script id="__NEXT_DATA__" type="application/json">
+{"props": {"plans": [{"label": "Disney+ incluido sin costo"}]}}</script>
+<script>var hidden = "Texto de un script que no es JSON";</script>
+</head><body><main><h1>Meli+</h1><p>Elige tu plan</p></main></body></html>"""
+
+
+def html_page(text: str, content_type: str = "text/html") -> Page:
+    return Page(url=TERMS, text=text, content_type=content_type)
+
+
+def test_contains_reports_where_the_quote_is():
+    page = html_page(PAGE)
+    assert page.contains(QUOTE) == "lines"
+    assert page.contains("geographic locations where we offer our service") == "lines"
+    assert page.contains("nowhere on this page at all") is None
+    spa = html_page(NEXT_PAGE)
+    assert spa.contains("Meli+ Total por $ 24.900 al mes") is None
+    assert spa.contains("Meli+ Total por $ 24.900 al mes", allow_embedded=True) == "embedded"
+    assert spa.contains("Disney+ incluido sin costo", allow_embedded=True) == "embedded"
+    assert spa.contains("Texto de un script que no es JSON", allow_embedded=True) is None
+    assert spa.contains("Elige tu plan", allow_embedded=True) == "lines"
+
+
+def test_contains_falls_back_to_text_nodes():
+    # The rendered lines drop a short <sup> footnote mark; the raw text nodes keep it.
+    page = html_page("<html><body><p>Precio total<sup>2</sup> por mes</p></body></html>")
+    assert page.lines() == ["Precio total por mes"] and page.contains("total por mes") == "lines"
+    assert page.contains("Precio total 2 por mes") == "nodes"
+
+
+def test_contains_on_plain_text_and_pdf_pages():
+    plain = html_page("Line one\n\n  Line   two  \n", content_type="text/plain")
+    assert plain.lines() == ["Line one", "Line two"] and plain.nodes() == []
+    assert plain.contains("one line two") == "lines" and plain.contains("<p>") is None
+    pdf = Page(url=TERMS, is_pdf=True, _lines=["Col A Col B", "row 299 kr"],
+               _nodes=["Col A", "row", "Col B 299 kr"])  # fmt: skip
+    assert pdf.contains("row 299 kr") == "lines" and pdf.contains("Col B 299 kr") == "nodes"
+    assert pdf.contains("Col B", allow_embedded=True) == "lines" and pdf.embedded() == []
+
+
+def test_locate_returns_the_line_and_its_context():
+    lines = ["Header", "Meli+ Total", "Primeros 2 meses", "$ 9.900 / mes", "luego $ 24.900", "Fin"]
+    page = Page(url=TERMS, is_pdf=True, _lines=lines, _nodes=[])
+    assert page.locate("$ 9.900 / mes") == (3, lines[1:5])
+    # A quote over two lines: 2 lines before its first line, 1 after its last.
+    assert page.locate("9.900 / MES luego $ 24.900") == (3, lines[1:6])
+    assert page.locate("Header Meli+") == (0, lines[0:3])
+    assert page.locate("Fin") == (5, lines[3:6])
+    assert page.locate("no such text") is None and page.locate("   ") is None
+
+
+def test_locate_skips_empty_lines_and_falls_back_to_nodes():
+    page = Page(url=TERMS, is_pdf=True, _lines=["A", "", "B 1 kr", "C"], _nodes=["x", "only here"])
+    assert page.locate("a b 1 KR") == (0, ["A", "", "B 1 kr", "C"])
+    assert page.locate("only here") == (1, ["x", "only here"])
+    html = html_page(PAGE)
+    index, context = html.locate(QUOTE)
+    assert html.lines()[index].startswith("4.3.") and context[0] == "Menu"
 
 
 async def test_grounding_source_of_the_same_site_can_verify():

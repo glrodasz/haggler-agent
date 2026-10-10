@@ -24,6 +24,10 @@ class RawResponse:
     fetched_at: datetime | None = None
     headers: dict[str, str] = field(default_factory=dict)
     elapsed_ms: int = 0
+    # The raw bytes, kept only for a PDF (haggler.fetch.pdf.pdf_payload): application/pdf, or an
+    # octet-stream / missing content type whose body starts with "%PDF-". b"" for everything
+    # else, whose `text` (the decoded body, as always) is all there is.
+    body: bytes = b""
 
 
 class Fetcher(Protocol):

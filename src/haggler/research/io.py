@@ -7,7 +7,8 @@ Store (GCS or local, written by the research job):
     research/latest/run.json                        written LAST; sha256 of every latest file
     research/usage/{YYYY-MM}.json                   calls and search queries spent in the month
                                                     (dry runs included): the monthly guard
-    raw/research/{date}/{sha}.html.gz               fetched pages (30-day lifecycle)
+    raw/research/{date}/{sha}.html.gz               fetched pages (30-day lifecycle, like
+    raw/research/{date}/{sha}.pdf                   every key under raw/research/)
 
 Repo (written by `haggler sync`, read by `haggler site-data`):
     data/research/{services,pairs,instruments}.json, data/research/run.json
@@ -79,8 +80,10 @@ def run_prefix(run_date: str, run_id: str) -> str:
     return f"{PREFIX}/runs/{run_date}/{run_id}"
 
 
-def raw_key(run_date: str, url: str) -> str:
-    return f"raw/research/{run_date}/{hashlib.sha256(url.encode()).hexdigest()[:16]}.html.gz"
+def raw_key(run_date: str, url: str, ext: str = "html.gz") -> str:
+    """Store key of a fetched page: "html.gz" for HTML (gzipped text), "pdf" for a PDF's bytes.
+    Every key is under raw/research/, which the bucket's lifecycle deletes after 30 days."""
+    return f"raw/research/{run_date}/{hashlib.sha256(url.encode()).hexdigest()[:16]}.{ext}"
 
 
 @dataclass

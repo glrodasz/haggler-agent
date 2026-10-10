@@ -11,27 +11,36 @@ For each ClaimDraft of a subject:
    fetched, and a claim citing one is checked against the fallbacks only.
 3. The quote must appear (text.contains_normalized) in the page's block-aware text
    (text.html_to_lines), or in its raw text nodes (text.text_node_lines) as a fallback for
-   script-heavy pages. Non-HTML content (PDF...) is "unsupported_content".
+   script-heavy pages. A PDF (haggler.fetch.pdf, in a sandboxed worker) is read as its
+   extracted text: layout-mode lines first, then plain-mode lines as the fallback; its page_hash
+   is over that text. A PDF that cannot be read (encrypted, no text layer, over a cap, broken)
+   is "unsupported_content" with the pdf_* reason in the detail, as is any other non-text
+   content. (Until Phase 3 every PDF was "unsupported_content": a quote in an official PDF now
+   verifies.) Embedded JSON (Page.contains(allow_embedded=True)) is never used here.
 4. Source class of the page that verified: forum first (community.*, reddit..., and user or
    third-party content on official domains: groups/sites/docs.google.com, youtube.com/watch,
    apps.apple.com...), official when the host is one of the subject's official domains, press
    otherwise. Model-chosen URLs must name a public host (no IP literal or internal name).
 
-Fetched pages are never sent back to the model. Raw pages can be kept (store_raw) for audits.
+Fetched pages (PDF text included) are never sent back to the model. Raw pages can be kept
+(store_raw: the text of an HTML page, the bytes of a PDF) for audits.
 """
 
 from __future__ import annotations
 
 import asyncio
+import bisect
 import ipaddress
 import re
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+from typing import Any, Literal
 from urllib.parse import urlsplit, urlunsplit
 
-from haggler.fetch import Fetcher
+from haggler.fetch import Fetcher, RawResponse
 from haggler.fetch.errors import BlockedError, FetchError, RobotsDisallowedError
+from haggler.fetch.pdf import extract_pdf_text, is_pdf_response
 from haggler.llm.grounding import GroundingSource
 from haggler.models.research import (
     MAX_QUOTE,
@@ -47,7 +56,14 @@ from haggler.models.research import (
     claim_id,
 )
 from haggler.research.fields import FIELD_SPECS, FIELDS_BY_LEVEL, normalize_value, parse_event_date
-from haggler.text import contains_normalized, html_to_lines, text_hash, text_node_lines
+from haggler.text import (
+    contains_normalized,
+    html_to_lines,
+    json_scripts,
+    normalize_for_match,
+    text_hash,
+    text_node_lines,
+)
 
 MIN_QUOTE = 20
 MAX_GROUNDING_TRIES = 3
@@ -82,7 +98,16 @@ _SOURCE_ORDER = {"forum": 0, "press": 1, "official": 2}
 TEXT_TYPES = ("text/html", "application/xhtml+xml", "text/plain")
 _ELLIPSIS = re.compile(r"\.\.\.|…|\[\s*\.\.\.\s*\]")
 
-StoreRaw = Callable[[str, str], str | None]
+# Keeps a fetched page for audits: (final URL, HTML text or PDF bytes) -> store key.
+StoreRaw = Callable[[str, str | bytes], str | None]
+# Where Page.contains found a quote: the rendered lines (block-aware HTML, a PDF's layout-mode
+# lines, text/plain lines), the fallback lines (HTML text nodes, a PDF's plain-mode lines) or,
+# only when asked, the string leaves of embedded JSON scripts.
+Via = Literal["lines", "nodes", "embedded"]
+# Context Page.locate returns around a quote: lines before its first line and after its last.
+CONTEXT_BEFORE = 2
+CONTEXT_AFTER = 1
+MAX_JSON_NODES = 200_000
 
 
 def host_of(url: str) -> str:
@@ -174,31 +199,116 @@ def validate_draft(draft: ClaimDraft, kind: SubjectKind, *, today: date) -> Vali
     return ValidDraft(name, value, event if spec.needs_date else None, quote, url)
 
 
+def json_text_leaves(html: str) -> list[str]:
+    """The string leaves (whitespace collapsed) of a page's ld+json, __NEXT_DATA__ and other
+    application/json scripts, depth first, at most MAX_JSON_NODES nodes per script."""
+    out: list[str] = []
+    for _ident, value in json_scripts(html):
+        stack: list[Any] = [value]
+        visited = 0
+        while stack and visited < MAX_JSON_NODES:
+            node = stack.pop()
+            visited += 1
+            if isinstance(node, dict):
+                stack.extend(reversed(list(node.values())))
+            elif isinstance(node, list):
+                stack.extend(reversed(node))
+            elif isinstance(node, str) and (text := " ".join(node.split())):
+                out.append(text)
+    return out
+
+
+def _locate(lines: list[str], needle: str) -> tuple[int, list[str]] | None:
+    """(index of the line where the normalized `needle` starts, that line and the ones it
+    spans with CONTEXT_BEFORE lines before and CONTEXT_AFTER after), or None. Lines are joined
+    the way contains_normalized joins them (any whitespace run is one space)."""
+    starts: list[int] = []
+    owners: list[int] = []
+    parts: list[str] = []
+    pos = 0
+    for i, line in enumerate(lines):
+        norm = normalize_for_match(line)
+        if not norm:
+            continue
+        starts.append(pos)
+        owners.append(i)
+        parts.append(norm)
+        pos += len(norm) + 1
+    at = " ".join(parts).find(needle)
+    if at < 0:
+        return None
+    first = owners[bisect.bisect_right(starts, at) - 1]
+    last = owners[bisect.bisect_right(starts, at + len(needle) - 1) - 1]
+    return first, lines[max(0, first - CONTEXT_BEFORE) : last + 1 + CONTEXT_AFTER]
+
+
 @dataclass
 class Page:
     url: str
     status: CheckStatus | None = None  # None = fetched fine
     final_url: str | None = None
     http_status: int | None = None
+    # HTML or plain text as fetched; for a PDF, its extracted (layout-mode) lines.
     text: str = ""
     content_type: str = ""
     retrieved_at: datetime | None = None
     detail: str = ""
     page_hash: str | None = None
     raw_ref: str | None = None
+    is_pdf: bool = False
+    pdf_pages: int = 0
     _lines: list[str] | None = field(default=None, repr=False)
     _nodes: list[str] | None = field(default=None, repr=False)
+    _embedded: list[str] | None = field(default=None, repr=False)
 
-    def contains(self, quote: str) -> bool:
-        if self.content_type == "text/plain":
-            return contains_normalized(self.text, quote)
+    def lines(self) -> list[str]:
+        """The page's rendered lines: block-aware HTML lines, a PDF's layout-mode lines, or the
+        non-empty lines of a text/plain page."""
         if self._lines is None:
-            self._lines = html_to_lines(self.text)
-        if contains_normalized("\n".join(self._lines), quote):
-            return True
+            if self.content_type == "text/plain":
+                self._lines = [
+                    ln for ln in (" ".join(r.split()) for r in self.text.split("\n")) if ln
+                ]
+            else:
+                self._lines = html_to_lines(self.text)
+        return self._lines
+
+    def nodes(self) -> list[str]:
+        """The fallback lines: raw HTML text nodes, a PDF's plain-mode lines (none for
+        text/plain)."""
         if self._nodes is None:
-            self._nodes = text_node_lines(self.text)
-        return contains_normalized("\n".join(self._nodes), quote)
+            self._nodes = [] if self.content_type == "text/plain" else text_node_lines(self.text)
+        return self._nodes
+
+    def embedded(self) -> list[str]:
+        """String leaves of the HTML page's embedded JSON scripts (none for PDF or text/plain)."""
+        if self._embedded is None:
+            plain = self.is_pdf or self.content_type == "text/plain"
+            self._embedded = [] if plain else json_text_leaves(self.text)
+        return self._embedded
+
+    def contains(self, quote: str, *, allow_embedded: bool = False) -> Via | None:
+        """Where the quote is (a truthy Via), or None. Embedded JSON is searched only with
+        allow_embedded=True, and a match there alone never fixes a price or a tier."""
+        if contains_normalized("\n".join(self.lines()), quote):
+            return "lines"
+        if contains_normalized("\n".join(self.nodes()), quote):
+            return "nodes"
+        if allow_embedded and contains_normalized("\n".join(self.embedded()), quote):
+            return "embedded"
+        return None
+
+    def locate(self, quote: str) -> tuple[int, list[str]] | None:
+        """(index of the line where the quote starts, context lines: CONTEXT_BEFORE before
+        the quote's lines and CONTEXT_AFTER after), searched in lines() then nodes() (the index
+        refers to the list that matched), or None where contains() finds neither."""
+        needle = normalize_for_match(quote)
+        if not needle:
+            return None
+        for lines in (self.lines(), self.nodes()):
+            if (hit := _locate(lines, needle)) is not None:
+                return hit
+        return None
 
 
 class PageCache:
@@ -250,17 +360,41 @@ class PageCache:
         page.http_status = resp.status_code
         page.content_type = (resp.content_type or "").lower()
         page.retrieved_at = resp.fetched_at or self.now()
+        # Before the text types: a PDF served without a content type gets the Accept fallback.
+        if is_pdf_response(resp):
+            return await self._read_pdf(page, resp)
         if not page.content_type.startswith(TEXT_TYPES):
             page.status, page.detail = "unsupported_content", page.content_type
             return page
         page.text = resp.text
         page.page_hash = text_hash(resp.text)
-        if self.store_raw is not None:
-            try:
-                page.raw_ref = self.store_raw(page.final_url, resp.text)
-            except Exception as exc:  # keeping the raw page is best effort
-                page.detail = f"raw page not stored: {type(exc).__name__}"
+        self._keep_raw(page, resp.text)
         return page
+
+    async def _read_pdf(self, page: Page, resp: RawResponse) -> Page:
+        page.is_pdf = True
+        try:
+            pdf = await extract_pdf_text(resp.body)
+        except Exception as exc:  # extract_pdf_text never raises for a bad PDF: this is a bug
+            page.status, page.detail = "unsupported_content", f"pdf_error: {type(exc).__name__}"
+            return page
+        page.pdf_pages = pdf.pages
+        if not pdf.ok:
+            page.status, page.detail = "unsupported_content", pdf.reason
+            return page
+        page.text = pdf.text
+        page._lines, page._nodes = list(pdf.lines), list(pdf.stream_lines)
+        page.page_hash = text_hash(page.text)
+        self._keep_raw(page, resp.body)
+        return page
+
+    def _keep_raw(self, page: Page, data: str | bytes) -> None:
+        if self.store_raw is None:
+            return
+        try:
+            page.raw_ref = self.store_raw(page.final_url or page.url, data)
+        except Exception as exc:  # keeping the raw page is best effort
+            page.detail = f"raw page not stored: {type(exc).__name__}"
 
 
 @dataclass

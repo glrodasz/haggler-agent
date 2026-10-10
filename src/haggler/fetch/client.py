@@ -31,6 +31,7 @@ from haggler.fetch.errors import (
     RobotsDisallowedError,
     TransientFetchError,
 )
+from haggler.fetch.pdf import MAX_PDF_BYTES, pdf_payload
 from haggler.fetch.robots import (
     ROBOTS_MAX_BYTES,
     RobotsCache,
@@ -41,6 +42,8 @@ from haggler.fetch.robots import (
 log = logging.getLogger(__name__)
 
 MAX_REDIRECTS = 5
+# Every body, HTML or PDF (fetch.pdf.MAX_PDF_BYTES is the same 10 MiB): a larger one is a
+# FetchError, never read into memory.
 MAX_BODY_BYTES = 10 * 1024 * 1024
 # A robots.txt Crawl-delay above our own interval is honoured, up to this cap.
 MAX_CRAWL_DELAY_S = 30.0
@@ -242,6 +245,15 @@ class HttpFetcher:
                 continue
             text = _decode(hop.body, hop.encoding)
             classify_status(url, hop.status, hop.headers, text)
+            # The bytes are kept only for a PDF (by type, or an octet-stream / untyped "%PDF-"
+            # body); `text` stays the decoded body for every response, as before.
+            body = pdf_payload(hop.headers.get("content-type"), hop.body)
+            if len(body) > MAX_PDF_BYTES:
+                raise FetchError(
+                    f"PDF too large ({len(body)} bytes > {MAX_PDF_BYTES})",
+                    status=hop.status,
+                    url=url,
+                )
             return RawResponse(
                 url=url,
                 final_url=current,
@@ -253,6 +265,7 @@ class HttpFetcher:
                     k.lower(): v for k, v in hop.headers.items() if k.lower() not in _DROP_HEADERS
                 },
                 elapsed_ms=total_ms,
+                body=body,
             )
         raise FetchError(f"more than {MAX_REDIRECTS} redirects", url=url)
 

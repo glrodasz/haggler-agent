@@ -35,6 +35,7 @@ from haggler.probe_bundles import (
     probe_bundle_targets,
     quoted_chars,
 )
+from pdf_support import blank_pdf, build_pdf, encrypted_pdf
 
 NOW = datetime(2026, 10, 9, 6, 0, tzinfo=UTC)
 MELI = "https://www.mercadolibre.com.co/suscripciones/melimas/planes"
@@ -459,13 +460,15 @@ def test_no_amounts(catalog, bundles, tmp_path: Path) -> None:
         ("application/octet-stream", "﻿%PDF-1.4\n\x00\x00 17,99 € Netflix"),
     ],
 )
-def test_pdf_is_pending_and_never_quoted(
+def test_pdf_without_bytes_is_pending_and_never_quoted(
     catalog, bundles, tmp_path: Path, content_type: str, body: str
 ) -> None:
+    # A fetcher that keeps no bytes (this test double): nothing to extract.
     routes = {GO3: html(GO3, body, content_type=content_type)}
     row = row_for(f"go3_lt_filmai_netflix LT {GO3}", routes, catalog, bundles, tmp_path)
     assert (row["status"], row["readability"], row["pdf"]) == ("ok", "pdf_pending", True)
-    assert row["suggested_mode"] == "manual" and "H4" in row["mode_reason"]
+    assert (row["pdf_status"], row["pdf_pages"]) == (None, 0)
+    assert row["suggested_mode"] == "manual" and "bytes" in row["mode_reason"]
     assert (row["content_type"], row["http_status"], row["page_len"]) == (
         content_type,
         200,
@@ -674,6 +677,81 @@ def test_markdown_never_renders_vendor_text(catalog, bundles, tmp_path: Path) ->
             assert ln[: hit.start()].count("`") % 2 == 1, ln
 
 
+GO3_PDF = [
+    [
+        "Go3 kainorastis",
+        "Planas Kaina",
+        "Go3 Filmai 8,99 €/men.",
+        "Go3 Filmai + Netflix 17,99 €/men.",
+    ],
+    ["Netflix planas: Standard su reklamomis", "Kainos nurodytos su PVM. Galioja nuo 2026-09-04."],
+]
+
+
+@pytest.mark.parametrize("content_type", ["application/pdf", "application/octet-stream"])
+def test_pdf_text_is_read_like_a_page(catalog, bundles, tmp_path: Path, content_type: str) -> None:
+    body = build_pdf(GO3_PDF)
+    routes = {GO3: html(GO3, body.decode("utf-8", "replace"), content_type=content_type,
+                        body=body)}  # fmt: skip
+    row = row_for(f"go3_lt_filmai_netflix LT {GO3}", routes, catalog, bundles, tmp_path)
+    assert (row["status"], row["pdf"], row["pdf_status"], row["pdf_pages"]) == (
+        "ok",
+        True,
+        "ok",
+        2,
+    )
+    assert (row["readability"], row["suggested_mode"]) == ("readable", "auto")
+    assert row["mode_reason"] == "importes en EUR en el texto visible"
+    assert row["amount_lines"] == ["Go3 Filmai 8,99 €/men.", "Go3 Filmai + Netflix 17,99 €/men."]
+    assert row["component_lines"] == ["Netflix planas: Standard su reklamomis"]
+    assert row["page_len"] == len(body) and row["text_chars"] == sum(
+        len(line) for page in GO3_PDF for line in page
+    )
+    assert (row["page_title"], row["json_script_ids"], row["embedded_amount_total"]) == ("", [], 0)
+    assert quoted_chars(row) <= QUOTE_BUDGET
+    # The raw PDF stays under <out>/raw/bundles/ for local debugging.
+    assert row["raw_file"] == "raw/bundles/01_go3_lt_filmai_netflix_LT.pdf"
+    assert (tmp_path / row["raw_file"]).read_bytes() == body
+    md = probe_bundles.render_bundles_md([row], generated_at=NOW)
+    assert f"{len(body)} bytes (PDF ok: 2 páginas, texto: {row['text_chars']})" in md
+    assert "  - `Go3 Filmai + Netflix 17,99 €/men.`" in md
+
+
+def test_pdf_quotes_stay_within_the_budget(catalog, bundles, tmp_path: Path) -> None:
+    pages = [[f"Netflix paketas {i} kaina {i},99 € per men. " + "x" * 150 for i in range(40)]]
+    body = build_pdf(pages)
+    routes = {GO3: html(GO3, "", content_type="application/pdf", body=body)}
+    row = row_for(f"go3_lt_filmai_netflix LT {GO3}", routes, catalog, bundles, tmp_path)
+    assert row["readability"] == "readable" and row["amount_lines_total"] == 40
+    assert len(row["amount_lines"]) <= MAX_AMOUNT_LINES
+    assert all(len(line) <= LINE_CHARS for line in row["amount_lines"])
+    assert quoted_chars(row) <= QUOTE_BUDGET
+
+
+@pytest.mark.parametrize(
+    ("body", "status", "why"),
+    [
+        (encrypted_pdf(["Go3 Filmai + Netflix 17,99 €"]), "pdf_encrypted", "cifrado"),
+        (blank_pdf(), "pdf_no_text", "escaneado"),
+        (b"%PDF-1.4 broken bytes", "pdf_error", "ilegible"),
+    ],
+    ids=["encrypted", "blank", "broken"],
+)
+def test_unreadable_pdf_is_reported_and_never_quoted(
+    catalog, bundles, tmp_path: Path, body: bytes, status: str, why: str
+) -> None:
+    routes = {GO3: html(GO3, "", content_type="application/pdf", body=body)}
+    row = row_for(f"go3_lt_filmai_netflix LT {GO3}", routes, catalog, bundles, tmp_path)
+    assert (row["readability"], row["pdf_status"], row["suggested_mode"]) == (
+        "pdf_unreadable",
+        status,
+        "manual",
+    )
+    assert why in row["mode_reason"] and status in row["mode_reason"]
+    assert quoted_chars(row) == 0 and row["amount_lines"] == []
+    assert any(note.startswith("PDF ilegible") for note in row["notes"])
+
+
 def test_run_probe_bundles_mode(catalog, tmp_path: Path) -> None:
     targets = tmp_path / "bundle_targets.txt"
     targets.write_text(
@@ -721,6 +799,23 @@ def test_run_probe_bundles_mode(catalog, tmp_path: Path) -> None:
     assert "Términos y condiciones" not in md and "Términos y condiciones" not in json.dumps(
         summary, ensure_ascii=False
     )
+
+
+def test_pdf_with_a_broken_cmap_still_writes_the_summaries(catalog, tmp_path: Path) -> None:
+    # The font's ToUnicode maps "A" to a lone surrogate: the amount line carries U+FFFD instead,
+    # and summary.json / summary.md (UTF-8) are written.
+    body = build_pdf([["ABBA Go3 Filmai + Netflix 17,99 €/men."]], to_unicode={"41": "D800"})
+    targets = tmp_path / "t.txt"
+    targets.write_text(f"go3_lt_filmai_netflix LT {GO3}\n", encoding="utf-8")
+    fetcher = FixtureFetcher({GO3: html(GO3, "", content_type="application/pdf", body=body)})
+    out_dir = tmp_path / "o"
+    code = run_probe(targets, out_dir, "bundles", fetcher=fetcher, catalog=catalog, now=NOW,
+                     out=io.StringIO())  # fmt: skip
+    assert code == 0
+    (row,) = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))["targets"]
+    assert (row["readability"], row["pdf_status"]) == ("readable", "ok")
+    assert row["amount_lines"] == ["\ufffdBB\ufffd Go3 Filmai + Netflix 17,99 €/men."]
+    assert "\ufffdBB\ufffd Go3" in (out_dir / "summary.md").read_text(encoding="utf-8")
 
 
 def test_run_probe_bundles_exits_1_on_an_unexpected_error(catalog, tmp_path: Path) -> None:

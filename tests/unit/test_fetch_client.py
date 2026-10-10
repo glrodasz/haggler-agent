@@ -10,6 +10,7 @@ import respx
 
 from haggler.config import Settings
 from haggler.fetch import client as client_module
+from haggler.fetch import pdf as pdf_module
 from haggler.fetch.client import HttpFetcher, looks_like_bot_wall
 from haggler.fetch.errors import (
     BlockedError,
@@ -21,6 +22,8 @@ from haggler.fetch.errors import (
 UA = "haggler-test/0.1 (+https://github.com/glrodasz/haggler-agent; price research bot)"
 SITE = "https://www.example.com"
 ALLOW_ALL = "User-agent: *\nDisallow:\n"
+# The start of a PDF: the fetcher only sniffs the signature, it never parses.
+PDF = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n1 0 obj << /Type /Catalog >> endobj\n"
 
 # Trimmed from the public challenge/deny pages these vendors serve (structure and markers kept).
 CLOUDFLARE_CHALLENGE = """<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>
@@ -456,6 +459,70 @@ async def test_body_cap_while_streaming(fetcher, router, monkeypatch):
 
 async def test_default_cap_is_ten_megabytes():
     assert client_module.MAX_BODY_BYTES == 10 * 1024 * 1024
+    # The PDF extractor's body cap is the same: a PDF the fetcher accepts is never too big.
+    assert pdf_module.MAX_PDF_BYTES == client_module.MAX_BODY_BYTES
+
+
+async def test_pdf_over_the_cap_is_a_fetch_error(fetcher, router, monkeypatch):
+    monkeypatch.setattr(client_module, "MAX_BODY_BYTES", 1024)
+    allow_robots(router)
+    router.get(f"{SITE}/big.pdf").mock(
+        return_value=httpx.Response(
+            200, content=PDF + b"0" * 2048, headers={"Content-Type": "application/pdf"}
+        )
+    )
+    with pytest.raises(FetchError, match="too large"):
+        await fetcher.fetch(f"{SITE}/big.pdf")
+
+
+async def test_pdf_cap_applies_even_if_the_body_cap_grows(fetcher, router, monkeypatch):
+    monkeypatch.setattr(client_module, "MAX_PDF_BYTES", 16)
+    allow_robots(router)
+    router.get(f"{SITE}/list.pdf").mock(
+        return_value=httpx.Response(200, content=PDF, headers={"Content-Type": "application/pdf"})
+    )
+    with pytest.raises(FetchError, match="PDF too large") as exc:
+        await fetcher.fetch(f"{SITE}/list.pdf")
+    assert type(exc.value) is FetchError and exc.value.status == 200
+
+
+# ------------------------------------------------------------------ bytes (PDF)
+
+
+@pytest.mark.parametrize(
+    ("headers", "content", "kept"),
+    [
+        ({"Content-Type": "application/pdf"}, PDF, True),
+        ({"Content-Type": "application/octet-stream"}, PDF, True),
+        ({"Content-Type": "application/octet-stream"}, b"\xef\xbb\xbf\r\n " + PDF, True),
+        ({}, PDF, True),  # no content type at all
+        ({"Content-Type": "application/octet-stream"}, b"PK\x03\x04zip bytes", False),
+        ({"Content-Type": "text/html"}, b"%PDF-1.4 <p>an HTML page</p>", False),
+    ],
+)
+async def test_body_bytes_are_kept_only_for_pdfs(fetcher, router, headers, content, kept):
+    allow_robots(router)
+    router.get(f"{SITE}/doc").mock(
+        return_value=httpx.Response(200, content=content, headers=headers)
+    )
+    resp = await fetcher.fetch(f"{SITE}/doc")
+    assert resp.body == (content if kept else b"")
+    # `text` is the decoded body for every response, as before the bytes existed.
+    assert resp.text == content.decode("utf-8", errors="replace")
+    declared = headers.get("Content-Type")
+    assert resp.content_type == (declared or "text/html")  # the server's type, or Accept's
+
+
+async def test_html_response_is_unchanged_by_the_bytes(fetcher, router):
+    allow_robots(router)
+    body = "<html><body><p>Premium 129 kr/mån</p></body></html>"
+    router.get(f"{SITE}/page").mock(
+        return_value=httpx.Response(
+            200, text=body, headers={"Content-Type": "text/html; charset=utf-8"}
+        )
+    )
+    resp = await fetcher.fetch(f"{SITE}/page")
+    assert (resp.text, resp.content_type, resp.body) == (body, "text/html", b"")
 
 
 # ------------------------------------------------------------------ lifecycle

@@ -9,8 +9,18 @@ DIR/index.json maps request URLs to saved responses:
         "final_url": "https://...",           # optional, default = the URL
         "content_type": "text/html"           # optional, default from the Accept value
       },
+      "https://example.com/list.pdf": {
+        "file": "telia/prislista.pdf",
+        "binary": true,                       # read as bytes (default false: UTF-8 text)
+        "content_type": "application/pdf"     # optional for binary, default octet-stream
+      },
       "https://example.com/flaky": {"error": "transient"}   # transient|blocked|robots|fetch
     }
+
+A "binary" entry is served like HttpFetcher serves a download: `text` is the bytes decoded as
+UTF-8 with replacement characters, and `body` carries the bytes when they are a PDF (by content
+type, or an octet-stream "%PDF-" file; haggler.fetch.pdf.pdf_payload). Text entries keep
+body == b"".
 
 Keys starting with "_" are comments. A URL missing from the index raises FetchError(404), like a
 removed page. Non-2xx statuses raise the same exceptions HttpFetcher would (classify_status), so a
@@ -35,6 +45,7 @@ from haggler.fetch.errors import (
     RobotsDisallowedError,
     TransientFetchError,
 )
+from haggler.fetch.pdf import pdf_payload
 
 _ERRORS: dict[str, type[FetchError]] = {
     "transient": TransientFetchError,
@@ -65,14 +76,14 @@ class ReplayFetcher:
         url = url_or_task if isinstance(url_or_task, str) else getattr(url_or_task, "url", "")
         return url in self.index
 
-    def _read(self, rel: str) -> str:
+    def _read(self, rel: str) -> bytes:
         path = (self.root / rel).resolve()
         if self.root.resolve() not in path.parents:
             raise FetchError(f"replay file escapes {self.root}: {rel}")
         data = path.read_bytes()
         if path.suffix == ".gz":
             data = gzip.decompress(data)
-        return data.decode("utf-8")
+        return data
 
     async def fetch(
         self, url: str, *, accept: str = "text/html", egress: str = "default"
@@ -84,22 +95,29 @@ class ReplayFetcher:
         if error := entry.get("error"):
             cls = _ERRORS.get(str(error), FetchError)
             raise cls(f"replayed {error} error", status=entry.get("status"), url=url)
+        binary = entry.get("binary") is True
         try:
-            text = self._read(str(entry["file"]))
+            data = self._read(str(entry["file"]))
         except OSError as exc:
             raise FetchError(f"replay file unreadable: {exc}", url=url) from exc
+        text = data.decode("utf-8", errors="replace") if binary else data.decode("utf-8")
         status = int(entry.get("status", 200))
         headers = {str(k): str(v) for k, v in (entry.get("headers") or {}).items()}
         classify_status(url, status, httpx.Headers(headers), text)
-        default_type = "application/json" if accept == "application/json" else "text/html"
+        if binary:
+            default_type = "application/octet-stream"
+        else:
+            default_type = "application/json" if accept == "application/json" else "text/html"
+        content_type = str(entry.get("content_type") or default_type)
         return RawResponse(
             url=url,
             final_url=str(entry.get("final_url") or url),
             status_code=status,
             text=text,
-            content_type=str(entry.get("content_type") or default_type),
+            content_type=content_type,
             fetched_at=datetime.now(UTC),
             headers=headers,
+            body=pdf_payload(content_type, data) if binary else b"",
         )
 
     async def aclose(self) -> None:
