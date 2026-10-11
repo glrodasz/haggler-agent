@@ -16,6 +16,7 @@ from haggler.catalog import load_catalog
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.models.fx import FxRate, FxTable
 from haggler.money import format_money_code, parse_money_code
+from haggler.research.evidence import Page
 from haggler.research.values import ValueCheck, check_value
 
 MELI_LINE = (
@@ -1140,6 +1141,693 @@ def test_a_tier_named_in_a_comparison_is_not_the_amounts() -> None:
     assert pro.status == "value_not_in_quote" and "google_co_ultra" in pro.reason, pro
     ultra = _check("money", "449000 COP/month", quote, "google_co_ultra", context_lines=lines)
     assert _ok(ultra), ultra
+
+
+# ------------------------------------------------------- card headings (the real planes page)
+
+PLANES_URL = "https://www.mercadolibre.com.co/suscripciones/melimas/planes"
+# Our fetch of the planes page (2026-10-11), consecutive visible lines: the Meli+ Esencial card,
+# then the Meli+ Total card (the benefit lines between its "Envíos gratis" and "Disney+" ones
+# left out). Markup doubles a line's text: the visible one and the accessible label.
+PLANES_ESENCIAL = [
+    "Plan Esencial",
+    "-",
+    "$ 9.900/mes",
+    "Disney+ Estándar con anuncios.No incluido: Disney+ Estándar con anuncios.",
+    MELI_COMPONENTS + "No incluido: " + MELI_COMPONENTS,
+]
+PLANES_TOTAL = [
+    "Plan Total",
+    "$ 21.900 9% OFF",
+    "$ 19.900/mes por 2 meses",
+    MELI_LINE,
+    "Envíos gratis en millones de productos desde $ 30.000.Envíos gratis en millones de "
+    "productos desde 30,000 pesos",
+    "Disney+ Estándar con anuncios.Disney+ Estándar con anuncios.",
+    MELI_COMPONENTS + MELI_COMPONENTS,
+]
+PLANES = [*PLANES_ESENCIAL, *PLANES_TOTAL]
+TOTAL_PRICES = "\n".join(PLANES_TOTAL[:4])  # "Plan Total" ... "Precio anterior: $ 21.900 ..."
+TOTAL_INTRO = "\n".join(PLANES_TOTAL[:3])  # "Plan Total" ... "$ 19.900/mes por 2 meses"
+TOTAL, ESENCIAL = "meli_plus_co_total", "meli_plus_co_esencial"
+# The two rows as bundles.yaml has them: the page's card labels are aliases.
+PLANES_BUNDLES = BundlesFile.model_validate(
+    {
+        "providers": PROVIDERS,
+        "bundles": [
+            {
+                "bundle_id": bundle_id,
+                "provider_id": "meli",
+                "provider_type": "marketplace",
+                "country": "CO",
+                "name": name,
+                "tier": bundle_id.rsplit("_", 1)[-1],
+                "aliases": [name, label],
+                "official_url": PLANES_URL,
+                "price": {"amount": amount, "currency": "COP", "tax_included": True, **intro},
+                "components": [],
+                "last_verified": "2026-10-11",
+            }
+            for bundle_id, name, label, amount, intro in (
+                (
+                    TOTAL,
+                    "Meli+ Total",
+                    "Plan Total",
+                    "21900",
+                    {"intro_amount": "19900", "intro_months": 2},
+                ),
+                (ESENCIAL, "Meli+ Esencial", "Plan Esencial", "9900", {}),
+            )
+        ],
+    }
+)
+
+
+def _planes(kind: str, value: Any, quote: str, bundle_id: str, **kw: Any) -> ValueCheck:
+    bundle = next(b for b in PLANES_BUNDLES.bundles if b.bundle_id == bundle_id)
+    return check_value(
+        kind,  # type: ignore[arg-type]
+        value,
+        quote,
+        country="CO",
+        currency="COP",
+        period="month",
+        provider=PLANES_BUNDLES.provider("meli"),
+        bundle=bundle,
+        bundles=PLANES_BUNDLES.bundles,
+        **kw,
+    )
+
+
+def _window(quote: str) -> list[str]:
+    """The context lines Page.locate gives the quote on the planes page: 2 before, 1 after."""
+    page = Page(url=PLANES_URL, text="\n".join(PLANES), content_type="text/plain")
+    hit = page.locate(quote)
+    assert hit is not None, quote
+    return hit[1]
+
+
+@pytest.mark.parametrize("in_window", [False, True])
+def test_the_real_total_card_confirms_its_regular_and_intro_prices(in_window: bool) -> None:
+    """The line "Plan Total" heads its card: the amounts below it are Total's, past the struck
+    "$ 21.900 9% OFF". The roles do not change: that struck price is a comparison one, the
+    "Precio anterior" next to its own timed intro the regular one."""
+
+    def check(kind: str, value: str, quote: str) -> ValueCheck:
+        lines = _window(quote) if in_window else []
+        return _planes(kind, value, quote, TOTAL, context_lines=lines)
+
+    regular = check("money", "21900 COP/month", TOTAL_PRICES)
+    assert _ok(regular) and "'$ 21.900' regular" in regular.reason, regular
+    for quote in (TOTAL_PRICES, TOTAL_INTRO):
+        intro = check("intro_money", "19900 COP/month", quote)
+        assert _ok(intro), intro
+    struck = check("money", "21900 COP/month", TOTAL_INTRO)
+    assert struck.status == "value_not_in_quote" and "comparison" in struck.reason, struck
+    assert "names no tier" not in struck.reason, struck
+    wrong = check("money", "19900 COP/month", TOTAL_PRICES)
+    assert wrong.status == "value_not_in_quote" and "introductory" in wrong.reason, wrong
+    wrong = check("intro_money", "21900 COP/month", TOTAL_PRICES)
+    assert wrong.status == "value_not_in_quote", wrong
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "quote", "owner"),
+    [
+        pytest.param(
+            "money", "9900 COP/month", "\n".join(PLANES_ESENCIAL[:3]), ESENCIAL, id="esencial"
+        ),
+        pytest.param("money", "21900 COP/month", TOTAL_PRICES, TOTAL, id="total-regular"),
+        pytest.param("intro_money", "19900 COP/month", TOTAL_PRICES, TOTAL, id="total-intro"),
+        pytest.param("intro_money", "19900 COP/month", TOTAL_INTRO, TOTAL, id="total-intro-3"),
+        # Both cards in one text: each amount is its own card's.
+        pytest.param("money", "9900 COP/month", "\n".join(PLANES), ESENCIAL, id="page-esencial"),
+        pytest.param("money", "21900 COP/month", "\n".join(PLANES), TOTAL, id="page-regular"),
+        pytest.param("intro_money", "19900 COP/month", "\n".join(PLANES), TOTAL, id="page-intro"),
+    ],
+)
+def test_one_cards_prices_never_confirm_the_other_card(
+    kind: str, value: str, quote: str, owner: str
+) -> None:
+    assert _ok(_planes(kind, value, quote, owner))
+    other = ESENCIAL if owner == TOTAL else TOTAL
+    result = _planes(kind, value, quote, other)
+    assert result.status == "value_not_in_quote" and owner in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("kind", "value"),
+    [
+        ("component", "disney_plus.standard_with_ads"),
+        ("discount_pct", "hbo_max:30"),
+        ("discount_pct", "paramount_plus:30"),
+    ],
+)
+def test_one_cards_component_lines_never_confirm_the_other_card(kind: str, value: str, cat) -> None:
+    total_card = "\n".join(PLANES_TOTAL)
+    assert _ok(_planes(kind, value, total_card, TOTAL, catalog=cat))
+    result = _planes(kind, value, total_card, ESENCIAL, catalog=cat)
+    assert result.status == "value_not_in_quote" and TOTAL in result.reason, result
+    for bundle_id in (TOTAL, ESENCIAL):  # the Esencial card lists them as not included
+        result = _planes(kind, value, "\n".join(PLANES_ESENCIAL), bundle_id, catalog=cat)
+        assert result.status == "value_not_in_quote" and "not included" in result.reason
+
+
+@pytest.mark.parametrize(
+    ("lines", "kind", "value", "owner"),
+    [
+        (
+            ["Plan Total", "$ 21.900 9% OFF", "Plan Esencial", "$ 9.900/mes"],
+            "money",
+            "9900 COP/month",
+            ESENCIAL,
+        ),
+        # Nothing between the two headings: the card still ends at the sibling's.
+        (
+            ["Plan Total", "Plan Esencial", "$ 19.900/mes por 2 meses"],
+            "intro_money",
+            "19900 COP/month",
+            ESENCIAL,
+        ),
+        (
+            ["Plan Esencial", "Plan Total", "$ 19.900/mes por 2 meses"],
+            "intro_money",
+            "19900 COP/month",
+            TOTAL,
+        ),
+        # Under "Plan Esencial", "$ 9.900/mes" is Esencial's even if Total's heading follows.
+        ([*PLANES_ESENCIAL[:3], "Plan Total"], "money", "9900 COP/month", ESENCIAL),
+        ([*PLANES_ESENCIAL, *PLANES_TOTAL[:3]], "money", "9900 COP/month", ESENCIAL),
+    ],
+)
+def test_a_sibling_heading_ends_a_card(lines: list[str], kind: str, value: str, owner: str) -> None:
+    quote = "\n".join(lines)
+    assert _ok(_planes(kind, value, quote, owner))
+    other = ESENCIAL if owner == TOTAL else TOTAL
+    result = _planes(kind, value, quote, other)
+    assert result.status == "value_not_in_quote" and owner in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("lines", "why"),
+    [
+        (["Plan Esencial / Plan Total", *PLANES_TOTAL[1:3]], "names no tier"),
+        (["Plan Total y Plan Esencial", *PLANES_TOTAL[1:3]], "names no tier"),
+        (["Meli+ Total | Meli+ Esencial", *PLANES_TOTAL[1:3]], "names no tier"),
+        # One clause naming two tiers, and no struck price below it: several.
+        (["Plan Esencial / Plan Total", PLANES_TOTAL[2]], "several"),
+    ],
+)
+def test_a_line_naming_two_tiers_heads_no_card(lines: list[str], why: str) -> None:
+    for bundle_id in (TOTAL, ESENCIAL):
+        result = _planes("intro_money", "19900 COP/month", "\n".join(lines), bundle_id)
+        assert result.status == "value_not_in_quote" and why in result.reason, result
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        ["Plan Total $ 21.900 9% OFF", PLANES_TOTAL[2]],  # the heading's line states a price
+        ["Plan Total desde US$ 5", *PLANES_TOTAL[1:3]],  # in another currency too
+    ],
+)
+def test_a_heading_line_that_states_an_amount_keeps_the_clause_rules(lines: list[str]) -> None:
+    """Below a tier name that shares its line with an amount, the earlier-clause rule decides:
+    the struck price between them keeps the intro from the name."""
+    result = _planes("intro_money", "19900 COP/month", "\n".join(lines), TOTAL)
+    assert result.status == "value_not_in_quote" and "no other price in between" in result.reason
+    # The tier named in the amount's own clause still decides.
+    quote = "Plan Total: $ 19.900/mes por 2 meses"
+    assert _ok(_planes("intro_money", "19900 COP/month", quote, TOTAL))
+
+
+@pytest.mark.parametrize("heading", ["Planes", "Elige tu plan de Meli+"])
+def test_a_generic_heading_is_no_tier_heading(heading: str) -> None:
+    quote = "\n".join([heading, *PLANES_TOTAL[1:4]])
+    for kind, value in (("money", "21900 COP/month"), ("intro_money", "19900 COP/month")):
+        result = _planes(kind, value, quote, TOTAL)
+        assert result.status == "value_not_in_quote" and "names no tier" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("quote", "kind", "value", "bundle_id", "ok"),
+    [
+        ("$ 19.900/mes por 2 meses", "intro_money", "19900 COP/month", TOTAL, True),
+        ("$ 19.900/mes por 2 meses", "intro_money", "19900 COP/month", ESENCIAL, False),
+        ("$ 9.900/mes", "money", "9900 COP/month", ESENCIAL, True),
+        ("$ 9.900/mes", "money", "9900 COP/month", TOTAL, False),
+        # Three lines below "Plan Total", the real line's window does not reach its heading.
+        (MELI_LINE, "money", "21900 COP/month", TOTAL, False),
+        (MELI_LINE, "intro_money", "19900 COP/month", TOTAL, False),
+    ],
+)
+def test_a_card_is_read_in_the_quotes_context_window(
+    quote: str, kind: str, value: str, bundle_id: str, ok: bool
+) -> None:
+    lines = _window(quote)
+    result = _planes(kind, value, quote, bundle_id, context_lines=lines)
+    assert _ok(result) is ok, (lines, result)
+    if quote == MELI_LINE:
+        assert "Plan Total" not in lines and "names no tier" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("value", "lines"),
+    [
+        ("21900 COP/month", ["Meli+ Total", "$ 24.900", "$ 21.900/mes"]),
+        ("21900 COP/month", ["Plan Total", "$ 24.900 12% OFF", "$ 21.900/mes"]),
+        # The real card without its duration: a discount the card states no end for.
+        ("19900 COP/month", ["Plan Total", "$ 21.900 9% OFF", "$ 19.900/mes"]),
+    ],
+)
+def test_under_a_card_only_an_intro_follows_a_price_struck_through_by_position(
+    value: str, lines: list[str]
+) -> None:
+    result = _planes("money", value, "\n".join(lines), TOTAL)
+    assert result.status == "value_not_in_quote" and "struck through by position" in result.reason
+    # The intro's own struck price does not separate them, on its line or the one above.
+    for card in (
+        ["Plan Total", "$ 21.900 9% OFF $ 19.900/mes por 2 meses"],
+        ["Plan Total", "$ 24.900", "$ 19.900/mes por 2 meses"],
+    ):
+        assert _ok(_planes("intro_money", "19900 COP/month", "\n".join(card), TOTAL)), card
+
+
+@pytest.mark.parametrize(
+    ("quote", "bundle_id"),
+    [
+        ("Plan Total\nEnvíos gratis desde $ 30.000\n$ 21.900/mes", TOTAL),
+        ("Plan Esencial\nEnvíos gratis desde $ 30.000\n$ 9.900/mes", ESENCIAL),
+    ],
+)
+def test_under_a_card_a_threshold_above_a_regular_price_reads_as_struck(
+    quote: str, bundle_id: str
+) -> None:
+    """Errs toward rejecting: the threshold right above a lower price is struck by position."""
+    value = "21900 COP/month" if bundle_id == TOTAL else "9900 COP/month"
+    result = _planes("money", value, quote, bundle_id)
+    assert result.status == "value_not_in_quote" and "struck through by position" in result.reason
+
+
+@pytest.mark.parametrize(
+    ("lines", "bundle_id", "value"),
+    [
+        # A price with words before it on its line is no intro's own struck price: a threshold,
+        # an add-on (whose intro the next line may be).
+        (
+            ["Plan Total", "Envíos gratis desde $ 30.000", "$ 19.900/mes por 2 meses"],
+            TOTAL,
+            "19900",
+        ),
+        (
+            ["Plan Esencial", "Agrega Disney+ por $ 8.000/mes", "$ 4.900/mes por 2 meses"],
+            ESENCIAL,
+            "4900",
+        ),
+        # Struck by another price, not by the intro: two discounts the card does not tell apart.
+        (["Plan Total", "$ 24.900", "$ 21.900/mes", "$ 19.900/mes por 2 meses"], TOTAL, "19900"),
+        # A struck price of another intro amount.
+        (
+            ["Plan Total", "$ 49.900 20% OFF", "$ 39.900/mes por 3 meses", PLANES_TOTAL[2]],
+            TOTAL,
+            "19900",
+        ),
+    ],
+)
+def test_under_a_card_only_the_intros_own_struck_price_is_waived(
+    lines: list[str], bundle_id: str, value: str
+) -> None:
+    result = _planes("intro_money", f"{value} COP/month", "\n".join(lines), bundle_id)
+    assert result.status == "value_not_in_quote", result
+    assert "another price lies between them" in result.reason, result
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "lines", "bundle_id"),
+    [
+        # Two regular prices under one heading, one feature line between them.
+        (
+            "money",
+            "9900 COP/month",
+            ["Meli+ Total", "$ 21.900/mes", "Envíos gratis", "$ 9.900/mes", "Meli+ Esencial"],
+            TOTAL,
+        ),
+        # An add-on, a payment variant, a footer below the last card.
+        (
+            "money",
+            "8000 COP/month",
+            [
+                "Plan Total",
+                "$ 21.900/mes",
+                "Agrega Disney+ Premium sin anuncios por $ 8.000/mes",
+            ],
+            TOTAL,
+        ),
+        (
+            "money",
+            "14900 COP/month",
+            ["Plan Total", "$ 21.900/mes", "Agrega Disney+ Premium por $ 14.900/mes"],
+            TOTAL,
+        ),
+        (
+            "money",
+            "17900 COP/month",
+            ["Plan Total", "$ 21.900/mes", "Con Mercado Pago: $ 17.900/mes"],
+            TOTAL,
+        ),
+        (
+            "money",
+            "15900 COP/month",
+            [
+                "Plan Esencial",
+                "$ 9.900/mes",
+                "Plan Total",
+                "$ 21.900/mes",
+                "Todos los planes incluyen envíos gratis.",
+                "Tarjeta de crédito Mercado Pago: cuota de manejo $ 15.900/mes",
+            ],
+            TOTAL,
+        ),
+        # The next card has no text heading.
+        (
+            "money",
+            "9900 COP/month",
+            [
+                "Plan Total",
+                "$ 21.900/mes",
+                "Envíos gratis en millones de productos",
+                "Disney+ Estándar con anuncios",
+                "$ 9.900/mes",
+                "Envíos gratis en millones de productos",
+            ],
+            TOTAL,
+        ),
+        # A column-major comparison table: each header cell is a line naming one tier.
+        (
+            "intro_money",
+            "4900 COP/month",
+            [
+                "Compara los planes",
+                "Plan Esencial",
+                "Plan Total",
+                "Precio",
+                "$ 9.900/mes",
+                "$ 21.900/mes",
+                "Precio de lanzamiento",
+                "$ 4.900/mes por 2 meses",
+                "$ 19.900/mes por 2 meses",
+            ],
+            TOTAL,
+        ),
+        # The real CTA line "Elegir Plan Total" names one tier and no amount.
+        (
+            "money",
+            "29900 COP/month",
+            [
+                "Elegir Plan Total",
+                "Disney+, Suscripciones",
+                "Disney+ Premium",
+                "$ 38.900/mes",
+                "HBO Max, Suscripciones",
+                "HBO Max Platino",
+                "$ 29.900/mes",
+            ],
+            TOTAL,
+        ),
+        # A tier missing from the rows does not end the card: the heading's price still does.
+        (
+            "money",
+            "39900 COP/month",
+            ["Plan Total", "$ 21.900/mes", "Plan Mega", "$ 39.900/mes"],
+            TOTAL,
+        ),
+        (
+            "intro_money",
+            "29900 COP/month",
+            ["Plan Total", "$ 21.900/mes", "Plan Mega", "$ 29.900/mes por 3 meses"],
+            TOTAL,
+        ),
+        # Total's real intro lines below Esencial's card, after a generic or drifted heading.
+        (
+            "intro_money",
+            "19900 COP/month",
+            ["Plan Esencial", "$ 9.900/mes", "Planes", "$ 21.900 9% OFF", PLANES_TOTAL[2]],
+            ESENCIAL,
+        ),
+        (
+            "intro_money",
+            "19900 COP/month",
+            ["Plan Esencial", "-", "$ 9.900/mes", "Total", "$ 21.900 9% OFF", PLANES_TOTAL[2]],
+            ESENCIAL,
+        ),
+    ],
+)
+def test_under_a_card_another_price_separates_the_heading_from_the_amount(
+    kind: str, value: str, lines: list[str], bundle_id: str
+) -> None:
+    """Only a price struck through by position next to an intro is the same offer's: any other
+    price between a card heading and the amount keeps the amount from the heading's tier."""
+    result = _planes(kind, value, "\n".join(lines), bundle_id)
+    assert result.status == "value_not_in_quote", result
+    assert "another price lies between them" in result.reason, result
+
+
+def test_a_watched_line_under_a_card_is_not_the_cards_price() -> None:
+    """The watcher's per-line call: an add-on's price below the card's own is no price hint."""
+    result = _planes(
+        "money",
+        Decimal("7900"),
+        "Paramount+ $ 7.900/mes",
+        TOTAL,
+        context_lines=["Plan Total", "$ 21.900/mes", "Paramount+ $ 7.900/mes"],
+        current=Decimal("21900"),
+    )
+    assert result.status == "value_not_in_quote" and not result.big_change, result
+    assert "another price lies between them" in result.reason, result
+
+
+# Rows as bundles.yaml has them where it lists one tier of a page that shows several: no Google
+# AI Plus / Ultra, no Apple One Premium (CO) or Premier (SE), no Meli+ Total in MX or BR, Telia
+# and Go3 plans besides the bundle's.
+UNLISTED = BundlesFile.model_validate(
+    {
+        "providers": [
+            *PROVIDERS,
+            {"id": "go3", "name": "Go3", "domains": {"LT": ["go3.lt"]}},
+        ],
+        "bundles": [
+            {
+                "bundle_id": bundle_id,
+                "provider_id": provider,
+                "provider_type": "platform",
+                "country": country,
+                "name": name,
+                "tier": bundle_id.rsplit("_", 1)[-1],
+                "aliases": aliases,
+                "official_url": url,
+                "price": {"amount": amount, "currency": currency, "tax_included": True, **extra},
+                "components": [],
+                "last_verified": "2026-10-11",
+            }
+            for bundle_id, provider, country, name, aliases, amount, currency, url, extra in (
+                (
+                    "google_ai_pro_co",
+                    "google",
+                    "CO",
+                    "Google AI Pro",
+                    ["Google AI Pro"],
+                    "79000",
+                    "COP",
+                    OFFICIAL_URL["google", "CO"],
+                    {},
+                ),
+                (
+                    "apple_one_individual_co",
+                    "apple",
+                    "CO",
+                    "Apple One Individual",
+                    ["plan Individual", "Individual"],
+                    "45900",
+                    "COP",
+                    OFFICIAL_URL["apple", "CO"],
+                    {},
+                ),
+                (
+                    "apple_one_family_co",
+                    "apple",
+                    "CO",
+                    "Apple One Familiar",
+                    ["plan Familiar", "Familiar"],
+                    "62900",
+                    "COP",
+                    OFFICIAL_URL["apple", "CO"],
+                    {},
+                ),
+                (
+                    "apple_one_individual_se",
+                    "apple",
+                    "SE",
+                    "Apple One Individual",
+                    ["Personligt", "personliga abonnemanget"],
+                    "215",
+                    "SEK",
+                    OFFICIAL_URL["apple", "SE"],
+                    {},
+                ),
+                (
+                    "apple_one_family_se",
+                    "apple",
+                    "SE",
+                    "Apple One Familj",
+                    ["Familj", "familjeabonnemanget"],
+                    "295",
+                    "SEK",
+                    OFFICIAL_URL["apple", "SE"],
+                    {},
+                ),
+                (
+                    "meli_plus_mx_mega",
+                    "meli",
+                    "MX",
+                    "Meli+ Mega (con anuncios)",
+                    ["Meli+ Mega", "Plan Mega"],
+                    "399",
+                    "MXN",
+                    OFFICIAL_URL["meli", "MX"],
+                    {},
+                ),
+                (
+                    "meli_plus_br_mega",
+                    "meli",
+                    "BR",
+                    "Meli+ Mega",
+                    ["Meli+ Mega", "Plano Mega"],
+                    "74.90",
+                    "BRL",
+                    OFFICIAL_URL["meli", "BR"],
+                    {},
+                ),
+                (
+                    "telia_se_obegransad_streaming",
+                    "telia",
+                    "SE",
+                    "Telia Obegränsad Plus + Netflix, HBO Max y Disney+",
+                    ["Obegränsad Plus med Netflix", "HBO Max och Disney+"],
+                    "699",
+                    "SEK",
+                    OFFICIAL_URL["telia", "SE"],
+                    {"base_plan_name": "Telia Obegränsad Plus", "base_plan_amount": "569"},
+                ),
+                (
+                    "go3_lt_filmai_netflix",
+                    "go3",
+                    "LT",
+                    "Go3 Filmai + Netflix",
+                    [],
+                    "17.99",
+                    "EUR",
+                    "https://go3.lt/",
+                    {},
+                ),
+            )
+        ],
+    }
+)
+GOOGLE_CO_PAGE = [
+    "Google AI Pro",
+    "COP 79,000 por mes",
+    "Google AI Ultra",
+    "COP 449,000/ mes",
+    "COP 449,000/ mes: Límites de uso 5 veces más altos que los de AI Pro",
+]
+APPLE_CO_PAGE = [
+    "Individual",
+    "$ 45.900/mes",
+    "Familiar",
+    "$ 62.900/mes",
+    "Premium",
+    "$ 86.900/mes",
+    "Prueba gratis",
+]
+
+
+@pytest.mark.parametrize(
+    ("bundle_id", "kind", "value", "quote", "context"),
+    [
+        (
+            "google_ai_pro_co",
+            "money",
+            "449000 COP/month",
+            "Google AI Ultra\nCOP 449,000/ mes",
+            GOOGLE_CO_PAGE,
+        ),
+        ("google_ai_pro_co", "money", "449000 COP/month", "\n".join(GOOGLE_CO_PAGE[:4]), []),
+        ("apple_one_family_co", "money", "86900 COP/month", "Premium\n$ 86.900/mes", APPLE_CO_PAGE),
+        (
+            "meli_plus_mx_mega",
+            "money",
+            "149 MXN/month",
+            "Plan Mega\n$ 399/mes\nPlan Total\n$ 149/mes",
+            [],
+        ),
+        (
+            "meli_plus_br_mega",
+            "money",
+            "24.90 BRL/month",
+            "Plano Mega\nR$ 74,90/mês\nPlano Total\nR$ 24,90/mês",
+            [],
+        ),
+        (
+            "apple_one_family_se",
+            "money",
+            "379 SEK/month",
+            "Familj\n295 kr/mån\nPremier\n379 kr/mån",
+            [],
+        ),
+        (
+            "apple_one_family_se",
+            "money",
+            "215 SEK/month",
+            "Familj\n295 kr/mån\nIndividuell\n215 kr/mån",
+            [],
+        ),
+        (
+            "telia_se_obegransad_streaming",
+            "base_money",
+            "449 SEK/month",
+            "Telia Obegränsad Plus\n569 kr/mån\nTelia Obegränsad\n449 kr/mån",
+            [],
+        ),
+        (
+            "go3_lt_filmai_netflix",
+            "money",
+            "15.99 EUR/month",
+            "Go3 Filmai + Netflix\n17,99 € / mėn.\nGo3 Filmai + HBO Max\n15,99 € / mėn.",
+            [],
+        ),
+    ],
+)
+def test_a_card_does_not_take_the_price_of_a_tier_the_rows_do_not_list(
+    bundle_id: str, kind: str, value: str, quote: str, context: list[str]
+) -> None:
+    """A tier missing from the rows ends no card, but the card's own price before its price
+    still keeps that price from the heading."""
+    b = next(r for r in UNLISTED.bundles if r.bundle_id == bundle_id)
+    result = check_value(
+        kind,  # type: ignore[arg-type]
+        value,
+        quote,
+        context_lines=context,
+        country=b.country,
+        currency=b.price.currency,
+        period="month",
+        provider=UNLISTED.provider(b.provider_id),
+        bundle=b,
+        bundles=UNLISTED.bundles,
+        fx=FX,
+    )
+    assert result.status == "value_not_in_quote", result
+    assert "another price lies between them" in result.reason, result
 
 
 # ------------------------------------------------------------- currency and country
