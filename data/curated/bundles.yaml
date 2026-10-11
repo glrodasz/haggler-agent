@@ -333,16 +333,25 @@ bundles:
       mode: manual
       pages:
         - {url: "https://www.apple.com/se/apple-one/", kind: html}
-      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row. Apple
+      # Music and Apple TV: their section headings (the line above pads the anchor to 20
+      # characters); the platforms paragraph sits next to the family plan's text, so it only
+      # confirms Apple One Familj.
       anchors:
         - fact: component
           service_id: apple_music
           url: https://www.apple.com/se/apple-one/
-          text: 'När du tecknar ett abonnemang får du tillgång till Apple One-tjänsterna på alla plattformar där de finns: på webben (Apple Music och Apple TV), på vissa smarta tv:ar (Apple Music och Apple TV), på Android-enheter (Apple Music) och på streamingenheter från andra leverantörer (Apple Music och Apple TV).'
+          text: |-
+            Titta på serier, filmer, barnunderhållning och mycket annat från världens mest kreativa hjärnor inom film och tv. Nya Apple Originals kommer varje månad.
+            Läs mer
+            Apple Music
         - fact: component
           service_id: apple_tv
           url: https://www.apple.com/se/apple-one/
-          text: 'När du tecknar ett abonnemang får du tillgång till Apple One-tjänsterna på alla plattformar där de finns: på webben (Apple Music och Apple TV), på vissa smarta tv:ar (Apple Music och Apple TV), på Android-enheter (Apple Music) och på streamingenheter från andra leverantörer (Apple Music och Apple TV).'
+          text: |-
+            Upp till 200 GB lagringsutrymme för allt från bilder och filmer till säkerhetskopior av enheter och video från övervakningskameror i hemmet, synkat mellan alla dina enheter. Och kraftfulla funktioner som skyddar din integritet.
+            Läs mer
+            Apple TV
         - fact: component
           service_id: apple_arcade
           url: https://www.apple.com/se/apple-one/
@@ -423,16 +432,22 @@ bundles:
       mode: manual
       pages:
         - {url: "https://www.apple.com/co/apple-one/", kind: html}
-      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row. Apple
+      # Music and Apple TV: their section headings; the platforms paragraph sits next to the
+      # plan Familiar's text, so it only confirms Apple One Familiar.
       anchors:
         - fact: component
           service_id: apple_music
           url: https://www.apple.com/co/apple-one/
-          text: Una vez que te suscribes, puedes empezar a disfrutar los servicios de Apple One en todos los lugares donde estén disponibles, como internet (Apple Music y Apple TV), Apple TV y algunos smart TV (Apple Music, Apple TV y Apple Fitness+), Apple Watch (Apple Fitness+), dispositivos Android (Apple Music) y otros dispositivos de streaming de terceros (Apple Music y Apple TV).
+          text: |-
+            Más información
+            Apple Music
         - fact: component
           service_id: apple_tv
           url: https://www.apple.com/co/apple-one/
-          text: Una vez que te suscribes, puedes empezar a disfrutar los servicios de Apple One en todos los lugares donde estén disponibles, como internet (Apple Music y Apple TV), Apple TV y algunos smart TV (Apple Music, Apple TV y Apple Fitness+), Apple Watch (Apple Fitness+), dispositivos Android (Apple Music) y otros dispositivos de streaming de terceros (Apple Music y Apple TV).
+          text: |-
+            Más información
+            Apple TV
         - fact: component
           service_id: apple_arcade
           url: https://www.apple.com/co/apple-one/
