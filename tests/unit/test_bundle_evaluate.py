@@ -349,7 +349,9 @@ def test_a_component_that_is_not_feasible_makes_the_bundle_not_feasible() -> Non
 
 
 def test_google_ai_pro_inherits_youtube_curated_rank() -> None:
-    a = verdict("google_ai_pro_co", CO)
+    # The synthetic observed variant (google_one.ai_pro, which has no CO verdict).
+    a = assess_bundle(GOOGLE_AI_PRO_CO, CO, CTX)
+    assert a is not None
     assert a.rank == 3 and a.label == "tos_breach_enforced"
     # The step and its reason are copied from YouTube Premium CO's curated record.
     copied = [s for s in a.steps if s.requires_false_declaration]
@@ -363,6 +365,18 @@ def test_google_ai_pro_inherits_youtube_curated_rank() -> None:
     # Google One CO has no verdict: the rank is a floor, and the verdict says so.
     assert "Hay partes del paquete sin evaluar: el nivel podría ser peor." in a.assumptions_es
     assert (a.legality, a.tos) == ("requires_misrepresentation", "breach_enforced")
+
+
+def test_the_real_google_ai_pro_row_inherits_youtube_and_states_its_assumptions() -> None:
+    # The curated row (web price, own route): YouTube Premium CO's curated false declaration is
+    # inherited; its own unknown requirements are stated as assumptions, never as advice.
+    a = verdict("google_ai_pro_co", CO)
+    assert REAL["google_ai_pro_co"].price.source == "curated"
+    assert (a.rank, a.label, a.provenance) == (3, "tos_breach_enforced", "composed")
+    assert [(s.type, s.value) for s in a.steps if s.requires_false_declaration] == [
+        ("presence", "CO")
+    ]
+    assert "Se asume que no se pide un documento de identidad de CO." in a.assumptions_es
 
 
 def test_inheritance_also_holds_on_the_bundle_own_route() -> None:

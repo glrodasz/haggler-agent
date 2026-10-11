@@ -852,7 +852,8 @@ def _str(value: Any) -> str | None:
 
 def test_migration_keeps_every_value() -> None:
     rows = {b.bundle_id: b for b in load_bundles().bundles}
-    assert set(rows) == set(PRE_MIGRATION)
+    # Rows added later (H10 wave 1) are not part of the migration.
+    assert set(PRE_MIGRATION) <= set(rows)
     for bundle_id, expected in PRE_MIGRATION.items():
         b, p = rows[bundle_id], rows[bundle_id].price
         *head, requirements = expected
@@ -874,8 +875,9 @@ def test_migration_keeps_every_value() -> None:
 
 def test_migration_adds_structure_but_no_values() -> None:
     bundles = load_bundles()
-    rows = {b.bundle_id: b for b in bundles.bundles}
-    assert {p.id for p in bundles.providers} == {"mercado_libre", "telia_se", "go3", "apple"}
+    # The rows the H1 migration touched (rows added later, in H10, are checked elsewhere).
+    rows = {b.bundle_id: b for b in bundles.bundles if b.bundle_id in PRE_MIGRATION}
+    assert {"mercado_libre", "telia_se", "go3", "apple"} <= {p.id for p in bundles.providers}
     assert all(b.verified_by == "search_summary" for b in rows.values())
     assert all(b.status == "unverified" and b.user_report is None for b in rows.values())
     # Anchors come from the bundles probe's output (milestone H10), never typed before.

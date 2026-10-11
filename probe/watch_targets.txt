@@ -21,3 +21,6 @@ meli_plus_co_esencial
 apple_one_individual_se
 apple_one_family_se
 telia_se_obegransad_streaming
+apple_one_individual_co
+apple_one_family_co
+google_ai_pro_co

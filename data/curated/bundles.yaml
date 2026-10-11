@@ -50,6 +50,14 @@ providers:
       CO: [www.apple.com/co/, one.apple.com/co/]
     automated_access: allowed
 
+  - id: google
+    name: Google
+    domains:
+      # gemini.google serves the plans per country under a path (/co/); support.google.com is the
+      # official help centre (same pages for every country, no prices).
+      CO: [gemini.google/co/, support.google.com]
+    automated_access: allowed
+
 bundles:
   - bundle_id: meli_plus_co_total
     provider_id: mercado_libre
@@ -285,3 +293,78 @@ bundles:
       pages:
         - {url: "https://www.apple.com/se/apple-one/", kind: html}
     last_verified: 2026-10-08
+
+  # Wave 1 (H10): rows added from the bundles probe of 2026-10-09 (our own fetch of the official
+  # pages). Watched in manual mode until probe --mode watch verifies their anchors.
+  - bundle_id: apple_one_individual_co
+    provider_id: apple
+    provider_type: platform
+    country: CO
+    name: Apple One Individual
+    tier: individual
+    aliases: [plan Individual, Individual]
+    official_url: https://www.apple.com/co/apple-one/
+    # Consumer prices in Colombia include taxes (Ley 1480 de 2011, art. 26).
+    price: {currency: COP, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: individual}
+    components:
+      - {service_id: apple_music, plan_id: individual, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/co/apple-one/", kind: html}
+    last_verified: 2026-10-09
+
+  - bundle_id: apple_one_family_co
+    provider_id: apple
+    provider_type: platform
+    country: CO
+    name: Apple One Familiar
+    tier: family
+    aliases: [plan Familiar, Familiar]
+    official_url: https://www.apple.com/co/apple-one/
+    price: {currency: COP, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: family}
+    components:
+      - {service_id: apple_music, plan_id: family, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/co/apple-one/", kind: html}
+    last_verified: 2026-10-09
+
+  - bundle_id: google_ai_pro_co
+    provider_id: google
+    provider_type: platform
+    country: CO
+    name: Google AI Pro
+    tier: ai_pro
+    aliases: [Google AI Pro]
+    official_url: https://gemini.google/co/subscriptions/?hl=es-419
+    # The web price (gemini.google/co); the daily data only has the App Store price of
+    # google_one.ai_pro, which differs. Consumer prices in Colombia include taxes (Ley 1480).
+    price: {amount: "79000", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: youtube_premium, plan_id: lite, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://gemini.google/co/subscriptions/?hl=es-419", kind: html}
+        - {url: "https://support.google.com/googleone/answer/17101453?hl=es", kind: html}
+    last_verified: 2026-10-09
+    notes_es: >-
+      Plan de Google One. Según la ayuda de Google incluye YouTube Premium Lite en Colombia (sin
+      YouTube Music, sin reproducción en segundo plano ni descargas). El almacenamiento y Gemini no
+      se cuentan como componentes.
