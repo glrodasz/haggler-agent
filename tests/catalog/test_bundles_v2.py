@@ -978,7 +978,8 @@ def test_wave_1_values_match_the_official_pages() -> None:
 
 
 # The wave-1 rows the watch probe confirmed on 2026-10-11 (probe --mode watch): every included
-# component and the price (or the daily row, for an observed price) have an anchor.
+# component and the price (or the daily row, for an observed price) have an anchor, and the
+# probe left them verified, so they are watched in auto mode.
 OFFICIAL_FETCH = {
     "meli_plus_co_total",
     "meli_plus_co_esencial",
@@ -993,6 +994,8 @@ OFFICIAL_FETCH = {
 def test_wave_1_anchors_come_from_the_watch_probe() -> None:
     rows = {b.bundle_id: b for b in load_bundles().bundles}
     assert {i for i, b in rows.items() if b.verified_by == "official_fetch"} == OFFICIAL_FETCH
+    # Auto only where the watch probe left the bundle verified (runs 38148273652, 38148424547).
+    assert {i for i, b in rows.items() if b.watch.mode == "auto"} == OFFICIAL_FETCH
     facts = {i: sorted({a.fact for a in b.watch.anchors}) for i, b in rows.items()}
     assert facts["meli_plus_co_total"] == ["component", "intro", "price"]
     assert facts["meli_plus_co_esencial"] == ["price"]

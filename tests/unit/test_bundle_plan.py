@@ -126,10 +126,25 @@ def test_only_auto_bundles_are_planned_automatically():
     assert sel.errors == []
 
 
-def test_the_real_bundles_have_no_auto_bundle_yet():
-    # Wave 1 data (milestone H10) has not switched any bundle to auto: nothing is planned, so
-    # the Phase 2 runs keep their plans.
-    assert keys(plan(load_bundles(), max_bundles=10)) == []
+# The wave-1 bundles the watch probe left verified (milestone H10, 2026-10-11), in file order.
+REAL_AUTO = [
+    "meli_plus_co_total",
+    "meli_plus_co_esencial",
+    "apple_one_individual_se",
+    "apple_one_family_se",
+    "apple_one_individual_co",
+    "apple_one_family_co",
+    "google_ai_pro_co",
+]
+
+
+def test_the_real_auto_bundles_are_the_ones_the_watch_probe_verified():
+    # Never researched: every auto bundle is new; the cap keeps a run to 2 bundle subjects
+    # (HAGGLER_RESEARCH_MAX_BUNDLES), after every Phase 2 subject (KIND_ORDER puts bundle last).
+    sel = plan(load_bundles(), max_bundles=10)
+    assert keys(sel) == [f"bundle:{i}" for i in REAL_AUTO]
+    assert {s.reason for s in sel.subjects} == {"new"}
+    assert keys(plan(load_bundles(), max_bundles=2)) == [f"bundle:{i}" for i in REAL_AUTO[:2]]
 
 
 def test_priority_order_and_cap():
