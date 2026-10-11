@@ -29,8 +29,9 @@ from test_research import (
     watched_bundles,
 )
 
+from conftest import frozen_bundles
 from haggler.bundles.proposals import bundle_proposals, snippet
-from haggler.catalog import integrity_errors, load_bundles, load_catalog
+from haggler.catalog import integrity_errors, load_catalog
 from haggler.fetch import RawResponse
 from haggler.models.curated import BundlesFile
 from haggler.models.research import ReviewDecision, ReviewFile
@@ -371,9 +372,10 @@ async def test_a_planned_bundle_the_run_skips_is_rechecked(why: str):
 
 
 def meli_auto() -> BundlesFile:
-    """bundles.yaml with both Meli+ CO tiers watched (watch.mode auto, as H10 will set them):
-    the plans page shows Total and Esencial, so a price excerpt must name its tier."""
-    data = load_bundles().model_dump(mode="json", exclude_none=True)
+    """The frozen bundles.yaml (tests/conftest.py) with both Meli+ CO tiers watched (watch.mode
+    auto, as H10 will set them): the plans page shows Total and Esencial, so a price excerpt
+    must name its tier."""
+    data = frozen_bundles().model_dump(mode="json", exclude_none=True)
     for row in data["bundles"]:
         if row["bundle_id"] in ("meli_plus_co_total", "meli_plus_co_esencial"):
             row["watch"]["mode"] = "auto"
@@ -465,7 +467,7 @@ async def test_the_agents_snippet_pasted_as_printed_passes_validate_catalog():
     # A quote that names its own tier needs no longer excerpt.
     disney = facts.claim(f"{KEY}:bundle_includes:disney_plus.standard_with_ads")
     assert disney is not None and disney.anchor_text is None
-    bf = load_bundles()
+    bf = frozen_bundles()
     total = next(b for b in bf.bundles if b.bundle_id == "meli_plus_co_total")
     shown = [
         p

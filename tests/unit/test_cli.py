@@ -14,9 +14,8 @@ import yaml
 
 import haggler.fetch.client
 import haggler.research.deps
-from conftest import FixtureFetcher
+from conftest import FixtureFetcher, frozen_bundles
 from haggler import cli
-from haggler.catalog import load_bundles
 from haggler.config import Settings, llm_credentials_available
 from haggler.publish import SITE_FILES
 from haggler.store import LocalStore
@@ -436,15 +435,18 @@ def test_research_run_plan_only(capsys, monkeypatch, offline_fetcher) -> None:
 
 def test_research_run_watch_only(capsys, monkeypatch, offline_fetcher) -> None:
     monkeypatch.setenv("HAGGLER_LLM", "off")
-    # One real bundle switched to auto: the watcher reads its pages, through the test's fetcher.
-    real = load_bundles()
-    auto = real.model_copy(
+    # One bundle switched to auto: the watcher reads its pages, through the test's fetcher. From
+    # the frozen bundles.yaml (tests/conftest.py), where every other row is manual or off, so
+    # the real file's auto modes never add pages to the telia.se ones asserted below.
+    frozen = frozen_bundles()
+    assert all(b.watch.mode != "auto" for b in frozen.bundles)
+    auto = frozen.model_copy(
         update={
             "bundles": [
                 b.model_copy(update={"watch": b.watch.model_copy(update={"mode": "auto"})})
                 if b.bundle_id == "telia_se_obegransad_streaming"
                 else b
-                for b in real.bundles
+                for b in frozen.bundles
             ]
         }
     )
