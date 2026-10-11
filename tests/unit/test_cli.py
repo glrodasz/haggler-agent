@@ -379,8 +379,11 @@ def test_validate_catalog_checks_anchor_values_offline(tmp_path: Path, capsys) -
         str(curated_dir),
     ]
 
+    # The row's other anchors stay (verified_by official_fetch needs its component anchors).
+    others = [a for a in total["watch"].get("anchors", []) if a["fact"] != "price"]
+
     def with_anchor(text: str) -> None:
-        total["watch"]["anchors"] = [{"fact": "price", "url": page, "text": text}]
+        total["watch"]["anchors"] = [*others, {"fact": "price", "url": page, "text": text}]
         path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
 
     with_anchor("Meli+ Total: $ 19.900/mes por 2 meses")

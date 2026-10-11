@@ -931,8 +931,8 @@ def test_migration_adds_structure_but_no_values() -> None:
 def test_wave_1_values_match_the_official_pages() -> None:
     """The real bundles.yaml: the migration's values (and the base plan and provider domains it
     added) with the corrections H10 read on our own fetch of the official pages (commit
-    046392a), each quoted. Values only: the anchors, watch modes and statuses H10 adds next are
-    not pinned here."""
+    046392a), each quoted. Values only: anchors and watch modes are pinned by
+    test_wave_1_anchors_come_from_the_watch_probe."""
     bundles = load_bundles()
     rows = {b.bundle_id: b for b in bundles.bundles}
     expected = {bundle_id: list(values) for bundle_id, values in PRE_MIGRATION.items()}
@@ -944,6 +944,9 @@ def test_wave_1_values_match_the_official_pages() -> None:
     # OFF en HBO Max, Universal+, Paramount+ y ViX Premium." (and "No incluido: Disney+
     # Estándar con anuncios."): no component. The 30 % HBO Max discount is Meli+ Total's.
     expected["meli_plus_co_esencial"][7] = []  # the components
+    # The wave-1 rows were checked against probe --mode watch on 2026-10-11 (their anchors).
+    for bundle_id in WAVE_1:
+        expected[bundle_id][10] = "2026-10-11"  # last_verified
     for bundle_id, (*head, requirements) in expected.items():
         assert _values(rows[bundle_id]) == head, bundle_id
         assert rows[bundle_id].requirements == BundleRequirements(**requirements), bundle_id
@@ -972,6 +975,48 @@ def test_wave_1_values_match_the_official_pages() -> None:
     # country's path.
     assert "static3.go3.tv" in bundles.provider("go3").domains["LT"]
     assert bundles.provider("apple").domains["SE"] == ["www.apple.com/se/"]
+
+
+# The wave-1 rows the watch probe confirmed on 2026-10-11 (probe --mode watch): every included
+# component and the price (or the daily row, for an observed price) have an anchor.
+OFFICIAL_FETCH = {
+    "meli_plus_co_total",
+    "meli_plus_co_esencial",
+    "apple_one_individual_se",
+    "apple_one_family_se",
+    "apple_one_individual_co",
+    "apple_one_family_co",
+    "google_ai_pro_co",
+}
+
+
+def test_wave_1_anchors_come_from_the_watch_probe() -> None:
+    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    assert {i for i, b in rows.items() if b.verified_by == "official_fetch"} == OFFICIAL_FETCH
+    facts = {i: sorted({a.fact for a in b.watch.anchors}) for i, b in rows.items()}
+    assert facts["meli_plus_co_total"] == ["component", "intro", "price"]
+    assert facts["meli_plus_co_esencial"] == ["price"]
+    assert facts["google_ai_pro_co"] == ["component", "price"]
+    for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):
+        assert facts[bundle_id] == ["component"]  # the price is the daily apple_one row
+    for bundle_id in ("apple_one_individual_co", "apple_one_family_co"):
+        assert facts[bundle_id] == ["component"]
+    # Telia: its components are on the product page, but the price list prints 699 kr in a
+    # table row without the plan's name, so the price has no anchor and stays manual.
+    telia = rows["telia_se_obegransad_streaming"]
+    assert facts["telia_se_obegransad_streaming"] == ["component"]
+    assert telia.verified_by == "search_summary" and telia.watch.mode == "manual"
+    # Meli+ Total's discounts are anchored too (optional savings), on the doubled benefit line.
+    total = rows["meli_plus_co_total"]
+    assert {a.service_id for a in total.watch.anchors if a.fact == "component"} == {
+        "disney_plus",
+        "hbo_max",
+        "paramount_plus",
+        "vix",
+    }
+    # Outside wave 1, nothing is watched or anchored.
+    for bundle_id in ("meli_plus_mx_mega", "meli_plus_br_mega", "go3_lt_filmai_netflix"):
+        assert rows[bundle_id].watch.mode == "off" and not rows[bundle_id].watch.anchors
 
 
 def test_apple_pages_of_another_country_fail(cat, profiles, instruments) -> None:
