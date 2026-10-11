@@ -337,6 +337,9 @@ bundles:
       # Music and Apple TV: their section headings (the line above pads the anchor to 20
       # characters); the platforms paragraph sits next to the family plan's text, so it only
       # confirms Apple One Familj.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
       anchors:
         - fact: component
           service_id: apple_music
@@ -387,6 +390,9 @@ bundles:
       pages:
         - {url: "https://www.apple.com/se/apple-one/", kind: html}
       # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
       anchors:
         - fact: component
           service_id: apple_music
@@ -435,6 +441,9 @@ bundles:
       # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row. Apple
       # Music and Apple TV: their section headings; the platforms paragraph sits next to the
       # plan Familiar's text, so it only confirms Apple One Familiar.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
       anchors:
         - fact: component
           service_id: apple_music
@@ -482,6 +491,9 @@ bundles:
       pages:
         - {url: "https://www.apple.com/co/apple-one/", kind: html}
       # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
       anchors:
         - fact: component
           service_id: apple_music
