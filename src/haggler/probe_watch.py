@@ -118,6 +118,9 @@ ANCHOR_TEXT_CHARS = 120
 MAX_CANDIDATES = 3
 # Lines above an excerpt searched for the tier heading it belongs to (_Tiers).
 TIER_LOOKBACK = 12
+# Page lines shown per fact that got no candidate, with why the check turned them down.
+MAX_NEAR_MISSES = 3
+NEAR_MISS_LINE_CHARS = 200
 RAW_DIR = "raw/watch"
 RAW_NAME_CHARS = 80
 
@@ -439,6 +442,7 @@ def _base_row(b: Bundle, yaml_mode: str) -> dict[str, Any]:
         "edition_snippets": [],
         "candidates": [],
         "facts_without_candidate": [],
+        "near_misses": [],
         "state": {
             "display_status": None,
             "reasons_es": [],
@@ -474,7 +478,7 @@ def _bundle_report(run: _Run, bundle_id: str, skipped: str | None) -> dict[str, 
         row["anchors"] = _anchor_rows(real, state, budget)
         index_of: dict[tuple[str, str], int] = {}
         row["hints"] = _hint_rows(run, real, auto, state, budget, index_of)
-        row["candidates"], row["facts_without_candidate"] = _candidates(
+        row["candidates"], row["facts_without_candidate"], row["near_misses"] = _candidates(
             run, real, state, budget, index_of
         )
         row["edition_snippets"] = _edition_rows(auto, state, budget)
@@ -886,8 +890,9 @@ def _candidates(
     state: BundleWatchState,
     budget: _QuoteBudget,
     index_of: dict[tuple[str, str], int],
-) -> tuple[list[dict[str, Any]], list[str]]:
-    """The would-be anchors (module docstring) and the facts that have none."""
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
+    """The would-be anchors (module docstring), the facts that have none and, for those, the
+    page lines that state the value but were turned down, with the check's reason."""
     checker = _Checker(run, b)
     tiers = _Tiers(b, run.bundles)
     sources = _sources(state, run.pages)
@@ -896,6 +901,7 @@ def _candidates(
     }
     out: list[dict[str, Any]] = []
     without: list[str] = []
+    misses: list[dict[str, Any]] = []
     for f in _facts(b, state.hints):
         if _verified(state, f):
             continue
@@ -928,6 +934,7 @@ def _candidates(
                     found.append(_candidate(f, src, text, "yaml", None))
         if not found:
             without.append(f.label)
+            misses += _near_misses(f, sources, checker, tiers, names, budget)
         for c in found:
             # A hint's text was counted with the hint (or dropped with it: then shown here).
             counted = c["source"] == "hint" and c["hint"] is not None
@@ -935,7 +942,62 @@ def _candidates(
                 if not counted:
                     c["snippet"] = _anchor_snippet(b, c).text()
                 out.append(c)
-    return out, without
+    return out, without, misses
+
+
+def _near_misses(
+    f: _Fact,
+    sources: Sequence[_Source],
+    checker: _Checker,
+    tiers: _Tiers,
+    names: list[str],
+    budget: _QuoteBudget,
+) -> list[dict[str, Any]]:
+    """Why a fact got no candidate: up to MAX_NEAR_MISSES page lines that state its value, each
+    with the value check's verdict on the line (with its context) and on the span from the
+    nearest line naming the bundle's own tier above it. Quoted within the bundle's budget."""
+    out: list[dict[str, Any]] = []
+    for src in sources:
+        lines = src.page.lines()
+        for i, line in enumerate(lines):
+            if len(out) >= MAX_NEAR_MISSES:
+                return out
+            flat = " ".join(line.split())
+            if not _line_mentions(f, flat, checker.b, names):
+                continue
+            located = src.page.locate(flat)
+            context = located[1] if located else ()
+            url = src.page.final_url or src.page.url
+            line_check = checker._check(f, anchor_lines(flat), context, url)
+            own = None
+            for j in range(i, max(-1, i - TIER_LOOKBACK - 1), -1):
+                if tiers.own is not None and tiers.own.search(normalize_for_match(lines[j])):
+                    own = j
+                    break
+            span = (
+                "\n".join(" ".join(x.split()) for x in lines[own : i + 1])
+                if own is not None
+                else None
+            )
+            span_check = (
+                checker._check(f, span, (), None) if span is not None and own != i else None
+            )
+            row = {
+                "fact": f.label,
+                "url": src.anchor_url,
+                "line": budget.clip(flat, NEAR_MISS_LINE_CHARS)
+                if flat not in budget.seen
+                else flat,
+                "other_tier_above": f.fact in _TIERED_FACTS and tiers.another(lines, i),
+                "line_check": _check_json(line_check),
+                "span_lines": None if own is None else i - own + 1,
+                "span_chars": None if span is None else len(" ".join(span.split())),
+                "span_check": _check_json(span_check),
+            }
+            if span is not None and own != i and budget.whole(span):
+                row["span"] = span
+            out.append(row)
+    return out
 
 
 def _candidate(f: _Fact, src: _Source, text: str, source: str, hint: int | None) -> dict:
@@ -1090,11 +1152,37 @@ def _details(n: int, r: dict[str, Any]) -> list[str]:
             "- Sin ancla verificada ni candidata: "
             + ", ".join(_code(f) for f in r["facts_without_candidate"])
         )
+    for m in r.get("near_misses", []):
+        out += _near_miss_md(m)
     if r["edition_snippets"]:
         out += ["", "#### Edición nueva de la lista", ""]
         for e in r["edition_snippets"]:
             out += [*_fence(e["snippet"]), ""]
     out.append("")
+    return out
+
+
+def _near_miss_md(m: dict[str, Any]) -> list[str]:
+    def verdict(c: dict[str, Any] | None) -> str:
+        if c is None:
+            return "—"
+        return _plain(f"{c.get('status')}: {c.get('reason') or ''}".strip(": "))
+
+    out = [
+        f"  - casi: {_code(m['fact'])} en {_code(m['url'])}: {_code(m['line'])}",
+        f"    - la línea (con su contexto): {verdict(m['line_check'])}",
+    ]
+    if m["other_tier_above"]:
+        out.append("    - otra tarjeta de nivel queda más cerca por encima")
+    if m["span_lines"] is None:
+        out.append(f"    - ningún nombre del nivel en las {TIER_LOOKBACK} líneas de arriba")
+    else:
+        out.append(
+            f"    - desde el nombre del nivel: {m['span_lines']} líneas, {m['span_chars']} "
+            f"caracteres (máximo {MAX_QUOTE}); comprobación: {verdict(m['span_check'])}"
+        )
+        if m.get("span"):
+            out += ["", *("    " + x for x in _fence(m["span"], "text"))]
     return out
 
 
