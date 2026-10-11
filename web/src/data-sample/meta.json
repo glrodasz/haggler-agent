@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-10-08T05:21:14Z",
+  "run_id": "sample-20261008",
+  "as_of": "2026-10-08",
+  "residence": "SE",
+  "profile": "se_resident_co_citizen",
+  "research_run_id": "sample-research-20261006",
+  "research_as_of": "2026-10-06",
+  "fx_fee_pct": 2.0,
+  "display_currencies": [
+    "SEK",
+    "EUR",
+    "USD"
+  ],
+  "attributions": [
+    {
+      "name": "Netflix prices dataset, Thomas Pecserke (tompec/netflix-prices)",
+      "url": "https://github.com/tompec/netflix-prices",
+      "license": "CC BY 4.0"
+    },
+    {
+      "name": "Tipos de cambio de referencia del Banco Central Europeo",
+      "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+      "license": "Reutilización libre citando la fuente (BCE)"
+    },
+    {
+      "name": "Rates By Exchange Rate API",
+      "url": "https://www.exchangerate-api.com",
+      "license": "Uso gratuito con atribución"
+    }
+  ]
+}

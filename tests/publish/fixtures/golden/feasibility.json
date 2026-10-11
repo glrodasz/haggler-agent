@@ -1,0 +1,164 @@
+{
+  "default_profile": "se_resident_co_citizen",
+  "labels": [
+    {
+      "description_es": "Precio del país donde vives, contratado de la forma normal. Sin riesgo de incumplir los términos del servicio.",
+      "id": "official_home",
+      "name_es": "Oferta oficial de tu país",
+      "rank": 0
+    },
+    {
+      "description_es": "Comprar la oferta de otro país del EEE podría estar amparado por el Reglamento (UE) 2018/302 sobre geobloqueo, pero no hay precedentes y el proveedor puede negarse. No es asesoría legal.",
+      "id": "eu_right_untested",
+      "name_es": "Posible derecho UE, sin probar",
+      "rank": 1
+    },
+    {
+      "description_es": "Incumple los términos del servicio (por ejemplo, la regla de país de residencia), pero no se conocen cancelaciones o bloqueos sistemáticos. Eso puede cambiar sin aviso y podrías perder la suscripción.",
+      "id": "tos_breach_low_enforcement",
+      "name_es": "Contra los términos, control bajo",
+      "rank": 2
+    },
+    {
+      "description_es": "Incumple los términos y el proveedor verifica activamente el país de la cuenta (hay cancelaciones o bloqueos documentados). Riesgo alto de perder la suscripción.",
+      "id": "tos_breach_enforced",
+      "name_es": "Contra los términos, control activo",
+      "rank": 3
+    },
+    {
+      "description_es": "No es viable para tu perfil: exige requisitos que no puedes cumplir de forma honesta (por ejemplo, un medio de pago o presencia en el país que no tienes).",
+      "id": "not_feasible",
+      "name_es": "No factible",
+      "rank": 4
+    },
+    {
+      "description_es": "Aún no hay un análisis de factibilidad para comprar en este país desde tu residencia. Se muestra como referencia, pero nunca se elige como la opción más barata.",
+      "id": "unknown",
+      "name_es": "Sin evaluar",
+      "rank": 99
+    }
+  ],
+  "profiles": [
+    {
+      "description_es": "Vive en Suecia, ciudadano colombiano.",
+      "id": "se_resident_co_citizen",
+      "name_es": "se_resident_co_citizen",
+      "residence_country": "SE"
+    }
+  ],
+  "records": [
+    {
+      "assumptions_es": [],
+      "confidence": "low",
+      "eu_badge": false,
+      "evidence": [],
+      "label": "tos_breach_low_enforcement",
+      "legality": "lawful",
+      "notes_es": "",
+      "practical": "remote",
+      "profile": "se_resident_co_citizen",
+      "provenance": "curated",
+      "rank": 2,
+      "reasons_es": [],
+      "researched_on": "2026-10-08",
+      "service_id": "apple_one",
+      "status": "unverified",
+      "steps": [],
+      "target_country": "CO",
+      "tos": "breach_unenforced",
+      "tos_clause_url": null
+    },
+    {
+      "assumptions_es": [],
+      "confidence": "low",
+      "eu_badge": true,
+      "evidence": [],
+      "label": "eu_right_untested",
+      "legality": "contestable_eu_right",
+      "notes_es": "Derecho UE sin probar.",
+      "practical": "remote",
+      "profile": "se_resident_co_citizen",
+      "provenance": "curated",
+      "rank": 1,
+      "reasons_es": [],
+      "researched_on": "2026-10-08",
+      "service_id": "icloud_plus",
+      "status": "verified",
+      "steps": [],
+      "target_country": "LT",
+      "tos": "compliant",
+      "tos_clause_url": null
+    },
+    {
+      "assumptions_es": [],
+      "confidence": "medium",
+      "eu_badge": false,
+      "evidence": [
+        {
+          "kind": "official",
+          "quote": "...primarily within the country...",
+          "retrieved_at": null,
+          "url": "https://help.netflix.com/legal/termsofuse",
+          "verified": false
+        }
+      ],
+      "label": "tos_breach_low_enforcement",
+      "legality": "lawful",
+      "notes_es": "Se fija el país al suscribirse.",
+      "practical": "presence_once",
+      "profile": "se_resident_co_citizen",
+      "provenance": "curated",
+      "rank": 2,
+      "reasons_es": [],
+      "researched_on": "2026-10-08",
+      "service_id": "netflix",
+      "status": "unverified",
+      "steps": [],
+      "target_country": "CO",
+      "tos": "breach_unenforced",
+      "tos_clause_url": "https://help.netflix.com/legal/termsofuse"
+    },
+    {
+      "assumptions_es": [],
+      "confidence": "low",
+      "eu_badge": false,
+      "evidence": [],
+      "label": "not_feasible",
+      "legality": "requires_misrepresentation",
+      "notes_es": "",
+      "practical": "impossible",
+      "profile": "se_resident_co_citizen",
+      "provenance": "curated",
+      "rank": 4,
+      "reasons_es": [],
+      "researched_on": "2026-10-08",
+      "service_id": "netflix",
+      "status": "unverified",
+      "steps": [],
+      "target_country": "US",
+      "tos": "breach_enforced",
+      "tos_clause_url": null
+    },
+    {
+      "assumptions_es": [],
+      "confidence": "medium",
+      "eu_badge": false,
+      "evidence": [],
+      "label": "tos_breach_enforced",
+      "legality": "lawful",
+      "notes_es": "",
+      "practical": "remote",
+      "profile": "se_resident_co_citizen",
+      "provenance": "curated",
+      "rank": 3,
+      "reasons_es": [],
+      "researched_on": "2026-10-08",
+      "service_id": "spotify",
+      "status": "unverified",
+      "steps": [],
+      "target_country": "CO",
+      "tos": "breach_enforced",
+      "tos_clause_url": null
+    }
+  ]
+}

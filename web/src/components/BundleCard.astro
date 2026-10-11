@@ -1,0 +1,444 @@
+---
+import { es, lookup } from "../i18n/es";
+import { getSite } from "../logic/data";
+import {
+  formatDate,
+  formatMoney,
+  formatPercent,
+  formatPrice,
+  hostOf,
+  periodSuffix,
+} from "../logic/format";
+import { bundleAnchor, routes } from "../logic/paths";
+import { bundleSavingNotes, pendingValueText, savingClass } from "../logic/site";
+import type {
+  Bundle,
+  BundleComponent,
+  BundleEvidence,
+  BundlePendingChange,
+} from "../logic/types";
+import BundleVerdict from "./BundleVerdict.astro";
+import CountryLabel from "./CountryLabel.astro";
+
+interface Props {
+  bundle: Bundle;
+}
+
+const { bundle: b } = Astro.props;
+const site = getSite();
+const t = es.bundle;
+const f = es.feasibility;
+const price = b.price;
+const per = periodSuffix(price.period);
+const money = (value: number | null) => formatPrice(value, price.currency);
+const names = (ids: readonly string[]) => ids.map((id) => site.serviceName(id)).join(", ");
+
+function inclusionText(c: Pick<BundleComponent, "inclusion" | "value" | "choose_n">): string {
+  const fmt = t.inclusion[c.inclusion] ?? (() => c.inclusion);
+  if (c.inclusion === "choose_n") return fmt(c.choose_n === null ? "" : String(c.choose_n));
+  if (c.value === null || c.value === undefined) return fmt("");
+  if (c.inclusion === "discount_pct") return fmt(formatPercent(c.value, { digits: 0 }));
+  if (c.inclusion === "discount_abs") return fmt(money(c.value));
+  return fmt(String(c.value));
+}
+
+// Status badge: derived state, with the date it rests on.
+const status = b.display_status;
+const statusDate = (() => {
+  if (status === "verified" && b.verified_at) return t.verifiedOn(formatDate(b.verified_at));
+  if (status === "manual") {
+    // Counted to the day Python applied the 45-day rule on (meta.generated_at), not to as_of.
+    const days = site.daysBeforeGeneration(b.verified_at);
+    return days === null ? null : t.manualAgo(Math.max(0, days));
+  }
+  // Never an announced end still ahead: a bundle marked expired before it has no end date.
+  const ended = status === "expired" ? site.bundleEndedOn(b) : null;
+  if (ended) return t.expiredOn(formatDate(ended));
+  if (b.checked_at) return t.checkedOn(formatDate(b.checked_at));
+  return null;
+})();
+
+// Price block: the full regular price leads; the marginal cost, intro and contract follow.
+const marginal = b.saving_basis === "marginal" && price.marginal_amount !== null;
+const basePlan = price.base_plan_name ?? t.basePlanFallback;
+const basePlanLabel =
+  price.base_plan_amount === null
+    ? basePlan
+    : t.basePlanWithPrice(basePlan, money(price.base_plan_amount) + per);
+// Only a current, verified intro is published with a first-year average; any other is not shown.
+const intro =
+  b.first_year_monthly_eur !== null && price.intro_amount !== null && price.intro_months !== null;
+const observedName = b.observed_service_id ? site.serviceName(b.observed_service_id) : null;
+const feeDiffers = b.monthly_eur_with_fee !== null && b.monthly_eur_with_fee !== b.monthly_eur;
+const fee = formatPercent(site.meta.fx_fee_pct, { digits: 1 });
+const observedText =
+  observedName &&
+  (price.observed_on
+    ? t.observedOn(observedName, formatDate(price.observed_on))
+    : t.observedMissing(observedName));
+const standaloneNote =
+  b.standalone_missing.length === 0
+    ? null
+    : b.standalone_sum_eur === null
+      ? t.noStandalone(names(b.standalone_missing))
+      : t.partialSum(names(b.standalone_missing));
+
+const saving = b.saving_pct;
+const savingNotes = bundleSavingNotes(b);
+
+// "Incluye" lists what the subscriber gets; discounts and free months are optional savings.
+const included = b.components.filter(
+  (c) => c.inclusion === "included" || c.inclusion === "choose_n",
+);
+const optional = b.optional_savings.map((o) => ({
+  ...o,
+  confirmed:
+    b.components.find((c) => c.service_id === o.service_id && c.inclusion === o.inclusion)
+      ?.confirmed ?? false,
+}));
+/** Free months are never a monthly saving (saving_month_eur is null by contract). */
+const optionalNote = (o: (typeof optional)[number]): string =>
+  o.inclusion === "free_months"
+    ? t.freeMonthsNote
+    : o.saving_month_eur === null
+      ? t.optionalNoPrice
+      : t.optionalSaving(formatMoney(o.saving_month_eur, "EUR"));
+
+const requirementOrder = [
+  "residency",
+  "billing_address",
+  "signup_presence",
+  "local_id",
+  "local_line",
+  "local_payment",
+  "credit_check",
+  "new_customers_only",
+] as const;
+const requirements = requirementOrder
+  .map((k) => [k, b.requirements[k]] as const)
+  .filter(([, v]) => v !== null && v !== undefined && v !== "unknown");
+const reqValue = (v: unknown): string =>
+  typeof v === "boolean"
+    ? v
+      ? es.common.yes
+      : es.common.no
+    : lookup(t.requirementValues, String(v));
+
+const verdicts = site.bundleVerdicts(b);
+const defaultProfile = site.defaultProfile;
+const otherTitle = (v: (typeof verdicts.others)[number]) =>
+  v.provenance === "agent_pending"
+    ? `${site.profileName(v.profile)} · ${t.pendingVariant}`
+    : site.profileName(v.profile);
+const otherProfiles = new Set(verdicts.others.map((v) => v.profile)).size;
+
+/** A component found (or not yet) on an official page of the bundle's country. */
+const confirmation = (confirmed: boolean) =>
+  confirmed
+    ? { css: "badge status-verified", title: t.confirmedTitle, text: t.confirmed }
+    : { css: "badge status-unverified", title: t.unconfirmedTitle, text: t.unconfirmed };
+
+/** "24.900 COP/mes → 21.900 COP/mes": what the curated data says, then what the page says. */
+const pendingText = (c: BundlePendingChange): string =>
+  t.pendingChange(
+    pendingValueText(c.value_type, c.current, site),
+    pendingValueText(c.value_type, c.proposed, site),
+  );
+
+const evidenceMeta = (e: BundleEvidence): string[] =>
+  [
+    e.fact ? lookup(t.evidenceFacts, e.fact) : null,
+    f.sourceKind(lookup(es.evidenceKinds, e.kind)),
+    e.retrieved_at ? f.retrievedOn(formatDate(e.retrieved_at)) : null,
+    e.via ? lookup(t.evidenceVia, e.via) : null,
+    e.edition ? t.evidenceEdition(e.edition) : null,
+    e.status ? lookup(t.evidenceStatus, e.status) : null,
+  ].filter((x): x is string => x !== null);
+---
+
+<li class="card bundle-card" id={bundleAnchor(b.bundle_id)}>
+  <h3>{b.name}</h3>
+  <p class="small muted">
+    <CountryLabel cc={b.country} /> ·{" "}
+    <span class={`badge status-${status}`} title={t.displayStatusTitles[status]}>
+      {lookup(t.displayStatus, status)}
+    </span>
+    {statusDate && <> · {statusDate}</>}
+  </p>
+  {
+    b.status_reasons_es.length > 0 && (
+      <ul class="small muted status-reasons" aria-label={t.statusReasons}>
+        {b.status_reasons_es.map((r) => (
+          <li>{r}</li>
+        ))}
+      </ul>
+    )
+  }
+  <dl>
+    <dt>{t.price}</dt>
+    <dd>
+      {
+        price.amount === null ? (
+          t.noPrice
+        ) : (
+          <>
+            {money(price.amount)}
+            {per}
+          </>
+        )
+      }
+      <span class="muted"> · {price.tax_included ? t.taxIncluded : t.taxExcluded}</span>
+      {
+        marginal && (
+          <div class="small">
+            {t.marginalLine(basePlanLabel, money(price.marginal_amount) + per)}
+          </div>
+        )
+      }
+      {observedText && <div class="small muted">{observedText}</div>}
+      {
+        intro && (
+          <div class="small">
+            {t.introLine(money(price.intro_amount) + per, price.intro_months ?? 0)}
+            {price.intro_valid_until && (
+              <>, {t.introUntil(formatDate(price.intro_valid_until))}</>
+            )}
+          </div>
+        )
+      }
+      {
+        price.contract_months !== null && (
+          <div class="small muted">{t.contract(price.contract_months)}</div>
+        )
+      }
+      {b.valid_from && <div class="small muted">{t.validFrom(formatDate(b.valid_from))}</div>}
+      {
+        b.valid_until && status !== "expired" && (
+          <div class="small muted">{t.validUntil(formatDate(b.valid_until))}</div>
+        )
+      }
+    </dd>
+    {
+      marginal ? (
+        <>
+          <dt>{t.fullMonthlyEur}</dt>
+          <dd>{formatMoney(b.full_monthly_eur, "EUR")}</dd>
+          <dt>{t.marginalEur}</dt>
+        </>
+      ) : (
+        <dt>{t.monthlyEur}</dt>
+      )
+    }
+    <dd>
+      {formatMoney(b.monthly_eur, "EUR")}
+      {
+        feeDiffers && (
+          <div class="small muted">
+            {t.withFee(formatMoney(b.monthly_eur_with_fee, "EUR"), fee)}
+          </div>
+        )
+      }
+    </dd>
+    {
+      intro && (
+        <>
+          <dt>{t.firstYear}</dt>
+          <dd>{t.firstYearValue(formatMoney(b.first_year_monthly_eur, "EUR"))}</dd>
+        </>
+      )
+    }
+    <dt>{t.standalone}</dt>
+    <dd>
+      {formatMoney(b.standalone_sum_eur, "EUR")}
+      {standaloneNote && <div class="small muted">{standaloneNote}</div>}
+    </dd>
+    <dt>{t.saving}</dt>
+    <dd>
+      <span class={savingClass(saving)} title={t.savingHelp}>
+        {formatPercent(saving, { signed: true })}
+      </span>
+      {savingNotes.length > 0 && <span class="muted small"> ({savingNotes.join(", ")})</span>}
+    </dd>
+  </dl>
+
+  {
+    included.length > 0 && (
+      <>
+        <h4>{t.components}</h4>
+        <ul>
+          {included.map((c) => (
+            <li>
+              <a href={routes.service(c.service_id)}>{site.serviceName(c.service_id)}</a>
+              {c.plan_id && <> ({site.planLabel(c.service_id, c.plan_id)})</>}: {inclusionText(c)}
+              {c.ads && <span class="muted"> · {t.withAds}</span>}
+              {c.standalone_eur !== null && (
+                <span class="muted">
+                  {" · "}
+                  {t.standaloneEach(formatMoney(c.standalone_eur, "EUR"))}
+                </span>
+              )}{" "}
+              <span class={confirmation(c.confirmed).css} title={confirmation(c.confirmed).title}>
+                {confirmation(c.confirmed).text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  {
+    optional.length > 0 && (
+      <>
+        <h4>{t.optionalTitle}</h4>
+        <p class="small muted">{t.optionalHelp}</p>
+        <ul>
+          {optional.map((o) => (
+            <li>
+              <a href={routes.service(o.service_id)}>{site.serviceName(o.service_id)}</a>:{" "}
+              {inclusionText({ ...o, choose_n: null })}
+              <span class="muted">
+                {" · "}
+                {optionalNote(o)}
+              </span>{" "}
+              <span class={confirmation(o.confirmed).css} title={confirmation(o.confirmed).title}>
+                {confirmation(o.confirmed).text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  {
+    requirements.length > 0 && (
+      <>
+        <h4>{t.requirements}</h4>
+        <dl>
+          {requirements.map(([k, v]) => (
+            <>
+              <dt>{lookup(t.requirementFields, k)}</dt>
+              <dd>{reqValue(v)}</dd>
+            </>
+          ))}
+        </dl>
+      </>
+    )
+  }
+
+  <h4>{t.forProfile}</h4>
+  {defaultProfile && <p class="small muted">{defaultProfile.name_es}</p>}
+  {
+    verdicts.main ? (
+      <BundleVerdict verdict={verdicts.main} />
+    ) : (
+      <p class="small muted">{status === "expired" ? t.expiredNoVerdict : t.noVerdict}</p>
+    )
+  }
+  {verdicts.pending && <BundleVerdict verdict={verdicts.pending} title={t.pendingVariant} />}
+  {
+    verdicts.others.length > 0 && (
+      <details class="evidence">
+        <summary>{t.otherProfiles(otherProfiles)}</summary>
+        {verdicts.others.map((v) => (
+          <BundleVerdict verdict={v} title={otherTitle(v)} />
+        ))}
+      </details>
+    )
+  }
+
+  {
+    b.evidence.length > 0 && (
+      <details class="evidence">
+        <summary>{t.evidenceSummary(b.evidence.length)}</summary>
+        <ul class="evidence-list">
+          {b.evidence.map((e) => (
+            <li>
+              {e.quote && <blockquote cite={e.url}>{e.quote}</blockquote>}
+              <p class="small muted">
+                <a
+                  href={e.url}
+                  rel="nofollow noopener noreferrer external"
+                  aria-label={f.evidenceLinkLabel(hostOf(e.url), lookup(es.evidenceKinds, e.kind))}
+                >
+                  {hostOf(e.url)}
+                </a>
+                {evidenceMeta(e).map((m) => (
+                  <> · {m}</>
+                ))}
+                {e.quote && (
+                  <>
+                    {" · "}
+                    {e.verified ? (
+                      <strong class="verified">{f.verifiedQuote}</strong>
+                    ) : (
+                      f.unverifiedQuote
+                    )}
+                  </>
+                )}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )
+  }
+
+  {
+    b.pending_changes.length > 0 && (
+      <details class="evidence pending-changes">
+        <summary>{t.pendingTitle(b.pending_changes.length)}</summary>
+        <p class="small muted">{t.pendingLead}</p>
+        <ul class="evidence-list">
+          {b.pending_changes.map((c) => (
+            <li>
+              <p>
+                <strong>{lookup(t.pendingFields, c.field)}</strong>: {pendingText(c)}
+                {c.big_change && (
+                  <>
+                    {" "}
+                    <span class="badge status-needs_review" title={t.pendingBigChangeTitle}>
+                      {t.pendingBigChange}
+                    </span>
+                  </>
+                )}
+              </p>
+              <blockquote cite={c.url}>{c.quote}</blockquote>
+              <p class="small muted">
+                <a
+                  href={c.url}
+                  rel="nofollow noopener noreferrer external"
+                  aria-label={f.evidenceLinkLabel(
+                    hostOf(c.url),
+                    lookup(es.evidenceKinds, "official"),
+                  )}
+                >
+                  {hostOf(c.url)}
+                </a>
+                {" · "}
+                {t.pendingSeen(
+                  lookup(t.pendingSources, c.source),
+                  formatDate(c.retrieved_at ?? c.first_seen),
+                )}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )
+  }
+
+  {b.notes_es && <p class="note">{b.notes_es}</p>}
+  <p class="small">
+    <a href={b.official_url} rel="nofollow noopener noreferrer external">{t.officialPage}</a>
+    {
+      b.last_verified && (
+        <>
+          {" · "}
+          <span class="muted">{t.lastVerified(formatDate(b.last_verified))}</span>
+        </>
+      )
+    }
+  </p>
+</li>

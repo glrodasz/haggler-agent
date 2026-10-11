@@ -1,0 +1,143 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: python (ruff, pytest, catalog)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run --frozen ruff check .
+
+      - name: Format
+        run: uv run --frozen ruff format --check .
+
+      - name: Tests
+        run: uv run --frozen pytest -q
+
+      - name: Validate catalog
+        run: uv run --frozen haggler validate-catalog
+
+      - name: ADK agent shim imports
+        run: PYTHONPATH=agents uv run --frozen python -c "import haggler_agent"
+
+  web:
+    name: web (astro check, vitest, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sample data
+        run: npm run sample-data
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # The site-data contract end to end: the Python pipeline writes the JSON the site reads, so a
+  # field rename, a type change or a null in publish.py has to fail here, not on the first
+  # real-data build. assertSiteData (web/src/logic/validate.ts) checks every record against
+  # types.ts in vitest and in the build; contract.test.ts also checks compare.ts against
+  # cheapest.json on this data.
+  contract:
+    name: contract (pipeline -> site-data -> site build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      HAGGLER_LLM: "off"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen --no-dev
+          npm ci --prefix web
+
+      # Offline: pages and FX come from the replay fixtures, the store is a local directory.
+      - name: Daily run on the replay fixtures
+        env:
+          HAGGLER_LOCAL_DIR: ${{ runner.temp }}/store
+        run: >-
+          uv run --frozen --no-dev haggler daily
+          --replay tests/workflow/fixtures/replay --store local --no-llm
+
+      - name: Sync the run into a data/ directory
+        run: >-
+          uv run --frozen --no-dev haggler sync
+          --from-dir "$RUNNER_TEMP/store" --data-dir "$RUNNER_TEMP/data"
+
+      - name: Site data from the synced run
+        run: >-
+          uv run --frozen --no-dev haggler site-data
+          --data-dir "$RUNNER_TEMP/data" --out web/src/data
+
+      - name: Check, test and build the site (pipeline data)
+        working-directory: web
+        run: |
+          npm run check
+          npm test
+          npm run build
+
+      # First deploy / fresh clone: no completed run yet (run_id, as_of and fx.as_of are null).
+      - name: Site data from an empty data/ directory
+        run: |
+          rm -rf web/src/data
+          mkdir -p "$RUNNER_TEMP/empty"
+          uv run --frozen --no-dev haggler site-data --data-dir "$RUNNER_TEMP/empty" --out web/src/data
+
+      - name: Check, test and build the site (empty data)
+        working-directory: web
+        run: |
+          npm run check
+          npm test
+          npm run build

@@ -1,0 +1,595 @@
+[
+  {
+    "bundle_id": "apple_one_individual_se",
+    "checked_at": null,
+    "components": [
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "individual",
+        "service_id": "apple_music",
+        "standalone_eur": 10.82,
+        "value": null
+      },
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "apple_tv",
+        "standalone_eur": 9.0,
+        "value": null
+      },
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "apple_arcade",
+        "standalone_eur": null,
+        "value": null
+      },
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "50gb",
+        "service_id": "icloud_plus",
+        "standalone_eur": 1.09,
+        "value": null
+      }
+    ],
+    "confidence": "low",
+    "country": "SE",
+    "covers": [
+      "apple_music",
+      "apple_tv",
+      "apple_arcade",
+      "icloud_plus"
+    ],
+    "display_status": "unverified",
+    "evidence": [],
+    "first_year_monthly_eur": null,
+    "full_monthly_eur": 17.73,
+    "last_verified": "2026-10-08",
+    "monthly_eur": 17.73,
+    "monthly_eur_with_fee": 17.73,
+    "name": "Apple One Individual",
+    "notes_es": "",
+    "observed_service_id": "apple_one",
+    "official_url": "https://www.apple.com/se/apple-one/",
+    "optional_savings": [],
+    "pending_changes": [],
+    "price": {
+      "amount": 195.0,
+      "base_plan_amount": null,
+      "base_plan_name": null,
+      "contract_months": null,
+      "currency": "SEK",
+      "intro_amount": null,
+      "intro_months": null,
+      "intro_valid_until": null,
+      "marginal_amount": null,
+      "observed_on": "2026-10-08",
+      "period": "month",
+      "source": "observed",
+      "tax_included": true
+    },
+    "provider_id": "apple",
+    "provider_type": "platform",
+    "requirements": {
+      "billing_address": "unknown",
+      "credit_check": null,
+      "local_id": null,
+      "local_line": null,
+      "local_payment": null,
+      "new_customers_only": null,
+      "residency": "unknown",
+      "signup_presence": "unknown"
+    },
+    "saving_basis": "full",
+    "saving_pct": 15.21,
+    "standalone_missing": [
+      "apple_arcade"
+    ],
+    "standalone_sum_eur": 20.91,
+    "status_reasons_es": [
+      "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
+      "Se revisa a mano: sus páginas no están en la vigilancia automática."
+    ],
+    "tier": "individual",
+    "valid_from": null,
+    "valid_until": null,
+    "verdicts": [
+      {
+        "assumptions_es": [],
+        "components": [
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "apple_music",
+            "target_country": "SE"
+          },
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "apple_tv",
+            "target_country": "SE"
+          },
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "apple_arcade",
+            "target_country": "SE"
+          },
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "icloud_plus",
+            "target_country": "SE"
+          }
+        ],
+        "confidence": "low",
+        "eu_badge": false,
+        "label": "official_home",
+        "legality": "lawful",
+        "notes_es": "",
+        "practical": "remote",
+        "profile": "se_resident_co_citizen",
+        "provenance": "home",
+        "rank": 0,
+        "reasons_es": [],
+        "status": "unverified",
+        "steps": [],
+        "tos": "compliant"
+      }
+    ],
+    "verified_at": null,
+    "verified_by": "search_summary",
+    "watch_mode": "manual"
+  },
+  {
+    "bundle_id": "apple_one_family_se",
+    "checked_at": null,
+    "components": [
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "family",
+        "service_id": "apple_music",
+        "standalone_eur": null,
+        "value": null
+      }
+    ],
+    "confidence": "low",
+    "country": "SE",
+    "covers": [
+      "apple_music"
+    ],
+    "display_status": "unverified",
+    "evidence": [],
+    "first_year_monthly_eur": null,
+    "full_monthly_eur": null,
+    "last_verified": "2026-10-08",
+    "monthly_eur": null,
+    "monthly_eur_with_fee": null,
+    "name": "Apple One Familj",
+    "notes_es": "",
+    "observed_service_id": "apple_one",
+    "official_url": "https://www.apple.com/se/apple-one/",
+    "optional_savings": [],
+    "pending_changes": [],
+    "price": {
+      "amount": null,
+      "base_plan_amount": null,
+      "base_plan_name": null,
+      "contract_months": null,
+      "currency": "SEK",
+      "intro_amount": null,
+      "intro_months": null,
+      "intro_valid_until": null,
+      "marginal_amount": null,
+      "observed_on": null,
+      "period": "month",
+      "source": "observed",
+      "tax_included": true
+    },
+    "provider_id": "apple",
+    "provider_type": "platform",
+    "requirements": {
+      "billing_address": "unknown",
+      "credit_check": null,
+      "local_id": null,
+      "local_line": null,
+      "local_payment": null,
+      "new_customers_only": null,
+      "residency": "unknown",
+      "signup_presence": "unknown"
+    },
+    "saving_basis": "full",
+    "saving_pct": null,
+    "standalone_missing": [
+      "apple_music"
+    ],
+    "standalone_sum_eur": null,
+    "status_reasons_es": [
+      "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
+      "Aún no hay un precio publicado de este plan en los datos diarios.",
+      "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "tier": "family",
+    "valid_from": null,
+    "valid_until": null,
+    "verdicts": [
+      {
+        "assumptions_es": [],
+        "components": [
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "apple_music",
+            "target_country": "SE"
+          }
+        ],
+        "confidence": "low",
+        "eu_badge": false,
+        "label": "official_home",
+        "legality": "lawful",
+        "notes_es": "",
+        "practical": "remote",
+        "profile": "se_resident_co_citizen",
+        "provenance": "home",
+        "rank": 0,
+        "reasons_es": [],
+        "status": "unverified",
+        "steps": [],
+        "tos": "compliant"
+      }
+    ],
+    "verified_at": null,
+    "verified_by": "search_summary",
+    "watch_mode": "off"
+  },
+  {
+    "bundle_id": "meli_co",
+    "checked_at": null,
+    "components": [
+      {
+        "ads": true,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "standard_with_ads",
+        "service_id": "netflix",
+        "standalone_eur": 3.76,
+        "value": null
+      },
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "discount_pct",
+        "plan_id": null,
+        "service_id": "spotify",
+        "standalone_eur": 3.76,
+        "value": 30.0
+      }
+    ],
+    "confidence": "low",
+    "country": "CO",
+    "covers": [
+      "netflix"
+    ],
+    "display_status": "unverified",
+    "evidence": [],
+    "first_year_monthly_eur": null,
+    "full_monthly_eur": 5.53,
+    "last_verified": "2026-10-08",
+    "monthly_eur": 5.53,
+    "monthly_eur_with_fee": 5.64,
+    "name": "Meli+ Total",
+    "notes_es": "Precio en conflicto.",
+    "observed_service_id": null,
+    "official_url": "https://www.mercadolibre.com.co/suscripciones/melimas/planes",
+    "optional_savings": [
+      {
+        "inclusion": "discount_pct",
+        "saving_month_eur": 1.13,
+        "service_id": "spotify",
+        "value": 30.0
+      }
+    ],
+    "pending_changes": [],
+    "price": {
+      "amount": 24900.0,
+      "base_plan_amount": null,
+      "base_plan_name": null,
+      "contract_months": null,
+      "currency": "COP",
+      "intro_amount": null,
+      "intro_months": null,
+      "intro_valid_until": null,
+      "marginal_amount": null,
+      "observed_on": null,
+      "period": "month",
+      "source": "curated",
+      "tax_included": true
+    },
+    "provider_id": "mercado_libre",
+    "provider_type": "marketplace",
+    "requirements": {
+      "billing_address": "unknown",
+      "credit_check": null,
+      "local_id": "cedula",
+      "local_line": null,
+      "local_payment": "any_card",
+      "new_customers_only": null,
+      "residency": "unknown",
+      "signup_presence": "unknown"
+    },
+    "saving_basis": "full",
+    "saving_pct": -47.07,
+    "standalone_missing": [],
+    "standalone_sum_eur": 3.76,
+    "status_reasons_es": [
+      "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
+      "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "tier": "total",
+    "valid_from": null,
+    "valid_until": null,
+    "verdicts": [
+      {
+        "assumptions_es": [],
+        "components": [
+          {
+            "label": "tos_breach_low_enforcement",
+            "provenance": "curated",
+            "rank": 2,
+            "service_id": "netflix",
+            "target_country": "CO"
+          }
+        ],
+        "confidence": "low",
+        "eu_badge": false,
+        "label": "not_feasible",
+        "legality": "lawful",
+        "notes_es": "",
+        "practical": "impossible",
+        "profile": "se_resident_co_citizen",
+        "provenance": "curated",
+        "rank": 4,
+        "reasons_es": [
+          "Exige un documento de identidad de CO (cédula); el perfil no tiene uno."
+        ],
+        "status": "unverified",
+        "steps": [],
+        "tos": "breach_unenforced"
+      }
+    ],
+    "verified_at": null,
+    "verified_by": "search_summary",
+    "watch_mode": "off"
+  },
+  {
+    "bundle_id": "telia_se",
+    "checked_at": null,
+    "components": [
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "standard",
+        "service_id": "netflix",
+        "standalone_eur": 13.55,
+        "value": null
+      },
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": "individual",
+        "service_id": "spotify",
+        "standalone_eur": 12.64,
+        "value": null
+      }
+    ],
+    "confidence": "low",
+    "country": "SE",
+    "covers": [
+      "netflix",
+      "spotify"
+    ],
+    "display_status": "unverified",
+    "evidence": [],
+    "first_year_monthly_eur": null,
+    "full_monthly_eur": 63.55,
+    "last_verified": "2026-10-08",
+    "monthly_eur": 11.82,
+    "monthly_eur_with_fee": 11.82,
+    "name": "Telia + Netflix y Spotify",
+    "notes_es": "",
+    "observed_service_id": null,
+    "official_url": "https://www.telia.se/privat/mobilt/abonnemang",
+    "optional_savings": [],
+    "pending_changes": [],
+    "price": {
+      "amount": 699.0,
+      "base_plan_amount": 569.0,
+      "base_plan_name": "Telia Plus",
+      "contract_months": null,
+      "currency": "SEK",
+      "intro_amount": null,
+      "intro_months": null,
+      "intro_valid_until": null,
+      "marginal_amount": 130.0,
+      "observed_on": null,
+      "period": "month",
+      "source": "curated",
+      "tax_included": true
+    },
+    "provider_id": "telia_se",
+    "provider_type": "telco_mobile",
+    "requirements": {
+      "billing_address": "unknown",
+      "credit_check": true,
+      "local_id": "personnummer",
+      "local_line": "mobile",
+      "local_payment": "local_bank",
+      "new_customers_only": null,
+      "residency": "unknown",
+      "signup_presence": "unknown"
+    },
+    "saving_basis": "marginal",
+    "saving_pct": 54.87,
+    "standalone_missing": [],
+    "standalone_sum_eur": 26.19,
+    "status_reasons_es": [
+      "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
+      "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "tier": "plus",
+    "valid_from": null,
+    "valid_until": null,
+    "verdicts": [
+      {
+        "assumptions_es": [],
+        "components": [
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "netflix",
+            "target_country": "SE"
+          },
+          {
+            "label": "official_home",
+            "provenance": "home",
+            "rank": 0,
+            "service_id": "spotify",
+            "target_country": "SE"
+          }
+        ],
+        "confidence": "low",
+        "eu_badge": false,
+        "label": "not_feasible",
+        "legality": "lawful",
+        "notes_es": "",
+        "practical": "impossible",
+        "profile": "se_resident_co_citizen",
+        "provenance": "home",
+        "rank": 4,
+        "reasons_es": [
+          "Exige un documento de identidad de SE (personnummer); el perfil no tiene uno.",
+          "Exige una línea móvil de SE; el perfil no tiene un teléfono de SE."
+        ],
+        "status": "unverified",
+        "steps": [],
+        "tos": "compliant"
+      }
+    ],
+    "verified_at": null,
+    "verified_by": "search_summary",
+    "watch_mode": "off"
+  },
+  {
+    "bundle_id": "yearly_lt",
+    "checked_at": null,
+    "components": [
+      {
+        "ads": null,
+        "choice_group_id": null,
+        "choose_n": null,
+        "confirmed": false,
+        "inclusion": "included",
+        "plan_id": null,
+        "service_id": "netflix",
+        "standalone_eur": 6.99,
+        "value": null
+      }
+    ],
+    "confidence": "low",
+    "country": "LT",
+    "covers": [
+      "netflix"
+    ],
+    "display_status": "expired",
+    "evidence": [],
+    "first_year_monthly_eur": null,
+    "full_monthly_eur": 10.0,
+    "last_verified": "2026-09-01",
+    "monthly_eur": 10.0,
+    "monthly_eur_with_fee": 10.2,
+    "name": "Go3 anual + Netflix",
+    "notes_es": "",
+    "observed_service_id": null,
+    "official_url": "https://example.com/go3",
+    "optional_savings": [],
+    "pending_changes": [],
+    "price": {
+      "amount": 120.0,
+      "base_plan_amount": null,
+      "base_plan_name": null,
+      "contract_months": null,
+      "currency": "EUR",
+      "intro_amount": null,
+      "intro_months": null,
+      "intro_valid_until": null,
+      "marginal_amount": null,
+      "observed_on": null,
+      "period": "year",
+      "source": "curated",
+      "tax_included": true
+    },
+    "provider_id": "go3",
+    "provider_type": "streaming_joint",
+    "requirements": {
+      "billing_address": "unknown",
+      "credit_check": null,
+      "local_id": null,
+      "local_line": null,
+      "local_payment": null,
+      "new_customers_only": null,
+      "residency": "unknown",
+      "signup_presence": "unknown"
+    },
+    "saving_basis": "full",
+    "saving_pct": -43.06,
+    "standalone_missing": [],
+    "standalone_sum_eur": 6.99,
+    "status_reasons_es": [
+      "La oferta pasó su fecha de fin.",
+      "Marcada como vencida en los datos curados."
+    ],
+    "tier": "annual",
+    "valid_from": null,
+    "valid_until": "2026-09-01",
+    "verdicts": [],
+    "verified_at": null,
+    "verified_by": "search_summary",
+    "watch_mode": "off"
+  }
+]

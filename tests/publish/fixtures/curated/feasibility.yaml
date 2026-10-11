@@ -1,0 +1,80 @@
+# Feasibility fixture for the publish tests (residence SE, one profile).
+profiles:
+  se_resident_co_citizen: Vive en Suecia, ciudadano colombiano.
+
+records:
+  - id: netflix_co_from_se
+    service_id: netflix
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    legality: lawful
+    tos: breach_unenforced
+    practical: presence_once
+    tos_clause:
+      url: https://help.netflix.com/legal/termsofuse
+      quote: "...primarily within the country..."
+    confidence: medium
+    last_verified: 2026-10-08
+    notes_es: Se fija el país al suscribirse.
+
+  - id: netflix_us_from_se
+    service_id: netflix
+    target_country: US
+    residence_country: SE
+    profile: se_resident_co_citizen
+    legality: requires_misrepresentation
+    tos: breach_enforced
+    practical: impossible
+    confidence: low
+    last_verified: 2026-10-08
+
+  - id: spotify_co_from_se
+    service_id: spotify
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    legality: lawful
+    tos: breach_enforced
+    practical: remote
+    confidence: medium
+    last_verified: 2026-10-08
+
+  - id: icloud_lt_from_se
+    service_id: icloud_plus
+    target_country: LT
+    residence_country: SE
+    profile: se_resident_co_citizen
+    legality: contestable_eu_right
+    tos: compliant
+    practical: remote
+    legal_basis:
+      - {instrument: "Regulation (EU) 2018/302", article: "4(1)(b)", strength: arguable}
+    confidence: low
+    status: verified
+    verified_by: official_fetch
+    last_verified: 2026-10-08
+    notes_es: >-
+      Derecho UE sin probar.
+
+  - id: apple_one_co_from_se
+    service_id: apple_one
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    confidence: low
+    last_verified: 2026-10-08
+
+  # Other residence: must not reach the SE site.
+  - id: netflix_co_from_lt
+    service_id: netflix
+    target_country: CO
+    residence_country: LT
+    profile: se_resident_co_citizen
+    legality: lawful
+    tos: compliant
+    practical: remote
+    last_verified: 2026-10-08

@@ -1,0 +1,135 @@
+---
+import { es, lookup } from "../i18n/es";
+import { getSite } from "../logic/data";
+import { formatDate, formatMoney, formatPrice, periodSuffix } from "../logic/format";
+import { routes } from "../logic/paths";
+import type { Offer } from "../logic/types";
+import ChannelBadge from "./ChannelBadge.astro";
+import CountryLabel from "./CountryLabel.astro";
+import EuBadge from "./EuBadge.astro";
+import RiskBadge from "./RiskBadge.astro";
+import TableWrap from "./TableWrap.astro";
+
+interface Props {
+  offers: Offer[];
+  /** "service": first column is the country; "country": first column is the service. */
+  mode: "service" | "country";
+  caption: string;
+  captionId: string;
+}
+
+const { offers, mode, caption, captionId } = Astro.props;
+const site = getSite();
+const t = es.service;
+const second = site.residenceCurrency !== "EUR" ? site.residenceCurrency : null;
+const stale = (o: Offer) => site.isStale(o.currency);
+const hasStale = offers.some(stale);
+---
+
+<TableWrap captionId={captionId}>
+  <table>
+    <caption id={captionId}>{caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{mode === "service" ? t.colCountry : es.country.colService}</th>
+        <th scope="col">{t.colPlan}</th>
+        <th scope="col" class="num">{t.colLocal}</th>
+        <th scope="col" class="num">{t.colMonthlyIn("EUR")}</th>
+        {second && <th scope="col" class="num">{t.colMonthlyIn(second)}</th>}
+        <th scope="col">{t.colChannel}</th>
+        <th scope="col">{t.colVat}</th>
+        <th scope="col">{t.colSource}</th>
+        <th scope="col">{t.colRiskLabel}</th>
+        <th scope="col">{t.colUpdated}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        offers.map((o) => {
+          const isHome = o.country === site.meta.residence;
+          const inactive = o.status === "quarantined" || o.status === "rejected";
+          const rowClass = [isHome ? "is-home" : "", inactive ? "is-inactive" : ""].join(" ").trim();
+          const mark = stale(o) ? "*" : "";
+          return (
+            <tr class={rowClass || undefined}>
+              <th scope="row">
+                {mode === "service" ? (
+                  <>
+                    <CountryLabel cc={o.country} />
+                    {isHome && (
+                      <>
+                        {" "}
+                        <span class="badge risk-0">{es.common.residenceTag}</span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <a href={routes.service(o.service_id)}>{site.serviceName(o.service_id)}</a>
+                )}
+              </th>
+              <td>
+                {site.planLabel(o.service_id, o.plan_id)}
+                {(o.status !== "accepted" || o.flags.length > 0) && (
+                  <div class="badges">
+                    {o.status !== "accepted" && (
+                      <span class="badge badge-neutral" title={es.offerStatusTitles[o.status]}>
+                        {lookup(es.offerStatus, o.status)}
+                      </span>
+                    )}
+                    {o.flags.map((f) => (
+                      <span class="badge badge-neutral">{lookup(es.flags, f)}</span>
+                    ))}
+                  </div>
+                )}
+              </td>
+              <td class="num">
+                {formatPrice(o.amount, o.currency)}
+                <span class="muted">{periodSuffix(o.billing_period)}</span>
+              </td>
+              <td class="num">
+                {formatMoney(o.monthly_eur, "EUR")}
+                {mark}
+              </td>
+              {second && (
+                <td class="num">
+                  {formatMoney(site.monthlyIn(o, second), second)}
+                  {o.currency !== second ? mark : ""}
+                </td>
+              )}
+              <td>
+                <ChannelBadge channel={o.channel} />
+              </td>
+              <td>{o.vat_included === null ? es.common.unknown : o.vat_included ? es.common.yes : es.common.no}</td>
+              <td>
+                <a
+                  href={o.source_url}
+                  rel="nofollow noopener noreferrer external"
+                  aria-label={es.common.sourceLinkLabel(
+                    lookup(es.sourceKinds, o.source_kind),
+                    `${site.serviceName(o.service_id)}, ${site.countryName(o.country)}`,
+                  )}
+                >
+                  {lookup(es.sourceKinds, o.source_kind)}
+                </a>
+                {o.extraction === "llm" && (
+                  <>
+                    {" "}
+                    <span class="badge badge-neutral">{lookup(es.extraction, o.extraction)}</span>
+                  </>
+                )}
+              </td>
+              <td>
+                <span class="badges">
+                  <RiskBadge label={o.label} rank={o.rank} />
+                  {o.eu_badge && <EuBadge />}
+                </span>
+              </td>
+              <td class="nowrap">{formatDate(o.last_changed)}</td>
+            </tr>
+          );
+        })
+      }
+    </tbody>
+  </table>
+</TableWrap>
+{hasStale && <p class="note">{es.common.staleFxNote}</p>}

@@ -1,0 +1,38 @@
+# Who the site evaluates feasibility for. A profile lists only what the person can HONESTLY show:
+# real addresses, documents, phone numbers, payment instruments and where they can travel. The
+# research evaluator (haggler.research.evaluate) never assumes anything not listed here, and a
+# route that needs a false declaration is never offered.
+#
+# Curated feasibility records (feasibility.yaml) name one of these profiles; the site has a
+# profile selector when more than one profile is public.
+
+default: se_resident_co_citizen
+
+profiles:
+  - id: se_resident_co_citizen
+    name_es: Residente en Suecia con ciudadanía colombiana
+    description_es: >-
+      Vive en Suecia (residencia estable), ciudadano colombiano con cédula y tarjeta de crédito
+      emitida en Colombia. Viaja a Colombia de vez en cuando.
+    residence_country: SE
+    citizenships: [CO]
+    id_document_countries: [CO, SE]
+    phone_countries: [SE]
+    address_countries: [SE]
+    instruments_held: [user_co_card]
+    obtain_remote_instruments: true
+    presence: {CO: once}
+
+  - id: se_resident_eu_generic
+    name_es: Residente en Suecia sin vínculos con otros países
+    description_es: >-
+      Vive en Suecia, con documentos, teléfono y dirección solo suecos y sin tarjetas extranjeras.
+      Puede abrir en línea cuentas de bancos del EEE.
+    residence_country: SE
+    citizenships: [SE]
+    id_document_countries: [SE]
+    phone_countries: [SE]
+    address_countries: [SE]
+    instruments_held: []
+    obtain_remote_instruments: true
+    presence: {}

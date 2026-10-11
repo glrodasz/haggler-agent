@@ -1,0 +1,18 @@
+# Small country list for the publish tests.
+fx_pins:
+  COP: BANREP
+  ARS: BCRA
+
+countries:
+  - {cc: SE, name_es: Suecia, name_en: Sweden, region: nordics, currency: SEK, locale: sv_SE, eu_eea: true,
+     apple_path: se, disney_locale: sv-se, vat_included: {web: true, ios_iap: true}}
+  - {cc: LT, name_es: Lituania, name_en: Lithuania, region: eu, currency: EUR, locale: lt_LT, eu_eea: true,
+     apple_path: lt, disney_locale: lt-lt, vat_included: {web: true, ios_iap: true}}
+  - {cc: CO, name_es: Colombia, name_en: Colombia, region: latam, currency: COP, locale: es_CO, eu_eea: false,
+     apple_path: co, disney_locale: es-co, vat_included: {web: true, ios_iap: true}}
+  - {cc: AR, name_es: Argentina, name_en: Argentina, region: latam, currency: ARS, appstore_currency: USD,
+     locale: es_AR, eu_eea: false, apple_path: null, disney_locale: es-ar,
+     vat_included: {web: false, ios_iap: null}}
+  - {cc: US, name_es: Estados Unidos, name_en: United States, region: north_america, currency: USD,
+     locale: en_US, eu_eea: false, apple_path: "", disney_locale: en-us,
+     vat_included: {web: false, ios_iap: false}}

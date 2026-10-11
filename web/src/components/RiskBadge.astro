@@ -1,0 +1,14 @@
+---
+import { getSite } from "../logic/data";
+import { riskClass } from "../logic/site";
+
+interface Props {
+  label: string;
+  rank: number;
+}
+
+const { label, rank } = Astro.props;
+const info = getSite().label(label, rank);
+---
+
+<span class={`badge ${riskClass(info.rank)}`} title={info.description}>{info.name}</span>

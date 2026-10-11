@@ -1,0 +1,13 @@
+---
+import { es } from "../i18n/es";
+
+interface Props {
+  channel: string;
+}
+
+const { channel } = Astro.props;
+---
+
+<span class={`badge channel-${channel}`} title={es.channelTitles[channel]}>
+  {es.channels[channel] ?? channel}
+</span>

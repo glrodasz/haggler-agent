@@ -1,0 +1,96 @@
+# Curated country list. Edit freely; `haggler validate-catalog` checks integrity.
+# apple_path: segment on apple.com ("" = US). null = not configured (task marked not_configured).
+# disney_locale: segment on disneyplus.com. Values marked "verify" are best guesses that the
+# probe workflow confirms or corrects.
+# vat_included: whether shown prices include VAT/sales tax, per channel. null = unknown.
+
+fx_pins:
+  COP: BANREP
+  ARS: BCRA
+  CLP: BCCH
+  EGP: CBE
+  NGN: CBN
+
+countries:
+  # --- Nordics ---------------------------------------------------------------
+  - {cc: SE, name_es: Suecia, name_en: Sweden, region: nordics, currency: SEK, locale: sv_SE, eu_eea: true,
+     apple_path: se, disney_locale: sv-se, vat_included: {web: true, ios_iap: true}}
+  - {cc: "NO", name_es: Noruega, name_en: Norway, region: nordics, currency: NOK, locale: nb_NO, eu_eea: true,
+     apple_path: "no", disney_locale: nb-no, vat_included: {web: true, ios_iap: true}}  # disney: verify
+  - {cc: DK, name_es: Dinamarca, name_en: Denmark, region: nordics, currency: DKK, locale: da_DK, eu_eea: true,
+     apple_path: dk, disney_locale: da-dk, vat_included: {web: true, ios_iap: true}}
+  - {cc: FI, name_es: Finlandia, name_en: Finland, region: nordics, currency: EUR, locale: fi_FI, eu_eea: true,
+     apple_path: fi, disney_locale: fi-fi, vat_included: {web: true, ios_iap: true}}
+  # --- EU / EEA ----------------------------------------------------------------
+  - {cc: LT, name_es: Lituania, name_en: Lithuania, region: eu, currency: EUR, locale: lt_LT, eu_eea: true,
+     apple_path: lt, disney_locale: lt-lt, vat_included: {web: true, ios_iap: true}}  # disney: verify
+  - {cc: LV, name_es: Letonia, name_en: Latvia, region: eu, currency: EUR, locale: lv_LV, eu_eea: true,
+     apple_path: lv, disney_locale: lv-lv, vat_included: {web: true, ios_iap: true}}  # disney: verify
+  - {cc: EE, name_es: Estonia, name_en: Estonia, region: eu, currency: EUR, locale: et_EE, eu_eea: true,
+     apple_path: ee, disney_locale: et-ee, vat_included: {web: true, ios_iap: true}}  # disney: verify
+  - {cc: PL, name_es: Polonia, name_en: Poland, region: eu, currency: PLN, locale: pl_PL, eu_eea: true,
+     apple_path: pl, disney_locale: pl-pl, vat_included: {web: true, ios_iap: true}}
+  - {cc: DE, name_es: Alemania, name_en: Germany, region: eu, currency: EUR, locale: de_DE, eu_eea: true,
+     apple_path: de, disney_locale: de-de, vat_included: {web: true, ios_iap: true}}
+  - {cc: ES, name_es: España, name_en: Spain, region: eu, currency: EUR, locale: es_ES, eu_eea: true,
+     apple_path: es, disney_locale: es-es, vat_included: {web: true, ios_iap: true}}
+  - {cc: IE, name_es: Irlanda, name_en: Ireland, region: eu, currency: EUR, locale: en_IE, eu_eea: true,
+     apple_path: ie, disney_locale: en-ie, vat_included: {web: true, ios_iap: true}}
+  - {cc: NL, name_es: Países Bajos, name_en: Netherlands, aliases_en: [The Netherlands], region: eu,
+     currency: EUR, locale: nl_NL, eu_eea: true, apple_path: nl, disney_locale: nl-nl,
+     vat_included: {web: true, ios_iap: true}}
+  - {cc: PT, name_es: Portugal, name_en: Portugal, region: eu, currency: EUR, locale: pt_PT, eu_eea: true,
+     apple_path: pt, disney_locale: pt-pt, vat_included: {web: true, ios_iap: true}}
+  - {cc: CZ, name_es: Chequia, name_en: Czechia, aliases_en: [Czech Republic], region: eu, currency: CZK,
+     locale: cs_CZ, eu_eea: true, apple_path: cz, disney_locale: cs-cz,
+     vat_included: {web: true, ios_iap: true}}
+  - {cc: HU, name_es: Hungría, name_en: Hungary, region: eu, currency: HUF, locale: hu_HU, eu_eea: true,
+     apple_path: hu, disney_locale: hu-hu, vat_included: {web: true, ios_iap: true}}
+  - {cc: RO, name_es: Rumania, name_en: Romania, region: eu, currency: RON, locale: ro_RO, eu_eea: true,
+     apple_path: ro, disney_locale: ro-ro, vat_included: {web: true, ios_iap: true}}
+  - {cc: CH, name_es: Suiza, name_en: Switzerland, region: europe_other, currency: CHF, locale: de_CH,
+     eu_eea: false, apple_path: chde, disney_locale: de-ch, vat_included: {web: true, ios_iap: true}}
+  # --- Latin America -----------------------------------------------------------
+  - {cc: CO, name_es: Colombia, name_en: Colombia, region: latam, currency: COP, locale: es_CO, eu_eea: false,
+     apple_path: co, disney_locale: es-co, vat_included: {web: true, ios_iap: true}}
+  - {cc: MX, name_es: México, name_en: Mexico, region: latam, currency: MXN, locale: es_MX, eu_eea: false,
+     apple_path: mx, disney_locale: es-mx, vat_included: {web: true, ios_iap: true}}
+  - {cc: AR, name_es: Argentina, name_en: Argentina, region: latam, currency: ARS, appstore_currency: USD,
+     locale: es_AR, eu_eea: false, apple_path: null, disney_locale: es-ar,
+     vat_included: {web: false, ios_iap: null}}
+  - {cc: BR, name_es: Brasil, name_en: Brazil, region: latam, currency: BRL, locale: pt_BR, eu_eea: false,
+     apple_path: br, disney_locale: pt-br, vat_included: {web: true, ios_iap: true}}
+  - {cc: CL, name_es: Chile, name_en: Chile, region: latam, currency: CLP, locale: es_CL, eu_eea: false,
+     apple_path: cl, disney_locale: es-cl, vat_included: {web: true, ios_iap: true}}
+  - {cc: PE, name_es: Perú, name_en: Peru, region: latam, currency: PEN, locale: es_PE, eu_eea: false,
+     apple_path: null, disney_locale: es-pe, vat_included: {web: null, ios_iap: true}}
+  # --- North America & UK --------------------------------------------------------
+  - {cc: US, name_es: Estados Unidos, name_en: United States, aliases_en: [USA, United States of America],
+     region: north_america, currency: USD, locale: en_US, eu_eea: false, apple_path: "",
+     disney_locale: en-us, vat_included: {web: false, ios_iap: false}}
+  - {cc: CA, name_es: Canadá, name_en: Canada, region: north_america, currency: CAD, locale: en_CA,
+     eu_eea: false, apple_path: ca, disney_locale: en-ca, vat_included: {web: false, ios_iap: false}}
+  - {cc: GB, name_es: Reino Unido, name_en: United Kingdom, aliases_en: [UK, Great Britain],
+     region: europe_other, currency: GBP, locale: en_GB, eu_eea: false, apple_path: uk,
+     disney_locale: en-gb, vat_included: {web: true, ios_iap: true}}
+  # --- Typically cheap markets ---------------------------------------------------
+  - {cc: TR, name_es: Turquía, name_en: Turkey, aliases_en: [Türkiye, Turkiye], region: mena, currency: TRY,
+     locale: tr_TR, eu_eea: false, apple_path: tr, disney_locale: tr-tr,
+     vat_included: {web: true, ios_iap: true}}
+  - {cc: IN, name_es: India, name_en: India, region: asia, currency: INR, locale: en_IN, eu_eea: false,
+     apple_path: in, disney_locale: null, vat_included: {web: true, ios_iap: true}}
+  - {cc: PK, name_es: Pakistán, name_en: Pakistan, region: asia, currency: PKR, locale: en_PK, eu_eea: false,
+     apple_path: null, disney_locale: null, vat_included: {web: null, ios_iap: true}}
+  - {cc: EG, name_es: Egipto, name_en: Egypt, region: mena, currency: EGP, locale: ar_EG, eu_eea: false,
+     apple_path: null, disney_locale: null, vat_included: {web: null, ios_iap: true}}
+  - {cc: NG, name_es: Nigeria, name_en: Nigeria, region: africa, currency: NGN, locale: en_NG, eu_eea: false,
+     apple_path: null, disney_locale: null, vat_included: {web: null, ios_iap: true}}
+  - {cc: PH, name_es: Filipinas, name_en: Philippines, region: asia, currency: PHP, locale: en_PH,
+     eu_eea: false, apple_path: ph, disney_locale: en-ph, vat_included: {web: true, ios_iap: true}}
+  - {cc: ID, name_es: Indonesia, name_en: Indonesia, region: asia, currency: IDR, locale: id_ID,
+     eu_eea: false, apple_path: id, disney_locale: null, vat_included: {web: true, ios_iap: true}}
+  - {cc: VN, name_es: Vietnam, name_en: Vietnam, aliases_en: [Viet Nam], region: asia, currency: VND,
+     locale: vi_VN, eu_eea: false, apple_path: vn, disney_locale: null,
+     vat_included: {web: true, ios_iap: true}}
+  - {cc: ZA, name_es: Sudáfrica, name_en: South Africa, region: africa, currency: ZAR, locale: en_ZA,
+     eu_eea: false, apple_path: za, disney_locale: en-za, vat_included: {web: true, ios_iap: true}}

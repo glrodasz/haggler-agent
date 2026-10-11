@@ -1,0 +1,123 @@
+---
+import Comparador, {
+  type ComparadorLabel,
+  type ComparadorProfile,
+  type ComparadorService,
+} from "../islands/Comparador";
+import { es } from "../i18n/es";
+import Base from "../layouts/Base.astro";
+import { type CompareOfferFields, isCandidate } from "../logic/compare";
+import { getSite } from "../logic/data";
+import { routes } from "../logic/paths";
+import { inlineJson, packOffers, packVerdicts } from "../logic/transport";
+import { isPending } from "../logic/verdicts";
+
+const site = getSite();
+const t = es.home;
+
+// Only candidates travel to the browser, and only the fields the comparison needs.
+const offers: CompareOfferFields[] = site.offers.filter(isCandidate).map((o) => ({
+  obs_key: o.obs_key,
+  service_id: o.service_id,
+  plan_id: o.plan_id,
+  country: o.country,
+  channel: o.channel,
+  currency: o.currency,
+  amount: o.amount,
+  billing_period: o.billing_period,
+  monthly_equiv: o.monthly_equiv,
+  source_kind: o.source_kind,
+  status: o.status,
+  label: o.label,
+  rank: o.rank,
+  eu_badge: o.eu_badge,
+}));
+const plansWithOffers = new Set(offers.map((o) => `${o.service_id}:${o.plan_id}`));
+
+const services: ComparadorService[] = site.pricedServices().map((s) => ({
+  id: s.id,
+  name: s.name,
+  default_plan: s.default_plan,
+  plans: [...s.plans]
+    .filter((p) => p.id === s.default_plan || plansWithOffers.has(`${s.id}:${p.id}`))
+    .sort((a, b) => a.rank - b.rank)
+    .map((p) => ({ id: p.id, label_es: p.label_es })),
+  href: routes.service(s.id),
+}));
+
+const labelIds = new Set([
+  ...Object.keys(es.riskLabels),
+  ...site.feasibility.labels.map((l) => l.id),
+  ...site.offers.map((o) => o.label),
+  ...site.feasibility.records.map((r) => r.label),
+]);
+const labels: Record<string, ComparadorLabel> = Object.fromEntries(
+  [...labelIds].map((id) => [id, site.label(id)]),
+);
+const riskOptions: ComparadorLabel[] = site.acceptableLabels();
+const countryNames = Object.fromEntries(site.countries.map((c) => [c.cc, c.name_es]));
+const currencies = site.meta.display_currencies?.length ? site.meta.display_currencies : ["EUR"];
+const defaultCurrency = currencies.includes(site.residenceCurrency)
+  ? site.residenceCurrency
+  : (currencies[0] ?? "EUR");
+const offersJson = inlineJson(packOffers(offers));
+
+// Feasibility records of every public profile, so the island can relabel the offers.
+const profiles: ComparadorProfile[] = site.feasibility.profiles.map((p) => {
+  const home = site.country(p.residence_country);
+  return {
+    id: p.id,
+    name: p.name_es,
+    description: p.description_es,
+    residence: p.residence_country,
+    residenceName: home?.name_es ?? p.residence_country,
+    residenceCurrency: home?.currency ?? site.residenceCurrency,
+  };
+});
+const verdictsJson = inlineJson(packVerdicts(site.feasibility.records));
+const hasPending = site.feasibility.records.some(isPending);
+---
+
+<Base current="home">
+  <h1>{t.title}</h1>
+  <p class="lead">{t.lead(site.residenceName)}</p>
+
+  <noscript>
+    <p class="callout warning">
+      {es.compare.noscript}{" "}
+      <a href={routes.services()}>{es.site.nav.services}</a> ·
+      <a href={routes.countries()}>{es.site.nav.countries}</a>
+    </p>
+  </noscript>
+
+  <Comparador
+    client:load
+    services={services}
+    labels={labels}
+    riskOptions={riskOptions}
+    countryNames={countryNames}
+    rates={site.fx.rates}
+    fxAsOf={site.fx.as_of}
+    residence={site.meta.residence}
+    residenceName={site.residenceName}
+    residenceCurrency={site.residenceCurrency}
+    feePct={site.meta.fx_fee_pct}
+    currencies={currencies}
+    defaultCurrency={defaultCurrency}
+    dataId="comparador-ofertas"
+    profiles={profiles}
+    defaultProfile={site.feasibility.default_profile}
+    hasPending={hasPending}
+    verdictsId="comparador-veredictos"
+  />
+  <script type="application/json" id="comparador-ofertas" is:inline set:html={offersJson} />
+  <script type="application/json" id="comparador-veredictos" is:inline set:html={verdictsJson} />
+
+  <section aria-labelledby="como-leer">
+    <h2 id="como-leer">{t.howTitle}</h2>
+    <ul>
+      {t.howItems.map((item) => <li>{item}</li>)}
+    </ul>
+    <p><a href={routes.methodology()}>{es.site.footer.methodologyLink}</a></p>
+  </section>
+</Base>

@@ -1,0 +1,8 @@
+{
+  "_comment": "Offline replay set for `haggler daily --replay tests/workflow/fixtures/replay`. Keys are request URLs; see haggler/fetch/replay.py. Only these URLs are planned in a replay run.",
+  "https://help.netflix.com/en/node/24926/se": {"file": "pages/netflix_help_se.html", "status": 200, "content_type": "text/html"},
+  "https://help.netflix.com/en/node/24926/us": {"file": "pages/netflix_help_us_prose.html", "status": 200, "content_type": "text/html"},
+  "https://www.spotify.com/se/premium/": {"file": "pages/spotify_se.html", "status": 200, "final_url": "https://www.spotify.com/se/premium/", "content_type": "text/html"},
+  "https://www.apple.com/se/apple-one/": {"file": "pages/apple_one_se.html", "status": 200, "content_type": "text/html"},
+  "https://www.spotify.com/co/premium/": {"error": "blocked", "status": 403}
+}

@@ -1,0 +1,26 @@
+# Targets for "haggler probe --mode watch" (.github/workflows/probe.yml, mode=watch): the bundle
+# watcher (haggler.bundles.watch) run for real on the official pages, writing nothing. Each
+# bundle is watched as watch.mode auto in memory only, so a manual bundle is tested before it is
+# switched: a bundle goes to auto in data/curated/bundles.yaml only when this run leaves it
+# verified, and its anchors are copied from this output (literal text, URL and fact).
+#
+# Format: bundle ids of data/curated/bundles.yaml, one per line ("#" starts a comment). A file
+# without ids means every bundle that has watch.pages. A provider whose terms forbid automated
+# access is reported and never fetched.
+#
+# Override for a single manual run: Actions > probe > Run workflow > mode "watch" > "targets",
+# separated by ";" (e.g. "meli_plus_co_total; apple_one_individual_se").
+#
+# Every page is one real request to the vendor (robots.txt on every hop, 1 request per 3 s per
+# host, one fetch per URL per run). Walls, robots.txt and login pages are reported, never worked
+# around.
+
+# Wave 1 (plan H10)
+meli_plus_co_total
+meli_plus_co_esencial
+apple_one_individual_se
+apple_one_family_se
+telia_se_obegransad_streaming
+apple_one_individual_co
+apple_one_family_co
+google_ai_pro_co

@@ -1,0 +1,284 @@
+# Daily publication: copy the job's latest/ snapshot from GCS into data/ (commit if it changed),
+# generate the site data and deploy the static site to GitHub Pages.
+# Scheduled workflows only run from the default branch. On other branches (manual dispatch) the
+# site is built from the data/ already committed: Workload Identity Federation only trusts the
+# default branch, so there is no sync, and nothing is pushed or deployed.
+# A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
+# leaves a warning and the site is rebuilt from the committed data/. A failed push of data/
+# (e.g. branch protection) leaves a warning and the site is still built from the synced data.
+# After a sync, the run's summary also counts the bundles' pending proposals and findings
+# (haggler research review --bundles --summary); that step never fails the job.
+name: publish
+
+on:
+  schedule:
+    - cron: "15 5 * * *" # UTC; the Cloud Run Job runs at 04:17 Europe/Stockholm
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: sync data from GCS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # commit data/
+      id-token: write # Workload Identity Federation
+    outputs:
+      synced: ${{ steps.sync.outcome == 'success' }}
+    env:
+      # Scheduled runs always use the default branch, and their github.event has no "repository".
+      IS_DEFAULT_BRANCH: >-
+        ${{ github.event_name == 'schedule' ||
+        github.ref_name == github.event.repository.default_branch }}
+    steps:
+      - name: Check repository variables
+        id: cfg
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_GITHUB_SA: ${{ vars.GCP_GITHUB_SA }}
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+        run: |
+          if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
+            echo "::notice title=sync omitido::${GITHUB_REF_NAME} no es la rama por defecto y Workload Identity Federation solo la acepta a ella. Se construye el sitio con los datos ya versionados en data/."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          missing=""
+          for name in GCP_PROJECT_ID GCP_WIF_PROVIDER GCP_GITHUB_SA GCS_BUCKET; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=sync omitido::Faltan variables de repositorio:${missing}. Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.cfg.outputs.ok == 'true'
+
+      - name: Authenticate to Google Cloud (WIF)
+        if: steps.cfg.outputs.ok == 'true'
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_GITHUB_SA }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - uses: astral-sh/setup-uv@v7
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        if: steps.cfg.outputs.ok == 'true'
+        run: uv sync --frozen --no-dev
+
+      # A failed sync must not block the site: the step stays "failure" (synced=false, nothing is
+      # committed or uploaded) but the job succeeds, and build uses the checked-out data/.
+      - name: haggler sync
+        id: sync
+        if: steps.cfg.outputs.ok == 'true'
+        continue-on-error: true
+        env:
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+        run: |
+          status=0
+          uv run --frozen --no-dev haggler sync --from "gs://${GCS_BUCKET}" --data-dir data \
+            2> "$RUNNER_TEMP/sync.err" || status=$?
+          cat "$RUNNER_TEMP/sync.err" >&2
+          if [ "$status" -ne 0 ]; then
+            msg="$(grep -v '^[[:space:]]*$' "$RUNNER_TEMP/sync.err" | tail -n 1 || true)"
+            msg="${msg//'%'/'%25'}"
+            echo "::warning title=sync falló::${msg} Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md §11."
+            exit "$status"
+          fi
+
+      # Uploaded before the push, so build publishes the synced data whatever the push does.
+      - name: Upload synced data
+        if: steps.sync.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: data
+          path: data
+          retention-days: 1
+          if-no-files-found: error
+
+      # Versioning data/ must not block the site either (e.g. a protected main without a bypass
+      # for this bot, docs/SETUP.md §12): the step fails visibly but the job still succeeds and
+      # build/deploy use the artifact above. data/ in the repository then lags until it is fixed.
+      - name: Commit and push data/
+        id: push
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: |
+          git add -A data/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en data/." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git diff --cached --stat | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
+            echo "::notice title=publish::Rama ${GITHUB_REF_NAME} no es la rama por defecto: no se hace commit."
+            exit 0
+          fi
+          as_of="$(python3 -c 'import json; print(json.load(open("data/latest/run.json")).get("as_of") or "")' 2>/dev/null || true)"
+          as_of="${as_of:-$(date -u +%Y-%m-%d)}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "data: precios ${as_of}"
+          # Someone may have pushed meanwhile; data/ is only written by this bot, so a rebase is safe.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            echo "push rechazado (intento ${attempt}); rebase y reintento"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || break
+          done
+          echo "::warning title=push de data/ falló::No se pudo hacer push de data/ a ${GITHUB_REF_NAME} (¿rama protegida sin bypass para github-actions[bot]?). El sitio se publica igualmente con los datos sincronizados; data/ del repositorio queda desactualizado. Ver docs/SETUP.md §11."
+          echo "⚠ No se pudo hacer push de data/; el sitio se publica con los datos sincronizados." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      # The bundles' pending proposals and findings, counted on the synced data/ for the run's
+      # summary (docs/SETUP.md §14). Read-only and informative: whatever the review command does,
+      # the step ends with 0 (a failure is a warning) and continue-on-error covers the rest. Its
+      # own timeout is a step failure that continue-on-error absorbs; a hang left to the job's
+      # timeout would cancel the job and skip build and deploy.
+      - name: Bundle review summary
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          status=0
+          line="$(uv run --frozen --no-dev haggler research review --bundles --summary \
+            --data-dir data 2> "$RUNNER_TEMP/review.err")" || status=$?
+          cat "$RUNNER_TEMP/review.err" >&2
+          if [ "$status" -eq 0 ] && [ -n "$line" ]; then
+            {
+              echo ""
+              echo "### Paquetes"
+              echo ""
+              echo "${line}"
+              echo ""
+              echo "Detalle y snippets: \`haggler research review --bundles\` (docs/SETUP.md §14)."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=resumen de paquetes::haggler research review --bundles --summary no dio un resumen (código ${status}). El sitio se publica igual. Ver docs/SETUP.md §14."
+          fi
+
+  build:
+    name: build site
+    needs: sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read # actions/configure-pages reads the Pages site (base path, custom domain)
+    outputs:
+      has_data: ${{ steps.data.outputs.has_data }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The artifact holds the whole data/ tree, so files removed by the sync stay removed.
+      - name: Drop checked-out data/
+        if: needs.sync.outputs.synced == 'true'
+        run: rm -rf data
+
+      - name: Download synced data
+        if: needs.sync.outputs.synced == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: data
+          path: data
+
+      - name: Check data
+        id: data
+        run: |
+          if [ -s data/latest/prices.json ]; then
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=publish::Aún no hay data/latest/prices.json; no se construye ni publica el sitio."
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: astral-sh/setup-uv@v7
+        if: steps.data.outputs.has_data == 'true'
+        with:
+          enable-cache: true
+
+      - name: Site data
+        if: steps.data.outputs.has_data == 'true'
+        run: |
+          uv sync --frozen --no-dev
+          uv run --frozen --no-dev haggler site-data --data-dir data --out web/src/data --residence SE
+
+      - uses: actions/setup-node@v7
+        if: steps.data.outputs.has_data == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Base path/origin of the Pages site ("/haggler-agent", or "" with a custom domain). If Pages
+      # is not enabled yet this fails softly; the deploy step then reports the real problem.
+      - name: Pages configuration
+        id: pages
+        if: steps.data.outputs.has_data == 'true'
+        continue-on-error: true
+        uses: actions/configure-pages@v6
+
+      - name: Build site
+        if: steps.data.outputs.has_data == 'true'
+        working-directory: web
+        env:
+          PAGES_OK: ${{ steps.pages.outcome == 'success' }}
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          PAGES_ORIGIN: ${{ steps.pages.outputs.origin }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          if [ "$PAGES_OK" = "true" ]; then
+            export BASE_PATH="$PAGES_BASE_PATH"
+            export SITE_URL="${PAGES_ORIGIN:-https://${OWNER}.github.io}"
+          else
+            export BASE_PATH="/${REPO_NAME}"
+            export SITE_URL="https://${OWNER}.github.io"
+            echo "::warning title=Pages::actions/configure-pages falló; se usa la ruta base por defecto ${BASE_PATH} (un dominio propio no se detecta). ¿Pages habilitado con Source: GitHub Actions?"
+          fi
+          echo "BASE_PATH='${BASE_PATH}' SITE_URL='${SITE_URL}'"
+          npm ci
+          npm run build
+
+      - name: Upload Pages artifact
+        if: steps.data.outputs.has_data == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    if: >-
+      needs.build.outputs.has_data == 'true' &&
+      (github.event_name == 'schedule' ||
+      github.ref_name == github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

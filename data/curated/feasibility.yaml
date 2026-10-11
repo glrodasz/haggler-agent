@@ -1,0 +1,251 @@
+# Feasibility of buying a foreign country's offer while living in the residence country.
+# Three SEPARATE axes, never merged in data: legality / tos / practical. The display label is
+# computed by haggler.feasibility (worst axis wins). Not legal advice.
+# Seeds come from desk research on 2026-10-08 (web search summaries; official pages were not
+# reachable from the research environment) -> status: unverified until re-checked.
+
+profiles:
+  se_resident_co_citizen: >-
+    Vive en Suecia (residencia estable), ciudadano colombiano con cédula y tarjeta de crédito
+    emitida en Colombia.
+
+records:
+  - id: netflix_co_from_se
+    service_id: netflix
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: presence, value: CO, requires_presence: true}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: presence_once
+    reversibility: {cooldown_days: null, permanent: false, collateral: []}
+    enforcement: {level: none_known}
+    tos_clause:
+      url: https://help.netflix.com/legal/termsofuse
+      quote: "...primarily within the country in which you have established your account..."
+    confidence: medium
+    last_verified: 2026-10-08
+    notes_es: >-
+      El país se fija en el registro (ubicación al suscribirse). Usarla principalmente fuera de CO
+      contradice los términos; no se conocen cancelaciones por vivir en el exterior. El catálogo
+      sigue la ubicación actual.
+
+  - id: youtube_premium_co_from_se
+    service_id: youtube_premium
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: payment_country, value: CO}
+      - {type: presence, value: CO, requires_presence: true, requires_false_declaration: true}
+    legality: requires_misrepresentation
+    tos: breach_enforced
+    practical: presence_once
+    enforcement:
+      level: systematic
+      events:
+        - date: 2024-06-01
+          url: https://www.techradar.com/computing/websites-apps/youtube-is-reportedly-canceling-premium-memberships-for-people-using-vpns-to-get-discounts
+          summary: Cancelaciones de membresías Premium compradas en países más baratos vía VPN.
+    tos_clause:
+      url: https://www.youtube.com/t/terms_paycontent
+      quote: "...using the paid service predominantly outside your sign-up country..."
+    confidence: medium
+    last_verified: 2026-10-08
+    notes_es: El país de suscripción debe coincidir con dónde vives; Google lo verifica.
+
+  - id: youtube_premium_us_from_se
+    service_id: youtube_premium
+    target_country: US
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: payment_country, value: US}
+      - {type: presence, value: US, requires_presence: true, requires_false_declaration: true}
+    legality: requires_misrepresentation
+    tos: breach_enforced
+    practical: impossible
+    enforcement: {level: systematic}
+    confidence: medium
+    last_verified: 2026-10-08
+    notes_es: Requiere instrumento de pago estadounidense; no disponible para este perfil.
+
+  - id: spotify_co_from_se
+    service_id: spotify
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_enforced
+    practical: remote
+    enforcement: {level: reported}
+    tos_clause:
+      url: https://www.spotify.com/int/legal/end-user-agreement/
+      quote: "...your account must be in your country of residence..."
+    confidence: medium
+    last_verified: 2026-10-08
+    notes_es: >-
+      La tarjeta debe ser del país de la cuenta (la del usuario es CO). Los términos 2025 exigen que
+      la cuenta esté en el país de residencia.
+
+  - id: disney_plus_co_from_se
+    service_id: disney_plus
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    enforcement: {level: reported}
+    tos_clause:
+      url: https://www.disneyplus.com/legal/subscriber-agreement
+      quote: "Only residents of the countries where we offer the Disney+ Service ... are eligible"
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: Controles de hogar en LatAm desde 2024; error 73 con VPN.
+
+  - id: hbo_max_co_from_se
+    service_id: hbo_max
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    enforcement: {level: none_known}
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: El país de origen es donde te registraste; fuera del EEE ves el catálogo local.
+
+  - id: icloud_plus_co_from_se
+    service_id: icloud_plus
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: CO}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {collateral: [storefront_wide, balance_forfeit, family_group]}
+    tos_clause:
+      url: https://www.apple.com/legal/internet-services/icloud/
+      quote: "Home Country = country or territory of residence"
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: >-
+      Cambiar el país de la cuenta Apple afecta a todo el storefront (apps, Music, suscripciones,
+      Family Sharing). Requiere saldo cero y método de pago del país.
+
+  - id: icloud_plus_lt_from_se
+    service_id: icloud_plus
+    target_country: LT
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: LT}
+      - {type: billing_address, value: LT, requires_false_declaration: true}
+    legality: contestable_eu_right
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {collateral: [storefront_wide, balance_forfeit, family_group]}
+    legal_basis:
+      - {instrument: "Reglamento (UE) 2018/302", article: "Art. 4(1)(b), 4(2), 5", strength: arguable,
+         tested: false}
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: >-
+      Derecho UE no probado: servicio tipo nube; el precio legal sería el neto lituano + IVA sueco.
+      Apple exige dirección de facturación del país, por eso hoy implica declarar datos falsos.
+
+  - id: google_one_lt_from_se
+    service_id: google_one
+    target_country: LT
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: presence, value: LT, requires_presence: true}
+      - {type: payment_country, value: LT}
+    legality: contestable_eu_right
+    tos: breach_unenforced
+    practical: presence_once
+    reversibility: {cooldown_days: 365, permanent: true, collateral: [storefront_wide]}
+    legal_basis:
+      - {instrument: "Reglamento (UE) 2018/302", article: "Art. 4(1)(b), 4(2)", strength: arguable,
+         tested: false}
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: >-
+      El perfil de pagos de Google no cambia de país (hay que crear otro) y Play solo permite un
+      cambio cada 12 meses estando físicamente en el país.
+
+  - id: apple_one_co_from_se
+    service_id: apple_one
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: CO}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {collateral: [storefront_wide, balance_forfeit, family_group]}
+    confidence: low
+    last_verified: 2026-10-08
+
+  - id: apple_music_co_from_se
+    service_id: apple_music
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: CO}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {collateral: [storefront_wide, balance_forfeit, family_group]}
+    confidence: low
+    last_verified: 2026-10-08
+
+  - id: apple_tv_co_from_se
+    service_id: apple_tv
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: CO}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {collateral: [storefront_wide, balance_forfeit, family_group]}
+    confidence: low
+    last_verified: 2026-10-08
+
+  - id: microsoft_365_co_from_se
+    service_id: microsoft_365
+    target_country: CO
+    residence_country: SE
+    profile: se_resident_co_citizen
+    steps:
+      - {type: store_region, value: CO}
+      - {type: payment_country, value: CO}
+    legality: lawful
+    tos: breach_unenforced
+    practical: remote
+    reversibility: {cooldown_days: 90, collateral: [balance_forfeit]}
+    confidence: low
+    last_verified: 2026-10-08
+    notes_es: La región de la cuenta Microsoft solo cambia cada 3 meses y el saldo no se transfiere.

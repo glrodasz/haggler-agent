@@ -1,0 +1,99 @@
+# Payment instruments a Sweden resident can hold. card_bin_country_observed is ONLY filled from
+# real issued cards (never inferred from the issuer's licence country).
+
+instruments:
+  - id: user_co_card
+    name: Tarjeta de crédito colombiana del usuario
+    issuer_entity: Banco colombiano (del usuario)
+    issuer_country: CO
+    iban_country: null
+    eligible_residence: [CO]
+    onboarding_remote: false
+    currencies: [COP]
+    card_bin_country_observed: {value: CO, sample_size: 1, last_seen: 2026-10-08}
+    status: verified
+    notes_es: Ya en uso por el usuario para la mayoría de suscripciones.
+
+  - id: revolut_eea
+    name: Revolut
+    issuer_entity: Revolut Bank UAB
+    issuer_country: LT
+    iban_country: LT
+    eligible_residence: [EEA]
+    onboarding_remote: true
+    official_domains: [revolut.com]
+    currencies: [EUR, SEK, USD]
+    evidence:
+      - {url: "https://community.revolut.com/t/living-in-sweden-with-revolut/162181", kind: forum}
+    notes_es: >-
+      Licencia bancaria lituana; IBAN LT para residentes en Suecia (Revolut está desplegando IBAN
+      locales país por país). El país BIN de la tarjeta debe observarse.
+
+  - id: wise_eea
+    name: Wise
+    issuer_entity: Wise Europe SA
+    issuer_country: BE
+    iban_country: BE
+    eligible_residence: [EEA]
+    onboarding_remote: true
+    official_domains: [wise.com]
+    research_urls:
+      - https://wise.com/help/articles/2968915
+    currencies: [EUR, SEK, USD, GBP]
+    evidence:
+      - {url: "https://wise.com/help/articles/2968915", kind: official}
+
+  - id: n26
+    name: N26
+    issuer_entity: N26 Bank SE
+    issuer_country: DE
+    iban_country: DE
+    eligible_residence: [SE, EEA]
+    onboarding_remote: true
+    official_domains: [n26.com]
+    research_urls:
+      - https://support.n26.com/en-eu/account-and-personal-details/opening-an-account/can-i-open-an-account-if-i-live-outside-the-eurozone
+    currencies: [EUR]
+    evidence:
+      - {url: "https://support.n26.com/en-eu/account-and-personal-details/opening-an-account/can-i-open-an-account-if-i-live-outside-the-eurozone", kind: official}
+
+  - id: bunq
+    name: bunq
+    issuer_entity: bunq B.V.
+    issuer_country: NL
+    iban_country: NL
+    eligible_residence: [EEA]
+    onboarding_remote: true
+    official_domains: [bunq.com]
+    currencies: [EUR]
+
+  - id: paysera
+    name: Paysera
+    issuer_entity: Paysera LT, UAB
+    issuer_country: LT
+    iban_country: LT
+    eligible_residence: [EEA]
+    onboarding_remote: true
+    official_domains: [paysera.com, paysera.lt]
+    research_urls:
+      - https://www.paysera.lt/v2/en-LT/faq/where-paysera-works
+    currencies: [EUR]
+    evidence:
+      - {url: "https://www.paysera.lt/v2/en-LT/faq/where-paysera-works", kind: official}
+    notes_es: Una cuenta por persona; puede pedir prueba de residencia.
+
+  - id: bancolombia_exterior
+    name: Bancolombia Cuenta Colombianos en el Exterior
+    issuer_entity: Bancolombia S.A.
+    issuer_country: CO
+    iban_country: null
+    eligible_residence: [ANY]
+    onboarding_remote: true
+    official_domains: [bancolombia.com]
+    research_urls:
+      - https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior
+    required_id_countries: [CO]
+    currencies: [COP]
+    evidence:
+      - {url: "https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior", kind: official}
+    notes_es: Para ciudadanos colombianos con cédula; tarjeta débito virtual en la app.

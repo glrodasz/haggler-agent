@@ -1,0 +1,9 @@
+{
+  "base": "EUR",
+  "as_of": "2026-10-07",
+  "rates": {
+    "SEK": {"currency": "SEK", "per_eur": "11.20", "source": "ecb", "provider": "ECB", "as_of": "2026-10-07", "stale": false},
+    "USD": {"currency": "USD", "per_eur": "1.08", "source": "ecb", "provider": "ECB", "as_of": "2026-10-07", "stale": false},
+    "COP": {"currency": "COP", "per_eur": "4700", "source": "frankfurter", "provider": "BANREP", "as_of": "2026-10-07", "stale": false}
+  }
+}

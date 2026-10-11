@@ -1,0 +1,6 @@
+# Review decisions on research findings (append-only; `haggler research accept|reject` adds
+# lines). A decision holds for one claim id AND its evidence hash: when the agent later finds a
+# different quote or URL for the same fact, the hash changes and the finding is pending again.
+# The last entry for an (id, hash) wins.
+
+decisions: []

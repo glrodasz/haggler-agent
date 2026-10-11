@@ -1,0 +1,157 @@
+[
+  {
+    "category": "video",
+    "default_plan": "standard",
+    "eu_geo_class": "audiovisual_excluded",
+    "homepage": "https://www.netflix.com",
+    "id": "netflix",
+    "name": "Netflix",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": true,
+        "id": "standard_with_ads",
+        "label_es": "Estándar con anuncios",
+        "rank": 2
+      },
+      {
+        "ads": false,
+        "id": "standard",
+        "label_es": "Estándar",
+        "rank": 3
+      },
+      {
+        "ads": false,
+        "id": "premium",
+        "label_es": "Premium",
+        "rank": 4
+      }
+    ]
+  },
+  {
+    "category": "music",
+    "default_plan": "individual",
+    "eu_geo_class": "copyright_art3_5_only",
+    "homepage": "https://www.spotify.com",
+    "id": "spotify",
+    "name": "Spotify Premium",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": false,
+        "id": "individual",
+        "label_es": "Individual",
+        "rank": 1
+      },
+      {
+        "ads": false,
+        "id": "family",
+        "label_es": "Familiar",
+        "rank": 3
+      }
+    ]
+  },
+  {
+    "category": "cloud",
+    "default_plan": "200gb",
+    "eu_geo_class": "eservice_art4_1b",
+    "homepage": "https://www.apple.com/icloud/",
+    "id": "icloud_plus",
+    "name": "iCloud+",
+    "notes_es": "Precios de la tabla oficial de Apple.",
+    "plans": [
+      {
+        "ads": false,
+        "id": "50gb",
+        "label_es": "50 GB",
+        "rank": 0
+      },
+      {
+        "ads": false,
+        "id": "200gb",
+        "label_es": "200 GB",
+        "rank": 1
+      }
+    ]
+  },
+  {
+    "category": "bundle",
+    "default_plan": "individual",
+    "eu_geo_class": "software_unclear",
+    "homepage": "https://www.apple.com/apple-one/",
+    "id": "apple_one",
+    "name": "Apple One",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": false,
+        "id": "individual",
+        "label_es": "Individual",
+        "rank": 1
+      },
+      {
+        "ads": false,
+        "id": "family",
+        "label_es": "Familiar",
+        "rank": 2
+      }
+    ]
+  },
+  {
+    "category": "music",
+    "default_plan": "individual",
+    "eu_geo_class": "copyright_art3_5_only",
+    "homepage": "https://www.apple.com/apple-music/",
+    "id": "apple_music",
+    "name": "Apple Music",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": false,
+        "id": "individual",
+        "label_es": "Individual",
+        "rank": 1
+      },
+      {
+        "ads": false,
+        "id": "family",
+        "label_es": "Familiar",
+        "rank": 2
+      }
+    ]
+  },
+  {
+    "category": "video",
+    "default_plan": "standard",
+    "eu_geo_class": "audiovisual_excluded",
+    "homepage": "https://www.apple.com/apple-tv/",
+    "id": "apple_tv",
+    "name": "Apple TV",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": false,
+        "id": "standard",
+        "label_es": "Suscripción",
+        "rank": 1
+      }
+    ]
+  },
+  {
+    "category": "gaming",
+    "default_plan": "standard",
+    "eu_geo_class": "copyright_art3_5_only",
+    "homepage": "https://www.apple.com/apple-arcade/",
+    "id": "apple_arcade",
+    "name": "Apple Arcade",
+    "notes_es": "",
+    "plans": [
+      {
+        "ads": false,
+        "id": "standard",
+        "label_es": "Suscripción",
+        "rank": 1
+      }
+    ]
+  }
+]

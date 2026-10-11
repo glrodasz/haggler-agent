@@ -1,0 +1,124 @@
+# Fetches the real vendor pages from a GitHub runner (the dev container cannot reach them) and
+# reports, per target, what the adapters extracted (in mode=bundles, how readable each bundle
+# page is; in mode=watch, what the bundle watcher finds, writing nothing). Read the job summary
+# or the probe-summary artifact to tune parsers. Failing targets never fail the job: only a crash
+# of the CLI does.
+# Never authenticates to GCP. The fetched pages (probe-out/raw/) stay on the runner: only the
+# summary, which quotes short snippets at most, is uploaded (raw HTML is never republished).
+name: probe
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "src/haggler/sources/**"
+      - "src/haggler/fetch/**"
+      - "src/haggler/fx/**"
+      - "catalog/**"
+      - "probe/targets.txt"
+      - ".github/workflows/probe.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: >-
+          adapters = solo parsers; fx = tipos de cambio; full = workflow completo (store local);
+          research = una corrida real de investigación de factibilidad (Google Search);
+          bundles = legibilidad de las páginas de paquetes promocionales (sin LLM);
+          watch = el vigilante de paquetes sobre las páginas reales, sin escribir nada (sin LLM)
+        type: choice
+        options: [adapters, fx, full, research, bundles, watch]
+        default: adapters
+      targets:
+        description: >-
+          Opcional: reemplaza probe/targets.txt (probe/research_targets.txt en research,
+          probe/bundle_targets.txt en bundles, probe/watch_targets.txt en watch). Separados por
+          ';', p. ej. "netflix SE CO; spotify *", "netflix; spotify CO; instrument revolut_eea",
+          "meli_plus_co_total CO https://www.mercadolibre.com.co/suscripciones/melimas/planes" o
+          "meli_plus_co_total; apple_one_individual_se"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MODE: ${{ inputs.mode || 'adapters' }}
+      TARGETS_OVERRIDE: ${{ inputs.targets || '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --no-dev
+
+      - name: Run probe (${{ env.MODE }})
+        env:
+          # Only exported to the CLI in mode=full|research (see below); never echoed.
+          GEMINI_SECRET: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          targets=probe/targets.txt
+          if [ "$MODE" = "research" ]; then targets=probe/research_targets.txt; fi
+          if [ "$MODE" = "bundles" ]; then targets=probe/bundle_targets.txt; fi
+          if [ "$MODE" = "watch" ]; then targets=probe/watch_targets.txt; fi
+          if [ -n "$(printf '%s' "$TARGETS_OVERRIDE" | tr -d '[:space:];')" ]; then
+            targets="$RUNNER_TEMP/targets.txt"
+            printf '%s\n' "$TARGETS_OVERRIDE" | tr ';' '\n' | sed 's/^[[:space:]]*//' > "$targets"
+            echo "Targets (override):"
+            cat "$targets"
+          fi
+
+          if { [ "$MODE" = "full" ] || [ "$MODE" = "research" ]; } && [ -n "$GEMINI_SECRET" ]; then
+            export GOOGLE_API_KEY="$GEMINI_SECRET"
+            echo "LLM: on (AI Studio key from secrets.GEMINI_API_KEY)"
+          else
+            export HAGGLER_LLM=off
+            echo "LLM: off"
+          fi
+          unset GEMINI_SECRET
+
+          uv run --frozen --no-dev haggler probe --targets "$targets" --out probe-out --mode "$MODE"
+
+      # Pushes also check the FX providers (blocked from the dev container, like vendor sites).
+      - name: Probe FX providers
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          uv run --frozen --no-dev haggler probe --targets probe/targets.txt --out probe-fx --mode fx
+          if [ -f probe-fx/summary.md ]; then
+            head -c 200000 probe-fx/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f probe-out/summary.md ]; then
+            cat probe-out/summary.md
+            # Job summaries are capped at 1 MiB per step.
+            head -c 1000000 probe-out/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=probe::probe-out/summary.md no fue generado (¿falló el CLI?)"
+          fi
+
+      # Not the whole probe-out/: raw/ holds the vendors' full pages (and the store in mode=full).
+      - name: Upload probe summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: probe-summary-${{ env.MODE }}
+          path: |
+            probe-out/summary.md
+            probe-out/summary.json
+          retention-days: 3
+          if-no-files-found: warn

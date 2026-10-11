@@ -1,0 +1,11 @@
+---
+import { es } from "../i18n/es";
+import Base from "../layouts/Base.astro";
+import { routes } from "../logic/paths";
+---
+
+<Base title={es.notFound.title} indexable={false}>
+  <h1>{es.notFound.title}</h1>
+  <p>{es.notFound.text}</p>
+  <p><a href={routes.home()}>{es.notFound.back}</a></p>
+</Base>

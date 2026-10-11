@@ -1,0 +1,84 @@
+---
+import { es, lookup } from "../i18n/es";
+import { getSite } from "../logic/data";
+import type { BundleVerdict } from "../logic/types";
+import EuBadge from "./EuBadge.astro";
+import RiskBadge from "./RiskBadge.astro";
+
+interface Props {
+  verdict: BundleVerdict;
+  /** Heading above the verdict (the profile name, or "with pending findings"). */
+  title?: string;
+}
+
+const { verdict: v, title } = Astro.props;
+const site = getSite();
+const t = es.bundle;
+const f = es.feasibility;
+// "unknown" (facts missing) is one of each axis' values in es.axes: "Sin datos".
+const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}, value);
+const pending = v.provenance === "agent_pending";
+---
+
+<div class={pending ? "verdict is-pending" : "verdict"}>
+  {title && <p class="small verdict-title">{title}</p>}
+  <p class="badges">
+    <RiskBadge label={v.label} rank={v.rank} />
+    {v.eu_badge && <EuBadge />}
+    <span class={`badge provenance-${v.provenance}`} title={es.provenanceTitles[v.provenance]}>
+      {lookup(es.provenance, v.provenance)}
+    </span>
+  </p>
+  <dl>
+    <dt>{es.axes.legality?.name}</dt>
+    <dd>{axis("legality", v.legality)}</dd>
+    <dt>{es.axes.tos?.name}</dt>
+    <dd>{axis("tos", v.tos)}</dd>
+    <dt>{es.axes.practical?.name}</dt>
+    <dd>{axis("practical", v.practical)}</dd>
+    <dt>{t.verdictConfidence}</dt>
+    <dd>{lookup(es.confidence, v.confidence)}</dd>
+    <dt>{t.verdictStatus}</dt>
+    <dd>{lookup(es.curatedStatus, v.status)}</dd>
+  </dl>
+  {v.notes_es && <p class="small">{v.notes_es}</p>}
+  {
+    v.reasons_es.length > 0 && (
+      <>
+        <p class="small evidence-heading">{f.reasonsTitle}</p>
+        <ul class="small">
+          {v.reasons_es.map((r) => (
+            <li>{r}</li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+  {
+    v.assumptions_es.length > 0 && (
+      <>
+        <p class="small evidence-heading">{f.assumptionsTitle}</p>
+        <ul class="small">
+          {v.assumptions_es.map((a) => (
+            <li>{a}</li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+  {
+    v.components.length > 0 && (
+      <>
+        <p class="small evidence-heading">{t.perComponent}</p>
+        <ul class="small verdict-components">
+          {v.components.map((c) => (
+            <li>
+              {site.serviceName(c.service_id)}: <RiskBadge label={c.label} rank={c.rank} />
+              {c.provenance && <span class="muted"> · {lookup(es.provenance, c.provenance)}</span>}
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</div>

@@ -1,0 +1,12 @@
+[
+{"cc": "SE", "currency": "SEK", "eu_eea": true, "name_es": "Suecia", "region": "nordics"},
+{"cc": "CO", "currency": "COP", "eu_eea": false, "name_es": "Colombia", "region": "latam"},
+{"cc": "LT", "currency": "EUR", "eu_eea": true, "name_es": "Lituania", "region": "eu"},
+{"cc": "US", "currency": "USD", "eu_eea": false, "name_es": "Estados Unidos", "region": "north_america"},
+{"cc": "TR", "currency": "TRY", "eu_eea": false, "name_es": "Turquía", "region": "mena"},
+{"cc": "IN", "currency": "INR", "eu_eea": false, "name_es": "India", "region": "asia"},
+{"cc": "BR", "currency": "BRL", "eu_eea": false, "name_es": "Brasil", "region": "latam"},
+{"cc": "MX", "currency": "MXN", "eu_eea": false, "name_es": "México", "region": "latam"},
+{"cc": "DE", "currency": "EUR", "eu_eea": true, "name_es": "Alemania", "region": "eu"},
+{"cc": "ES", "currency": "EUR", "eu_eea": true, "name_es": "España", "region": "eu"}
+]

@@ -1,0 +1,21 @@
+---
+import { getSite } from "../logic/data";
+import { flagEmoji } from "../logic/format";
+import { routes } from "../logic/paths";
+
+interface Props {
+  cc: string;
+  link?: boolean;
+}
+
+const { cc, link = true } = Astro.props;
+const site = getSite();
+const name = site.countryName(cc);
+const known = site.country(cc) !== undefined;
+---
+
+<span class="nowrap"
+  ><span class="flag" aria-hidden="true">{flagEmoji(cc)}</span>{" "}{
+    link && known ? <a href={routes.country(cc)}>{name}</a> : name
+  }</span
+>
