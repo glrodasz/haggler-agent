@@ -15,7 +15,10 @@ Modes:
             and print the RunReports;
   research  one real feasibility research run (haggler.probe_research; its own target format);
   bundles   readability of the promotional bundles' official pages (haggler.probe_bundles; its
-            own target format, "<label> <CC> <url>"), fetched with HttpFetcher, LLM off.
+            own target format, "<label> <CC> <url>"), fetched with HttpFetcher, LLM off;
+  watch     the bundle watcher on the real pages, each target watched as watch.mode auto in
+            memory only, writing nothing (haggler.probe_watch; targets: bundle ids, none = every
+            bundle with watch.pages), LLM off.
 
 Targets file (adapters, fx, full): one target per non-comment line, "service_id CC [CC ...]"
 ("*" = all countries).
@@ -24,7 +27,8 @@ Output: everything that quotes vendor pages (raw pages, the full-mode store) goe
 <out>/raw/ and is for local debugging only. <out>/summary.{json,md} are the only files meant to
 be published (CI artifact, job summary); in adapters mode they quote at most PAGE_TEXT_BUDGET
 characters of page text per task (title, unmapped items, price lines), in bundles mode at most
-haggler.probe_bundles.QUOTE_BUDGET per target.
+haggler.probe_bundles.QUOTE_BUDGET per target, in watch mode at most
+haggler.probe_watch.QUOTE_BUDGET per bundle (anchors, hint lines, anchor texts).
 """
 
 from __future__ import annotations
@@ -63,8 +67,8 @@ from haggler.money import find_prices
 from haggler.sources.base import Adapter, ParseResult
 from haggler.sources.registry import get_adapter
 
-Mode = Literal["adapters", "fx", "full", "research", "bundles"]
-MODES: tuple[str, ...] = ("adapters", "fx", "full", "research", "bundles")
+Mode = Literal["adapters", "fx", "full", "research", "bundles", "watch"]
+MODES: tuple[str, ...] = ("adapters", "fx", "full", "research", "bundles", "watch")
 ALL_COUNTRIES = "*"
 TASK_TIMEOUT_S = 90.0
 TRANSIENT_ATTEMPTS = 2
@@ -815,12 +819,14 @@ def run_probe(
     today: date | None = None,
     now: datetime | None = None,
     out: TextIO | None = None,
+    data_dir: Path | None = None,
 ) -> int:
     """Run one probe mode; writes <out>/summary.{json,md} and prints the markdown.
 
-    Returns 0 unless something unexpected happened (an adapter or the bundle page analysis
-    crashed, the daily job raised); fetch failures, bot walls and empty pages are findings, not
-    errors.
+    Returns 0 unless something unexpected happened (an adapter, the bundle page analysis or the
+    watcher crashed, the daily job raised); fetch failures, bot walls and empty pages are
+    findings, not errors. `data_dir` (watch mode): the data/ directory whose curated/ and
+    latest/ it reads, never writes (default the repo's).
     """
     if mode not in MODES:
         raise ValueError(f"modo desconocido {mode!r} (opciones: {', '.join(MODES)})")
@@ -844,6 +850,22 @@ def run_probe(
         )
         _write_outputs(out_dir, summary, md, out)
         return 1 if any(r["unexpected"] for r in summary["targets"]) else 0
+    if mode == "watch":
+        from haggler import probe_watch
+
+        summary, md = probe_watch.run(
+            targets_file,
+            out_dir,
+            settings,
+            catalog=catalog,
+            fetcher=fetcher,
+            now=now,
+            today=today,
+            data_dir=data_dir,
+        )
+        _write_outputs(out_dir, summary, md, out)
+        unexpected = summary["error"] or any(r["unexpected"] for r in summary["bundles"])
+        return 1 if unexpected else 0
     targets = parse_targets(Path(targets_file).read_text(encoding="utf-8"), catalog)
 
     if mode == "fx":

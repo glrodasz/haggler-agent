@@ -21,7 +21,7 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
-| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación y `mode=bundles` mide la legibilidad de las páginas de los paquetes (no usa GCP) |
+| `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación, `mode=bundles` mide la legibilidad de las páginas de los paquetes y `mode=watch` corre el vigilante de paquetes sin escribir nada (no usa GCP) |
 | `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
 | `publish.yml` | todos los días 05:15 UTC, o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages; el resumen del run cuenta lo que hay por revisar en los paquetes (§14) |
 
@@ -264,10 +264,20 @@ dispara solo con push a `claude/**` que toque `src/haggler/sources/`, `fetch/`, 
   `full` (workflow completo con store local; LLM solo si existe el secreto `GEMINI_API_KEY`),
   `research` (ver §13; targets en `probe/research_targets.txt`) o `bundles` (legibilidad de las
   páginas oficiales de los paquetes promocionales, sin LLM; targets `<etiqueta> <CC> <url>` en
-  `probe/bundle_targets.txt`: solo una página `readable` puede vigilarse en modo `auto`).
+  `probe/bundle_targets.txt`: solo una página `readable` puede vigilarse en modo `auto`) o
+  `watch` (el vigilante de paquetes tal cual, sobre las páginas reales y sin LLM; targets: ids
+  de `bundles.yaml` en `probe/watch_targets.txt`, sin ids = todos los que tienen
+  `watch.pages`). En `watch` cada paquete se vigila como `auto` solo en memoria, así que uno en
+  `manual` se prueba antes de cambiarlo; nunca escribe `data/curated/` ni ningún store, y un
+  proveedor con `automated_access: forbidden` se reporta sin descargarlo. Por paquete imprime
+  las páginas, las anclas, las pistas con su snippet de `haggler research review`, el estado que
+  daría `bundles.status` y las anclas posibles (textos que ya pasan el chequeo sin red de
+  `validate-catalog` y el del vigilante), listas para pegar. Un paquete pasa a `auto` en el YAML
+  solo si esta salida lo deja `verified`.
 - `targets` reemplaza `probe/targets.txt` para ese run (`probe/research_targets.txt` en
-  `mode=research`, `probe/bundle_targets.txt` en `mode=bundles`), separado por `;`:
-  `netflix SE CO; spotify *`.
+  `mode=research`, `probe/bundle_targets.txt` en `mode=bundles`, `probe/watch_targets.txt` en
+  `mode=watch`), separado por `;`: `netflix SE CO; spotify *` o
+  `meli_plus_co_total; apple_one_individual_se`.
 
 Los targets que fallan no hacen fallar el job; solo un crash del CLI lo hace.
 

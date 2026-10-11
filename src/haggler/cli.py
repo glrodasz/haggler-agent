@@ -4,7 +4,7 @@
   haggler research run [...]     weekly feasibility research and bundle watcher
                                  (haggler.jobs.research.main; --watch-only: the watcher alone)
   haggler research review|accept|reject [...]   review research findings (haggler.research.cli)
-  haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles]
+  haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles|watch]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]
   haggler site-data [--data-dir data] [--out web/src/data] [--residence SE] [--profile P]
   haggler validate-catalog
@@ -75,7 +75,9 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--out", type=Path, default=Path("probe-out"))
     # Kept in step with haggler.probe.MODES (not imported: probe pulls in the HTML parser).
     probe.add_argument(
-        "--mode", choices=("adapters", "fx", "full", "research", "bundles"), default="adapters"
+        "--mode",
+        choices=("adapters", "fx", "full", "research", "bundles", "watch"),
+        default="adapters",
     )
 
     sync = sub.add_parser("sync", help="copia la última corrida del store a data/ (con changelog)")

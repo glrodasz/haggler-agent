@@ -79,7 +79,9 @@ def test_probe_dispatch_offers_every_probe_mode() -> None:
     inputs = load("probe.yml")[True]["workflow_dispatch"]["inputs"]  # YAML 1.1: on -> True
     assert inputs["mode"]["options"] == list(MODES)
     assert "bundles" in inputs["mode"]["description"]
+    assert "watch" in inputs["mode"]["description"]
     assert "probe/bundle_targets.txt" in inputs["targets"]["description"]
+    assert "probe/watch_targets.txt" in inputs["targets"]["description"]
 
 
 def _run_probe_step(tmp_path: Path, mode: str, override: str = "", secret: str = "") -> str:
@@ -121,6 +123,7 @@ def test_probe_step_picks_the_targets_file_of_each_mode(tmp_path: Path) -> None:
         ("adapters", "probe/targets.txt"),
         ("research", "probe/research_targets.txt"),
         ("bundles", "probe/bundle_targets.txt"),
+        ("watch", "probe/watch_targets.txt"),
     ):
         call = _run_probe_step(tmp_path, mode, secret="s3cret")
         assert f"args: run --frozen --no-dev haggler probe --targets {targets} --out probe-out " \
@@ -148,6 +151,17 @@ def test_probe_bundles_override_is_parsed_by_the_bundle_targets_parser(
         ("meli_plus_co_total", "CO", 1),
         ("apple_one_co", "CO", 2),
     ]
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_probe_watch_override_is_parsed_as_bundle_ids(tmp_path: Path, bundles) -> None:
+    from haggler.probe_watch import parse_watch_targets
+
+    call = _run_probe_step(tmp_path, "watch", override="meli_plus_co_total;  apple_one_family_se;")
+    assert f"--targets {tmp_path / 'targets.txt'} --out probe-out --mode watch\n" in call
+    assert "llm: off" in call and "key: set" not in call
+    targets = (tmp_path / "targets.txt").read_text()
+    assert parse_watch_targets(targets, bundles) == ["meli_plus_co_total", "apple_one_family_se"]
 
 
 def test_publish_builds_even_when_sync_fails() -> None:
