@@ -67,7 +67,10 @@ bundles:
     tier: total
     aliases: [Meli+ Total, Plan Total]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
-    price: {amount: "24900", currency: COP, period: month, tax_included: true}
+    # The planes page (our probes of 2026-10-09 and 2026-10-11): "Precio actual con 9 por ciento
+    # de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes."
+    price: {amount: "21900", currency: COP, period: month, tax_included: true,
+            intro_amount: "19900", intro_months: 2}
     components:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
       - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
@@ -99,8 +102,9 @@ bundles:
         notes_es: según uso propio; sin cita de los términos
     last_verified: 2026-10-08
     notes_es: >-
-      Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia
-      con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.
+      Precio regular 21.900 COP/mes; los 2 primeros meses, 19.900. El usuario lo usa desde Suecia
+      con tarjeta colombiana. HBO Max, Paramount+ y ViX aparecen como 30 % de descuento, no
+      incluidos.
 
   - bundle_id: meli_plus_co_esencial
     provider_id: mercado_libre
@@ -111,8 +115,10 @@ bundles:
     aliases: [Meli+ Esencial, Plan Esencial]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "9900", currency: COP, period: month, tax_included: true}
-    components:
-      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+    # No streaming: its card on the planes page lists "No incluido: Disney+ Estándar con
+    # anuncios." and "No incluido: 30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium."
+    # (bundles probe, 2026-10-09). The 30 % discount on HBO Max belongs to Meli+ Total.
+    components: []
     requirements: {local_id: cedula, local_payment: any_card}
     status: unverified
     verified_by: search_summary
@@ -206,8 +212,8 @@ bundles:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
     evidence:
-      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
-         note: "edición 18 de la lista de precios; da 404 desde 2026-10-09 (reemplazada)"}
+      - {url: "https://www.telia.se/asset/57adaa15-db41-49d9-b13f-83a6c9beb698/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
+         note: "edición 18 de la lista de precios, la más nueva del índice el 2026-10-11"}
     status: unverified
     verified_by: search_summary
     watch:
@@ -215,9 +221,9 @@ bundles:
       pages:
         - {url: "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney", kind: html}
         # The price list is versioned: the current edition is the newest link on the index page
-        # that matches link_pattern. url is the last edition we know (18, superseded: 404 since
-        # 2026-10-09); the pattern must match it.
-        - url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+        # that matches link_pattern. url is the edition we know (18, still the newest on the index
+        # on 2026-10-11; its old /assets/m/... URL redirects here); the pattern must match it.
+        - url: "https://www.telia.se/asset/57adaa15-db41-49d9-b13f-83a6c9beb698/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
           kind: pdf
           index_url: "https://www.telia.se/om/priser"
           link_pattern: 'TSP-4667_(?P<edition>\d+)_\d{4}_Prislista-Telia-Mobil_B2C\.pdf'
