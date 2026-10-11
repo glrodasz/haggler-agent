@@ -351,10 +351,12 @@ def _mentions(folded: str, names: Iterable[str]) -> list[tuple[int, int, str]]:
 # ---- clauses --------------------------------------------------------------------------------
 
 # Where a clause ends, for pairing a tier name or a discount with its amount: a line break, a
-# sentence end ("." before a space, the end or a capital: "kr/mån.Pris"), "!", "?", ";", "•",
-# "|", a comma before a space, and the conjunctions (es / pt / sv / en).
+# sentence end ("." before a space, the end or a capital: "kr/mån.Pris"; between a letter and a
+# digit: "ViX Premium.30% OFF"), "!", "?", ";", "•", "|", a comma before a space, and the
+# conjunctions (es / pt / sv / en).
 _CLAUSE_BREAK = re.compile(
-    r"\n|[!?;•|]|\.(?=\s|$|[A-ZÀ-ÖØ-Þ])|,(?=\s)|(?i:\s(?:y|e|o|ou|och|eller|samt|and|or)(?=\s))"
+    r"\n|[!?;•|]|\.(?=\s|$|[A-ZÀ-ÖØ-Þ])|(?<=[^\W\d_])\.(?=\d)|,(?=\s)"
+    r"|(?i:\s(?:y|e|o|ou|och|eller|samt|and|or)(?=\s))"
 )
 _SENTENCE_BREAKS = frozenset("\n!?;•|.")
 
@@ -390,8 +392,12 @@ class _Clauses:
 
 # A number not glued to a larger one: no digit, decimal separator or "digit/" "digit-" "digit:"
 # before it, no digit, "/digit" "-digit" ".digit" ":digit" or letter after it ("31/12/2026",
-# "24/7", "01-8000-30", "12:00", "4K").
-_NUMBER_TOKEN = re.compile(r"(?<![\d.,])(?<!\d[/\-:])\d+(?:[.,]\d+)*(?!\d|[.,/\-:]\d)(?![^\W\d_])")
+# "24/7", "01-8000-30", "12:00", "4K"). A period right after a letter ends a sentence glued to
+# the number ("ViX Premium.30% OFF": Mercado Libre prints each line twice, glued), so it is no
+# decimal separator.
+_NUMBER_TOKEN = re.compile(
+    r"(?:(?<![\d.,])|(?<=[^\W\d_]\.))(?<!\d[/\-:])\d+(?:[.,]\d+)*(?!\d|[.,/\-:]\d)(?![^\W\d_])"
+)
 # Folded number words (es / pt / sv / en). 1 is left out: "un", "en", "ett" are also articles
 # and prepositions; Spanish "once" (11) is too, it is also English ("billed once a year").
 _NUMBER_WORDS: dict[int, tuple[str, ...]] = {

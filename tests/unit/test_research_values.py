@@ -2185,6 +2185,9 @@ def test_a_long_text_is_checked_fast_or_not_at_all() -> None:
         ("pct", "30%", "30 % OFF en HBO Max", True),
         ("pct", Decimal("9"), MELI_LINE, True),
         ("pct", "3", "30% OFF en HBO Max", False),  # part of a larger number
+        ("pct", "30", "y ViX Premium.30% OFF en HBO Max", True),  # a glued sentence end
+        ("pct", "30", "Total: 0.30% OFF", False),  # a decimal
+        ("pct", "30", "Total: .30% OFF", False),
         ("int", 2, MELI_LINE, True),
         ("int", 2, "Precio anterior: $ 21.900", False),
         ("int", 6, TELIA_PLAY, True),
@@ -2296,6 +2299,11 @@ def test_dates_with_a_direction(kind: str, value: str, quote: str, ok: bool) -> 
         ("hbo_max:30", MELI_COMPONENTS, True),
         ("paramount_plus:30", MELI_COMPONENTS, True),
         ("vix:30", MELI_COMPONENTS, True),
+        # The real planes page prints the line twice, glued: "...ViX Premium.30% OFF en ...".
+        ("vix:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("hbo_max:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("paramount_plus:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("vix:3", MELI_COMPONENTS + MELI_COMPONENTS, False),
         ("hbo_max:20", MELI_COMPONENTS, False),  # the discount's number
         ("netflix", MELI_COMPONENTS, False),
         ("disney_plus.standard_with_ads", "Disney+ Estándar con anuncios.", True),
@@ -2457,6 +2465,11 @@ def test_component_numbers_and_short_aliases(value: str, quote: str, ok: bool, c
     [
         ("hbo_max:30", MELI_COMPONENTS, True),
         ("vix:30", MELI_COMPONENTS, True),
+        # The real planes page prints the line twice, glued: "...ViX Premium.30% OFF en ...".
+        ("vix:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("hbo_max:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("paramount_plus:30", MELI_COMPONENTS + MELI_COMPONENTS, True),
+        ("vix:3", MELI_COMPONENTS + MELI_COMPONENTS, False),
         ("hbo_max:30", "30 por ciento de descuento en HBO Max", True),
         ("disney_plus:20", "20% OFF en Disney+ y 30% OFF en HBO Max", True),
         ("hbo_max:20", MELI_COMPONENTS, False),
