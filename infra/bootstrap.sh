@@ -11,7 +11,9 @@
 # 90 days, raw/research/ after 30), service accounts haggler-job / haggler-scheduler /
 # haggler-github, Workload Identity Federation for GitHub Actions, two placeholder Cloud Run Jobs
 # (deploy-job.yml deploys the real image) and their Cloud Scheduler triggers: haggler-daily
-# (prices, every day) and haggler-research (feasibility research, weekly). Finally prints the
+# (prices, every day) and haggler-research (feasibility research, weekly). Then a monthly budget
+# with email alerts and, unless BILLING_CAP=0, a kill switch that unlinks the project from its
+# billing account once actual spend reaches the budget (docs/SETUP.md §9). Finally prints the
 # GitHub repository variables.
 
 set -euo pipefail
@@ -40,6 +42,16 @@ RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-23 5 * * 1}"
 WIF_POOL="${WIF_POOL:-github}"
 WIF_PROVIDER="${WIF_PROVIDER:-github}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-us-docker.pkg.dev/cloudrun/container/job:latest}"
+# Monthly budget, in the billing account's currency. Empty = 5 when that currency is USD, EUR,
+# GBP or CHF; any other currency needs an explicit amount (5 SEK would cut the project off).
+BUDGET_AMOUNT="${BUDGET_AMOUNT:-}"
+# 1 = unlink billing once actual spend reaches BUDGET_AMOUNT; 0 = email alerts only.
+BILLING_CAP="${BILLING_CAP:-1}"
+# Workflows and Eventarc are not offered in every region either.
+BILLING_CAP_REGION="${BILLING_CAP_REGION:-${SCHEDULER_REGION}}"
+BUDGET_NAME="haggler ${PROJECT_ID}"
+BUDGET_TOPIC="haggler-budget"
+BILLING_CAP_NAME="haggler-billing-cap"
 
 JOB_SA_NAME="haggler-job"
 SCHEDULER_SA_NAME="haggler-scheduler"
@@ -47,6 +59,8 @@ GITHUB_SA_NAME="haggler-github"
 JOB_SA="${JOB_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 SCHEDULER_SA="${SCHEDULER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 GITHUB_SA="${GITHUB_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+BILLING_SA="${BILLING_CAP_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 APIS=(
   run.googleapis.com
@@ -59,7 +73,13 @@ APIS=(
   sts.googleapis.com
   logging.googleapis.com
   cloudbuild.googleapis.com
+  cloudbilling.googleapis.com
+  billingbudgets.googleapis.com
+  pubsub.googleapis.com
 )
+if [[ "${BILLING_CAP}" == 1 ]]; then
+  APIS+=(workflows.googleapis.com eventarc.googleapis.com)
+fi
 
 # Scope the project to this process and never prompt (a prompt would hang a re-run).
 export CLOUDSDK_CORE_PROJECT="${PROJECT_ID}"
@@ -74,6 +94,12 @@ info() { printf '    %s\n' "$*"; }
 die() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
+}
+# Problems that leave the rest of the setup usable; repeated in the final summary.
+WARNINGS=()
+warn() {
+  printf '    WARNING: %s\n' "$*" >&2
+  WARNINGS+=("$*")
 }
 
 # Quiet existence check: "exists gcloud ... describe ...".
@@ -139,6 +165,19 @@ PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(proje
 info "account=${ACCOUNT} project=${PROJECT_ID} (#${PROJECT_NUMBER})"
 info "region=${REGION} scheduler_region=${SCHEDULER_REGION} bucket=gs://${BUCKET}"
 info "jobs=${JOB},${RESEARCH_JOB} github=${GITHUB_REPO}@${GITHUB_BRANCH}"
+case "${BILLING_CAP}" in
+  0 | 1) ;;
+  *) die "BILLING_CAP must be 0 (alerts only) or 1 (kill switch), got '${BILLING_CAP}'" ;;
+esac
+if [[ -n "${BUDGET_AMOUNT}" ]]; then
+  [[ "${BUDGET_AMOUNT}" =~ ^[0-9]+([.][0-9]{1,2})?$ ]] ||
+    die "BUDGET_AMOUNT must be a plain amount such as 5 or 7.50 (the currency is the billing account's)"
+  [[ ! "${BUDGET_AMOUNT}" =~ ^0+([.]0+)?$ ]] || die "BUDGET_AMOUNT must be greater than 0"
+fi
+if [[ "${BILLING_CAP}" == 1 ]]; then
+  [[ -f "${SCRIPT_DIR}/billing_cap.yaml" ]] || die "missing ${SCRIPT_DIR}/billing_cap.yaml"
+fi
+info "budget=${BUDGET_AMOUNT:-default} billing_cap=${BILLING_CAP} (${BILLING_CAP_REGION})"
 # Best effort: the call itself needs the Cloud Billing API, so only a definite "False" stops us.
 BILLING="$(gcloud billing projects describe "${PROJECT_ID}" --format='value(billingEnabled)' \
   2>/dev/null || true)"
@@ -339,6 +378,143 @@ ensure_job_and_trigger "${JOB}" "${SCHEDULER_JOB}" "${SCHEDULE}" \
 ensure_job_and_trigger "${RESEARCH_JOB}" "${RESEARCH_SCHEDULER_JOB}" "${RESEARCH_SCHEDULE}" \
   "Runs Cloud Run Job ${RESEARCH_JOB} (haggler weekly feasibility research)"
 
+# --- Budget and billing kill switch (docs/SETUP.md §9) ------------------------------------------
+# A budget alone only sends emails. With BILLING_CAP=1 its Pub/Sub notifications also run the
+# workflow infra/billing_cap.yaml, which unlinks the project from its billing account once actual
+# spend reaches the budget. Billing data lags by hours, so spend can overshoot a little first.
+BUDGET_TOPIC_PATH="projects/${PROJECT_ID}/topics/${BUDGET_TOPIC}"
+BUDGET_SUMMARY="none (see the warnings below)"
+BUDGET_OK=0
+
+if [[ "${BILLING_CAP}" == 1 ]]; then
+  step "Pub/Sub topic ${BUDGET_TOPIC} (budget notifications)"
+  if exists gcloud pubsub topics describe "${BUDGET_TOPIC}"; then
+    info "already exists"
+  else
+    gcloud pubsub topics create "${BUDGET_TOPIC}" --format=none
+    info "created"
+  fi
+  # Cloud Billing publishes budget notifications as this Google-managed account.
+  retry gcloud pubsub topics add-iam-policy-binding "${BUDGET_TOPIC}" \
+    --member=serviceAccount:billing-budget-alert@system.gserviceaccount.com \
+    --role=roles/pubsub.publisher --format=none
+  info "topic ${BUDGET_TOPIC}: roles/pubsub.publisher -> Cloud Billing budget alerts"
+
+  step "Service account ${BILLING_CAP_NAME}"
+  ensure_sa "${BILLING_CAP_NAME}" "haggler billing kill switch (Workflows)"
+  # Runs the workflow (Eventarc) and unlinks the billing account; it reads no project data.
+  bind_project "serviceAccount:${BILLING_SA}" roles/billing.projectManager
+  bind_project "serviceAccount:${BILLING_SA}" roles/workflows.invoker
+  bind_project "serviceAccount:${BILLING_SA}" roles/eventarc.eventReceiver
+  bind_project "serviceAccount:${BILLING_SA}" roles/logging.logWriter
+  # Eventarc pushes to the workflow with an OIDC token of BILLING_SA minted by the Pub/Sub agent.
+  # Projects whose agent predates April 2021 need this grant; elsewhere it is redundant.
+  PUBSUB_AGENT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  if retry gcloud iam service-accounts add-iam-policy-binding "${BILLING_SA}" \
+    --member="serviceAccount:${PUBSUB_AGENT}" --role=roles/iam.serviceAccountTokenCreator \
+    --format=none; then
+    info "${BILLING_SA}: roles/iam.serviceAccountTokenCreator -> ${PUBSUB_AGENT}"
+  else
+    warn "could not grant ${PUBSUB_AGENT} roles/iam.serviceAccountTokenCreator on ${BILLING_SA};" \
+      "only projects older than April 2021 need it"
+  fi
+
+  step "Workflow ${BILLING_CAP_NAME} (${BILLING_CAP_REGION})"
+  retry gcloud workflows deploy "${BILLING_CAP_NAME}" --location="${BILLING_CAP_REGION}" \
+    --source="${SCRIPT_DIR}/billing_cap.yaml" --service-account="${BILLING_SA}" \
+    --description="Unlinks billing once the haggler budget is spent (docs/SETUP.md §9)" \
+    --labels=managed-by=haggler-bootstrap --format=none
+  info "deployed from infra/billing_cap.yaml"
+
+  step "Eventarc trigger ${BILLING_CAP_NAME}: topic ${BUDGET_TOPIC} -> workflow"
+  if exists gcloud eventarc triggers describe "${BILLING_CAP_NAME}" \
+    --location="${BILLING_CAP_REGION}"; then
+    info "already exists"
+  else
+    retry gcloud eventarc triggers create "${BILLING_CAP_NAME}" \
+      --location="${BILLING_CAP_REGION}" \
+      --destination-workflow="${BILLING_CAP_NAME}" \
+      --destination-workflow-location="${BILLING_CAP_REGION}" \
+      --event-filters="type=google.cloud.pubsub.topic.v1.messagePublished" \
+      --transport-topic="${BUDGET_TOPIC_PATH}" \
+      --service-account="${BILLING_SA}" --format=none
+    info "created"
+  fi
+fi
+
+# Budgets live on the billing account, not the project: creating one needs Billing Account
+# Administrator or Billing Account Costs Manager there, which a project Owner may lack. Without
+# it the rest of the setup stands and the warning says how to finish by hand.
+ensure_budget() {
+  local account currency amount listing budget_id rule
+  account="$(gcloud billing projects describe "${PROJECT_ID}" \
+    --format='value(billingAccountName)' 2>/dev/null || true)"
+  account="${account#billingAccounts/}"
+  if [[ -z "${account}" ]]; then
+    warn "could not read the billing account of ${PROJECT_ID}; no budget created (docs/SETUP.md §9)"
+    return 0
+  fi
+  currency="$(gcloud billing accounts describe "${account}" --format='value(currencyCode)' \
+    2>/dev/null || true)"
+  amount="${BUDGET_AMOUNT}"
+  if [[ -z "${amount}" ]]; then
+    case "${currency}" in
+      USD | EUR | GBP | CHF) amount=5 ;;
+      *)
+        warn "billing account ${account} bills in '${currency:-unknown currency}': re-run with" \
+          "BUDGET_AMOUNT in that currency; no budget created"
+        return 0
+        ;;
+    esac
+  fi
+
+  local thresholds=(percent=0.5 percent=0.9 percent=1.0 percent=1.0,basis=forecasted-spend)
+  local args=(
+    --billing-account="${account}"
+    --billing-project="${PROJECT_ID}"
+    --budget-amount="${amount}"
+    --calendar-period=month
+    --filter-projects="projects/${PROJECT_ID}"
+    --format=none
+  )
+  if [[ "${BILLING_CAP}" == 1 ]]; then
+    args+=(--notifications-rule-pubsub-topic="${BUDGET_TOPIC_PATH}")
+  fi
+
+  if ! listing="$(gcloud billing budgets list --billing-account="${account}" \
+    --billing-project="${PROJECT_ID}" --format='value(name,displayName)')"; then
+    warn "cannot list the budgets of billing account ${account} (needs Billing Account" \
+      "Administrator or Costs Manager); create '${BUDGET_NAME}' by hand (docs/SETUP.md §9)"
+    return 0
+  fi
+  budget_id="$(awk -F '\t' -v name="${BUDGET_NAME}" '$2 == name { print $1; exit }' \
+    <<<"${listing}")"
+
+  if [[ -n "${budget_id}" ]]; then
+    args+=(--clear-threshold-rules)
+    for rule in "${thresholds[@]}"; do args+=(--add-threshold-rule="${rule}"); done
+    if ! gcloud billing budgets update "${budget_id##*/}" "${args[@]}"; then
+      warn "could not update budget '${BUDGET_NAME}' (${budget_id})"
+      return 0
+    fi
+    info "already exists; amount, scope, thresholds and topic re-applied"
+  else
+    for rule in "${thresholds[@]}"; do args+=(--threshold-rule="${rule}"); done
+    if ! gcloud billing budgets create --display-name="${BUDGET_NAME}" "${args[@]}"; then
+      warn "could not create budget '${BUDGET_NAME}' on billing account ${account} (needs" \
+        "Billing Account Administrator or Costs Manager; docs/SETUP.md §9)"
+      return 0
+    fi
+    info "created"
+  fi
+  BUDGET_SUMMARY="${amount} ${currency:-(billing account currency)}/month on billing account"
+  BUDGET_SUMMARY+=" ${account}; emails at 50/90/100 % and at a 100 % forecast"
+  BUDGET_OK=1
+}
+
+step "Budget '${BUDGET_NAME}'"
+ensure_budget
+
 # --- Output --------------------------------------------------------------------------------------
 step "Done. Set these GitHub repository VARIABLES (Settings > Secrets and variables > Actions >"
 info "Variables), not secrets:"
@@ -369,4 +545,21 @@ Or with the GitHub CLI:
 Next: run the "deploy-job" workflow from ${GITHUB_BRANCH} (or merge to it), then
   gcloud run jobs execute ${JOB} --region ${REGION} --wait
   gcloud run jobs execute ${RESEARCH_JOB} --region ${REGION} --wait   # after the daily run
+
+Budget: ${BUDGET_SUMMARY}
 EOF
+if [[ "${BILLING_CAP}" == 1 && "${BUDGET_OK}" == 1 ]]; then
+  info "Kill switch: ON. Once actual spend reaches the budget, workflow ${BILLING_CAP_NAME}"
+  info "(${BILLING_CAP_REGION}) unlinks billing and every paid service stops (docs/SETUP.md §9)."
+elif [[ "${BILLING_CAP}" == 1 ]]; then
+  info "Kill switch: deployed but IDLE until a budget notifies topic ${BUDGET_TOPIC_PATH}"
+  info "(docs/SETUP.md §9)."
+else
+  info "Kill switch: OFF (BILLING_CAP=0): the budget only sends emails."
+fi
+if ((${#WARNINGS[@]})); then
+  printf '\nWarnings:\n' >&2
+  for warning in "${WARNINGS[@]}"; do
+    printf '  - %s\n' "${warning}" >&2
+  done
+fi
