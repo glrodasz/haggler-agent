@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
+from conftest import frozen_bundles
 from haggler.bundles.pricing import counted_components, price_bundle, regular_price
-from haggler.catalog import load_bundles
 from haggler.models.curated import Bundle
 from haggler.models.fx import FxRate, FxTable
 from haggler.models.observations import PERIOD_MONTHS, PublishedPrice, obs_key
@@ -322,8 +322,9 @@ def test_no_fx_table_no_eur_figures() -> None:
 @pytest.mark.parametrize("bundle_id", ["meli_plus_co_total", "meli_plus_co_esencial"])
 def test_meli_plus_saving_stays_honest(bundle_id: str) -> None:
     """The YAML price is never "fixed" here (only a verified anchor changes it, H10): the
-    saving is computed from it as it is, and the 30 % discounts stay out of saving_pct."""
-    b = next(x for x in load_bundles().bundles if x.bundle_id == bundle_id)
+    saving is computed from it as it is, and the 30 % discounts stay out of saving_pct. Read
+    from the frozen bundles.yaml (tests/conftest.py), where Total's 24900 makes no saving."""
+    b = next(x for x in frozen_bundles().bundles if x.bundle_id == bundle_id)
     rows = [offer("disney_plus", "standard_with_ads", "CO", "23900", "COP")]
     p = price(b, rows)
     assert p.regular.amount == b.price.amount

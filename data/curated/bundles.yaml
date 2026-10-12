@@ -67,7 +67,10 @@ bundles:
     tier: total
     aliases: [Meli+ Total, Plan Total]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
-    price: {amount: "24900", currency: COP, period: month, tax_included: true}
+    # The planes page (our probes of 2026-10-09 and 2026-10-11): "Precio actual con 9 por ciento
+    # de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes."
+    price: {amount: "21900", currency: COP, period: month, tax_included: true,
+            intro_amount: "19900", intro_months: 2}
     components:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
       - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
@@ -78,11 +81,45 @@ bundles:
       - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: official}
       - {url: "https://www.enter.co/empresas/meli-asi-funciona-la-nueva-suscripcion-de-mercado-libre-en-colombia-con-planes-desde-9-900-envios-gratis-y-beneficios-en-streaming/", kind: press}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+      # Copied from probe --mode watch (our fetch of the planes page, 2026-10-11). The card's
+      # screen-reader line states the regular price next to its intro; the benefit lines are
+      # printed twice, glued.
+      anchors:
+        - fact: price
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: |-
+            Plan Total
+            $ 21.900 9% OFF
+            $ 19.900/mes por 2 meses
+            Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes.
+        - fact: intro
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: |-
+            Plan Total
+            $ 21.900 9% OFF
+            $ 19.900/mes por 2 meses
+            Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes.
+        - fact: component
+          service_id: disney_plus
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: Disney+ Estándar con anuncios.Disney+ Estándar con anuncios.
+        - fact: component
+          service_id: hbo_max
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: 30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.
+        - fact: component
+          service_id: paramount_plus
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: 30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.
+        - fact: component
+          service_id: vix
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: 30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium.
     # User decision 2 (phase 3): own use from Sweden with a Colombian card. The rank comes from
     # the axes (haggler.feasibility.axes_rank: 2) and never ends below the worst component's;
     # without a verified tos_clause it is shown as unverified/low.
@@ -97,10 +134,11 @@ bundles:
         confidence: low
         last_verified: 2026-10-08
         notes_es: según uso propio; sin cita de los términos
-    last_verified: 2026-10-08
+    last_verified: 2026-10-11
     notes_es: >-
-      Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia
-      con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.
+      Precio regular 21.900 COP/mes; los 2 primeros meses, 19.900. El usuario lo usa desde Suecia
+      con tarjeta colombiana. HBO Max, Paramount+ y ViX aparecen como 30 % de descuento, no
+      incluidos.
 
   - bundle_id: meli_plus_co_esencial
     provider_id: mercado_libre
@@ -111,15 +149,25 @@ bundles:
     aliases: [Meli+ Esencial, Plan Esencial]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
     price: {amount: "9900", currency: COP, period: month, tax_included: true}
-    components:
-      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+    # No streaming: its card on the planes page lists "No incluido: Disney+ Estándar con
+    # anuncios." and "No incluido: 30% OFF en HBO Max, Universal+, Paramount+ y ViX Premium."
+    # (bundles probe, 2026-10-09). The 30 % discount on HBO Max belongs to Meli+ Total.
+    components: []
     requirements: {local_id: cedula, local_payment: any_card}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+      # Copied from probe --mode watch (2026-10-11).
+      anchors:
+        - fact: price
+          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+          text: |-
+            Plan Esencial
+            -
+            $ 9.900/mes
     # User decision 2 (phase 3), as for Meli+ Total.
     verdicts:
       - profile: se_resident_co_citizen
@@ -132,7 +180,7 @@ bundles:
         confidence: low
         last_verified: 2026-10-08
         notes_es: según uso propio; sin cita de los términos
-    last_verified: 2026-10-08
+    last_verified: 2026-10-11
     notes_es: Envíos gratis; sin streaming incluido.
 
   - bundle_id: meli_plus_mx_mega
@@ -206,8 +254,8 @@ bundles:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
     evidence:
-      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
-         note: "edición 18 de la lista de precios; da 404 desde 2026-10-09 (reemplazada)"}
+      - {url: "https://www.telia.se/asset/57adaa15-db41-49d9-b13f-83a6c9beb698/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
+         note: "edición 18 de la lista de precios, la más nueva del índice el 2026-10-11"}
     status: unverified
     verified_by: search_summary
     watch:
@@ -215,16 +263,33 @@ bundles:
       pages:
         - {url: "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney", kind: html}
         # The price list is versioned: the current edition is the newest link on the index page
-        # that matches link_pattern. url is the last edition we know (18, superseded: 404 since
-        # 2026-10-09); the pattern must match it.
-        - url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+        # that matches link_pattern. url is the edition we know (18, still the newest on the index
+        # on 2026-10-11; its old /assets/m/... URL redirects here); the pattern must match it.
+        - url: "https://www.telia.se/asset/57adaa15-db41-49d9-b13f-83a6c9beb698/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
           kind: pdf
           index_url: "https://www.telia.se/om/priser"
           link_pattern: 'TSP-4667_(?P<edition>\d+)_\d{4}_Prislista-Telia-Mobil_B2C\.pdf'
-    last_verified: 2026-10-08
+      # Copied from probe --mode watch (2026-10-11). No price anchor: the price list prints 699 kr
+      # in a table row without the plan's name, and the product page shows no amount as text.
+      anchors:
+        - fact: component
+          service_id: netflix
+          url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
+          text: Netflix Standard, HBO Max Basic med reklam, Disney+ Standard med reklam
+        - fact: component
+          service_id: hbo_max
+          url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
+          text: Netflix Standard, HBO Max Basic med reklam, Disney+ Standard med reklam
+        - fact: component
+          service_id: disney_plus
+          url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
+          text: Netflix Standard, HBO Max Basic med reklam, Disney+ Standard med reklam
+    last_verified: 2026-10-11
     notes_es: >-
       Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres
-      servicios es +130 kr. Fecha de vigencia de la lista de precios sin confirmar.
+      servicios es +130 kr. El precio se revisa a mano: la lista de precios en PDF da 699 kr en
+      una fila de tabla sin el nombre del plan, y la página del producto no lo muestra como texto.
+      Fecha de vigencia de la lista de precios sin confirmar.
 
   - bundle_id: go3_lt_filmai_netflix
     provider_id: go3
@@ -263,12 +328,44 @@ bundles:
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     requirements: {local_payment: any_card}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/se/apple-one/", kind: html}
-    last_verified: 2026-10-08
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row. Apple
+      # Music and Apple TV: their section headings (the line above pads the anchor to 20
+      # characters); the platforms paragraph sits next to the family plan's text, so it only
+      # confirms Apple One Familj.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/se/apple-one/
+          text: |-
+            Titta på serier, filmer, barnunderhållning och mycket annat från världens mest kreativa hjärnor inom film och tv. Nya Apple Originals kommer varje månad.
+            Läs mer
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/se/apple-one/
+          text: |-
+            Upp till 200 GB lagringsutrymme för allt från bilder och filmer till säkerhetskopior av enheter och video från övervakningskameror i hemmet, synkat mellan alla dina enheter. Och kraftfulla funktioner som skyddar din integritet.
+            Läs mer
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/se/apple-one/
+          text: |-
+            Läs mer
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/se/apple-one/
+          text: Spara 124 kr/mån** på favoritinnehåll och lagring i iCloud+.
+    last_verified: 2026-10-11
 
   - bundle_id: apple_one_family_se
     provider_id: apple
@@ -287,15 +384,38 @@ bundles:
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     requirements: {local_payment: any_card}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/se/apple-one/", kind: html}
-    last_verified: 2026-10-08
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/se/apple-one/
+          text: 'När du tecknar ett abonnemang får du tillgång till Apple One-tjänsterna på alla plattformar där de finns: på webben (Apple Music och Apple TV), på vissa smarta tv:ar (Apple Music och Apple TV), på Android-enheter (Apple Music) och på streamingenheter från andra leverantörer (Apple Music och Apple TV).'
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/se/apple-one/
+          text: 'När du tecknar ett abonnemang får du tillgång till Apple One-tjänsterna på alla plattformar där de finns: på webben (Apple Music och Apple TV), på vissa smarta tv:ar (Apple Music och Apple TV), på Android-enheter (Apple Music) och på streamingenheter från andra leverantörer (Apple Music och Apple TV).'
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/se/apple-one/
+          text: |-
+            Läs mer
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/se/apple-one/
+          text: Apple One är ett paket med fyra Apple-abonnemang till en lägre månadskostnad. Då ingår upp till 200 GB lagring i iCloud+. Skaffar du familjeabonnemang kan du bjuda in upp till fem andra personer att dela abonnemanget och få egen tillgång på alla sina enheter. Det har aldrig varit enklare att få mer för pengarna.
+    last_verified: 2026-10-11
 
   # Wave 1 (H10): rows added from the bundles probe of 2026-10-09 (our own fetch of the official
-  # pages). Watched in manual mode until probe --mode watch verifies their anchors.
+  # pages). Watched in auto mode since probe --mode watch verified their anchors (2026-10-11).
   - bundle_id: apple_one_individual_co
     provider_id: apple
     provider_type: platform
@@ -313,12 +433,41 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/co/apple-one/", kind: html}
-    last_verified: 2026-10-09
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row. Apple
+      # Music and Apple TV: their section headings; the platforms paragraph sits next to the
+      # plan Familiar's text, so it only confirms Apple One Familiar.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/co/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/co/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/co/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/co/apple-one/
+          text: Ahorra $36.300 al mes** en tu contenido favorito y almacenamiento en iCloud+.
+    last_verified: 2026-10-11
 
   - bundle_id: apple_one_family_co
     provider_id: apple
@@ -336,12 +485,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/co/apple-one/", kind: html}
-    last_verified: 2026-10-09
+      # Copied from probe --mode watch (2026-10-11); the price is the daily apple_one row.
+      # apple.com names each service once for every plan (a plan's list is drawn as icons), so
+      # these anchors confirm that Apple One includes the service, not each plan: a service
+      # dropped from one plan only would not be detected (accepted, PR #2 review).
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/co/apple-one/
+          text: Una vez que te suscribes, puedes empezar a disfrutar los servicios de Apple One en todos los lugares donde estén disponibles, como internet (Apple Music y Apple TV), Apple TV y algunos smart TV (Apple Music, Apple TV y Apple Fitness+), Apple Watch (Apple Fitness+), dispositivos Android (Apple Music) y otros dispositivos de streaming de terceros (Apple Music y Apple TV).
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/co/apple-one/
+          text: Una vez que te suscribes, puedes empezar a disfrutar los servicios de Apple One en todos los lugares donde estén disponibles, como internet (Apple Music y Apple TV), Apple TV y algunos smart TV (Apple Music, Apple TV y Apple Fitness+), Apple Watch (Apple Fitness+), dispositivos Android (Apple Music) y otros dispositivos de streaming de terceros (Apple Music y Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/co/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/co/apple-one/
+          text: Ahorra $40.300 al mes** en contenido para toda la familia y almacenamiento adicional en iCloud+.
+    last_verified: 2026-10-11
 
   - bundle_id: google_ai_pro_co
     provider_id: google
@@ -357,13 +529,25 @@ bundles:
     components:
       - {service_id: youtube_premium, plan_id: lite, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://gemini.google/co/subscriptions/?hl=es-419", kind: html}
         - {url: "https://support.google.com/googleone/answer/17101453?hl=es", kind: html}
-    last_verified: 2026-10-09
+      # Copied from probe --mode watch (2026-10-11).
+      anchors:
+        - fact: price
+          url: https://gemini.google/co/subscriptions/?hl=es-419
+          text: |-
+            Google AI Pro
+            Obtén acceso mejorado a funciones nuevas y potentes para impulsar tu productividad y creatividad.
+            COP 79,000 por mes
+        - fact: component
+          service_id: youtube_premium
+          url: https://support.google.com/googleone/answer/17101453?hl=es
+          text: Conseguir YouTube Premium Lite con Google AI Pro
+    last_verified: 2026-10-11
     notes_es: >-
       Plan de Google One. Según la ayuda de Google incluye YouTube Premium Lite en Colombia (sin
       YouTube Music, sin reproducción en segundo plano ni descargas). El almacenamiento y Gemini no

@@ -17,8 +17,16 @@ from google.genai import types
 from haggler.catalog import load_bundles, load_catalog, load_feasibility
 from haggler.fetch import RawResponse
 from haggler.fetch.errors import FetchError
+from haggler.models.curated import BundlesFile
 
 FIXTURES = Path(__file__).parent / "sources" / "fixtures"
+# A frozen data/curated/bundles.yaml (its header says why): the behaviour tests read it, so a
+# correct edit of the real file does not change what they test.
+FROZEN_CURATED = Path(__file__).parent / "fixtures" / "curated_pre_h10"
+
+
+def frozen_bundles() -> BundlesFile:
+    return load_bundles(FROZEN_CURATED)
 
 
 @pytest.fixture(scope="session")

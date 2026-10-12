@@ -38,20 +38,39 @@ Kinds (what H8's bundle fields map to):
         the conjunctions "y / e / o / ou / och / eller / and / or"); the tier named in the
         amount's own clause decides, before or after the amount ("215 kr i månaden för det
         personliga abonnemanget och 295 kr ... för familjeabonnemanget"); a clause without a
-        tier name takes the nearest earlier clause that has one (a card's heading two lines up),
-        never a later one (the next card's heading), and never when the amount's own clause
-        states another price (a table row "Precio $ 9.900 $ 21.900" under one heading). Either
-        way, a tier name and the amount are paired only when no other price of the currency
-        lies between them (a regular or offer price with another amount, or a struck-through
-        price read by position: so the current price under "Meli+ Total" / "$ 24.900" is not
-        confirmed either), nor, in the amount's sentence, a name inherited by another tier
-        ("Meli+ Total: todo lo de Meli+ Esencial, que cuesta $ 9.900"): the tier a sentence
-        named before "$62.900 ... y el plan Premium $86.900" is not Premium's. A clause naming
-        two tiers confirms neither. An inherited name ("todos los beneficios de Meli+
-        Esencial", "everything in Individual") is not a tier name of another clause's amount,
-        but is one of an amount in its own clause ("Disfruta todos los beneficios de Meli+
-        Esencial por $ 9.900/mes"), and a name compared with ("más altos que los de AI Pro",
-        "than", "jämfört med") is never one.
+        tier name takes, outside a card (below), the nearest earlier clause that has one (a
+        heading that also states a price), never a later one (the next card's heading), and
+        never when the amount's own clause states another price (a table row "Precio $ 9.900
+        $ 21.900" under one heading). Either way, a tier name and the amount are paired only
+        when no other price of the currency lies between them (a regular or offer price with
+        another amount, or a struck-through price read by position), nor, in the amount's
+        sentence, a name inherited by another tier ("Meli+ Total: todo lo de Meli+ Esencial,
+        que cuesta $ 9.900"): the tier a sentence named before "$62.900 ... y el plan Premium
+        $86.900" is not Premium's. A clause naming two tiers confirms neither. An inherited
+        name ("todos los beneficios de Meli+ Esencial", "everything in Individual") is not a
+        tier name of another clause's amount, but is one of an amount in its own clause
+        ("Disfruta todos los beneficios de Meli+ Esencial por $ 9.900/mes"), and a name
+        compared with ("más altos que los de AI Pro", "than", "jämfört med") is never one.
+        Cards: a line that names exactly one tier (own or another; no inherited or compared
+        name) and states no amount, of any currency, is a card heading ("Plan Total"). An
+        amount on a line below it, up to the next line that names a tier (own or another, a
+        heading or not, the amount's own line included), is the heading's tier when no other
+        price lies between them, as above, with one exception: the struck price of an
+        introductory amount's own offer (struck through by position by an intro of the same
+        amount right after it, with no word before it on its line), between them or in the
+        amount's clause, does not separate the heading from that amount ("Plan Total" /
+        "$ 21.900 9% OFF" / "$ 19.900/mes por 2 meses" is Total's intro). Any other price
+        still does: the card's own regular price before an add-on's, a payment variant's or a
+        footer's, a tier the catalog does not list ("Plan Mega" / "$ 399/mes" / "Plan Total" /
+        "$ 149/mes" is not Mega's $ 149 when Total is not a known tier), a line with words
+        before its price right above an intro ("Agrega Disney+ por $ 8.000/mes", a threshold
+        "desde $ 30.000"), a struck price before a regular amount (under "Meli+ Total" /
+        "$ 24.900", a "$ 21.900/mes" is not its regular price: a discount whose duration the
+        card does not state, or another card's price), and any other price in the amount's own
+        clause (the table row). A line naming two tiers, a tier and
+        an amount, or no tier ("Planes", "Elige tu plan de Meli+") heads no card: below it, and
+        on a line that names a tier, the clause rules above decide. A card is read in the text
+        checked only (the quote and its context lines): a heading outside it heads nothing.
     An amount needs its currency marker: a PDF row with bare amounts under a currency header
     ("Go3 Filmai + Netflix Premium 19,99") states no price.
     Then plausibility, with an FX table: a monthly equivalent outside 0.5-300 EUR is
@@ -174,6 +193,7 @@ from __future__ import annotations
 
 import bisect
 import functools
+import itertools
 import re
 import unicodedata
 from collections.abc import Iterable, Sequence
@@ -331,10 +351,12 @@ def _mentions(folded: str, names: Iterable[str]) -> list[tuple[int, int, str]]:
 # ---- clauses --------------------------------------------------------------------------------
 
 # Where a clause ends, for pairing a tier name or a discount with its amount: a line break, a
-# sentence end ("." before a space, the end or a capital: "kr/mån.Pris"), "!", "?", ";", "•",
-# "|", a comma before a space, and the conjunctions (es / pt / sv / en).
+# sentence end ("." before a space, the end or a capital: "kr/mån.Pris"; between a letter and a
+# digit: "ViX Premium.30% OFF"), "!", "?", ";", "•", "|", a comma before a space, and the
+# conjunctions (es / pt / sv / en).
 _CLAUSE_BREAK = re.compile(
-    r"\n|[!?;•|]|\.(?=\s|$|[A-ZÀ-ÖØ-Þ])|,(?=\s)|(?i:\s(?:y|e|o|ou|och|eller|samt|and|or)(?=\s))"
+    r"\n|[!?;•|]|\.(?=\s|$|[A-ZÀ-ÖØ-Þ])|(?<=[^\W\d_])\.(?=\d)|,(?=\s)"
+    r"|(?i:\s(?:y|e|o|ou|och|eller|samt|and|or)(?=\s))"
 )
 _SENTENCE_BREAKS = frozenset("\n!?;•|.")
 
@@ -370,8 +392,12 @@ class _Clauses:
 
 # A number not glued to a larger one: no digit, decimal separator or "digit/" "digit-" "digit:"
 # before it, no digit, "/digit" "-digit" ".digit" ":digit" or letter after it ("31/12/2026",
-# "24/7", "01-8000-30", "12:00", "4K").
-_NUMBER_TOKEN = re.compile(r"(?<![\d.,])(?<!\d[/\-:])\d+(?:[.,]\d+)*(?!\d|[.,/\-:]\d)(?![^\W\d_])")
+# "24/7", "01-8000-30", "12:00", "4K"). A period right after a letter ends a sentence glued to
+# the number ("ViX Premium.30% OFF": Mercado Libre prints each line twice, glued), so it is no
+# decimal separator.
+_NUMBER_TOKEN = re.compile(
+    r"(?:(?<![\d.,])|(?<=[^\W\d_]\.))(?<!\d[/\-:])\d+(?:[.,]\d+)*(?!\d|[.,/\-:]\d)(?![^\W\d_])"
+)
 # Folded number words (es / pt / sv / en). 1 is left out: "un", "en", "ett" are also articles
 # and prepositions; Spanish "once" (11) is too, it is also English ("billed once a year").
 _NUMBER_WORDS: dict[int, tuple[str, ...]] = {
@@ -743,6 +769,8 @@ _ADJACENT_BETWEEN = re.compile(
     r"|desconto|rabatt)?\s*\)?\s*)?$",
     re.IGNORECASE,
 )
+
+_LETTER = re.compile(r"[^\W\d_]")
 
 # An ISO code written right after (or before) an ambiguous "$" amount: "$ 399 MXN", "MXN $399",
 # "(USD): $ 19.99"; the nationality after "pesos" ("19900 pesos mexicanos", "$ 399 pesos
@@ -1229,6 +1257,25 @@ class _Mention:
 _OWN = "\x00own"
 
 
+@dataclass(frozen=True)
+class _Rivals:
+    """The other prices of the text that keep an amount from a tier name (module docstring,
+    the tier rule): `blockers` (sorted offsets) may not lie between a tier name and the amount,
+    nor in the amount's clause when it names no tier. Under a card heading they separate the
+    heading from the amount too, but for `own_struck`: the struck price of an introductory
+    amount's own offer. `struck` (struck through by position alone) and `intro` word the
+    rejection."""
+
+    blockers: Sequence[int] = ()
+    struck: Sequence[int] = ()
+    intro: bool = False
+    own_struck: frozenset[int] = frozenset()
+
+    @property
+    def card_blockers(self) -> Sequence[int]:
+        return [b for b in self.blockers if b not in self.own_struck]
+
+
 @dataclass
 class _Tiers:
     """The tier names of a text for one bundle and kind (module docstring, the tier rule)."""
@@ -1238,9 +1285,23 @@ class _Tiers:
     clauses: _Clauses
     by_clause: dict[int, list[_Mention]] = field(default_factory=dict)
     any_mention: bool = False
+    # The offsets where the text's lines start, the mentions of each line, and the lines that
+    # head a card (empty without the text's amounts: no card rule).
+    line_starts: list[int] = field(default_factory=lambda: [0])
+    by_line: dict[int, list[_Mention]] = field(default_factory=dict)
+    headings: set[int] = field(default_factory=set)
 
     @classmethod
-    def of(cls, text: str, kind: ValueKind, bundle: Bundle, siblings: Sequence[Bundle]) -> _Tiers:
+    def of(
+        cls,
+        text: str,
+        kind: ValueKind,
+        bundle: Bundle,
+        siblings: Sequence[Bundle],
+        amounts: Sequence[int] | None = None,
+    ) -> _Tiers:
+        """`amounts` are the offsets of every amount of the text (any currency, any role); the
+        card rule needs them to tell a heading from a price line, and is off without them."""
         own = _tier_names(bundle, kind)
         owner: dict[str, tuple[str, str]] = {}
         for n in own:
@@ -1249,6 +1310,7 @@ class _Tiers:
             owner.setdefault(_fold(n), (tier, n))
         folded, index = _fold_map(text)
         tiers = cls(text, own, _Clauses.of(text))
+        tiers.line_starts = [0, *(m.end() for m in re.finditer("\n", text))]
         for s, e, name in _mentions(folded, owner):
             window = folded[max(0, s - 60) : s]
             lead: Literal["inherited", "compared"] | None = None
@@ -1259,17 +1321,43 @@ class _Tiers:
             tier, printed = owner[name]
             m = _Mention(index[s], index[e - 1] + 1, tier, printed, lead)
             tiers.by_clause.setdefault(tiers.clauses.of_pos(m.start), []).append(m)
+            tiers.by_line.setdefault(tiers._line_of(m.start), []).append(m)
             tiers.any_mention = True
+        if amounts is not None:
+            priced = {tiers._line_of(a) for a in amounts}
+            tiers.headings = {
+                i
+                for i, ms in tiers.by_line.items()
+                if i not in priced
+                and all(m.lead is None for m in ms)
+                and len({m.tier for m in ms}) == 1
+            }
         return tiers
 
-    def named(self, start: int, end: int, blockers: Sequence[int] = ()) -> list[_Mention] | str:
-        """The mentions that name the tier of what spans start-end (an amount, a service), or
-        why none does. `blockers` are the sorted offsets of the prices that may not lie between
-        a tier name and the amount."""
+    def _line_of(self, pos: int) -> int:
+        return bisect.bisect_right(self.line_starts, pos) - 1
 
-        def blocked(a: int, b: int) -> bool:
-            i = bisect.bisect_left(blockers, a)
-            return (i < len(blockers) and blockers[i] < b) or self._inherited_between(a, b)
+    def _card(self, start: int) -> int | None:
+        """The heading line of the card the amount at `start` lies in, or None: the nearest
+        line above the amount's that names a tier, when it is a heading and the amount's own
+        line names none."""
+        line = self._line_of(start)
+        if line in self.by_line:
+            return None
+        for j in range(line - 1, -1, -1):
+            if j in self.by_line:
+                return j if j in self.headings else None
+        return None
+
+    def named(self, start: int, end: int, rivals: _Rivals | None = None) -> list[_Mention] | str:
+        """The mentions that name the tier of what spans start-end (an amount, a service), or
+        why none does (see _Rivals)."""
+        rivals = rivals or _Rivals()
+        blockers = rivals.blockers
+
+        def blocked(a: int, b: int, offsets: Sequence[int] = blockers) -> bool:
+            i = bisect.bisect_left(offsets, a)
+            return (i < len(offsets) and offsets[i] < b) or self._inherited_between(a, b)
 
         k = self.clauses.of_pos(start)
         found: list[_Mention] = []
@@ -1281,12 +1369,36 @@ class _Tiers:
             if m.start >= end and blocked(end, m.start):
                 continue
             found.append(m)
+        heading = None if found else self._card(start)
+        # Under a card heading, the struck price of an introductory amount's own offer is no
+        # other price ("$ 21.900 9% OFF $ 19.900/mes por 2 meses").
+        exempt = rivals.own_struck if heading is not None else frozenset()
         cs, ce = self.clauses.span(k)
-        if not found and any(cs <= b < ce for b in blockers):
+        if not found and any(cs <= b < ce and b not in exempt for b in blockers):
             return (
                 "the amount's clause states another price and names no tier: an earlier "
                 "heading is not the amount's"
             )
+        expected = f"expected one of {self.own_names}"
+        if heading is not None:
+            ms = self.by_line[heading]
+            card = rivals.card_blockers
+            found = [m for m in ms if not blocked(m.end, start, card)]
+            if not found:
+                i = bisect.bisect_left(card, ms[-1].end)
+                if not (i < len(card) and card[i] < start):
+                    why = "its sentence names what another tier inherits"
+                elif card[i] in rivals.struck and not rivals.intro:
+                    why = (
+                        "a price struck through by position alone precedes it, and the amount "
+                        "is not introductory"
+                    )
+                else:
+                    why = "another price lies between them"
+                return (
+                    f"the quote names no tier for the amount (under the card heading "
+                    f"{ms[0].printed!r}, {why}; {expected})"
+                )
         if not found:
             for j in range(k - 1, -1, -1):
                 ms = [m for m in self.by_clause.get(j, []) if m.lead is None]
@@ -1295,7 +1407,6 @@ class _Tiers:
                     break
         if found:
             return found
-        expected = f"expected one of {self.own_names}"
         if not self.any_mention:
             return f"the quote names no tier ({expected})"
         return (
@@ -1310,9 +1421,9 @@ class _Tiers:
         cut = max((m.end() for m in _SENTENCE_OR_LINE.finditer(part)), default=0)
         return bool(_INHERITED_ANY.search(_fold(part[cut:])))
 
-    def error(self, start: int, end: int, blockers: Sequence[int] = ()) -> str | None:
+    def error(self, start: int, end: int, rivals: _Rivals | None = None) -> str | None:
         """None when the tier named for start-end is the bundle's own."""
-        found = self.named(start, end, blockers)
+        found = self.named(start, end, rivals)
         if isinstance(found, str):
             return found
         tiers = {m.tier: m.printed for m in found}
@@ -1324,9 +1435,9 @@ class _Tiers:
             return None
         return f"the tier named next to the amount is {printed!r} ({tier})"
 
-    def other_tier(self, start: int, end: int, blockers: Sequence[int] = ()) -> bool:
+    def other_tier(self, start: int, end: int, rivals: _Rivals | None = None) -> bool:
         """True only when start-end is known to be another tier's."""
-        found = self.named(start, end, blockers)
+        found = self.named(start, end, rivals)
         return not isinstance(found, str) and all(m.tier != _OWN for m in found)
 
 
@@ -1455,12 +1566,31 @@ def _check_money(
             and b.country == country
             and b.bundle_id != bundle.bundle_id
         ]
-        tiers = _Tiers.of(text, kind, bundle, siblings)
+        tiers = _Tiers.of(text, kind, bundle, siblings, [q.start for q in prices])
     tax_included = bundle.price.tax_included if bundle is not None else None
 
-    def blockers(target: Decimal) -> list[int]:
-        return sorted(
-            q.start for q in prices if q.currency == currency and q.amount != target and _blocks(q)
+    def own_struck(target: _Price) -> frozenset[int]:
+        """The struck prices of an intro's own offer: struck through by position by an intro of
+        its amount right after it, with no word before them on their line ("$ 21.900 9% OFF" /
+        "$ 19.900/mes por 2 meses"; not "Agrega Disney+ por $ 8.000/mes", "desde $ 30.000")."""
+        if target.role != "intro":
+            return frozenset()
+        return frozenset(
+            q.start
+            for q, nxt in itertools.pairwise(prices)
+            if q.by_position
+            and nxt.role == "intro"
+            and nxt.amount == target.amount
+            and not _LETTER.search(text, text.rfind("\n", 0, q.start) + 1, q.start)
+        )
+
+    def rivals(target: _Price) -> _Rivals:
+        others = [q for q in prices if q.currency == currency and q.amount != target.amount]
+        return _Rivals(
+            sorted(q.start for q in others if _blocks(q)),
+            sorted(q.start for q in others if q.by_position),
+            target.role == "intro",
+            own_struck(target),
         )
 
     def reject(p: _Price) -> str | None:
@@ -1480,11 +1610,11 @@ def _check_money(
             return f"{raw} is a price before tax; the bundle's price includes it"
         if tiers is None:
             return None
-        if err := tiers.error(p.start, p.end, blockers(p.amount)):
+        if err := tiers.error(p.start, p.end, rivals(p)):
             return err
         if p.partner is not None:
             intro = prices[p.partner]
-            if err := tiers.error(intro.start, intro.end, blockers(intro.amount)):
+            if err := tiers.error(intro.start, intro.end, rivals(intro)):
                 # A previous price is the regular one only after its own tier's offer.
                 return f"{raw} follows another tier's offer: {err}"
         return None
@@ -1500,7 +1630,7 @@ def _check_money(
                 or (q.role == "regular" and q.label is None)
             ):
                 continue
-            if tiers is None or not tiers.other_tier(q.start, q.end, blockers(q.amount)):
+            if tiers is None or not tiers.other_tier(q.start, q.end, rivals(q)):
                 return q
         return None
 

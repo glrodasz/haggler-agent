@@ -10,9 +10,9 @@ from typing import Any
 
 import pytest
 
-from conftest import FixtureFetcher
+from conftest import FixtureFetcher, frozen_bundles
 from haggler.bundles import research as bundle_research
-from haggler.catalog import load_bundles, load_catalog, on_domains
+from haggler.catalog import load_catalog, on_domains
 from haggler.fetch import RawResponse
 from haggler.models.curated import BundlesFile
 from haggler.models.fx import FxRate, FxTable
@@ -39,7 +39,8 @@ from haggler.store import dumps_lines
 from pdf_support import build_pdf
 
 TODAY = date(2026, 10, 9)
-BUNDLES = load_bundles()
+# The frozen bundles.yaml (tests/conftest.py): Meli+ Total at 24900, its three 30 % discounts.
+BUNDLES = frozen_bundles()
 CATALOG = load_catalog()
 TOTAL = next(b for b in BUNDLES.bundles if b.bundle_id == "meli_plus_co_total")
 KEY = "bundle:meli_plus_co_total"

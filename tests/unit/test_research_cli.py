@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from conftest import FROZEN_CURATED
 from haggler import cli
 from haggler.catalog import load_review
 from haggler.config import repo_root
@@ -79,6 +80,9 @@ def dirs(tmp_path: Path) -> tuple[Path, Path]:
         (data / "research" / name).write_bytes(blob)
     curated = tmp_path / "curated"
     shutil.copytree(repo_root() / "data" / "curated", curated)
+    # The frozen bundles.yaml (tests/conftest.py), not the live one: Meli+ Total at 24900, so
+    # the agent's 21900 and the watcher's 22900 below stay changes to review.
+    shutil.copy(FROZEN_CURATED / "bundles.yaml", curated / "bundles.yaml")
     return data, curated
 
 

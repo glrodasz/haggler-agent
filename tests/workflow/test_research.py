@@ -16,7 +16,7 @@ from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
-from conftest import FixtureFetcher, _request_text
+from conftest import FixtureFetcher, _request_text, frozen_bundles
 from haggler.catalog import load_catalog, load_feasibility, load_payment_instruments, load_profiles
 from haggler.config import Settings
 from haggler.fetch import RawResponse
@@ -187,6 +187,9 @@ def make_deps(
         feasibility=load_feasibility(),
         instruments=load_payment_instruments(),
         profiles=load_profiles(),
+        # The frozen bundles.yaml (tests/conftest.py), not the live one: a correct edit of the
+        # real file (anchors, auto modes) never changes what a run plans, watches or fetches.
+        bundles=frozen_bundles(),
         fetcher=FixtureFetcher(PAGES if routes is None else routes),
         store=store if store is not None else prices_store(),
         model=model,

@@ -1,0 +1,384 @@
+# FROZEN copy of data/curated/bundles.yaml as merged to main in d986490 (PR #1), before the H10
+# value edits (046392a onward): Meli+ Total at 24900 with no intro price, Meli+ Esencial with the
+# 30 % HBO Max discount, Telia's edition-18 price list at its old /assets/m/... URL, every bundle
+# watch.mode manual or off and no anchors.
+#
+# The behaviour tests (review/accept/summary CLI, research run --watch-only, the research
+# workflow, the review snippets pasted into validate-catalog, the vocabulary forms, pricing
+# honesty, known pages, the Apple-country integrity case, the H1 migration snapshot) read THIS
+# file (tests/conftest.py: FROZEN_CURATED, frozen_bundles), so a correct edit of the real file
+# (values read on the official pages, anchors, auto modes) does not change what they test. Do
+# not sync it with the real file. Tests whose purpose is the real data read
+# data/curated/bundles.yaml (e.g. test_wave_1_values_match_the_official_pages,
+# test_real_bundles_pass_integrity).
+
+# Promotional bundles. Every row is unverified until the watcher confirms its anchors on our own
+# fetch of an official page; the retrieval date comes from the watcher's evidence and is never
+# typed here. Savings are computed from the daily price data, never typed here either.
+#
+# This file is the ONLY source of a bundle's values (price, base plan, components, dates,
+# requirements); no job writes it. A value counts as confirmed only through the watcher's
+# evidence for an anchor (a literal excerpt of our own fetch of an official page of the bundle's
+# country), so a row never types a verified state: status is unverified|expired, evidence has
+# no verified/retrieved_at, and verified_by says where the values come from
+# (official_fetch | user_report | search_summary | agent_research).
+# watch.mode: auto (the weekly watcher reads the pages) | manual (checked by hand) | off.
+# Quote "off": YAML reads a bare off as false.
+# Feasibility is evaluated per profile (haggler.bundles.evaluate): at home, from the requirements;
+# abroad, from a curated `verdicts` record for the profile, else composed from the bundle's own
+# route and its components' verdicts. A curated record can only make a verdict harder.
+
+# Providers: the official domains of each provider PER COUNTRY (a domain also covers its
+# subdomains; "host/path/" also needs the URL's path under that prefix). Every URL of a bundle
+# (official_url, watch pages, anchors) must be https on its provider's domains for the bundle's
+# country. automated_access: forbidden (the provider's terms forbid automated access) forces
+# watch.mode off.
+providers:
+  - id: mercado_libre
+    name: Mercado Libre
+    domains:
+      CO: [mercadolibre.com.co]
+      MX: [mercadolibre.com.mx]
+      BR: [mercadolivre.com.br]
+    automated_access: allowed
+
+  - id: telia_se
+    name: Telia
+    domains:
+      SE: [telia.se]
+    automated_access: allowed
+
+  - id: go3
+    name: Go3
+    domains:
+      # static3.go3.tv is the CDN host that serves the Lithuanian price-list PDF.
+      LT: [go3.lt, static3.go3.tv]
+    automated_access: allowed
+
+  - id: apple
+    name: Apple
+    domains:
+      # apple.com serves every country under a path (/se/, /co/), so the entries carry the
+      # country's path prefix: a /co/ or /us/ page never confirms a Swedish bundle.
+      SE: [www.apple.com/se/]
+      CO: [www.apple.com/co/, one.apple.com/co/]
+    automated_access: allowed
+
+  - id: google
+    name: Google
+    domains:
+      # gemini.google serves the plans per country under a path (/co/); support.google.com is the
+      # official help centre (same pages for every country, no prices).
+      CO: [gemini.google/co/, support.google.com]
+    automated_access: allowed
+
+bundles:
+  - bundle_id: meli_plus_co_total
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CO
+    name: Meli+ Total
+    tier: total
+    aliases: [Meli+ Total, Plan Total]
+    official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+    price: {amount: "24900", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+      - {service_id: paramount_plus, inclusion: discount_pct, value: "30"}
+      - {service_id: vix, inclusion: discount_pct, value: "30"}
+    requirements: {local_id: cedula, local_line: unknown, local_payment: any_card}
+    evidence:
+      - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: official}
+      - {url: "https://www.enter.co/empresas/meli-asi-funciona-la-nueva-suscripcion-de-mercado-libre-en-colombia-con-planes-desde-9-900-envios-gratis-y-beneficios-en-streaming/", kind: press}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+    # User decision 2 (phase 3): own use from Sweden with a Colombian card. The rank comes from
+    # the axes (haggler.feasibility.axes_rank: 2) and never ends below the worst component's;
+    # without a verified tos_clause it is shown as unverified/low.
+    verdicts:
+      - profile: se_resident_co_citizen
+        legality: lawful
+        tos: breach_unenforced
+        practical: remote
+        steps:
+          - {type: payment_country, value: CO}
+        status: unverified
+        confidence: low
+        last_verified: 2026-10-08
+        notes_es: según uso propio; sin cita de los términos
+    last_verified: 2026-10-08
+    notes_es: >-
+      Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia
+      con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.
+
+  - bundle_id: meli_plus_co_esencial
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CO
+    name: Meli+ Esencial
+    tier: esencial
+    aliases: [Meli+ Esencial, Plan Esencial]
+    official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
+    price: {amount: "9900", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
+    requirements: {local_id: cedula, local_payment: any_card}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
+    # User decision 2 (phase 3), as for Meli+ Total.
+    verdicts:
+      - profile: se_resident_co_citizen
+        legality: lawful
+        tos: breach_unenforced
+        practical: remote
+        steps:
+          - {type: payment_country, value: CO}
+        status: unverified
+        confidence: low
+        last_verified: 2026-10-08
+        notes_es: según uso propio; sin cita de los términos
+    last_verified: 2026-10-08
+    notes_es: Envíos gratis; sin streaming incluido.
+
+  - bundle_id: meli_plus_mx_mega
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: MX
+    name: Meli+ Mega (con anuncios)
+    tier: mega
+    aliases: [Meli+ Mega, Plan Mega]
+    official_url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+    price: {amount: "399", currency: MXN, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+    requirements: {local_id: CURP, local_payment: unknown}
+    evidence:
+      - {url: "https://expansion.mx/tecnologia/2026/02/24/mercado-libre-meli-mega-netflix-disney-hbo-max-apple-tv", kind: press}
+    status: unverified
+    valid_from: 2026-02-11
+    verified_by: search_summary
+    watch: {mode: "off"}
+    last_verified: 2026-10-08
+
+  - bundle_id: meli_plus_br_mega
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: BR
+    name: Meli+ Mega
+    tier: mega
+    aliases: [Meli+ Mega, Plano Mega]
+    official_url: https://www.mercadolivre.com.br/assinaturas/melimais
+    price: {amount: "74.90", currency: BRL, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+    requirements: {local_id: CPF, local_payment: unknown}
+    evidence:
+      - {url: "https://tecnoblog.net/noticias/meli-mega-novo-plano-inclui-disney-netflix-hbo-max-e-apple-tv/", kind: press}
+    status: unverified
+    valid_from: 2025-10-07
+    verified_by: search_summary
+    watch: {mode: "off"}
+    last_verified: 2026-10-08
+
+  - bundle_id: telia_se_obegransad_streaming
+    provider_id: telia_se
+    provider_type: telco_mobile
+    country: SE
+    name: Telia Obegränsad Plus + Netflix, HBO Max y Disney+
+    tier: obegransad_plus_all_streaming
+    # Product title as the page prints it (H0 probe, 2026-10-09).
+    aliases: [Obegränsad Plus med Netflix, HBO Max och Disney+]
+    # /privat/mobilt/abonnemang gives 404 since 2026-10-09 (H0 probe); it redirected here.
+    official_url: https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney
+    price:
+      amount: "699"
+      currency: SEK
+      period: month
+      tax_included: true
+      # Sold on top of Obegränsad Plus: marginal_amount = amount - base_plan_amount.
+      base_plan_name: Telia Obegränsad Plus
+      base_plan_amount: "569"
+      marginal_amount: "130"
+    components:
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+    requirements: {local_id: personnummer, local_line: mobile, local_payment: local_bank, credit_check: true}
+    evidence:
+      - {url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf", kind: official,
+         note: "edición 18 de la lista de precios; da 404 desde 2026-10-09 (reemplazada)"}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney", kind: html}
+        # The price list is versioned: the current edition is the newest link on the index page
+        # that matches link_pattern. url is the last edition we know (18, superseded: 404 since
+        # 2026-10-09); the pattern must match it.
+        - url: "https://www.telia.se/assets/m/3bb36ae829ef848f/original/TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+          kind: pdf
+          index_url: "https://www.telia.se/om/priser"
+          link_pattern: 'TSP-4667_(?P<edition>\d+)_\d{4}_Prislista-Telia-Mobil_B2C\.pdf'
+    last_verified: 2026-10-08
+    notes_es: >-
+      Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres
+      servicios es +130 kr. Fecha de vigencia de la lista de precios sin confirmar.
+
+  - bundle_id: go3_lt_filmai_netflix
+    provider_id: go3
+    provider_type: streaming_joint
+    country: LT
+    name: Go3 Filmai + Netflix
+    tier: filmai_netflix
+    official_url: https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf
+    price: {amount: "17.99", currency: EUR, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, inclusion: included}
+    requirements: {local_line: none, local_payment: unknown}
+    evidence:
+      - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: official}
+    status: unverified
+    valid_from: 2026-09-04
+    verified_by: search_summary
+    watch: {mode: "off"}
+    last_verified: 2026-10-08
+    notes_es: El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.
+
+  - bundle_id: apple_one_individual_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Individual
+    tier: individual
+    aliases: [Personligt, personliga abonnemanget]
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: individual}
+    components:
+      - {service_id: apple_music, plan_id: individual, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
+    requirements: {local_payment: any_card}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/se/apple-one/", kind: html}
+    last_verified: 2026-10-08
+
+  - bundle_id: apple_one_family_se
+    provider_id: apple
+    provider_type: platform
+    country: SE
+    name: Apple One Familj
+    tier: family
+    aliases: [Familj, familjeabonnemanget]
+    official_url: https://www.apple.com/se/apple-one/
+    price: {currency: SEK, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: family}
+    components:
+      - {service_id: apple_music, plan_id: family, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
+    requirements: {local_payment: any_card}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/se/apple-one/", kind: html}
+    last_verified: 2026-10-08
+
+  # Wave 1 (H10): rows added from the bundles probe of 2026-10-09 (our own fetch of the official
+  # pages). Watched in manual mode until probe --mode watch verifies their anchors.
+  - bundle_id: apple_one_individual_co
+    provider_id: apple
+    provider_type: platform
+    country: CO
+    name: Apple One Individual
+    tier: individual
+    aliases: [plan Individual, Individual]
+    official_url: https://www.apple.com/co/apple-one/
+    # Consumer prices in Colombia include taxes (Ley 1480 de 2011, art. 26).
+    price: {currency: COP, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: individual}
+    components:
+      - {service_id: apple_music, plan_id: individual, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/co/apple-one/", kind: html}
+    last_verified: 2026-10-09
+
+  - bundle_id: apple_one_family_co
+    provider_id: apple
+    provider_type: platform
+    country: CO
+    name: Apple One Familiar
+    tier: family
+    aliases: [plan Familiar, Familiar]
+    official_url: https://www.apple.com/co/apple-one/
+    price: {currency: COP, period: month, tax_included: true, source: observed,
+            observed_service_id: apple_one, observed_plan_id: family}
+    components:
+      - {service_id: apple_music, plan_id: family, inclusion: included}
+      - {service_id: apple_tv, plan_id: standard, inclusion: included}
+      - {service_id: apple_arcade, plan_id: standard, inclusion: included}
+      - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.apple.com/co/apple-one/", kind: html}
+    last_verified: 2026-10-09
+
+  - bundle_id: google_ai_pro_co
+    provider_id: google
+    provider_type: platform
+    country: CO
+    name: Google AI Pro
+    tier: ai_pro
+    aliases: [Google AI Pro]
+    official_url: https://gemini.google/co/subscriptions/?hl=es-419
+    # The web price (gemini.google/co); the daily data only has the App Store price of
+    # google_one.ai_pro, which differs. Consumer prices in Colombia include taxes (Ley 1480).
+    price: {amount: "79000", currency: COP, period: month, tax_included: true}
+    components:
+      - {service_id: youtube_premium, plan_id: lite, inclusion: included}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://gemini.google/co/subscriptions/?hl=es-419", kind: html}
+        - {url: "https://support.google.com/googleone/answer/17101453?hl=es", kind: html}
+    last_verified: 2026-10-09
+    notes_es: >-
+      Plan de Google One. Según la ayuda de Google incluye YouTube Premium Lite en Colombia (sin
+      YouTube Music, sin reproducción en segundo plano ni descargas). El almacenamiento y Gemini no
+      se cuentan como componentes.

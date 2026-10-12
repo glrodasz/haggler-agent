@@ -2,7 +2,8 @@
 
 Every integrity rule has one negative case, built from a small valid file (BASE) so the cases do
 not change when the real bundles.yaml is edited; the real file and the publish fixture are
-checked as they are.
+checked as they are. The migration is checked on the frozen bundles.yaml it produced
+(tests/conftest.py); the values H10 corrected since, on the real file.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from conftest import frozen_bundles
 from haggler.catalog import (
     integrity_errors,
     load_bundles,
@@ -27,6 +29,7 @@ from haggler.catalog import (
 )
 from haggler.feasibility import axes_rank, record_rank
 from haggler.models.curated import (
+    Bundle,
     BundleRequirements,
     BundlesFile,
     FeasibilityStep,
@@ -754,8 +757,13 @@ def test_publish_fixture_passes_integrity() -> None:
     assert integrity_errors(fixture_catalog, bundles=bundles) == []
 
 
-TELIA_PDF = (
+# Edition 18 of Telia's price list: its URL in the frozen file, and the one it moved to (H10).
+TELIA_PDF_PRE_H10 = (
     "https://www.telia.se/assets/m/3bb36ae829ef848f/original/"
+    "TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
+)
+TELIA_PDF = (
+    "https://www.telia.se/asset/57adaa15-db41-49d9-b13f-83a6c9beb698/"
     "TSP-4667_18_0701_Prislista-Telia-Mobil_B2C.pdf"
 )
 
@@ -850,31 +858,40 @@ def _str(value: Any) -> str | None:
     return None if value is None else str(value)
 
 
+def _values(b: Bundle) -> list[Any]:
+    """A row's value-bearing fields in the order of PRE_MIGRATION (requirements apart)."""
+    p = b.price
+    return [
+        b.country,
+        _str(p.amount),
+        p.currency,
+        p.period,
+        p.tax_included,
+        _str(p.marginal_amount),
+        p.observed_plan_id,
+        [(c.service_id, c.plan_id, c.inclusion, _str(c.value), c.ads) for c in b.components],
+        _str(b.valid_from),
+        _str(b.valid_until),
+        _str(b.last_verified),
+    ]
+
+
 def test_migration_keeps_every_value() -> None:
-    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    # The migration's output as it stood before H10 corrected values on the official pages:
+    # the frozen bundles.yaml (tests/conftest.py). The real file's values since are pinned by
+    # test_wave_1_values_match_the_official_pages.
+    rows = {b.bundle_id: b for b in frozen_bundles().bundles}
     # Rows added later (H10 wave 1) are not part of the migration.
     assert set(PRE_MIGRATION) <= set(rows)
     for bundle_id, expected in PRE_MIGRATION.items():
-        b, p = rows[bundle_id], rows[bundle_id].price
         *head, requirements = expected
-        assert [
-            b.country,
-            _str(p.amount),
-            p.currency,
-            p.period,
-            p.tax_included,
-            _str(p.marginal_amount),
-            p.observed_plan_id,
-            [(c.service_id, c.plan_id, c.inclusion, _str(c.value), c.ads) for c in b.components],
-            _str(b.valid_from),
-            _str(b.valid_until),
-            _str(b.last_verified),
-        ] == head, bundle_id
-        assert b.requirements == BundleRequirements(**requirements), bundle_id
+        assert _values(rows[bundle_id]) == head, bundle_id
+        assert rows[bundle_id].requirements == BundleRequirements(**requirements), bundle_id
 
 
 def test_migration_adds_structure_but_no_values() -> None:
-    bundles = load_bundles()
+    # On the frozen bundles.yaml, as the migration left it (H10 adds anchors and auto modes).
+    bundles = frozen_bundles()
     # The rows the H1 migration touched (rows added later, in H10, are checked elsewhere).
     rows = {b.bundle_id: b for b in bundles.bundles if b.bundle_id in PRE_MIGRATION}
     assert {"mercado_libre", "telia_se", "go3", "apple"} <= {p.id for p in bundles.providers}
@@ -894,9 +911,9 @@ def test_migration_adds_structure_but_no_values() -> None:
     )
     html_page, pdf_page = telia.watch.pages
     assert (html_page.kind, pdf_page.kind) == ("html", "pdf")
-    assert str(pdf_page.url) == str(telia.evidence[0].url) == TELIA_PDF
+    assert str(pdf_page.url) == str(telia.evidence[0].url) == TELIA_PDF_PRE_H10
     assert str(pdf_page.index_url) == "https://www.telia.se/om/priser"
-    match = re.search(pdf_page.link_pattern, TELIA_PDF)
+    match = re.search(pdf_page.link_pattern, TELIA_PDF_PRE_H10)
     assert match is not None and match["edition"] == "18"
     price = telia.price
     assert (price.base_plan_name, price.amount, price.base_plan_amount, price.marginal_amount) == (
@@ -911,9 +928,106 @@ def test_migration_adds_structure_but_no_values() -> None:
     assert bundles.provider("apple").domains["SE"] == ["www.apple.com/se/"]
 
 
+def test_wave_1_values_match_the_official_pages() -> None:
+    """The real bundles.yaml: the migration's values (and the base plan and provider domains it
+    added) with the corrections H10 read on our own fetch of the official pages (commit
+    046392a), each quoted. Values only: anchors and watch modes are pinned by
+    test_wave_1_anchors_come_from_the_watch_probe."""
+    bundles = load_bundles()
+    rows = {b.bundle_id: b for b in bundles.bundles}
+    expected = {bundle_id: list(values) for bundle_id, values in PRE_MIGRATION.items()}
+    # Meli+ Total, the planes page (our probes of 2026-10-09 and 2026-10-11): "Precio actual con
+    # 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900
+    # pesos por mes." The 24900 of the search summaries was wrong.
+    expected["meli_plus_co_total"][1] = "21900"  # the amount
+    # Meli+ Esencial, its card on the same page (bundles probe, 2026-10-09): "No incluido: 30%
+    # OFF en HBO Max, Universal+, Paramount+ y ViX Premium." (and "No incluido: Disney+
+    # Estándar con anuncios."): no component. The 30 % HBO Max discount is Meli+ Total's.
+    expected["meli_plus_co_esencial"][7] = []  # the components
+    # The wave-1 rows were checked against probe --mode watch on 2026-10-11 (their anchors).
+    for bundle_id in WAVE_1:
+        expected[bundle_id][10] = "2026-10-11"  # last_verified
+    for bundle_id, (*head, requirements) in expected.items():
+        assert _values(rows[bundle_id]) == head, bundle_id
+        assert rows[bundle_id].requirements == BundleRequirements(**requirements), bundle_id
+    # The same quote's "19900 pesos por mes, por 2 meses": Meli+ Total's intro price, the only
+    # one among these rows.
+    intro = {i: (_str(rows[i].price.intro_amount), rows[i].price.intro_months) for i in expected}
+    assert intro == {
+        i: ("19900", 2) if i == "meli_plus_co_total" else (None, None) for i in expected
+    }
+    # Telia: edition 18 of the price list moved to a new asset URL (the old /assets/m/... one
+    # redirects there) and is still the newest link on the price-list index on 2026-10-11.
+    telia = rows["telia_se_obegransad_streaming"]
+    html_page, pdf_page = telia.watch.pages
+    page = "https://www.telia.se/mobilabonnemang/mobil-obegraensad-plus-netflix-max-disney"
+    assert str(html_page.url) == str(telia.official_url) == page
+    assert (pdf_page.kind, str(pdf_page.index_url)) == ("pdf", "https://www.telia.se/om/priser")
+    assert str(pdf_page.url) == str(telia.evidence[0].url) == TELIA_PDF
+    match = re.search(pdf_page.link_pattern, TELIA_PDF)
+    assert match is not None and match["edition"] == "18"
+    # Unchanged by H10: Telia's base plan (its amount 699 and marginal 130 are pinned above)...
+    assert (telia.price.base_plan_name, telia.price.base_plan_amount) == (
+        "Telia Obegränsad Plus",
+        569,
+    )
+    # ... and the provider domains. One host for every Apple country: the domains carry the
+    # country's path.
+    assert "static3.go3.tv" in bundles.provider("go3").domains["LT"]
+    assert bundles.provider("apple").domains["SE"] == ["www.apple.com/se/"]
+
+
+# The wave-1 rows the watch probe confirmed on 2026-10-11 (probe --mode watch): every included
+# component and the price (or the daily row, for an observed price) have an anchor, and the
+# probe left them verified, so they are watched in auto mode.
+OFFICIAL_FETCH = {
+    "meli_plus_co_total",
+    "meli_plus_co_esencial",
+    "apple_one_individual_se",
+    "apple_one_family_se",
+    "apple_one_individual_co",
+    "apple_one_family_co",
+    "google_ai_pro_co",
+}
+
+
+def test_wave_1_anchors_come_from_the_watch_probe() -> None:
+    rows = {b.bundle_id: b for b in load_bundles().bundles}
+    assert {i for i, b in rows.items() if b.verified_by == "official_fetch"} == OFFICIAL_FETCH
+    # Auto only where the watch probe left the bundle verified (runs 38148273652, 38148424547).
+    assert {i for i, b in rows.items() if b.watch.mode == "auto"} == OFFICIAL_FETCH
+    facts = {i: sorted({a.fact for a in b.watch.anchors}) for i, b in rows.items()}
+    assert facts["meli_plus_co_total"] == ["component", "intro", "price"]
+    assert facts["meli_plus_co_esencial"] == ["price"]
+    assert facts["google_ai_pro_co"] == ["component", "price"]
+    for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):
+        assert facts[bundle_id] == ["component"]  # the price is the daily apple_one row
+    for bundle_id in ("apple_one_individual_co", "apple_one_family_co"):
+        assert facts[bundle_id] == ["component"]
+    # Telia: its components are on the product page, but the price list prints 699 kr in a
+    # table row without the plan's name, so the price has no anchor and stays manual.
+    telia = rows["telia_se_obegransad_streaming"]
+    assert facts["telia_se_obegransad_streaming"] == ["component"]
+    assert telia.verified_by == "search_summary" and telia.watch.mode == "manual"
+    # Meli+ Total's discounts are anchored too (optional savings), on the doubled benefit line.
+    total = rows["meli_plus_co_total"]
+    assert {a.service_id for a in total.watch.anchors if a.fact == "component"} == {
+        "disney_plus",
+        "hbo_max",
+        "paramount_plus",
+        "vix",
+    }
+    # Outside wave 1, nothing is watched or anchored.
+    for bundle_id in ("meli_plus_mx_mega", "meli_plus_br_mega", "go3_lt_filmai_netflix"):
+        assert rows[bundle_id].watch.mode == "off" and not rows[bundle_id].watch.anchors
+
+
 def test_apple_pages_of_another_country_fail(cat, profiles, instruments) -> None:
     """apple.com serves every country: a /co/ or /us/ page never confirms a Swedish bundle."""
-    data = load_bundles().model_dump(mode="json")
+    # From the frozen bundles.yaml (tests/conftest.py), which has no anchors: in the real file an
+    # anchor on the /se/ page would no longer be on a watch page once that page moves to /us/,
+    # an error of another rule. Here only the country rule speaks.
+    data = frozen_bundles().model_dump(mode="json")
     (apple,) = [b for b in data["bundles"] if b["bundle_id"] == "apple_one_individual_se"]
     apple["official_url"] = "https://www.apple.com/co/apple-one/"
     apple["watch"]["pages"][0]["url"] = "https://www.apple.com/us/apple-one/"
