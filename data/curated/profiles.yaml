@@ -3,8 +3,11 @@
 # research evaluator (haggler.research.evaluate) never assumes anything not listed here, and a
 # route that needs a false declaration is never offered.
 #
-# Curated feasibility records (feasibility.yaml) name one of these profiles; the site has a
-# profile selector when more than one profile is public.
+# Curated feasibility records (feasibility.yaml) name one of these profiles. The site's
+# comparator starts from these profiles and also lets a visitor describe their own (residence
+# among the countries with prices, ties with any country); haggler.profile_rules publishes the
+# rules that evaluate any such profile. Cards that are not curated instruments can be listed by
+# issuing country in card_countries.
 
 default: se_resident_co_citizen
 
