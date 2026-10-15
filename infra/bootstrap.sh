@@ -21,8 +21,9 @@ set -euo pipefail
 # --- Configuration (override via environment) ------------------------------------------------
 : "${PROJECT_ID:?Set PROJECT_ID, e.g. PROJECT_ID=my-project ./infra/bootstrap.sh}"
 REGION="${REGION:-europe-north2}"
-# Cloud Scheduler is not offered in every region; it only needs to call the Run API.
-SCHEDULER_REGION="${SCHEDULER_REGION:-europe-north1}"
+# Cloud Scheduler is not offered in every region (not in europe-north1 or europe-north2); it only
+# needs to call the Run API, so it can live elsewhere while the jobs stay in REGION.
+SCHEDULER_REGION="${SCHEDULER_REGION:-europe-west1}"
 GITHUB_REPO="${GITHUB_REPO:-glrodasz/haggler-agent}"
 # Only workflows running on this branch (deploy-job, publish) may impersonate haggler-github.
 GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
@@ -106,17 +107,22 @@ warn() {
 exists() { "$@" >/dev/null 2>&1; }
 
 # IAM is eventually consistent: a service account created seconds ago can be "not found" by the
-# next binding call. Retry a few times before giving up.
+# next binding call. Retry a few times before giving up, except on errors waiting won't fix.
 retry() {
-  local attempt=1 max=6 delay=10
-  until "$@"; do
-    if ((attempt >= max)); then
+  local attempt=1 max=6 delay=10 err
+  err="$(mktemp)"
+  until "$@" 2>"${err}"; do
+    cat "${err}" >&2
+    if ((attempt >= max)) || grep -q 'is not a valid location' "${err}"; then
+      rm -f "${err}"
       return 1
     fi
     info "retrying in ${delay}s (${attempt}/${max})..."
     sleep "${delay}"
     attempt=$((attempt + 1))
   done
+  cat "${err}" >&2
+  rm -f "${err}"
 }
 
 bind_project() { # member role
@@ -368,7 +374,8 @@ ensure_job_and_trigger() { # job scheduler_job schedule description
     gcloud scheduler jobs update http "${scheduler_job}" "${scheduler_args[@]}"
     info "already exists; schedule/target re-applied"
   else
-    retry gcloud scheduler jobs create http "${scheduler_job}" "${scheduler_args[@]}"
+    retry gcloud scheduler jobs create http "${scheduler_job}" "${scheduler_args[@]}" \
+      || die "Cloud Scheduler failed in ${SCHEDULER_REGION}; re-run with another SCHEDULER_REGION"
     info "created"
   fi
 }
