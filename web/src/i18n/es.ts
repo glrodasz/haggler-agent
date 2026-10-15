@@ -516,18 +516,29 @@ export const es = {
     currencyLabel: "Moneda para mostrar los importes",
     currencyCommon: "Frecuentes",
     currencyAll: "Todas las monedas",
-    profileLegend: "Perfil",
+    profileLegend: "Tu perfil",
     profileHelp:
-      "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes.",
+      "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: dónde vives, documentos, teléfono, dirección, medios de pago y viajes.",
     profileLabel: "Perfil de factibilidad",
-    profileStart: "Punto de partida",
-    profileCustom: "Perfil propio",
     profileCustomDesc:
-      "Las etiquetas salen de aplicar las mismas reglas a los hechos investigados. Las fichas curadas a mano solo valen para los perfiles predefinidos.",
-    residenceLabel: "País de residencia",
-    residenceHelp:
-      "Solo aparecen los países cuyos precios seguimos, porque el ahorro se calcula contra el precio de tu país.",
-    tiesLabel: "Vínculos con otros países",
+      "Las etiquetas salen de aplicar las mismas reglas a los hechos investigados. Las fichas curadas a mano solo valen para los perfiles de ejemplo.",
+    profileExamples: "Ejemplos:",
+    residenceLabel: "1. ¿En qué país vives?",
+    residenceHelp: (host: string) =>
+      `Solo listamos países cuyos precios seguimos. «Usar mi IP» envía tu IP a ${host}; solo si lo pulsas.`,
+    locateFound: {
+      timezone: "Lo dedujimos de la zona horaria de tu navegador.",
+      language: "Lo dedujimos del idioma de tu navegador.",
+      ip: "Según tu IP.",
+    } as Record<"timezone" | "language" | "ip", string>,
+    locateUncovered: (country: string) =>
+      `Parece que estás en ${country}, pero aún no seguimos precios allí. Elige el país contra el que quieres comparar.`,
+    locateLoading: "Consultando tu país por IP…",
+    locateFailed: "No pudimos consultar tu IP. Elige tu país en la lista.",
+    locateIp: "Usar mi IP",
+    ownLabel: (country: string) => `2. ¿Qué tienes de ${country}?`,
+    ownDoc: "Documento de identidad o permiso de residencia",
+    tiesLabel: "3. ¿Tienes vínculos con otros países?",
     tiesHelp:
       "Tu nacionalidad u otros países donde tienes documentos, tarjeta, teléfono o dirección, o adonde viajas. Puede ser cualquier país.",
     tiesNone: "Ninguno.",
@@ -541,6 +552,19 @@ export const es = {
     tieAddress: "Dirección real",
     tiePresence: "Viajes",
     presence: { none: "No viajo allí", once: "De vez en cuando", periodic: "Con regularidad" },
+    adviceTitle: (country: string) => `Qué te abre vivir en ${country}`,
+    adviceLead:
+      "Cuentas que puedes abrir por internet con tu residencia y tus documentos. Pueden darte una tarjeta de otro país, que algunos servicios aceptan; no cambian dónde vives ni las condiciones de ningún servicio. Las etiquetas de arriba ya cuentan con ellas.",
+    adviceNone: "No tenemos registrada ninguna cuenta que se pueda abrir online con este perfil.",
+    adviceNeedsDocTitle: "Con otro documento",
+    adviceNeedsDoc: (countries: string) => `Requiere documento de ${countries}`,
+    adviceIssuer: (country: string) => `Entidad de ${country}`,
+    adviceCard: (country: string) => `tarjeta emitida en ${country}`,
+    adviceCardUnknown: "país de la tarjeta sin confirmar",
+    adviceEea:
+      "Al vivir en la UE/EEE, tus suscripciones de vídeo, música y juegos siguen funcionando cuando viajas temporalmente a otro país de la UE (Reglamento (UE) 2017/1128 de portabilidad).",
+    adviceHonest:
+      "Datos curados a mano y sin verificar en tiempo real: comprueba los requisitos en la web de cada entidad. Nunca declares una residencia que no tienes.",
     pendingLabel: "Incluir hallazgos pendientes de revisión",
     pendingHelp:
       "Hallazgos del agente de investigación que nadie ha revisado todavía. Sin marcar, solo cuentan las fichas curadas o revisadas.",
@@ -813,7 +837,7 @@ export const es = {
         : "Todavía no se ha publicado ninguna investigación: solo hay fichas escritas a mano.",
     profilesTitle: "Perfiles",
     profilesLead:
-      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. En el comparador puedes elegir uno de estos perfiles o describir el tuyo: país de residencia (entre los que tienen precios) y vínculos con cualquier otro país. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
+      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. El comparador empieza por tu país, deducido de la zona horaria o el idioma de tu navegador sin enviar nada; si pulsas «Usar mi IP», tu navegador consulta a country.is, que recibe tu dirección IP. Luego describes tu perfil (país de residencia entre los que tienen precios, lo que tienes de él y vínculos con cualquier otro país) o eliges uno de estos de ejemplo. También muestra las cuentas que podrías abrir por internet con esa residencia y esos documentos, según nuestros datos curados. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
     defaultProfileTag: "Por defecto",
     researchNotLegal:
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",

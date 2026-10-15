@@ -223,6 +223,7 @@ describe("verdicts without research", () => {
     records: [],
     rules: [],
     eea_countries: ["SE"],
+    instruments: [],
   };
 
   it("labels every foreign offer unknown and the residence official", () => {

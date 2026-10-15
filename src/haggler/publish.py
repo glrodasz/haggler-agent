@@ -872,6 +872,34 @@ def _rules_json(ctx: EvalContext, rows: list[PublishedPrice]) -> list[dict[str, 
     return out
 
 
+def _instruments_json(ctx: EvalContext) -> list[dict[str, Any]]:
+    """Payment instruments anyone could open online, for the comparator's suggestions of what a
+    residence unlocks. The evaluator already counts them (research.evaluate.obtainable); the
+    site only explains them. Personal instruments (not opened online) are left out."""
+    out = []
+    for i in ctx.instruments.instruments:
+        if not i.onboarding_remote:
+            continue
+        url = i.research_urls[0] if i.research_urls else None
+        if url is None and i.official_domains:
+            url = f"https://{i.official_domains[0]}/"
+        out.append(
+            {
+                "id": i.id,
+                "name": i.name,
+                "issuer_country": i.issuer_country,
+                "iban_country": i.iban_country,
+                "eligible_residence": list(i.eligible_residence),
+                "required_id_countries": list(i.required_id_countries),
+                "card_country": i.card_bin_country_observed.value,
+                "currencies": list(i.currencies),
+                "url": url,
+                "notes_es": " ".join(i.notes_es.split()),
+            }
+        )
+    return out
+
+
 def profile_capabilities(profile: Profile, ctx: EvalContext) -> dict[str, Any]:
     """A curated profile as the site's profile builder describes one: held instruments count
     as cards of their observed BIN country."""
@@ -924,6 +952,7 @@ def _feasibility_json(
         "records": records,
         "rules": _rules_json(ctx, rows),
         "eea_countries": sorted(ctx.eea_countries),
+        "instruments": _instruments_json(ctx),
     }
 
 

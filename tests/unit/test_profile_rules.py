@@ -194,3 +194,14 @@ def test_preset_capabilities_count_held_cards() -> None:
     assert caps["card_countries"] == ["CO"]
     assert caps["address_countries"] == ["SE"]
     assert caps["presence"] == {"CO": "once"}
+
+
+def test_published_instruments_leave_out_personal_ones() -> None:
+    from haggler.publish import _instruments_json
+
+    items = {i["id"]: i for i in _instruments_json(context(load_feasibility()))}
+    assert "user_co_card" not in items
+    assert items["revolut_eea"]["eligible_residence"] == ["EEA"]
+    assert items["bancolombia_exterior"]["required_id_countries"] == ["CO"]
+    assert items["wise_eea"]["url"] == "https://wise.com/help/articles/2968915"
+    assert items["bunq"]["url"] == "https://bunq.com/"

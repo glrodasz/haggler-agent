@@ -255,6 +255,27 @@ export interface FeasibilityData {
   rules: FeasibilityRule[];
   /** EU/EEA country codes (the rules' "lives_eea" and "doc_eea" questions). */
   eea_countries: string[];
+  /** Payment instruments anyone can open online (the comparator's residence suggestions). */
+  instruments: PaymentInstrumentView[];
+}
+
+/**
+ * A payment instrument opened online. eligible_residence holds country codes, "EEA" (any
+ * EU/EEA residence) or "ANY"; required_id_countries, when not empty, the countries one of whose
+ * ID documents the issuer asks for. card_country is the observed card BIN country (null:
+ * not observed yet, never inferred from the issuer's licence).
+ */
+export interface PaymentInstrumentView {
+  id: string;
+  name: string;
+  issuer_country: string;
+  iban_country: string | null;
+  eligible_residence: string[];
+  required_id_countries: string[];
+  card_country: string | null;
+  currencies: string[];
+  url: string | null;
+  notes_es: string;
 }
 
 export interface OfferRef {

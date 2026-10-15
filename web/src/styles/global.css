@@ -1510,7 +1510,8 @@ main.is-wide {
     top: 6rem;
     align-self: start;
   }
-  .comparador > .result-detail {
+  .comparador > .result-detail,
+  .comparador > .advice {
     grid-column: 1 / -1;
   }
   .controls .service-list {
@@ -1603,4 +1604,61 @@ fieldset.ties {
   padding: var(--space-1);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Guided profile: what the visitor has in their residence, example profiles, residence advice. */
+fieldset.own {
+  border: 0;
+  padding: var(--space-2) 0 0;
+  margin-bottom: var(--space-3);
+}
+fieldset.own > legend {
+  float: none;
+  font-size: 1rem;
+  padding: 0;
+}
+.locate-note .link-button {
+  padding: 0;
+}
+.profile-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+.chip {
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  text-align: left;
+}
+.chip[aria-pressed="true"] {
+  border-color: var(--color-fg);
+  font-weight: 600;
+}
+.advice-list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-3);
+}
+.advice-list > li {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.advice-subtitle {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 1rem;
 }
