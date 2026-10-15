@@ -547,6 +547,11 @@ tr.is-pending > * {
   background: var(--color-surface);
   color: var(--color-fg);
 }
+.provenance-template {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  border: 1px dashed currentColor;
+}
 .provenance-agent_reviewed {
   background: var(--channel-web-bg);
   color: var(--channel-web-fg);

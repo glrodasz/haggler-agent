@@ -38,6 +38,12 @@ Pure (no I/O, no ADK). For a profile P living in R and a target country T:
 9. Confidence: high = reviewed, every decisive claim official, no assumptions; medium = ToS
    from official sources and no assumptions; low otherwise. Provenance agent_reviewed only when
    every decisive claim is accepted for its current hash, else agent_pending.
+10. Template (no research facts for the service nor the pair). A curated record of the same
+   service whose every step is about its own target (payment_country / store_region / presence
+   in T, no other country) is reapplied to any T and any profile: same ToS axis, practicality
+   from those steps (a card of T as in 4 for payment_country, presence in T for presence; either
+   missing -> unknown, never a guess). A step that needs a false declaration makes the route
+   not feasible (as in 5). Provenance "template", confidence low.
 
 The building blocks (Facts, Work, tos_axis, requirement, held_card, obtainable_card, obtainable,
 card_country, eea) are public because haggler.bundles.evaluate applies the same rules to a
@@ -159,7 +165,7 @@ class Assessment:
     label: str
     eu_badge: bool
     confidence: str
-    # "home" | "curated" | "agent_reviewed" | "agent_pending" | "none"
+    # "home" | "curated" | "template" | "agent_reviewed" | "agent_pending" | "none"
     provenance: str
     status: str = "unverified"
     steps: tuple[FeasibilityStep, ...] = ()
@@ -683,6 +689,76 @@ def _curated(record: FeasibilityRecord) -> Assessment:
     )
 
 
+_TEMPLATE_STEPS = frozenset({"payment_country", "store_region", "presence"})
+
+
+def _template(feasibility: FeasibilityFile, service_id: str) -> FeasibilityRecord | None:
+    """The service's curated record that only speaks about its own target (see 10)."""
+    for record in feasibility.records:
+        if (
+            record.service_id == service_id
+            and record.practical != "impossible"
+            and record.steps
+            and all(
+                st.type in _TEMPLATE_STEPS and st.value == record.target_country
+                for st in record.steps
+            )
+        ):
+            return record
+    return None
+
+
+def _from_template(
+    record: FeasibilityRecord, target: str, profile: Profile, facts: Facts, base: dict[str, str]
+) -> Assessment | None:
+    practical = "remote"
+    false_declaration = False
+    steps: list[FeasibilityStep] = []
+    for st in record.steps:
+        if st.type == "payment_country":
+            w = Work()
+            if not (
+                held_card(target, profile, facts, w) or obtainable_card(target, profile, facts, w)
+            ):
+                return None
+        if st.type == "presence":
+            if profile.presence_in(target) is None:
+                return None
+            practical = "presence_once"
+        false_declaration = false_declaration or st.requires_false_declaration
+        steps.append(st.model_copy(update={"value": target}))
+    if false_declaration:
+        legality, practical, rank = "requires_misrepresentation", "impossible", 4
+    else:
+        legality = "lawful"
+        rank = max(LEGALITY_RANK[legality], TOS_RANK[record.tos], PRACTICAL_RANK[practical])
+    evidence = list(record.evidence)
+    if record.tos_clause is not None:
+        evidence.insert(
+            0, Evidence(url=record.tos_clause.url, kind="official", quote=record.tos_clause.quote)
+        )
+    return Assessment(
+        **base,
+        profile=profile.id,
+        legality=legality,
+        tos=record.tos,
+        practical=practical,
+        rank=rank,
+        label=LABELS[rank],
+        eu_badge=False,
+        confidence="low",
+        provenance="template",
+        steps=tuple(steps),
+        evidence=tuple(evidence),
+        researched_on=record.last_verified,
+        record_id=record.id,
+        notes_es=(
+            f"Mismos términos y pasos que la ficha curada {record.id}, aplicados a {target}: "
+            "sin investigar este país en concreto."
+        ),
+    )
+
+
 def assess(
     service_id: str,
     target: str,
@@ -728,6 +804,9 @@ def assess(
         provenance="none",
     )
     if facts.subject(svc_key) is None and facts.subject(pair_key_) is None:
+        template = _template(ctx.feasibility, service_id)
+        if template is not None:
+            return _from_template(template, target, profile, facts, base) or unknown
         return unknown
 
     w = Work()

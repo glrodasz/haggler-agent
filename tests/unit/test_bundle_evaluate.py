@@ -362,8 +362,9 @@ def test_google_ai_pro_inherits_youtube_curated_rank() -> None:
         "como país de residencia), así que el paquete hereda su nivel «Contra los términos, "
         "control activo»." in a.reasons_es
     )
-    # Google One CO has no verdict: the rank is a floor, and the verdict says so.
-    assert "Hay partes del paquete sin evaluar: el nivel podría ser peor." in a.assumptions_es
+    # Google One CO has no record of its own; it is judged by analogy with its curated LT record
+    # (a trip and a local card), so no part of the bundle is left unevaluated.
+    assert "Hay partes del paquete sin evaluar: el nivel podría ser peor." not in a.assumptions_es
     assert (a.legality, a.tos) == ("requires_misrepresentation", "breach_enforced")
 
 

@@ -213,6 +213,7 @@ export const es = {
     home: "Tu país",
     curated: "Curado",
     composed: "Por requisitos",
+    template: "Por analogía",
     agent_reviewed: "Revisado",
     agent_pending: "Pendiente de revisión",
   } as Record<string, string>,
@@ -221,6 +222,8 @@ export const es = {
     curated: "Ficha escrita a mano; siempre prevalece sobre la investigación automática.",
     composed:
       "Calculado a partir de los requisitos del paquete y del veredicto de cada servicio incluido.",
+    template:
+      "Mismos términos y pasos que la ficha curada del servicio, aplicados a este país sin investigarlo en concreto.",
     agent_reviewed:
       "Calculada a partir de hallazgos del agente de investigación que una persona aceptó.",
     agent_pending:

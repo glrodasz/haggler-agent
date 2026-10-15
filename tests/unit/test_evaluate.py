@@ -148,6 +148,30 @@ def test_no_research_is_unknown():
     assert a.verdict().provenance is None
 
 
+def test_curated_template_applies_to_other_countries_with_the_same_ties():
+    tr_user = Profile(
+        id="tr",
+        name_es="tr",
+        residence_country="DE",
+        id_document_countries=["DE"],
+        phone_countries=["DE"],
+        card_countries=["TR"],
+        presence={"TR": "once"},
+    )
+    feas = load_feasibility()
+    a = assess("netflix", "TR", tr_user, ctx(feasibility=feas))
+    assert (a.provenance, a.practical, a.confidence) == ("template", "presence_once", "low")
+    assert a.record_id == "netflix_co_from_se"
+    assert [s.value for s in a.steps] == ["TR", "TR"]
+    # Same steps, but the template requires declaring a false country: never feasible.
+    yt = assess("youtube_premium", "TR", tr_user, ctx(feasibility=feas))
+    assert (yt.provenance, yt.rank) == ("template", 4)
+    # Without a card from the country (or the trip the template needs) it stays unknown.
+    assert assess("netflix", "TR", GENERIC, ctx(feasibility=feas)).provenance == "none"
+    no_trip = tr_user.model_copy(update={"presence": {}})
+    assert assess("netflix", "TR", no_trip, ctx(feasibility=feas)).provenance == "none"
+
+
 def test_curated_record_wins_over_research():
     feas = load_feasibility()
     svc = subject(SVC, claim(SVC, "foreign_offer_allowed", "true"))
