@@ -17,7 +17,7 @@
  */
 
 import type { Offer, OfferRef, RiskKey, RiskLevel, ServiceInfo } from "./types";
-import { RISK_LEVELS } from "./types";
+import { RISK_LEVELS, UNKNOWN_RANK } from "./types";
 
 /** The subset of an offer the comparison needs (the island ships only these fields). */
 export type CompareOfferFields = Pick<
@@ -278,6 +278,13 @@ export interface SummaryRow {
   runnerUp: PricedOffer | null;
   runnerUpCost: number | null;
   runnerUpAboveRisk: boolean;
+  /**
+   * The cheapest offer from another country that is cheaper than `best` but has no verdict yet
+   * for this profile (rank 99). Never chosen nor summed: shown so a profile nobody has evaluated
+   * still sees what the price difference is. Null when there is none.
+   */
+  unevaluated: PricedOffer | null;
+  unevaluatedCost: number | null;
 }
 
 export interface Totals {
@@ -290,6 +297,8 @@ export interface Totals {
   fee: number;
   withoutHome: string[];
   withoutOffers: string[];
+  /** What the unevaluated offers would save on top of `saving` (rows with a home price only). */
+  unevaluatedSaving: number;
 }
 
 /** Rows and totals (display currency) for the services the visitor picked at threshold k. */
@@ -308,6 +317,7 @@ export function summarize(
     fee: 0,
     withoutHome: [],
     withoutOffers: [],
+    unevaluatedSaving: 0,
   };
   for (const row of rows) {
     const best = row.bestByRisk[k];
@@ -320,6 +330,17 @@ export function summarize(
         : [];
     const withinK = foreign.find((o) => withinRisk(o, k)) ?? null;
     const runnerUp = withinK ?? foreign.find((o) => withinRisk(o, 3)) ?? null;
+    const reference = best ?? row.home;
+    const unevaluated =
+      row.offers.find(
+        (o) =>
+          o.rank === UNKNOWN_RANK &&
+          o.country !== row.home?.country &&
+          (reference === null || o.cost_eur_with_fee < reference.cost_eur_with_fee),
+      ) ?? null;
+    const unevaluatedCost = unevaluated
+      ? displayCost(unevaluated, currency, rates, feePct)
+      : null;
     out.push({
       service_id: row.service_id,
       plan_id: row.plan_id,
@@ -331,7 +352,12 @@ export function summarize(
       runnerUp,
       runnerUpCost: runnerUp ? displayCost(runnerUp, currency, rates, feePct) : null,
       runnerUpAboveRisk: runnerUp !== null && withinK === null,
+      unevaluated,
+      unevaluatedCost,
     });
+    if (homeCost !== null && unevaluatedCost !== null) {
+      totals.unevaluatedSaving += (bestCost ?? homeCost) - unevaluatedCost;
+    }
     if (homeCost !== null && bestCost !== null && best) {
       totals.comparable += 1;
       totals.home += homeCost;

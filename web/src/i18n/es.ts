@@ -597,6 +597,10 @@ export const es = {
     rowTotals: "Totales",
     perYear: (amount: string) => `${amount} al año`,
     savingNone: "Con este riesgo, tu país ya es la opción más barata.",
+    savingNoneEvaluated:
+      "Para tu perfil aún no hay ofertas de otros países con el riesgo evaluado, así que no sumamos ningún ahorro.",
+    savingUnevaluated: (amount: string) =>
+      `Las ofertas sin evaluar de otros países costarían hasta ${amount} al mes menos. No se suman: míralas abajo.`,
     savingMore: (amount: string) =>
       `Aceptando más riesgo podrías ahorrar hasta ${amount} al mes. Compáralo abajo.`,
     tableCaption: (residence: string, risk: string) =>
@@ -609,6 +613,9 @@ export const es = {
     noHome: "Sin precio local",
     noOffer: "Sin oferta con este riesgo",
     homeIsBest: "Tu país ya es la opción más barata",
+    homeIsBestEvaluated: "Tu país es la opción más barata entre las evaluadas",
+    unevaluatedOffer: (country: string, price: string, diff: string | null) =>
+      `Más barata pero sin evaluar para tu perfil: ${country}, ${price} al mes${diff ? ` (${diff})` : ""}`,
     runnerUp: (country: string, price: string, diff: string) =>
       `Le sigue ${country}: ${price} al mes (${diff})`,
     runnerUpAboveRisk: (country: string, price: string, diff: string) =>

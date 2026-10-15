@@ -16,6 +16,7 @@ import {
   type CompareContext,
   type CompareOfferFields,
   type PricedOffer,
+  type SummaryRow,
   savingsByRisk,
   savingsPctByRisk,
   summarize,
@@ -381,6 +382,19 @@ export default function Comparador(props: ComparadorProps) {
   const planLabel = (serviceId: string, planId: string) =>
     serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label_es ?? planId;
   const names = (ids: string[]) => ids.map((id) => serviceById.get(id)?.name ?? id).join(", ");
+  const unevaluatedNote = (r: SummaryRow): UnevaluatedInfo | null => {
+    if (!r.unevaluated) return null;
+    const reference = r.bestCost ?? r.homeCost;
+    return {
+      country: r.unevaluated.country,
+      countryName: props.countryNames[r.unevaluated.country] ?? r.unevaluated.country,
+      cost: formatMoney(r.unevaluatedCost, cur),
+      diff:
+        reference !== null && r.unevaluatedCost !== null
+          ? formatSignedMoney(r.unevaluatedCost - reference, cur)
+          : null,
+    };
+  };
 
   const { totals } = summary;
   const hasSaving = totals.saving > 0.005;
@@ -673,9 +687,18 @@ export default function Comparador(props: ComparadorProps) {
                   </>
                 ) : (
                   <>
-                    <span class="result-sub result-none">{t.savingNone}</span>
+                    <span class="result-sub result-none">
+                      {maxSaving <= 0.005 && totals.unevaluatedSaving > 0.005
+                        ? t.savingNoneEvaluated
+                        : t.savingNone}
+                    </span>
                     {maxSaving > 0.005 && (
                       <span class="result-sub">{t.savingMore(formatMoney(maxSaving, cur))}</span>
+                    )}
+                    {totals.unevaluatedSaving > 0.005 && (
+                      <span class="result-sub">
+                        {t.savingUnevaluated(formatMoney(totals.unevaluatedSaving, cur))}
+                      </span>
                     )}
                   </>
                 )}
@@ -813,6 +836,7 @@ export default function Comparador(props: ComparadorProps) {
                                 ),
                               }
                             }
+                            unevaluated={unevaluatedNote(r)}
                             pending={
                               state.pending &&
                               verdict(r.best.service_id, r.best.country).provenance ===
@@ -820,7 +844,10 @@ export default function Comparador(props: ComparadorProps) {
                             }
                           />
                         ) : (
-                          <span class="muted">{t.noOffer}</span>
+                          <div class="offer-cell">
+                            <span class="muted">{t.noOffer}</span>
+                            <UnevaluatedNote note={unevaluatedNote(r)} />
+                          </div>
                         )}
                       </td>
                       <td class="num">{formatMoney(r.bestCost, cur)}</td>
@@ -963,6 +990,8 @@ function OfferCell(props: {
     diff: string;
     aboveRisk: boolean;
   } | null;
+  /** Cheaper offer from another country with no verdict yet for this profile. */
+  unevaluated: UnevaluatedInfo | null;
   /** The verdict comes from findings still pending review. */
   pending: boolean;
 }) {
@@ -998,7 +1027,9 @@ function OfferCell(props: {
           `${formatPrice(offer.amount, offer.currency)}${periodSuffix(offer.billing_period)}`,
         )}
       </span>
-      {props.isHome && <span class="small">{t.homeIsBest}</span>}
+      {props.isHome && (
+        <span class="small">{props.unevaluated ? t.homeIsBestEvaluated : t.homeIsBest}</span>
+      )}
       {props.isHome && (
         <span class="small muted">
           {props.runnerUp ? (
@@ -1010,12 +1041,31 @@ function OfferCell(props: {
                 props.runnerUp.diff,
               )}
             </>
-          ) : (
+          ) : props.unevaluated ? null : (
             t.noRunnerUp
           )}
         </span>
       )}
+      <UnevaluatedNote note={props.unevaluated} />
     </div>
+  );
+}
+
+interface UnevaluatedInfo {
+  country: string;
+  countryName: string;
+  cost: string;
+  diff: string | null;
+}
+
+function UnevaluatedNote(props: { note: UnevaluatedInfo | null }) {
+  const { note } = props;
+  if (!note) return null;
+  return (
+    <span class="small muted">
+      <span aria-hidden="true">{flagEmoji(note.country)}</span>{" "}
+      {t.unevaluatedOffer(note.countryName, note.cost, note.diff)}
+    </span>
   );
 }
 
