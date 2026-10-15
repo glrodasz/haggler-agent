@@ -43,13 +43,52 @@
       "id": "se_resident_co_citizen",
       "name_es": "Residente en Suecia con ciudadanía colombiana",
       "description_es": "Vive en Suecia (residencia estable), ciudadano colombiano con cédula y tarjeta de crédito emitida en Colombia. Viaja a Colombia de vez en cuando.",
-      "residence_country": "SE"
+      "residence_country": "SE",
+      "citizenships": [
+        "CO"
+      ],
+      "capabilities": {
+        "residence_country": "SE",
+        "id_document_countries": [
+          "CO",
+          "SE"
+        ],
+        "phone_countries": [
+          "SE"
+        ],
+        "address_countries": [
+          "SE"
+        ],
+        "card_countries": [
+          "CO"
+        ],
+        "presence": {
+          "CO": "once"
+        }
+      }
     },
     {
       "id": "se_resident_eu_generic",
       "name_es": "Residente en Suecia sin vínculos con otros países",
       "description_es": "Vive en Suecia, con documentos, teléfono y dirección solo suecos y sin tarjetas extranjeras. Puede abrir en línea cuentas de bancos del EEE.",
-      "residence_country": "SE"
+      "residence_country": "SE",
+      "citizenships": [
+        "SE"
+      ],
+      "capabilities": {
+        "residence_country": "SE",
+        "id_document_countries": [
+          "SE"
+        ],
+        "phone_countries": [
+          "SE"
+        ],
+        "address_countries": [
+          "SE"
+        ],
+        "card_countries": [],
+        "presence": {}
+      }
     }
   ],
   "records": [
@@ -821,5 +860,840 @@
         "los términos exigen: el país de la cuenta debe ser el de residencia"
       ]
     }
+  ],
+  "rules": [
+    {
+      "service_id": "apple_music",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "apple_one",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "apple_tv",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "disney_plus",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "google_one",
+      "target_country": "LT",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": true,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "hbo_max",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "icloud_plus",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "icloud_plus",
+      "target_country": "LT",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": true,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "agent_reviewed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "microsoft_365",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "netflix",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": "agent_reviewed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "agent_pending"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "service_id": "netflix",
+      "target_country": "LT",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": "agent_reviewed"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "spotify",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_enforced",
+                  "rank": 3,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "spotify",
+      "target_country": "LT",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "verdict": {
+              "label": "unknown",
+              "rank": 99,
+              "eu_badge": false,
+              "provenance": null
+            }
+          }
+        }
+      },
+      "pending": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "agent_pending"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "tos_breach_low_enforcement",
+                      "rank": 2,
+                      "eu_badge": false,
+                      "provenance": "agent_pending"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "service_id": "youtube_premium",
+      "target_country": "CO",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_enforced",
+                  "rank": 3,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
+    {
+      "service_id": "youtube_premium",
+      "target_country": "US",
+      "reviewed": {
+        "ask": [
+          "lives",
+          "US"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "not_feasible",
+                  "rank": 4,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    }
+  ],
+  "eea_countries": [
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "GR",
+    "HR",
+    "HU",
+    "IE",
+    "IS",
+    "IT",
+    "LI",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "NO",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK"
   ]
 }

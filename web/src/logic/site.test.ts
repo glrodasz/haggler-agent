@@ -780,6 +780,35 @@ describe("selection hash", () => {
     );
   });
 
+  it("carries a described profile in pf= instead of p=", () => {
+    const options = {
+      profiles: ["se_resident_eu_generic"],
+      residences: ["SE", "CO"],
+      countries: new Set(["SE", "CO", "AR", "FR"]),
+    };
+    const custom = {
+      residence: "CO",
+      residenceDoc: true,
+      residencePhone: true,
+      residenceCard: false,
+      ties: [
+        { cc: "AR", doc: true, card: false, phone: false, address: true, presence: "periodic" as const },
+      ],
+    };
+    const state = { ...fallback, services: ["netflix"], custom };
+    const hash = `#${encodeState(state)}`;
+    expect(hash).toBe("#s=netflix.standard&r=0&c=SEK&pf=CO.dp%2CAR.dar");
+    expect(decodeState(hash, services, ["SEK"], fallback, options)).toEqual(state);
+    // A residence without prices drops the described profile (default profile).
+    expect(
+      decodeState("#s=netflix.standard&pf=FR.dp", services, ["SEK"], fallback, options),
+    ).toMatchObject({ custom: null, profile: null });
+    // pf= wins over p=.
+    expect(
+      decodeState("#pf=SE.dp&p=se_resident_eu_generic", services, ["SEK"], fallback, options),
+    ).toMatchObject({ profile: null, custom: { residence: "SE", ties: [] } });
+  });
+
   it("ignores unknown services, plans, risks and currencies", () => {
     const s = decodeState(
       "#s=nope.x,spotify.zzz,netflix.premium&r=9&c=JPY",

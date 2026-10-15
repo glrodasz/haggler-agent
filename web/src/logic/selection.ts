@@ -1,10 +1,12 @@
 /**
  * Comparator state <-> URL hash ("#s=netflix.standard,spotify.family&r=2&c=EUR&p=x&u=1"), so a
- * selection can be bookmarked or shared without any server or storage. p (feasibility profile)
- * is left out for the default profile and u (include findings pending review) when off, so the
+ * selection can be bookmarked or shared without any server or storage. p (curated feasibility
+ * profile) is left out for the default profile, pf (a profile the visitor described, see
+ * profile.ts) replaces it, and u (include findings pending review) is left out when off, so the
  * common links stay short and old links keep working.
  */
 
+import { decodeProfile, encodeProfile, type VisitorProfile } from "./profile";
 import type { RiskLevel } from "./types";
 import { RISK_LEVELS } from "./types";
 
@@ -15,8 +17,10 @@ export interface CompareState {
   plans: Record<string, string>;
   risk: RiskLevel;
   currency: string;
-  /** Feasibility profile id; null = the site's default profile. */
+  /** Curated feasibility profile id; null = the site's default profile. */
   profile: string | null;
+  /** A profile the visitor described; when set it replaces `profile`. */
+  custom: VisitorProfile | null;
   /** Count research findings still pending review. */
   pending: boolean;
 }
@@ -26,6 +30,10 @@ export interface DecodeOptions {
   profiles?: readonly string[];
   /** Whether u=1 is accepted (false when no record is pending review). */
   pending?: boolean;
+  /** Residence countries accepted in pf= (none: pf= is ignored). */
+  residences?: readonly string[];
+  /** Tie countries accepted in pf=. */
+  countries?: ReadonlySet<string>;
 }
 
 export interface ServiceChoice {
@@ -50,6 +58,7 @@ export function defaultState(
     risk: DEFAULT_RISK,
     currency,
     profile: null,
+    custom: null,
     pending: false,
   };
 }
@@ -58,7 +67,11 @@ export function encodeState(state: CompareState): string {
   const s = state.services
     .map((id) => `${encodeURIComponent(id)}.${encodeURIComponent(state.plans[id] ?? "")}`)
     .join(",");
-  const p = state.profile === null ? "" : `&p=${encodeURIComponent(state.profile)}`;
+  const p = state.custom
+    ? `&pf=${encodeURIComponent(encodeProfile(state.custom))}`
+    : state.profile === null
+      ? ""
+      : `&p=${encodeURIComponent(state.profile)}`;
   const u = state.pending ? "&u=1" : "";
   return `s=${s}&r=${state.risk}&c=${encodeURIComponent(state.currency)}${p}${u}`;
 }
@@ -96,13 +109,21 @@ export function decodeState(
   const risk = Number(params.get("r"));
   const currency = params.get("c") ?? "";
   const profile = params.get("p") ?? "";
+  const custom = params.has("pf")
+    ? decodeProfile(
+        params.get("pf") ?? "",
+        options.residences ?? [],
+        options.countries ?? new Set(),
+      )
+    : null;
   return {
     services: selected,
     plans,
     risk: params.has("r") && isRisk(risk) ? risk : fallback.risk,
     currency: currencies.includes(currency) ? currency : fallback.currency,
     // A link to a profile that is gone (or the default one) shows the default profile.
-    profile: (options.profiles ?? []).includes(profile) ? profile : null,
+    profile: !custom && (options.profiles ?? []).includes(profile) ? profile : null,
+    custom,
     pending: options.pending === true && params.get("u") === "1",
   };
 }

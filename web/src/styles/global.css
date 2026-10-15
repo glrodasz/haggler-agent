@@ -757,3 +757,71 @@ blockquote {
     display: none;
   }
 }
+
+/* Comparator profile builder (residence and ties with other countries). */
+.field {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+.field > .fieldset-help {
+  margin: 0;
+}
+fieldset.ties {
+  margin-bottom: var(--space-3);
+}
+.tie-list,
+.tie-flags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tie-list {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.tie {
+  display: grid;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.tie-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tie-head select {
+  flex: 1;
+  min-width: 0;
+}
+.tie-flags {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  column-gap: var(--space-3);
+}
+.tie-flags .check {
+  min-height: 2rem;
+  font-size: var(--text-sm);
+}
+.tie-presence {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+.tie-presence select {
+  flex: 1;
+  min-width: 0;
+}
+.link-button {
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  background: none;
+  border: 0;
+  padding: var(--space-1);
+  text-decoration: underline;
+  cursor: pointer;
+}

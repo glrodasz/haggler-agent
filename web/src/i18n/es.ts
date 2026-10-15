@@ -467,6 +467,27 @@ export const es = {
     profileHelp:
       "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes.",
     profileLabel: "Perfil de factibilidad",
+    profileStart: "Punto de partida",
+    profileCustom: "Perfil propio",
+    profileCustomDesc:
+      "Las etiquetas salen de aplicar las mismas reglas a los hechos investigados. Las fichas curadas a mano solo valen para los perfiles predefinidos.",
+    residenceLabel: "País de residencia",
+    residenceHelp:
+      "Solo aparecen los países cuyos precios seguimos, porque el ahorro se calcula contra el precio de tu país.",
+    tiesLabel: "Vínculos con otros países",
+    tiesHelp:
+      "Tu nacionalidad u otros países donde tienes documentos, tarjeta, teléfono o dirección, o adonde viajas. Puede ser cualquier país.",
+    tiesNone: "Ninguno.",
+    tieCountry: (n: number) => `País del vínculo ${n}`,
+    tieAdd: "Añadir un país…",
+    tieRemove: (country: string) => `Quitar ${country}`,
+    tieRemoveText: "Quitar",
+    tieDoc: "Documento de identidad o pasaporte",
+    tieCard: "Tarjeta emitida allí",
+    tiePhone: "Número de teléfono",
+    tieAddress: "Dirección real",
+    tiePresence: "Viajes",
+    presence: { none: "No viajo allí", once: "De vez en cuando", periodic: "Con regularidad" },
     pendingLabel: "Incluir hallazgos pendientes de revisión",
     pendingHelp:
       "Hallazgos del agente de investigación que nadie ha revisado todavía. Sin marcar, solo cuentan las fichas curadas o revisadas.",
@@ -592,7 +613,8 @@ export const es = {
     marginal: (full: string) => `coste adicional al plan base; completo: ${full}`,
     pendingVerdict: "Con hallazgos pendientes:",
     noOthers: "Sin otros perfiles",
-    cardLink: (name: string, country: string) => `${name}: ficha completa en la página de ${country}`,
+    cardLink: (name: string, country: string) =>
+      `${name}: ficha completa en la página de ${country}`,
     savingNote:
       "El ahorro compara el precio regular con los servicios incluidos comprados por separado en el país del paquete. No cuenta la comisión de cambio, los precios de introducción, los descuentos ni los meses gratis.",
     methodologyLink: "Cómo se verifican los paquetes",
@@ -719,7 +741,7 @@ export const es = {
         : "Todavía no se ha publicado ninguna investigación: solo hay fichas escritas a mano.",
     profilesTitle: "Perfiles",
     profilesLead:
-      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto; cuando hay más de uno, el comparador tiene un selector de perfil.",
+      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. En el comparador puedes elegir uno de estos perfiles o describir el tuyo: país de residencia (entre los que tienen precios) y vínculos con cualquier otro país. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
     defaultProfileTag: "Por defecto",
     researchNotLegal:
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",

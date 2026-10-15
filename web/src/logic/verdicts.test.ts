@@ -3,11 +3,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { cheapestFor } from "./compare";
 import { assertSiteData } from "./site";
-import { packVerdicts, unpackVerdicts } from "./transport";
 import type { FeasibilityData, SiteData } from "./types";
 import { DATA_FILES } from "./types";
 import {
   isPending,
+  matchingPreset,
   recordsForDisplay,
   relabelOffers,
   resolveProfile,
@@ -114,7 +114,10 @@ describe("verdicts on the sample data", () => {
     const on = verdictLookup(feasibility, other, true);
     expect(off("spotify", "LT")).toMatchObject({ rank: 99, provenance: null });
     expect(on("spotify", "LT")).toMatchObject({ rank: 2, provenance: "agent_pending" });
-    expect(on("netflix", "CO")).toMatchObject({ label: "not_feasible", provenance: "agent_pending" });
+    expect(on("netflix", "CO")).toMatchObject({
+      label: "not_feasible",
+      provenance: "agent_pending",
+    });
     // Without a pending record the non-pending one is kept.
     expect(on("icloud_plus", "LT")).toMatchObject({ rank: 4, provenance: "agent_reviewed" });
   });
@@ -155,11 +158,35 @@ describe("verdicts on the sample data", () => {
     );
   });
 
-  it("round-trips the records the island ships", () => {
+  it("evaluates a described profile with the same rules", () => {
+    const co = feasibility.profiles[0]!.capabilities;
+    // Exactly the default profile's capabilities: its curated records apply.
+    const same = { ...co, id_document_countries: [...co.id_document_countries].reverse() };
+    expect(verdictLookup(feasibility, same, false)("spotify", "CO")).toMatchObject({
+      rank: 3,
+      provenance: "curated",
+    });
+    expect(matchingPreset(feasibility, same)).toBe(data.meta.profile);
+    // Without the Colombian card it is another profile: the curated record does not apply.
+    const noCard = { ...co, card_countries: [] };
+    expect(matchingPreset(feasibility, noCard)).toBeNull();
+    expect(verdictLookup(feasibility, noCard, false)("spotify", "CO")).toMatchObject({
+      label: "unknown",
+      provenance: null,
+    });
+    // Living in Colombia: Colombia is home, Sweden is just another country.
+    const inCo = { ...co, residence_country: "CO", address_countries: ["CO"] };
+    const v = verdictLookup(feasibility, inCo, true);
+    expect(v("spotify", "CO")).toMatchObject({ label: "official_home", rank: 0 });
+    expect(v("netflix", "SE")).toMatchObject({ label: "unknown", rank: 99 });
+  });
+
+  it("survives the island's JSON round trip", () => {
     const source: VerdictSource = {
       default_profile: feasibility.default_profile,
       profiles: feasibility.profiles,
-      records: unpackVerdicts(JSON.parse(JSON.stringify(packVerdicts(feasibility.records)))),
+      rules: JSON.parse(JSON.stringify({ rules: feasibility.rules })).rules,
+      eea_countries: feasibility.eea_countries,
     };
     for (const profile of feasibility.profiles) {
       for (const pending of [false, true]) {
@@ -168,8 +195,6 @@ describe("verdicts on the sample data", () => {
         );
       }
     }
-    expect(unpackVerdicts(null)).toEqual([]);
-    expect(unpackVerdicts({ fields: ["profile"], rows: [["a", "b"]] })).toEqual([]);
   });
 });
 
@@ -178,8 +203,26 @@ describe("verdicts without research", () => {
   const feasibility: FeasibilityData = {
     labels: [],
     default_profile: "p",
-    profiles: [{ id: "p", name_es: "P", description_es: "", residence_country: "SE" }],
+    profiles: [
+      {
+        id: "p",
+        name_es: "P",
+        description_es: "",
+        residence_country: "SE",
+        citizenships: [],
+        capabilities: {
+          residence_country: "SE",
+          id_document_countries: [],
+          phone_countries: [],
+          address_countries: ["SE"],
+          card_countries: [],
+          presence: {},
+        },
+      },
+    ],
     records: [],
+    rules: [],
+    eea_countries: ["SE"],
   };
 
   it("labels every foreign offer unknown and the residence official", () => {

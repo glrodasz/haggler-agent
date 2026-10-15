@@ -1,7 +1,9 @@
 ---
 import Comparador, {
+  type ComparadorCountry,
   type ComparadorLabel,
   type ComparadorProfile,
+  type ComparadorResidence,
   type ComparadorService,
 } from "../islands/Comparador";
 import { es } from "../i18n/es";
@@ -9,7 +11,8 @@ import Base from "../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../logic/compare";
 import { getSite } from "../logic/data";
 import { routes } from "../logic/paths";
-import { inlineJson, packOffers, packVerdicts } from "../logic/transport";
+import { ALL_COUNTRY_CODES, countryOptions } from "../logic/profile";
+import { inlineJson, packOffers } from "../logic/transport";
 import { isPending } from "../logic/verdicts";
 
 const site = getSite();
@@ -62,20 +65,28 @@ const defaultCurrency = currencies.includes(site.residenceCurrency)
   : (currencies[0] ?? "EUR");
 const offersJson = inlineJson(packOffers(offers));
 
-// Feasibility records of every public profile, so the island can relabel the offers.
-const profiles: ComparadorProfile[] = site.feasibility.profiles.map((p) => {
-  const home = site.country(p.residence_country);
-  return {
-    id: p.id,
-    name: p.name_es,
-    description: p.description_es,
-    residence: p.residence_country,
-    residenceName: home?.name_es ?? p.residence_country,
-    residenceCurrency: home?.currency ?? site.residenceCurrency,
-  };
-});
-const verdictsJson = inlineJson(packVerdicts(site.feasibility.records));
-const hasPending = site.feasibility.records.some(isPending);
+// The public profiles and the rules of every pair, so the island can relabel the offers for a
+// curated profile or one the visitor describes.
+const profiles: ComparadorProfile[] = site.feasibility.profiles.map((p) => ({
+  id: p.id,
+  name: p.name_es,
+  description: p.description_es,
+  capabilities: p.capabilities,
+}));
+// A visitor can live in any country with prices (the saving is against its home price) and
+// have ties with any country.
+const residences: ComparadorResidence[] = countryOptions(
+  site.countries.map((c) => c.cc),
+  countryNames,
+).map((o) => ({ ...o, currency: site.country(o.cc)?.currency ?? "EUR" }));
+const tieCountries: ComparadorCountry[] = countryOptions(
+  [...new Set([...ALL_COUNTRY_CODES, ...site.countries.map((c) => c.cc)])],
+  countryNames,
+);
+const verdictsJson = inlineJson({ rules: site.feasibility.rules });
+const hasPending =
+  site.feasibility.rules.some((r) => r.pending !== null) ||
+  site.feasibility.records.some(isPending);
 ---
 
 <Base current="home">
@@ -107,6 +118,9 @@ const hasPending = site.feasibility.records.some(isPending);
     dataId="comparador-ofertas"
     profiles={profiles}
     defaultProfile={site.feasibility.default_profile}
+    residences={residences}
+    tieCountries={tieCountries}
+    eeaCountries={site.feasibility.eea_countries}
     hasPending={hasPending}
     verdictsId="comparador-veredictos"
   />

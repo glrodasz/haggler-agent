@@ -59,7 +59,6 @@ from haggler.feasibility import (
     UNKNOWN_RANK,
     Verdict,
     eu_badge,
-    find_record,
     record_rank,
 )
 from haggler.models.catalog import Catalog
@@ -106,6 +105,43 @@ EU_LEGAL_BASIS = LegalBasis(
     article="Art. 4(1)(b)",
     strength="arguable",
     tested=False,
+)
+# EU member states plus Iceland, Liechtenstein and Norway: an ID document of any of them is an
+# EEA document even when the country is not in the catalog (the site's profile builder offers
+# every country). The catalog's eu_eea flags are added on top.
+EEA_COUNTRIES = frozenset(
+    {
+        "AT",
+        "BE",
+        "BG",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IS",
+        "IT",
+        "LI",
+        "LT",
+        "LU",
+        "LV",
+        "MT",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "SE",
+        "SI",
+        "SK",
+    }
 )
 _PRACTICAL_ORDER = ("remote", "presence_once", "presence_periodic", "impossible")
 
@@ -158,6 +194,10 @@ class EvalContext:
     facts: dict[str, SubjectFacts]
     review: ReviewIndex
     today: date
+
+    @property
+    def eea_countries(self) -> frozenset[str]:
+        return EEA_COUNTRIES | {c.cc for c in self.catalog.countries if c.eu_eea}
 
     @classmethod
     def build(
@@ -306,10 +346,13 @@ def obtainable(inst: PaymentInstrument, profile: Profile, facts: Facts, w: Work)
     if remote is not None and remote.value == "false":
         w.use(remote.claims, key)
         return False
-    r = profile.residence_country
+    eea_ccs = ctx.eea_countries
 
     def eligible(codes: Iterable[str]) -> bool:
-        return any(e in ("ANY", r) or (e == "EEA" and eea(ctx, r)) for e in codes)
+        return any(
+            e == "ANY" or (profile.lives_in_eea(eea_ccs) if e == "EEA" else profile.lives_in(e))
+            for e in codes
+        )
 
     if not eligible(inst.eligible_residence):
         return False
@@ -317,18 +360,19 @@ def obtainable(inst: PaymentInstrument, profile: Profile, facts: Facts, w: Work)
     if claimed and not eligible(claimed):
         w.use([c for cs in claimed.values() for c in cs], key)
         return False
-    docs = profile.documents()
-    if inst.required_id_countries and not set(inst.required_id_countries) & docs:
+    if inst.required_id_countries and not any(
+        profile.has_document(cc) for cc in inst.required_id_countries
+    ):
         return False
     accepted_docs = facts.values(key, "id_documents")
     if accepted_docs:
         ok = {
-            "any_passport": bool(docs),
-            "eea_id": any(eea(ctx, cc) for cc in docs),
-            "residence_permit": r in docs,
-            "issuer_country_id": inst.issuer_country in docs,
+            "any_passport": profile.has_any_document,
+            "eea_id": lambda: profile.has_eea_document(eea_ccs),
+            "residence_permit": profile.has_residence_document,
+            "issuer_country_id": lambda: profile.has_document(inst.issuer_country),
         }
-        usable = [v for v in accepted_docs if ok.get(v)]
+        usable = [v for v in accepted_docs if v in ok and ok[v]()]
         if not usable:
             return False
         w.use(accepted_docs[usable[0]], key)
@@ -339,17 +383,20 @@ def obtainable(inst: PaymentInstrument, profile: Profile, facts: Facts, w: Work)
         w.assumptions.append(f"se asume que {inst.name} no exige una dirección en su país")
     elif local.value == "true":
         w.use(local.claims, key)
-        if inst.issuer_country not in profile.addresses():
+        if not profile.has_address(inst.issuer_country):
             return False
     return True
 
 
 def held_card(target: str, profile: Profile, facts: Facts, w: Work) -> str | None:
-    """Id of a held instrument whose card is issued in `target`."""
+    """Id of a held instrument whose card is issued in `target` ("card:T" for a card the
+    profile describes only by its country)."""
     held = set(profile.instruments_held)
     for inst in facts.ctx.instruments.instruments:
         if inst.id in held and card_country(inst, facts, w) == target:
             return inst.id
+    if profile.holds_card_of(target):
+        return f"card:{target}"
     return None
 
 
@@ -466,7 +513,7 @@ def _practical(
         implied=basis.get("signup_location"),
         implied_key=svc_key,
     ):
-        if t in profile.presence:
+        if profile.presence_in(t) is not None:
             w.practical.append("presence_once")
             w.step("presence", t, requires_presence=True)
         else:
@@ -482,7 +529,7 @@ def _practical(
         required="true",
         assumption_es=f"se asume que no hay verificaciones periódicas de ubicación en {t}",
     ):
-        if profile.presence.get(t) == "periodic":
+        if profile.presence_in(t) == "periodic":
             w.practical.append("presence_periodic")
             w.step("presence", t, requires_presence=True)
         else:
@@ -498,7 +545,7 @@ def _practical(
         required="true",
         assumption_es=f"se asume que no se pide un documento de {t}",
     ):
-        if t in profile.documents():
+        if profile.has_document(t):
             w.step("local_id", t)
         else:
             w.practical.append("impossible")
@@ -515,7 +562,7 @@ def _practical(
         implied=basis.get("phone_number"),
         implied_key=svc_key,
     ):
-        if t in profile.phones():
+        if profile.has_phone(t):
             w.step("local_phone", t)
         else:
             w.practical.append("impossible")
@@ -532,7 +579,7 @@ def _practical(
         implied=basis.get("billing_address"),
         implied_key=svc_key,
     ):
-        if t in profile.addresses():
+        if profile.has_address(t):
             w.step("billing_address", t)
         else:
             w.false_declaration = True
@@ -541,7 +588,7 @@ def _practical(
                 f"exige una dirección de facturación en {t} y el perfil no tiene una real"
             )
 
-    if "self_declared" in basis and t != profile.residence_country:
+    if "self_declared" in basis and not profile.lives_in(t):
         w.use(basis["self_declared"], svc_key)
         w.false_declaration = True
         w.step("declare_country", t, requires_false_declaration=True)
@@ -644,9 +691,10 @@ def assess(
     *,
     include_pending: bool = False,
 ) -> Assessment:
-    r = profile.residence_country
-    base = dict(service_id=service_id, target_country=target, residence_country=r)
-    if target == r:
+    base = dict(
+        service_id=service_id, target_country=target, residence_country=profile.residence_country
+    )
+    if profile.lives_in(target):
         return Assessment(
             **base,
             profile=profile.id,
@@ -660,9 +708,7 @@ def assess(
             provenance="home",
             status="verified",
         )
-    record = find_record(
-        ctx.feasibility, service_id, target, residence_country=r, profile=profile.id
-    )
+    record = profile.curated_record(ctx.feasibility, service_id, target)
     if record is not None:
         return _curated(record)
 
@@ -705,7 +751,7 @@ def assess(
     barrier = tos.startswith("breach") or practical not in ("remote", UNKNOWN_AXIS)
     if w.false_declaration:
         legality = "requires_misrepresentation"
-    elif eservice and eea(ctx, r) and eea(ctx, target) and barrier:
+    elif eservice and eea(ctx, target) and barrier and profile.lives_in_eea(ctx.eea_countries):
         legality = "contestable_eu_right"
         legal_basis = (EU_LEGAL_BASIS,)
     else:
