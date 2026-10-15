@@ -394,7 +394,9 @@ def check_contract(site: dict[str, Any]) -> None:
     assert meta["run_id"] is None or isinstance(meta["run_id"], str)
     assert is_date(meta["as_of"], nullable=True)
     assert is_number(meta["fx_fee_pct"])
-    assert meta["display_currencies"] == ["SEK", "EUR", "USD"]
+    # Residence, EUR and USD first, then every other currency the FX table has a rate for.
+    assert meta["display_currencies"][:3] == ["SEK", "EUR", "USD"]
+    assert set(meta["display_currencies"][3:]) == set(site["fx"]["rates"]) - {"SEK", "USD"}
     for a in meta["attributions"]:
         assert set(a) == ATTRIBUTION_KEYS
         assert all(isinstance(v, str) and v for v in a.values())
@@ -1003,7 +1005,8 @@ def test_other_residence(fx_catalog, fx_feasibility, fx_bundles) -> None:
         fx_fee_pct=0,
         now=NOW,
     )
-    assert site["meta"]["display_currencies"] == ["COP", "EUR", "USD"]
+    assert site["meta"]["display_currencies"][:3] == ["COP", "EUR", "USD"]
+    assert "SEK" in site["meta"]["display_currencies"]
     assert site["feasibility"]["records"] == []
     offers = by(site["offers"], "obs_key")
     assert offers["netflix:standard:CO:web:month"]["label"] == "official_home"

@@ -17,6 +17,7 @@ import {
   summarize,
 } from "../logic/compare";
 import {
+  currencyOption,
   flagEmoji,
   formatDate,
   formatMoney,
@@ -98,6 +99,14 @@ export default function Comparador(props: ComparadorProps) {
     () => props.currencies.filter((c) => c === "EUR" || (rates[c] ?? 0) > 0),
     [props.currencies, rates],
   );
+  // Residence currency, EUR and USD on top; every other one alphabetically below.
+  const [commonCurrencies, otherCurrencies] = useMemo(() => {
+    const common = new Set([props.residenceCurrency, "EUR", "USD"]);
+    return [
+      currencies.filter((c) => common.has(c)),
+      currencies.filter((c) => !common.has(c)).sort(),
+    ];
+  }, [currencies, props.residenceCurrency]);
   const initial = useMemo(
     () =>
       defaultState(
@@ -344,20 +353,27 @@ export default function Comparador(props: ComparadorProps) {
 
           <fieldset>
             <legend>{t.currencyLegend}</legend>
-            <div class="segmented">
-              {currencies.map((c) => (
-                <label class="radio" key={c}>
-                  <input
-                    type="radio"
-                    name="moneda"
-                    value={c}
-                    checked={cur === c}
-                    onChange={() => setCurrency(c)}
-                  />
-                  <span>{c}</span>
-                </label>
-              ))}
-            </div>
+            <label class="visually-hidden" for="moneda">
+              {t.currencyLabel}
+            </label>
+            <select id="moneda" value={cur} onChange={(e) => setCurrency(e.currentTarget.value)}>
+              <optgroup label={t.currencyCommon}>
+                {commonCurrencies.map((c) => (
+                  <option value={c} key={c}>
+                    {currencyOption(c)}
+                  </option>
+                ))}
+              </optgroup>
+              {otherCurrencies.length > 0 && (
+                <optgroup label={t.currencyAll}>
+                  {otherCurrencies.map((c) => (
+                    <option value={c} key={c}>
+                      {currencyOption(c)}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
           </fieldset>
         </div>
       </form>
@@ -455,6 +471,21 @@ export default function Comparador(props: ComparadorProps) {
                               countryName={props.countryNames[r.best.country] ?? r.best.country}
                               label={props.labels[r.best.label]}
                               residenceName={residenceName}
+                              runnerUp={
+                                r.runnerUp && {
+                                  countryName:
+                                    props.countryNames[r.runnerUp.country] ?? r.runnerUp.country,
+                                  country: r.runnerUp.country,
+                                  aboveRisk: r.runnerUpAboveRisk,
+                                  cost: formatMoney(r.runnerUpCost, cur),
+                                  diff: formatSignedMoney(
+                                    r.runnerUpCost !== null && r.bestCost !== null
+                                      ? r.runnerUpCost - r.bestCost
+                                      : null,
+                                    cur,
+                                  ),
+                                }
+                              }
                               pending={
                                 state.pending &&
                                 verdict(r.best.service_id, r.best.country).provenance ===
@@ -544,6 +575,14 @@ function OfferCell(props: {
   countryName: string;
   label: ComparadorLabel | undefined;
   residenceName: string;
+  /** Cheapest offer from another country, shown when the home offer wins. */
+  runnerUp: {
+    country: string;
+    countryName: string;
+    cost: string;
+    diff: string;
+    aboveRisk: boolean;
+  } | null;
   /** The verdict comes from findings still pending review. */
   pending: boolean;
 }) {
@@ -580,6 +619,22 @@ function OfferCell(props: {
         )}
       </span>
       {props.isHome && <span class="small">{t.homeIsBest}</span>}
+      {props.isHome && (
+        <span class="small muted">
+          {props.runnerUp ? (
+            <>
+              <span aria-hidden="true">{flagEmoji(props.runnerUp.country)}</span>{" "}
+              {(props.runnerUp.aboveRisk ? t.runnerUpAboveRisk : t.runnerUp)(
+                props.runnerUp.countryName,
+                props.runnerUp.cost,
+                props.runnerUp.diff,
+              )}
+            </>
+          ) : (
+            t.noRunnerUp
+          )}
+        </span>
+      )}
     </div>
   );
 }
