@@ -433,6 +433,21 @@ export default function Comparador(props: ComparadorProps) {
                               countryName={props.countryNames[r.best.country] ?? r.best.country}
                               label={props.labels[r.best.label]}
                               residenceName={residenceName}
+                              runnerUp={
+                                r.runnerUp && {
+                                  countryName:
+                                    props.countryNames[r.runnerUp.country] ?? r.runnerUp.country,
+                                  country: r.runnerUp.country,
+                                  aboveRisk: r.runnerUpAboveRisk,
+                                  cost: formatMoney(r.runnerUpCost, cur),
+                                  diff: formatSignedMoney(
+                                    r.runnerUpCost !== null && r.bestCost !== null
+                                      ? r.runnerUpCost - r.bestCost
+                                      : null,
+                                    cur,
+                                  ),
+                                }
+                              }
                               pending={
                                 state.pending &&
                                 verdict(r.best.service_id, r.best.country).provenance ===
@@ -522,6 +537,14 @@ function OfferCell(props: {
   countryName: string;
   label: ComparadorLabel | undefined;
   residenceName: string;
+  /** Cheapest offer from another country, shown when the home offer wins. */
+  runnerUp: {
+    country: string;
+    countryName: string;
+    cost: string;
+    diff: string;
+    aboveRisk: boolean;
+  } | null;
   /** The verdict comes from findings still pending review. */
   pending: boolean;
 }) {
@@ -558,6 +581,22 @@ function OfferCell(props: {
         )}
       </span>
       {props.isHome && <span class="small">{t.homeIsBest}</span>}
+      {props.isHome && (
+        <span class="small muted">
+          {props.runnerUp ? (
+            <>
+              <span aria-hidden="true">{flagEmoji(props.runnerUp.country)}</span>{" "}
+              {(props.runnerUp.aboveRisk ? t.runnerUpAboveRisk : t.runnerUp)(
+                props.runnerUp.countryName,
+                props.runnerUp.cost,
+                props.runnerUp.diff,
+              )}
+            </>
+          ) : (
+            t.noRunnerUp
+          )}
+        </span>
+      )}
     </div>
   );
 }
