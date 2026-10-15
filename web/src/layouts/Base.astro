@@ -30,6 +30,8 @@ const {
 const fullTitle = title ? `${title} · ${es.site.name}` : `${es.site.name} · ${es.site.tagline}`;
 const canonical =
   indexable && Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+// Social networks need absolute image URLs.
+const ogImage = new URL(withBase("og/haggler.png"), Astro.site ?? Astro.url).href;
 
 const dataLabel = site.isSample
   ? es.site.sampleData
@@ -56,13 +58,27 @@ const nav: { key: NavKey; href: string }[] = [
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" href={withBase("favicon.svg")} type="image/svg+xml" />
+    <link rel="icon" href={withBase("favicon-32.png")} type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href={withBase("apple-touch-icon.png")} />
+    <link rel="manifest" href={withBase("site.webmanifest")} />
     {canonical && <link rel="canonical" href={canonical} />}
     {!indexable && <meta name="robots" content="noindex" />}
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={es.site.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:locale" content="es_ES" />
     {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={es.site.ogImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={es.site.ogImageAlt} />
   </head>
   <body>
     <a class="skip-link" href="#main">{es.site.skipToContent}</a>

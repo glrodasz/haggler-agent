@@ -36,7 +36,14 @@ const summary = site.cheapest.find(
 const defaultPlan = site.planLabel(service.id, service.default_plan);
 ---
 
-<Base title={service.name} current="services" description={`${service.name}: ${t.offersTitle}`}>
+<Base
+  title={es.site.seo.serviceTitle(service.name)}
+  description={es.site.seo.serviceDescription(
+    service.name,
+    new Set(site.offersForService(service.id).map((o) => o.country)).size,
+  )}
+  current="services"
+>
   <p class="small"><a href={routes.services()}>← {t.backToServices}</a></p>
   <h1 class="service-title">
     <ServiceMark id={service.id} name={service.name} />

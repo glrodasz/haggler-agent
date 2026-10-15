@@ -29,7 +29,11 @@ const expired = site.expiredBundlesForCountry(country.cc);
 const records = site.feasibilityForCountry(country.cc);
 ---
 
-<Base title={country.name_es} current="countries">
+<Base
+  title={es.site.seo.countryTitle(country.name_es)}
+  description={es.site.seo.countryDescription(country.name_es, country.currency)}
+  current="countries"
+>
   <p class="small"><a href={routes.countries()}>← {t.backToCountries}</a></p>
   <h1><span aria-hidden="true">{flagEmoji(country.cc)}</span> {country.name_es}</h1>
   <ul class="facts">
