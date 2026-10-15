@@ -5,7 +5,7 @@
 
 export const es = {
   site: {
-    name: "haggler",
+    name: "Haggler",
     tagline: "Precios de suscripciones por país, con su riesgo",
     description: (residence: string) =>
       `Comparador de precios oficiales de suscripciones (Netflix, Spotify, iCloud+, YouTube Premium…) en distintos países, con el riesgo de cada opción para alguien que vive en ${residence}.`,
@@ -30,6 +30,10 @@ export const es = {
       methodologyLink: "Cómo se obtienen los datos",
       noAnalytics: "Sin analítica ni cookies.",
     },
+    pageEyebrow: (data: string) => `Haggler · ${data}`,
+    sampleData: "Datos de ejemplo",
+    dataAsOfShort: (date: string) => `Datos al ${date}`,
+    backToCompare: "Volver al comparador",
   },
 
   common: {
@@ -441,22 +445,71 @@ export const es = {
 
   home: {
     title: "Comparador de suscripciones",
+    eyebrow: "Precios oficiales, país por país",
+    heroTitle: "Paga lo justo por tus suscripciones",
+    heroAccent: "lo justo",
     lead: (residence: string) =>
-      `Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países, teniendo en cuenta el riesgo de cada opción y la comisión por pagar en otra moneda.`,
-    howTitle: "Cómo leer el resultado",
+      `El mismo servicio. Otro país. Un precio distinto. Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países. Te decimos cuánto ahorrarías, con qué riesgo y cuánto se lleva la comisión de cambio.`,
+    ctaStart: "Calcular mi ahorro",
+    ctaMethod: "Cómo lo calculamos",
+    stats: {
+      services: (n: number) => `${n} servicios`,
+      countries: (n: number) => `${n} países`,
+      asOf: (date: string) => `Datos al ${date}`,
+    },
+    workflowTitle: "Cómo trabaja el agente",
+    workflow: [
+      { title: "Explora precios", text: "País por país" },
+      { title: "Evalúa el riesgo", text: "Sin letra pequeña" },
+      { title: "Calcula tu ahorro", text: "Comisiones incluidas" },
+    ],
+    trust: ["Sin registro", "Sin cookies ni analítica", "Nunca te pedimos datos falsos"],
+    stepsTitle: "Tres pasos, un minuto",
+    stepsLead: "No hace falta registrarse. Todo se calcula en tu navegador.",
+    steps: [
+      {
+        title: "Elige lo que pagas",
+        text: "Marca tus suscripciones y el plan de cada una.",
+      },
+      {
+        title: "Cuéntanos tu situación",
+        text: "Tu perfil, el riesgo que aceptas y la moneda en la que piensas.",
+      },
+      {
+        title: "Mira tu ahorro real",
+        text: "La oferta más barata que encaja contigo, ya con la comisión de cambio.",
+      },
+    ],
+    compareEyebrow: "Tu comparación",
+    compareTitle: "Calcula tu ahorro paso a paso",
+    compareLead: "Cada cambio actualiza el resultado al instante.",
+    howTitle: "Sin letra pequeña",
+    howLink: "Cómo leer el resultado",
     howItems: [
-      "El precio de cada país es el oficial publicado por el servicio, convertido a la moneda que elijas.",
-      "Solo se elige una oferta si su nivel de riesgo es igual o menor que el que aceptas. Las ofertas sin evaluar nunca se eligen.",
-      "El ahorro ya descuenta la comisión de cambio por pagar en otra moneda.",
-      "Antes de cambiar nada, lee la ficha del servicio y la metodología.",
+      {
+        title: "Precios oficiales, no atajos",
+        text: "El precio de cada país es el que publica el servicio, convertido a la moneda que elijas.",
+      },
+      {
+        title: "El riesgo lo eliges tú",
+        text: "Solo se elige una oferta si su nivel de riesgo es igual o menor que el que aceptas. Las ofertas sin evaluar nunca se eligen.",
+      },
+      {
+        title: "El ahorro es neto",
+        text: "Ya descuenta la comisión de cambio por pagar en otra moneda.",
+      },
+      {
+        title: "Tus datos se quedan contigo",
+        text: "Todo se calcula en tu navegador. Antes de cambiar nada, lee la ficha del servicio y la metodología.",
+      },
     ],
   },
 
   compare: {
-    servicesLegend: "Servicios",
+    servicesLegend: "Tus suscripciones",
     servicesHelp: "Marca los servicios que pagas y elige el plan.",
     planLabel: (service: string) => `Plan de ${service}`,
-    riskLegend: "Riesgo máximo aceptado",
+    riskLegend: "Riesgo que aceptas",
     riskHelp:
       "Solo se eligen ofertas con un nivel de riesgo igual o menor. Las ofertas sin evaluar nunca se eligen.",
     currencyLegend: "Moneda",
@@ -497,7 +550,21 @@ export const es = {
     noscript:
       "El comparador necesita JavaScript. Sin él puedes consultar los precios por servicio o por país.",
     noneSelected: "Elige al menos un servicio para ver la comparación.",
-    resultsTitle: "Resultado",
+    resultsTitle: "Tu resultado",
+    savingYearLabel: "Ahorro neto al año",
+    savingMonthLabel: (amount: string) => `${amount} al mes`,
+    feeChip: (fee: string) => `Comisión de cambio del ${fee} incluida`,
+    totalOptimized: "Total mensual optimizado",
+    serviceSaving: (amount: string) => `${amount} / mes`,
+    shareButton: "Compartir mi comparación",
+    shareCopied: "Enlace copiado",
+    shareFailed: "Copia la dirección de la página para compartirla",
+    detailTitle: "Detalle por servicio",
+    rowTotals: "Totales",
+    perYear: (amount: string) => `${amount} al año`,
+    savingNone: "Con este riesgo, tu país ya es la opción más barata.",
+    savingMore: (amount: string) =>
+      `Aceptando más riesgo podrías ahorrar hasta ${amount} al mes. Compáralo abajo.`,
     tableCaption: (residence: string, risk: string) =>
       `Precio mensual en ${residence} frente a la oferta más barata con riesgo hasta «${risk}»`,
     colService: "Servicio",
@@ -536,6 +603,7 @@ export const es = {
 
   servicesIndex: {
     title: "Servicios",
+    heading: "Tus servicios, sin fronteras",
     lead: "Todos los servicios con precios recogidos o que aparecen en algún paquete.",
     caption:
       "Servicios y oferta más barata del plan por defecto según el riesgo aceptado (EUR al mes, con comisión de cambio)",
@@ -598,6 +666,7 @@ export const es = {
 
   bundlesIndex: {
     title: "Paquetes",
+    heading: "Paquetes, pieza a pieza",
     lead: "Paquetes promocionales que reúnen varias suscripciones por un solo precio, agrupados por su veredicto para el perfil por defecto y, dentro de cada grupo, del mayor al menor ahorro.",
     profileNote: (profile: string) =>
       `Veredicto del perfil por defecto: ${profile}. Al lado, el de los demás perfiles.`,
@@ -622,6 +691,7 @@ export const es = {
 
   countriesIndex: {
     title: "Países",
+    heading: "Un servicio. Distintos precios",
     lead: "Países del catálogo con su moneda y el número de ofertas publicadas.",
     caption: "Países, moneda y número de ofertas",
     colCountry: "País",
@@ -648,6 +718,7 @@ export const es = {
 
   changes: {
     title: "Cambios de precio",
+    heading: "Cada cambio, a la vista",
     lead: "Cambios detectados en los últimos 90 días, del más reciente al más antiguo.",
     caption: "Cambios de precio de los últimos 90 días",
     colDate: "Fecha",
@@ -664,6 +735,7 @@ export const es = {
 
   methodology: {
     title: "Metodología",
+    heading: "Sin magia. Con método",
     lead: "Qué datos mostramos, de dónde salen y qué riesgos conviene entender antes de usarlos.",
     toc: "En esta página",
     collectTitle: "Cómo se recogen los datos",

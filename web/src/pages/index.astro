@@ -7,9 +7,12 @@ import Comparador, {
   type ComparadorService,
 } from "../islands/Comparador";
 import { es } from "../i18n/es";
+import Icon from "../components/Icon.astro";
+import LogoMark from "../components/LogoMark.astro";
 import Base from "../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../logic/compare";
 import { getSite } from "../logic/data";
+import { formatDate } from "../logic/format";
 import { routes } from "../logic/paths";
 import { ALL_COUNTRY_CODES, countryOptions } from "../logic/profile";
 import { inlineJson, packOffers } from "../logic/transport";
@@ -87,51 +90,152 @@ const verdictsJson = inlineJson({ rules: site.feasibility.rules });
 const hasPending =
   site.feasibility.rules.some((r) => r.pending !== null) ||
   site.feasibility.records.some(isPending);
+
+const offerCountries = [...new Set(offers.map((o) => o.country))];
+const [before, after] = t.heroTitle.split(t.heroAccent);
 ---
 
-<Base current="home">
-  <h1>{t.title}</h1>
-  <p class="lead">{t.lead(site.residenceName)}</p>
+<Base current="home" wide>
+  <section class="hero" aria-labelledby="hero-titulo">
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow eyebrow-dot">{t.eyebrow}</p>
+        <h1 id="hero-titulo" class="hero-title dotted">
+          {before}<span class="accent">{t.heroAccent}</span>{after}
+        </h1>
+        <p class="lead">{t.lead(site.residenceName)}</p>
+        <div class="hero-actions">
+          <a class="button button-light" href="#comparar">
+            {t.ctaStart} <span aria-hidden="true">↓</span>
+          </a>
+          <a class="button button-link" href={routes.methodology()}>
+            {t.ctaMethod} <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <ul class="hero-stats">
+          <li>{t.stats.services(services.length)}</li>
+          <li>{t.stats.countries(offerCountries.length)}</li>
+          <li>{t.stats.asOf(formatDate(site.meta.as_of))}</li>
+        </ul>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <LogoMark size="100%" class="hero-mark" />
+      </div>
+    </div>
+    <div class="workflow">
+      <div class="container">
+        <p class="workflow-title"><Icon name="agent" size={16} /> {t.workflowTitle}</p>
+        <ol class="workflow-steps">
+          {
+            t.workflow.map((w, i) => (
+              <li>
+                <span class="workflow-icon">
+                  <Icon name={(["search", "shield", "coins"] as const)[i] ?? "search"} size={16} />
+                </span>
+                <span>
+                  <strong>{w.title}</strong>
+                  <span>{w.text}</span>
+                </span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
 
-  <noscript>
-    <p class="callout warning">
-      {es.compare.noscript}{" "}
-      <a href={routes.services()}>{es.site.nav.services}</a> ·
-      <a href={routes.countries()}>{es.site.nav.countries}</a>
-    </p>
-  </noscript>
+  <section class="steps-intro" aria-labelledby="pasos-titulo">
+    <div class="container">
+      <h2 id="pasos-titulo" class="section-title dotted">{t.stepsTitle}</h2>
+      <p class="section-lead">{t.stepsLead}</p>
+      <ol class="step-cards">
+        {
+          t.steps.map((step, i) => (
+            <li class="step-card">
+              <Icon name={(["list", "sliders", "receipt"] as const)[i] ?? "list"} class="step-icon" />
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <ul class="trust">
+        {t.trust.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </section>
 
-  <Comparador
-    client:load
-    services={services}
-    labels={labels}
-    riskOptions={riskOptions}
-    countryNames={countryNames}
-    rates={site.fx.rates}
-    fxAsOf={site.fx.as_of}
-    residence={site.meta.residence}
-    residenceName={site.residenceName}
-    residenceCurrency={site.residenceCurrency}
-    feePct={site.meta.fx_fee_pct}
-    currencies={currencies}
-    defaultCurrency={defaultCurrency}
-    dataId="comparador-ofertas"
-    profiles={profiles}
-    defaultProfile={site.feasibility.default_profile}
-    residences={residences}
-    tieCountries={tieCountries}
-    eeaCountries={site.feasibility.eea_countries}
-    hasPending={hasPending}
-    verdictsId="comparador-veredictos"
-  />
-  <script type="application/json" id="comparador-ofertas" is:inline set:html={offersJson} />
-  <script type="application/json" id="comparador-veredictos" is:inline set:html={verdictsJson} />
+  <section id="comparar" class="compare-section" aria-labelledby="comparar-titulo" tabindex="-1">
+    <div class="container">
+      <p class="eyebrow">{t.compareEyebrow}</p>
+      <h2 id="comparar-titulo" class="section-title dotted">{t.compareTitle}</h2>
+      <p class="section-lead">{t.compareLead}</p>
 
-  <section aria-labelledby="como-leer">
-    <h2 id="como-leer">{t.howTitle}</h2>
-    <ul>
-      {t.howItems.map((item) => <li>{item}</li>)}
-    </ul>
-    <p><a href={routes.methodology()}>{es.site.footer.methodologyLink}</a></p>
+      <noscript>
+        <p class="callout warning">
+          {es.compare.noscript}{" "}
+          <a href={routes.services()}>{es.site.nav.services}</a> ·
+          <a href={routes.countries()}>{es.site.nav.countries}</a>
+        </p>
+      </noscript>
+
+      <Comparador
+        client:load
+        services={services}
+        labels={labels}
+        riskOptions={riskOptions}
+        countryNames={countryNames}
+        rates={site.fx.rates}
+        fxAsOf={site.fx.as_of}
+        residence={site.meta.residence}
+        residenceName={site.residenceName}
+        residenceCurrency={site.residenceCurrency}
+        feePct={site.meta.fx_fee_pct}
+        currencies={currencies}
+        defaultCurrency={defaultCurrency}
+        dataId="comparador-ofertas"
+        profiles={profiles}
+        defaultProfile={site.feasibility.default_profile}
+        residences={residences}
+        tieCountries={tieCountries}
+        eeaCountries={site.feasibility.eea_countries}
+        hasPending={hasPending}
+        verdictsId="comparador-veredictos"
+      />
+      <script type="application/json" id="comparador-ofertas" is:inline set:html={offersJson} />
+      <script type="application/json" id="comparador-veredictos" is:inline set:html={verdictsJson} />
+    </div>
+  </section>
+
+  <section class="how-section" aria-labelledby="como-leer">
+    <div class="container">
+      <h2 id="como-leer" class="section-title dotted">{t.howTitle}</h2>
+      <p><a class="button button-ghost" href={routes.methodology()}>{t.howLink}</a></p>
+      <ul class="how-grid">
+        {
+          t.howItems.map((item, i) => (
+            <li>
+              <Icon name={(["scale", "user", "percent", "lock"] as const)[i] ?? "scale"} />
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </section>
 </Base>
+
+<script>
+  // The comparator keeps its shareable selection in location.hash, so the "#comparar" CTA
+  // scrolls without replacing it; the plain href still works without JavaScript.
+  const target = document.getElementById("comparar");
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href="#comparar"]')) {
+    link.addEventListener("click", (event) => {
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView();
+      target.focus({ preventScroll: true });
+    });
+  }
+</script>

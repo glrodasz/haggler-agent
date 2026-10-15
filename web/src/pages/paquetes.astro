@@ -24,7 +24,7 @@ const groupId = (label: string) => `grupo-${label.replace(/[^a-z0-9_-]/gi, "-")}
 ---
 
 <Base title={t.title} current="bundles" description={t.lead}>
-  <h1>{t.title}</h1>
+  <h1>{t.heading}</h1>
   <p class="lead">{t.lead}</p>
   {site.defaultProfile && <p class="note">{t.profileNote(site.defaultProfile.name_es)}</p>}
 

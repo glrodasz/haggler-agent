@@ -22,6 +22,7 @@ import {
   flagEmoji,
   formatDate,
   formatMoney,
+  formatNumber,
   formatPercent,
   formatPrice,
   formatSignedMoney,
@@ -149,6 +150,7 @@ export default function Comparador(props: ComparadorProps) {
   const [offers, setOffers] = useState<CompareOfferFields[] | null>(null);
   const [rules, setRules] = useState<FeasibilityRule[]>([]);
   const [ready, setReady] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "copied" | "failed">("idle");
 
   const source: VerdictSource = useMemo(
     () => ({
@@ -262,6 +264,7 @@ export default function Comparador(props: ComparadorProps) {
   );
   const summary = useMemo(() => summarize(rows, state.risk, display), [rows, state.risk, display]);
   const byRisk = useMemo(() => savingsByRisk(rows, display), [rows, display]);
+  const maxSaving = Math.max(0, ...RISK_LEVELS.map((k) => byRisk[k]));
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const cur = state.currency;
@@ -326,6 +329,16 @@ export default function Comparador(props: ComparadorProps) {
   const names = (ids: string[]) => ids.map((id) => serviceById.get(id)?.name ?? id).join(", ");
 
   const { totals } = summary;
+  const hasSaving = totals.saving > 0.005;
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      setShareState("copied");
+    } catch {
+      setShareState("failed");
+    }
+    window.setTimeout(() => setShareState("idle"), 2500);
+  };
   const liveText =
     offers && state.services.length > 0
       ? t.summaryLive(
@@ -344,7 +357,7 @@ export default function Comparador(props: ComparadorProps) {
             {services.map((s) => {
               const checked = state.services.includes(s.id);
               return (
-                <li class="service-row" key={s.id}>
+                <li class={`service-row ${checked ? "is-on" : ""}`} key={s.id}>
                   <label class="check" for={`svc-${s.id}`}>
                     <input
                       type="checkbox"
@@ -352,7 +365,10 @@ export default function Comparador(props: ComparadorProps) {
                       checked={checked}
                       onChange={(e) => toggleService(s.id, e.currentTarget.checked)}
                     />
-                    {s.name}
+                    <span class="monogram" aria-hidden="true">
+                      {s.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span class="service-name">{s.name}</span>
                   </label>
                   <label class="visually-hidden" for={`plan-${s.id}`}>
                     {t.planLabel(s.name)}
@@ -506,10 +522,10 @@ export default function Comparador(props: ComparadorProps) {
                       checked={state.risk === o.rank}
                       onChange={() => setRisk(o.rank as RiskLevel)}
                     />
-                    <span>
-                      <span class={`badge ${riskClass(o.rank)}`}>{es.riskLevel(o.rank)}</span>{" "}
-                      {o.name}
+                    <span class={`risk-dot-label ${riskClass(o.rank)}`}>
+                      {es.riskLevel(o.rank)}
                     </span>
+                    <span class="radio-name">{o.name}</span>
                     <span class="radio-desc">{o.description}</span>
                   </label>
                 </li>
@@ -552,164 +568,222 @@ export default function Comparador(props: ComparadorProps) {
           <p class="callout">{t.noneSelected}</p>
         ) : (
           <>
-            <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
-            <p class="small muted">{t.savingsByRiskHelp}</p>
-            <ul class="risk-strip" aria-labelledby="ahorro-por-riesgo">
-              {RISK_LEVELS.map((k) => (
-                <li key={k}>
-                  <button type="button" aria-pressed={state.risk === k} onClick={() => setRisk(k)}>
-                    <span class={`badge ${riskClass(k)}`}>{es.riskLevel(k)}</span>{" "}
-                    {props.riskOptions.find((o) => o.rank === k)?.name}
-                    <span class="amount">{formatSignedMoney(byRisk[k], cur)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div class="result-card">
+              <div class={`result-top ${hasSaving ? "is-positive" : ""}`}>
+                {hasSaving ? (
+                  <>
+                    <span class="result-label">{t.savingYearLabel}</span>
+                    <span class="result-amount">
+                      {formatNumber(Math.round(totals.saving * 12), 0)}{" "}
+                      <span class="result-currency">{cur}</span>
+                    </span>
+                    <span class="result-sub">
+                      {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span class="result-sub result-none">{t.savingNone}</span>
+                    {maxSaving > 0.005 && (
+                      <span class="result-sub">{t.savingMore(formatMoney(maxSaving, cur))}</span>
+                    )}
+                  </>
+                )}
+                {feePct > 0 && <span class="result-chip">{t.feeChip(formatPercent(feePct))}</span>}
+              </div>
 
-            <div class="table-wrap" role="region" aria-labelledby="cmp-caption" tabIndex={0}>
-              <table>
-                <caption id="cmp-caption">{t.tableCaption(residenceName, riskName)}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">{t.colService}</th>
-                    <th scope="col" class="num">
-                      {t.colHome(residenceName)}
-                    </th>
-                    <th scope="col">{t.colBest}</th>
-                    <th scope="col" class="num">
-                      {t.colMonthly}
-                    </th>
-                    <th scope="col" class="num">
-                      {t.colSaving}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.rows.map((r) => {
-                    const svc = serviceById.get(r.service_id);
-                    return (
-                      <tr key={r.service_id}>
-                        <th scope="row">
-                          {svc ? <a href={svc.href}>{svc.name}</a> : r.service_id}
-                          <div class="small muted">{planLabel(r.service_id, r.plan_id)}</div>
-                        </th>
-                        <td class="num">
-                          {r.home ? (
-                            <>
-                              {formatMoney(r.homeCost, cur)}
-                              {r.home.currency !== cur && (
-                                <div class="small muted">
-                                  {formatPrice(r.home.amount, r.home.currency)}
-                                  {periodSuffix(r.home.billing_period)}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <span class="muted">{t.noHome}</span>
-                          )}
-                        </td>
-                        <td>
-                          {r.best ? (
-                            <OfferCell
-                              offer={r.best}
-                              isHome={r.home?.obs_key === r.best.obs_key}
-                              countryName={props.countryNames[r.best.country] ?? r.best.country}
-                              label={props.labels[r.best.label]}
-                              residenceName={residenceName}
-                              runnerUp={
-                                r.runnerUp && {
-                                  countryName:
-                                    props.countryNames[r.runnerUp.country] ?? r.runnerUp.country,
-                                  country: r.runnerUp.country,
-                                  aboveRisk: r.runnerUpAboveRisk,
-                                  cost: formatMoney(r.runnerUpCost, cur),
-                                  diff: formatSignedMoney(
-                                    r.runnerUpCost !== null && r.bestCost !== null
-                                      ? r.runnerUpCost - r.bestCost
-                                      : null,
-                                    cur,
-                                  ),
-                                }
-                              }
-                              pending={
-                                state.pending &&
-                                verdict(r.best.service_id, r.best.country).provenance ===
-                                  "agent_pending"
-                              }
-                            />
-                          ) : (
-                            <span class="muted">{t.noOffer}</span>
-                          )}
-                        </td>
-                        <td class="num">{formatMoney(r.bestCost, cur)}</td>
-                        <td
-                          class={`num ${r.saving !== null && r.saving > 0.005 ? "positive" : ""}`}
-                        >
-                          {formatSignedMoney(r.saving, cur)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <h3>{t.totalsTitle}</h3>
-            <div class="table-wrap" role="region" aria-labelledby="tot-caption" tabIndex={0}>
-              <table>
-                <caption id="tot-caption">{t.totalsCaption}</caption>
-                <thead>
-                  <tr>
-                    <td />
-                    <th scope="col" class="num">
-                      {t.colPayHome(residenceName)}
-                    </th>
-                    <th scope="col" class="num">
-                      {t.colOptimized}
-                    </th>
-                    <th scope="col" class="num">
-                      {t.colNetSaving}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(
-                    [
-                      [t.rowMonthly, 1],
-                      [t.rowYearly, 12],
-                    ] as const
-                  ).map(([label, months]) => (
-                    <tr key={label}>
-                      <th scope="row">{label}</th>
-                      <td class="num">{formatMoney(totals.home * months, cur)}</td>
-                      <td class="num">{formatMoney(totals.optimized * months, cur)}</td>
-                      <td class={`num ${totals.saving > 0.005 ? "positive" : ""}`}>
-                        {formatSignedMoney(totals.saving * months, cur)}
-                      </td>
-                    </tr>
+              <div class="result-body">
+                <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
+                <p class="visually-hidden">{t.savingsByRiskHelp}</p>
+                <ul class="risk-strip" aria-labelledby="ahorro-por-riesgo">
+                  {RISK_LEVELS.map((k) => (
+                    <li key={k}>
+                      <button
+                        type="button"
+                        aria-pressed={state.risk === k}
+                        title={props.riskOptions.find((o) => o.rank === k)?.name}
+                        onClick={() => setRisk(k)}
+                      >
+                        <span class={`risk-dot-label ${riskClass(k)}`}>{es.riskLevel(k)}</span>
+                        <span class="amount">{formatNumber(Math.round(byRisk[k] ?? 0), 0)}</span>
+                      </button>
+                    </li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+
+                <ul class="result-rows">
+                  {summary.rows.map((r) => (
+                    <li key={r.service_id}>
+                      <span class="result-row-name">
+                        <strong>{serviceById.get(r.service_id)?.name ?? r.service_id}</strong>
+                        <span class="small muted">
+                          {r.best && (
+                            <>
+                              <span aria-hidden="true">{flagEmoji(r.best.country)}</span>{" "}
+                              {props.countryNames[r.best.country] ?? r.best.country} ·{" "}
+                            </>
+                          )}
+                          {planLabel(r.service_id, r.plan_id)}
+                        </span>
+                      </span>
+                      <span class="result-row-num">
+                        <strong class={r.saving !== null && r.saving > 0.005 ? "positive" : ""}>
+                          {formatSignedMoney(r.saving, cur)}
+                        </strong>
+                        <span class="small muted">
+                          {t.serviceSaving(formatMoney(r.bestCost, cur))}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                  <li class="result-total">
+                    <span>{t.totalOptimized}</span>
+                    <strong>{formatMoney(totals.optimized, cur)}</strong>
+                  </li>
+                </ul>
+
+                <button type="button" class="button button-dark share-button" onClick={share}>
+                  {shareState === "copied"
+                    ? t.shareCopied
+                    : shareState === "failed"
+                      ? t.shareFailed
+                      : t.shareButton}
+                </button>
+                <p class="small muted result-fx">
+                  {t.fxNote(formatDate(props.fxAsOf))} {t.shareNote}
+                </p>
+              </div>
             </div>
-            {totals.fee > 0.005 && (
-              <p class="note">{t.feeNote(formatPercent(feePct), formatMoney(totals.fee, cur))}</p>
-            )}
-            {totals.withoutHome.length > 0 && (
-              <p class="note">{t.excludedNote(names(totals.withoutHome))}</p>
-            )}
-            {totals.withoutOffers.length > 0 && (
-              <p class="note">{t.noOfferNote(names(totals.withoutOffers))}</p>
-            )}
-            {state.pending && <p class="note">{t.pendingNote}</p>}
-            <p class="note">
-              {t.fxNote(formatDate(props.fxAsOf))} {t.shareNote}
-            </p>
           </>
         )}
         <p class="visually-hidden" aria-live="polite">
           {liveText}
         </p>
       </section>
+      {relabelled !== null && state.services.length > 0 && (
+        <div class="result-detail">
+          <h3 class="detail-title">{t.detailTitle}</h3>
+          <div class="table-wrap is-plain" role="region" aria-labelledby="cmp-caption" tabIndex={0}>
+            <table>
+              <caption id="cmp-caption" class="visually-hidden">
+                {t.tableCaption(residenceName, riskName)}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">{t.colService}</th>
+                  <th scope="col" class="num">
+                    {t.colHome(residenceName)}
+                  </th>
+                  <th scope="col">{t.colBest}</th>
+                  <th scope="col" class="num">
+                    {t.colMonthly}
+                  </th>
+                  <th scope="col" class="num">
+                    {t.colSaving}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.rows.map((r) => {
+                  const svc = serviceById.get(r.service_id);
+                  return (
+                    <tr key={r.service_id}>
+                      <th scope="row">
+                        {svc ? <a href={svc.href}>{svc.name}</a> : r.service_id}
+                        <div class="small muted">{planLabel(r.service_id, r.plan_id)}</div>
+                      </th>
+                      <td class="num">
+                        {r.home ? (
+                          <>
+                            {formatMoney(r.homeCost, cur)}
+                            {r.home.currency !== cur && (
+                              <div class="small muted">
+                                {formatPrice(r.home.amount, r.home.currency)}
+                                {periodSuffix(r.home.billing_period)}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span class="muted">{t.noHome}</span>
+                        )}
+                      </td>
+                      <td>
+                        {r.best ? (
+                          <OfferCell
+                            offer={r.best}
+                            isHome={r.home?.obs_key === r.best.obs_key}
+                            countryName={props.countryNames[r.best.country] ?? r.best.country}
+                            label={props.labels[r.best.label]}
+                            residenceName={residenceName}
+                            runnerUp={
+                              r.runnerUp && {
+                                countryName:
+                                  props.countryNames[r.runnerUp.country] ?? r.runnerUp.country,
+                                country: r.runnerUp.country,
+                                aboveRisk: r.runnerUpAboveRisk,
+                                cost: formatMoney(r.runnerUpCost, cur),
+                                diff: formatSignedMoney(
+                                  r.runnerUpCost !== null && r.bestCost !== null
+                                    ? r.runnerUpCost - r.bestCost
+                                    : null,
+                                  cur,
+                                ),
+                              }
+                            }
+                            pending={
+                              state.pending &&
+                              verdict(r.best.service_id, r.best.country).provenance ===
+                                "agent_pending"
+                            }
+                          />
+                        ) : (
+                          <span class="muted">{t.noOffer}</span>
+                        )}
+                      </td>
+                      <td class="num">{formatMoney(r.bestCost, cur)}</td>
+                      <td class={`num ${r.saving !== null && r.saving > 0.005 ? "positive" : ""}`}>
+                        {formatSignedMoney(r.saving, cur)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">{t.rowTotals}</th>
+                  <td class="num">
+                    {formatMoney(totals.home, cur)}
+                    <div class="small muted">{t.perYear(formatMoney(totals.home * 12, cur))}</div>
+                  </td>
+                  <td class="small muted">{t.feeChip(formatPercent(feePct))}</td>
+                  <td class="num">
+                    {formatMoney(totals.optimized, cur)}
+                    <div class="small muted">
+                      {t.perYear(formatMoney(totals.optimized * 12, cur))}
+                    </div>
+                  </td>
+                  <td class={`num ${hasSaving ? "positive" : ""}`}>
+                    {formatSignedMoney(totals.saving, cur)}
+                    <div class="small muted">
+                      {t.perYear(formatSignedMoney(totals.saving * 12, cur))}
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          {totals.fee > 0.005 && (
+            <p class="note">{t.feeNote(formatPercent(feePct), formatMoney(totals.fee, cur))}</p>
+          )}
+          {totals.withoutHome.length > 0 && (
+            <p class="note">{t.excludedNote(names(totals.withoutHome))}</p>
+          )}
+          {totals.withoutOffers.length > 0 && (
+            <p class="note">{t.noOfferNote(names(totals.withoutOffers))}</p>
+          )}
+          {state.pending && <p class="note">{t.pendingNote}</p>}
+        </div>
+      )}
     </div>
   );
 }

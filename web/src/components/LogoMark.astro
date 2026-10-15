@@ -1,0 +1,39 @@
+---
+/**
+ * The Haggler isotype: a wooden bowl with three highlight strokes cut out of its body. One
+ * colour (currentColor), so it works in black on white, white on black and in either theme.
+ */
+interface Props {
+  size?: number | string;
+  class?: string;
+  /** Accessible name; omit for a decorative mark (next to the wordmark). */
+  title?: string;
+}
+
+const { size = 32, class: className, title } = Astro.props;
+// Each instance needs its own mask id: several marks share a page (header, footer, hero).
+const maskId = `logo-cut-${crypto.randomUUID().slice(0, 8)}`;
+---
+
+<svg
+  class:list={["logo-mark", className]}
+  width={size}
+  viewBox="0 0 56 44"
+  fill="currentColor"
+  role={title ? "img" : undefined}
+  aria-hidden={title ? undefined : "true"}
+  aria-label={title}
+  focusable="false"
+>
+  <mask id={maskId}>
+    <rect width="56" height="44" fill="#fff"></rect>
+    <path
+      d="M47.4 14.4 37.9 20.6M48.6 16.4 38.9 25.1M46.7 21.1 31 38"
+      stroke="#000"
+      stroke-width="1.9"
+      stroke-linecap="round"
+    ></path>
+  </mask>
+  <path mask={`url(#${maskId})`} d="M3 9C4 28 14 41.5 28 41.5S52 28 53 9A25 5.5 0 0 1 3 9Z"></path>
+  <ellipse cx="28" cy="9" rx="25" ry="5.5" fill="none" stroke="currentColor" stroke-width="3"></ellipse>
+</svg>
