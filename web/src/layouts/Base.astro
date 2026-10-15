@@ -1,6 +1,5 @@
 ---
 import "@fontsource-variable/inter";
-import "@fontsource-variable/bricolage-grotesque";
 import "../styles/global.css";
 import LogoMark from "../components/LogoMark.astro";
 import { es } from "../i18n/es";
@@ -51,7 +50,7 @@ const nav: { key: NavKey; href: string }[] = [
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0e0d1a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" href={withBase("favicon.svg")} type="image/svg+xml" />
     {canonical && <link rel="canonical" href={canonical} />}
@@ -67,7 +66,7 @@ const nav: { key: NavKey; href: string }[] = [
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href={routes.home()}>
-          <LogoMark id="brand-mark" size={30} />
+          <LogoMark size={30} />
           <span>{es.site.name}</span>
         </a>
         <nav class="site-nav" aria-label={es.site.navLabel}>
@@ -98,7 +97,7 @@ const nav: { key: NavKey; href: string }[] = [
     <footer class="site-footer">
       <div class="container">
         <p class="footer-brand">
-          <LogoMark id="footer-mark" size={22} />
+          <LogoMark size={22} />
           <span>{es.site.name}</span>
           <span class="muted">· {es.site.tagline}</span>
         </p>

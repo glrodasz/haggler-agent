@@ -9,7 +9,7 @@ import LogoMark from "../components/LogoMark.astro";
 import Base from "../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../logic/compare";
 import { getSite } from "../logic/data";
-import { flagEmoji, formatDate } from "../logic/format";
+import { formatDate } from "../logic/format";
 import { routes } from "../logic/paths";
 import { inlineJson, packOffers, packVerdicts } from "../logic/transport";
 import { isPending } from "../logic/verdicts";
@@ -80,8 +80,6 @@ const verdictsJson = inlineJson(packVerdicts(site.feasibility.records));
 const hasPending = site.feasibility.records.some(isPending);
 
 const offerCountries = [...new Set(offers.map((o) => o.country))];
-// Decorative orbit around the hero mark: a few of the countries the prices come from.
-const orbit = offerCountries.slice(0, 8);
 const [before, after] = t.heroTitle.split(t.heroAccent);
 ---
 
@@ -105,16 +103,7 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
         </ul>
       </div>
       <div class="hero-art" aria-hidden="true">
-        <div class="orbit">
-          <LogoMark id="hero-mark" size="100%" class="hero-mark" />
-          {
-            orbit.map((cc, i) => (
-              <span class="orbit-flag" style={`--i:${i};--n:${orbit.length}`}>
-                {flagEmoji(cc)}
-              </span>
-            ))
-          }
-        </div>
+        <LogoMark size="100%" class="hero-mark" />
       </div>
     </div>
   </section>

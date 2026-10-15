@@ -1,17 +1,16 @@
 ---
 /**
- * The haggler mark: a price tag whose price line drops, plus the coin you keep. Inline so the
- * gradient follows the theme tokens; `id` keeps gradient/mask ids unique when it appears twice.
+ * The haggler mark: an outstretched hand with a coin dropping into it. One colour
+ * (currentColor), so it works in black on white, white on black and in either theme.
  */
 interface Props {
-  id: string;
   size?: number | string;
   class?: string;
   /** Accessible name; omit for a decorative mark (next to the wordmark). */
   title?: string;
 }
 
-const { id, size = 32, class: className, title } = Astro.props;
+const { size = 32, class: className, title } = Astro.props;
 ---
 
 <svg
@@ -19,49 +18,20 @@ const { id, size = 32, class: className, title } = Astro.props;
   width={size}
   height={size}
   viewBox="0 0 48 48"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="3"
+  stroke-linecap="round"
+  stroke-linejoin="round"
   role={title ? "img" : undefined}
   aria-hidden={title ? undefined : "true"}
   aria-label={title}
   focusable="false"
 >
-  <defs>
-    <linearGradient id={`${id}-tag`} x1="6" y1="40" x2="44" y2="8" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="var(--logo-a, #4b2fe0)"></stop>
-      <stop offset="1" stop-color="var(--logo-b, #13b98f)"></stop>
-    </linearGradient>
-    <mask id={`${id}-cut`}>
-      <rect width="48" height="48" fill="#fff"></rect>
-      <circle cx="13.5" cy="25" r="3.2" fill="#000"></circle>
-      <path
-        d="M20 16.5 26.5 24 30.5 20 37.5 30.5M31.5 31h6.5v-6.5"
-        fill="none"
-        stroke="#000"
-        stroke-width="3.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"></path>
-    </mask>
-  </defs>
-  <g transform="rotate(-14 24 25)">
-    <path
-      d="M17 11h20.5a5.5 5.5 0 0 1 5.5 5.5v17a5.5 5.5 0 0 1-5.5 5.5H17L5 25Z"
-      fill={`url(#${id}-tag)`}
-      stroke={`url(#${id}-tag)`}
-      stroke-width="2.4"
-      stroke-linejoin="round"
-      mask={`url(#${id}-cut)`}></path>
-  </g>
-  <circle
-    cx="39.5"
-    cy="9.5"
-    r="6"
-    fill="var(--logo-coin, #ffc23d)"
-    stroke="var(--logo-gap, #fff)"
-    stroke-width="2.4"></circle>
-  <circle
-    cx="39.5"
-    cy="9.5"
-    r="2.6"
-    fill="none"
-    stroke="var(--logo-coin-ink, #b37400)"
-    stroke-width="1.4"></circle>
+  <circle cx="30" cy="12" r="5" fill="currentColor"></circle>
+  <path d="M22 30h4a4 4 0 1 0 0-8h-6c-1.2 0-2.2.4-2.8 1.2L6 34"></path>
+  <path
+    d="m14 42 3.2-2.8c.6-.8 1.6-1.2 2.8-1.2h8c2.2 0 4.2-.8 5.6-2.4l9.2-8.8a4 4 0 0 0-5.5-5.8l-8.4 7.8"
+  ></path>
+  <path d="m4 32 12 12"></path>
 </svg>

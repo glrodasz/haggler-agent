@@ -1,4 +1,5 @@
-/* Design tokens + base styles. One file; fonts are self-hosted (Fontsource), no CDNs. */
+/* Design tokens + base styles. One file; Inter is self-hosted (Fontsource), no CDNs.
+   Monochrome on purpose: colour is reserved for risk, channel and status badges. */
 
 :root {
   color-scheme: light dark;
@@ -7,7 +8,7 @@
     "Inter Variable",
     system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
-  --font-display: "Bricolage Grotesque Variable", "Inter Variable", system-ui, sans-serif;
+  --font-display: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --space-1: 0.25rem;
@@ -25,20 +26,13 @@
   --text-xs: 0.8rem;
 
   --color-bg: #ffffff;
-  --color-surface: #f6f5fb;
-  --color-fg: #16142b;
-  --color-muted: #555369;
-  --color-border: #dcd9e8;
-  --color-accent: #4b2fe0;
+  --color-surface: #f6f6f6;
+  --color-fg: #111111;
+  --color-muted: #5c5c5c;
+  --color-border: #e2e2e2;
+  --color-accent: #111111;
   --color-accent-fg: #ffffff;
-  --color-focus: #4b2fe0;
-  --color-mint: #0e8f6e;
-  --color-hero-a: #ece8ff;
-  --color-hero-b: #ddf7ef;
-  --shadow-card: 0 1px 2px rgb(22 20 43 / 6%), 0 8px 24px -12px rgb(22 20 43 / 18%);
-  --logo-a: #4b2fe0;
-  --logo-b: #13b98f;
-  --logo-gap: var(--color-bg);
+  --color-focus: #111111;
   --color-positive: #126330;
   --color-negative: #a3221d;
   --color-banner-bg: #fff4d1;
@@ -66,20 +60,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0e0d1a;
-    --color-surface: #18172a;
-    --color-fg: #ecebf5;
-    --color-muted: #adabc2;
-    --color-border: #34324d;
-    --color-accent: #a99bff;
-    --color-accent-fg: #120e2e;
-    --color-focus: #a99bff;
-    --color-mint: #5fe0bc;
-    --color-hero-a: #1f1a45;
-    --color-hero-b: #0f2b2a;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px -16px rgb(0 0 0 / 70%);
-    --logo-a: #8b78ff;
-    --logo-b: #2fd3a8;
+    --color-bg: #0f0f0f;
+    --color-surface: #181818;
+    --color-fg: #f2f2f2;
+    --color-muted: #a8a8a8;
+    --color-border: #2e2e2e;
+    --color-accent: #f2f2f2;
+    --color-accent-fg: #0f0f0f;
+    --color-focus: #f2f2f2;
     --color-positive: #7fd89b;
     --color-negative: #ff9d94;
     --color-banner-bg: #3a2f0d;
@@ -124,7 +112,7 @@ body {
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.6;
-  font-feature-settings: "cv11", "ss01";
+  font-feature-settings: "cv11";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -211,8 +199,7 @@ a:hover {
   top: 0;
   z-index: 5;
   border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px);
+  background: var(--color-bg);
 }
 .header-inner {
   display: flex;
@@ -567,7 +554,6 @@ legend {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
   padding: var(--space-4) var(--space-4) var(--space-5);
 }
 /* Floated so the legend sits inside the card like a heading instead of on its border. */
@@ -595,8 +581,8 @@ legend {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
-  color: #fff;
+  background: var(--color-fg);
+  color: var(--color-bg);
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 800;
@@ -878,7 +864,7 @@ blockquote {
   top: calc(var(--space-4) + 2.5rem);
   bottom: calc(-1 * var(--space-4) - 1px);
   width: 2px;
-  background: linear-gradient(var(--color-border), color-mix(in srgb, var(--logo-b) 45%, var(--color-border)));
+  background: var(--color-border);
   border-radius: 1px;
 }
 .controls .service-list {
@@ -926,10 +912,8 @@ select {
   border: 1px solid var(--color-border);
 }
 .saving-hero.is-positive {
-  background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--logo-b) 28%, transparent), transparent 60%),
-    linear-gradient(135deg, var(--color-hero-a), var(--color-hero-b));
-  border-color: transparent;
+  background: var(--color-bg);
+  border: 2px solid var(--color-fg);
 }
 .saving-hero-label {
   font-size: var(--text-sm);
@@ -980,18 +964,17 @@ main.is-wide {
   border: 1.5px solid transparent;
   font-weight: 600;
   text-decoration: none;
-  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 .button-primary {
   background: var(--color-accent);
   color: var(--color-accent-fg);
-  box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--color-accent) 80%, transparent);
 }
 .button-primary::after {
   content: "↓";
 }
 .button-primary:hover {
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--color-accent) 85%, var(--color-bg));
   text-decoration: none;
 }
 .button-ghost {
@@ -1007,9 +990,6 @@ main.is-wide {
 .hero {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(60rem 30rem at 85% -10%, var(--color-hero-b), transparent 70%),
-    radial-gradient(50rem 30rem at -10% 10%, var(--color-hero-a), transparent 70%);
   border-bottom: 1px solid var(--color-border);
 }
 .hero-inner {
@@ -1027,10 +1007,9 @@ main.is-wide {
   max-width: 14ch;
 }
 .hero-title .accent {
-  background: linear-gradient(100deg, var(--logo-a), var(--logo-b));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
 }
 .hero .lead {
   font-size: clamp(1.05rem, 2.2vw, 1.2rem);
@@ -1063,41 +1042,12 @@ main.is-wide {
 .hero-art {
   display: none;
 }
-.orbit {
-  position: relative;
-  width: min(100%, 24rem);
-  aspect-ratio: 1;
-  margin-inline: auto;
-}
-.orbit::before {
-  content: "";
-  position: absolute;
-  inset: 6%;
-  border-radius: 50%;
-  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 30%, transparent);
-}
 .hero-mark {
-  position: absolute;
-  inset: 24%;
-  width: 52%;
-  height: 52%;
-  filter: drop-shadow(0 18px 30px color-mix(in srgb, var(--logo-a) 35%, transparent));
-}
-.orbit-flag {
-  --angle: calc(360deg / var(--n) * var(--i));
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  margin: -1.5rem;
-  border-radius: 50%;
-  background: var(--color-bg);
-  box-shadow: var(--shadow-card);
-  font-size: 1.5rem;
-  transform: rotate(var(--angle)) translate(min(44vw, 10.6rem)) rotate(calc(-1 * var(--angle)));
+  display: block;
+  width: min(100%, 18rem);
+  height: auto;
+  margin-inline: auto;
+  color: var(--color-fg);
 }
 
 .steps-intro,
@@ -1138,10 +1088,10 @@ main.is-wide {
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-bg);
-  box-shadow: var(--shadow-card);
 }
 .step-card::before {
   content: "0" counter(intro);
+  color: var(--color-muted);
   float: left;
   margin: 0 var(--space-4) var(--space-1) 0;
   font-family: var(--font-display);
@@ -1149,10 +1099,6 @@ main.is-wide {
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 .step-card h3 {
   margin: 0 0 var(--space-2);
@@ -1175,7 +1121,7 @@ main.is-wide {
 .trust li::before {
   content: "✓";
   margin-right: var(--space-2);
-  color: var(--color-mint);
+  color: var(--color-fg);
   font-weight: 800;
 }
 .how-grid {
@@ -1200,7 +1146,7 @@ main.is-wide {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
+  background: var(--color-fg);
 }
 
 @media (min-width: 40rem) {
@@ -1252,20 +1198,6 @@ main.is-wide {
   }
   .hero-art {
     display: block;
-  }
-  .orbit-flag {
-    transform: rotate(var(--angle)) translate(10.6rem) rotate(calc(-1 * var(--angle)));
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-mark {
-    animation: float 6s ease-in-out infinite;
-  }
-  @keyframes float {
-    50% {
-      transform: translateY(-8px) rotate(-2deg);
-    }
   }
 }
 
