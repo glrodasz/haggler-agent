@@ -943,37 +943,64 @@ h1.service-title .monogram svg {
   font-weight: 600;
   letter-spacing: 0;
 }
-.risk-strip {
-  list-style: none;
+/* Risk slider: a pill track with one stop per level and a thumb that slides between them. */
+.risk-slider {
   margin: 0 0 var(--space-5);
   padding: 0.3rem;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.2rem;
   border-radius: var(--radius-pill);
   background: var(--color-surface);
+  cursor: pointer;
+  user-select: none;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
-.risk-strip button {
+.risk-slider:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 2px;
+}
+.risk-slider[data-dragging] {
+  cursor: grabbing;
+}
+.risk-slider-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--levels), minmax(0, 1fr));
+}
+.risk-slider-thumb {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(100% / var(--levels));
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    0 1px 3px rgb(0 0 0 / 0.12);
+  transition: transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.risk-slider[data-dragging] .risk-slider-thumb {
+  transition-duration: 140ms;
+}
+.risk-slider-stop {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 0.1rem;
-  width: 100%;
-  font: inherit;
+  padding: 0.55rem 0.25rem;
+  color: var(--color-muted, var(--color-fg));
+}
+.risk-slider-stop[data-active] {
   color: var(--color-fg);
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-pill);
-  padding: 0.5rem 0.25rem;
-  cursor: pointer;
 }
-.risk-strip button[aria-pressed="true"] {
-  background: var(--color-bg);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
-}
-.risk-strip .amount {
+.risk-slider .amount {
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .risk-slider-thumb {
+    transition: none;
+  }
 }
 .result-rows {
   list-style: none;

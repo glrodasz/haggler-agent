@@ -616,8 +616,10 @@ export const es = {
       `El total optimizado incluye ${amount} al mes de comisión de cambio (${fee}) por pagar en otra moneda.`,
     excludedNote: (names: string) => `No se suman en los totales (sin precio local): ${names}.`,
     noOfferNote: (names: string) => `Sin oferta con este nivel de riesgo: ${names}.`,
-    savingsByRiskTitle: "Ahorro mensual según el riesgo aceptado",
-    savingsByRiskHelp: "Con la misma selección, cuánto ahorrarías al mes en cada nivel.",
+    savingsByRiskTitle: "Ahorro según el riesgo aceptado",
+    savingsByRiskHelp:
+      "Con la misma selección, qué parte de lo que pagas hoy ahorrarías en cada nivel. Pulsa o arrastra para cambiar el nivel.",
+    riskSliderSaving: (pct: string) => `ahorro del ${pct}`,
     fxNote: (date: string) => `Conversión con los tipos de cambio del ${date}.`,
     shareNote: "La selección se guarda en la dirección de la página, así puedes compartirla.",
     servicePageLink: (name: string) => `Ver todos los precios de ${name}`,
