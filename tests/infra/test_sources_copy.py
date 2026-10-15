@@ -33,8 +33,8 @@ def _services(only_appstore: bool) -> list[str]:
 
 WEB_TEXT = _collect_text("Fuentes oficiales primero")
 APPSTORE_TEXT = _collect_text("App Store como respaldo")
-README_ROW = next(line for line in README.splitlines() if line.startswith("| Fuentes |"))
-README_WEB, _, README_APPSTORE = README_ROW.partition(") y, para servicios")
+README_ROW = next(line for line in README.splitlines() if line.startswith("| Sources |"))
+README_WEB, _, README_APPSTORE = README_ROW.partition(") and, for services")
 
 
 def test_appstore_only_services_include_disney_plus() -> None:

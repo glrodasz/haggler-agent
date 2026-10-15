@@ -1,50 +1,50 @@
 # haggler-agent
 
-Agente construido con **Google ADK** (`google-adk` 2.x) que recolecta cada día los precios de
-suscripciones de consumo **por país** desde fuentes oficiales, los valida y alimenta un sitio
-estático para encontrar la combinación más barata *y factible* para quien vive en Suecia.
+Agent built with **Google ADK** (`google-adk` 2.x) that collects consumer subscription prices
+**per country** from official sources every day, validates them and feeds a static site that
+finds the cheapest *and feasible* combination for someone living in Sweden.
 
-> Estado: **Fase 3** — precios diarios, sitio, un agente semanal de investigación de factibilidad
-> con perfiles configurables y la vigilancia de paquetes (bundles): sus valores siguen curados a
-> mano en `data/curated/bundles.yaml`, y un vigilante sin LLM los confirma en las páginas y PDF
-> oficiales. Faltan los datos de la primera ola (las anclas, tras el primer despliegue). Ver
-> [el roadmap](#roadmap).
+> Status: **Phase 3** — daily prices, the site, a weekly feasibility research agent with
+> configurable profiles, and bundle monitoring: bundle values are still hand-curated in
+> `data/curated/bundles.yaml`, and an LLM-free watcher confirms them on the official pages and
+> PDFs. The first-wave data is still missing (the anchors, after the first deployment). See
+> [the roadmap](#roadmap).
 
-## Qué hace
+## What it does
 
-| Paso | Cómo |
+| Step | How |
 |---|---|
-| Fuentes | Páginas oficiales direccionables por país (soporte de iCloud+, apple.com/{país}, spotify.com/{país}, ayuda de Netflix, catálogo de Microsoft Store) y, para servicios que solo muestran el precio según la IP (YouTube Premium, Google One, HBO Max) o cuyo robots.txt no permite el acceso al bot (Disney+), el listado de compras in-app del **App Store** de cada país. Dataset secundario de Netflix (tompec, CC BY 4.0) para contrastar. |
-| Extracción | Parsers determinísticos primero. Un agente LLM (Gemini en Vertex AI) solo actúa como respaldo cuando un parser falla, y únicamente puede citar texto literal de la página; el código verifica que el precio y la evidencia existan. |
-| Normalización | Tipos de cambio BCE + bancos centrales vía Frankfurter (COP=BanRep, ARS=BCRA…), equivalente mensual, IVA incluido sí/no. |
-| Validación | Reglas determinísticas: moneda vs país, rangos plausibles, cambios >30 % en cuarentena hasta confirmarse, orden de planes, arrastre de valores cuando una fuente falla. |
-| Publicación | Snapshots completos en GCS; `data/latest/` en el repo (cada cambio de precio = una línea en el diff de git) y `data/changes/*.jsonl`; sitio en GitHub Pages. |
+| Sources | Official pages addressable by country (iCloud+ support, apple.com/{country}, spotify.com/{country}, Netflix help, Microsoft Store catalog) and, for services that only show the price based on IP (YouTube Premium, Google One, HBO Max) or whose robots.txt disallows bot access (Disney+), each country's **App Store** in-app purchase listing. Secondary Netflix dataset (tompec, CC BY 4.0) for cross-checking. |
+| Extraction | Deterministic parsers first. An LLM agent (Gemini on Vertex AI) only acts as a fallback when a parser fails, and may only quote literal text from the page; the code verifies that the price and the evidence exist. |
+| Normalization | ECB + central bank exchange rates via Frankfurter (COP=BanRep, ARS=BCRA…), monthly equivalent, VAT included yes/no. |
+| Validation | Deterministic rules: currency vs. country, plausible ranges, changes >30 % quarantined until confirmed, plan ordering, carrying values forward when a source fails. |
+| Publishing | Full snapshots in GCS; `data/latest/` in the repo (every price change = one line in the git diff) and `data/changes/*.jsonl`; site on GitHub Pages. |
 
-**Factibilidad** = tres ejes separados (legalidad / términos de servicio / practicidad); la etiqueta
-es el peor de los tres. El sitio informa riesgos y supuestos; **no es asesoría legal** ni
-recomienda declarar datos falsos.
+**Feasibility** = three separate axes (legality / terms of service / practicality); the label
+is the worst of the three. The site reports risks and assumptions; it is **not legal advice** and
+does not recommend declaring false information.
 
-### Investigación de factibilidad (Fase 2)
+### Feasibility research (Phase 2)
 
-| Paso | Cómo |
+| Step | How |
 |---|---|
-| Qué investiga | Reglas de país de cada servicio, lo que exige contratar la oferta de un país (solo los pares con ahorro ≥ 1 €/mes y ≥ 15 %) y los medios de pago, con un vocabulario cerrado de hechos (`src/haggler/research/fields.py`). |
-| Descubrir | Tres agentes ADK `single_turn` con Gemini + Google Search y salida estructurada; topes de llamadas, de consultas por corrida y por mes. |
-| Verificar | Un hecho cuenta solo si nuestro fetch (robots.txt, sin evadir bloqueos) encuentra la **cita literal** en la página citada o en las páginas oficiales conocidas del sujeto. Clase de fuente: oficial / prensa / foro. |
-| Evaluar | Función pura (`research/evaluate.py`) que deriva los tres ejes **por perfil** (`data/curated/profiles.yaml`): país de la tarjeta, presencia, documentos, dirección. Lo curado gana; las mejoras exigen fuente oficial; una ruta que requiere declarar datos falsos es *No factible*. |
-| Revisar | Los hallazgos quedan *Pendiente de revisión* hasta `haggler research accept`; el comparador los excluye salvo que se active la casilla. |
+| What it researches | Each service's country rules, what it takes to sign up for a country's offer (only pairs saving ≥ 1 €/month and ≥ 15 %) and payment methods, using a closed vocabulary of facts (`src/haggler/research/fields.py`). |
+| Discover | Three ADK `single_turn` agents with Gemini + Google Search and structured output; caps on calls, on queries per run and per month. |
+| Verify | A fact only counts if our fetch (robots.txt, no bypassing blocks) finds the **literal quote** on the cited page or on the subject's known official pages. Source class: official / press / forum. |
+| Evaluate | Pure function (`research/evaluate.py`) that derives the three axes **per profile** (`data/curated/profiles.yaml`): card country, presence, documents, address. Curated data wins; upgrades require an official source; a route that requires declaring false information is *Not feasible*. |
+| Review | Findings stay *Pending review* until `haggler research accept`; the comparator excludes them unless the checkbox is enabled. |
 
-### Paquetes (Fase 3)
+### Bundles (Phase 3)
 
-| Paso | Cómo |
+| Step | How |
 |---|---|
-| Valores | `data/curated/bundles.yaml` es la única fuente (precio, intro, plan base, componentes, fechas, requisitos) y ningún job lo escribe. Cada valor se confirma con un **ancla**: una cita literal copiada de nuestra propia extracción de la página oficial. |
-| Vigilar | Dentro del job semanal, sin LLM ni consultas: lee las páginas y las listas PDF versionadas de los paquetes en modo `auto` (robots.txt, sin evadir muros, dominios oficiales del país del paquete), comprueba las anclas, anota pistas de precio y detecta ediciones nuevas. |
-| Proponer | Un agente con Google Search busca valores y requisitos de hasta 2 paquetes por semana, después de todo lo de la Fase 2. Un valor solo cuenta si la cita está en una página oficial del país y dice ese valor (chequeo valor‑cita). |
-| Revisar | `haggler research review --subject <id>` imprime un snippet YAML por propuesta; se acepta pegándolo en un PR (`validate-catalog` comprueba el ancla offline) y la siguiente corrida lo verifica en línea. La factibilidad se acepta por id, como en la Fase 2. |
-| Mostrar | `/paquetes`: estado derivado (verificado, requiere revisión, verificación manual, sin verificar, vencido), precio mensual con y sin la comisión de cambio del 2 %, ahorro sin contar el precio de introducción y veredicto por perfil. |
+| Values | `data/curated/bundles.yaml` is the single source (price, intro, base plan, components, dates, requirements) and no job writes to it. Each value is confirmed by an **anchor**: a literal quote copied from our own extraction of the official page. |
+| Watch | Inside the weekly job, with no LLM or queries: reads the bundles' pages and versioned PDF lists in `auto` mode (robots.txt, no bypassing walls, official domains of the bundle's country), checks the anchors, notes price hints and detects new editions. |
+| Propose | An agent with Google Search looks up values and requirements for up to 2 bundles per week, after all the Phase 2 work. A value only counts if the quote is on an official page of the country and states that value (value‑quote check). |
+| Review | `haggler research review --subject <id>` prints a YAML snippet per proposal; it is accepted by pasting it into a PR (`validate-catalog` checks the anchor offline) and the next run verifies it online. Feasibility is accepted by id, as in Phase 2. |
+| Display | `/paquetes`: derived status (verified, needs review, manual verification, unverified, expired), monthly price with and without the 2 % currency exchange fee, savings excluding the intro price, and verdict per profile. |
 
-## Arquitectura
+## Architecture
 
 ```
 Cloud Scheduler ──► Cloud Run Job (europe-north2) ──► GCS (snapshots + latest/)
@@ -52,93 +52,93 @@ Cloud Scheduler ──► Cloud Run Job (europe-north2) ──► GCS (snapshots
                                                              ▼
                     GitHub Actions publish.yml ──► commit data/ ──► GitHub Pages (web/)
 
-Cloud Scheduler (lunes) ──► Cloud Run Job haggler-research ──► GCS research/latest/
-                             haggler research run (ADK Workflow)   (sync → data/research/)
+Cloud Scheduler (Mondays) ──► Cloud Run Job haggler-research ──► GCS research/latest/
+                               haggler research run (ADK Workflow)  (sync → data/research/)
 ```
 
-Workflow ADK (cadena lineal; cada nodo es un no-op si no recibe trabajo):
+ADK workflow (linear chain; each node is a no-op if it receives no work):
 
 ```
-plan_tasks → fetch_and_parse (paralelo, reintentos por ítem) → llm_extract → fx_normalize
-          → validate → adjudicate (segunda opinión LLM) → persist
+plan_tasks → fetch_and_parse (parallel, per-item retries) → llm_extract → fx_normalize
+          → validate → adjudicate (LLM second opinion) → persist
 ```
 
-Workflow de investigación:
+Research workflow:
 
 ```
-plan_research → watch_bundles (vigilante de paquetes, sin LLM) → research (agentes con Google Search)
-              → verify_evidence (nuestro fetch) → persist
+plan_research → watch_bundles (bundle watcher, no LLM) → research (agents with Google Search)
+              → verify_evidence (our fetch) → persist
 ```
 
-## Estructura
+## Layout
 
 ```
-src/haggler/        paquete Python (modelos, fuentes, fetch, fx, validación, pipeline ADK, CLI)
-agents/haggler_agent/  shim para `adk web agents` / `adk run agents/haggler_agent`
-agents/haggler_research/  shim del workflow de investigación para `adk web agents`
-catalog/            servicios, planes, fuentes y países (YAML editable)
-data/latest/        últimos precios publicados (gestionado por el bot)
-data/changes/       historial de cambios de precio (append-only)
-data/curated/       factibilidad, perfiles, revisiones, bundles, instrumentos de pago
-data/research/      hechos verificados por el agente y estado del vigilante de paquetes (bot)
-web/                sitio estático (Astro + Preact)
-infra/              bootstrap de GCP
-.github/workflows/  CI, probe, despliegue del job, publicación
+src/haggler/        Python package (models, sources, fetch, fx, validation, ADK pipeline, CLI)
+agents/haggler_agent/  shim for `adk web agents` / `adk run agents/haggler_agent`
+agents/haggler_research/  research workflow shim for `adk web agents`
+catalog/            services, plans, sources and countries (editable YAML)
+data/latest/        latest published prices (managed by the bot)
+data/changes/       price change history (append-only)
+data/curated/       feasibility, profiles, reviews, bundles, payment instruments
+data/research/      facts verified by the agent and bundle watcher state (bot)
+web/                static site (Astro + Preact)
+infra/              GCP bootstrap
+.github/workflows/  CI, probe, job deployment, publishing
 ```
 
-## Desarrollo local
+## Local development
 
 ```bash
 uv sync
 uv run pytest
 uv run haggler validate-catalog
 
-# Corrida offline con páginas grabadas (sin red ni LLM)
+# Offline run with recorded pages (no network or LLM)
 uv run haggler daily --replay tests/workflow/fixtures/replay --store local --no-llm
 
-# Corrida real (necesita acceso a internet; LLM opcional)
-cp .env.example .env   # descomenta UNA opción: A) GOOGLE_API_KEY (AI Studio) o B) Vertex vía ADC
+# Real run (needs internet access; LLM optional)
+cp .env.example .env   # uncomment ONE option: A) GOOGLE_API_KEY (AI Studio) or B) Vertex via ADC
 uv run haggler daily --store local --services netflix,spotify --countries SE,CO
 
-# Datos del sitio y build
+# Site data and build
 uv run haggler sync --from-dir .haggler --data-dir data
 uv run haggler site-data --data-dir data --out web/src/data
 npm --prefix web ci && npm --prefix web run build
 
-# Investigación de factibilidad (necesita LLM con Google Search para investigar)
-uv run haggler research run --store local --dry-run --no-llm   # solo planifica
+# Feasibility research (needs an LLM with Google Search to research)
+uv run haggler research run --store local --dry-run --no-llm   # plan only
 uv run haggler research run --store local --services netflix --pairs spotify:CO
-uv run haggler research review                                   # pendientes e impacto
-uv run haggler research accept netflix --by tu-usuario
+uv run haggler research review                                   # pending items and impact
+uv run haggler research accept netflix --by your-username
 
-# Paquetes (docs/SETUP.md §14)
-uv run haggler research run --store local --watch-only           # solo el vigilante: 0 consultas
-uv run haggler research review --bundles                         # propuestas y snippets YAML
+# Bundles (docs/SETUP.md §14)
+uv run haggler research run --store local --watch-only           # watcher only: 0 queries
+uv run haggler research review --bundles                         # proposals and YAML snippets
 
-# UI de desarrollo de ADK
+# ADK development UI
 PYTHONPATH=agents uv run adk web agents
 ```
 
-`haggler` carga el `.env` del directorio de trabajo al arrancar (`uv run` no lo lee por sí solo)
-sin pisar las variables que ya están en el entorno; `adk web agents` carga el `.env` de la raíz
-del repo. En `.env.example` las dos opciones de LLM vienen comentadas: sin ninguna, el respaldo
-LLM queda apagado; con las dos, google-genai ignora `GOOGLE_API_KEY` y llama a Vertex AI.
+`haggler` loads the `.env` from the working directory on startup (`uv run` does not read it on its
+own) without overriding variables already set in the environment; `adk web agents` loads the `.env`
+from the repo root. In `.env.example` both LLM options are commented out: with neither, the LLM
+fallback is off; with both, google-genai ignores `GOOGLE_API_KEY` and calls Vertex AI.
 
-Despliegue en GCP y GitHub Pages: ver [docs/SETUP.md](docs/SETUP.md).
+Deployment to GCP and GitHub Pages: see [docs/SETUP.md](docs/SETUP.md).
 
 ## Roadmap
 
-1. **Fase 1**: precios diarios por país + sitio mínimo.
-2. **Fase 2**: agente semanal de investigación de factibilidad (hechos verificados con cita
-   literal, evaluador determinístico por perfil, revisión humana por hash de evidencia).
-3. **Fase 3 (esta)**: vigilancia de paquetes (Meli+, Telia, Apple One…). Hecho: YAML canónico con
-   anclas, vigilante semanal sin LLM de páginas y PDF oficiales, agente que solo propone,
-   estado derivado, ahorro honesto y veredicto por perfil en `/paquetes`. Pendiente: los datos de
-   la primera ola (anclas copiadas del probe tras el despliegue) y la segunda (Telia Play).
-4. **Fase 4**: optimizador de combinaciones en el navegador (una región por cuenta Apple/Google,
-   máximo de instrumentos de pago extranjeros, bundles como SKU virtuales).
+1. **Phase 1**: daily per-country prices + minimal site.
+2. **Phase 2**: weekly feasibility research agent (facts verified with a literal quote,
+   deterministic per-profile evaluator, human review by evidence hash).
+3. **Phase 3 (current)**: bundle monitoring (Meli+, Telia, Apple One…). Done: canonical YAML with
+   anchors, weekly LLM-free watcher of official pages and PDFs, a propose-only agent, derived
+   status, honest savings and per-profile verdict on `/paquetes`. Pending: the first-wave data
+   (anchors copied from the probe after deployment) and the second wave (Telia Play).
+4. **Phase 4**: in-browser combination optimizer (one region per Apple/Google account,
+   maximum number of foreign payment instruments, bundles as virtual SKUs).
 
-## Licencia
+## License
 
-Apache-2.0. Los precios pertenecen a sus respectivos proveedores; el dataset de Netflix de
-[tompec/netflix-prices](https://github.com/tompec/netflix-prices) se usa bajo CC BY 4.0.
+Apache-2.0. Prices belong to their respective providers; the Netflix dataset from
+[tompec/netflix-prices](https://github.com/tompec/netflix-prices) is used under CC BY 4.0.
