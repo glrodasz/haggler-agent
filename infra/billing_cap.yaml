@@ -1,0 +1,36 @@
+# Budget kill switch for haggler-agent (Cloud Workflows), deployed by infra/bootstrap.sh; see
+# docs/SETUP.md §9.
+#
+# Eventarc runs it for every Pub/Sub notification of the project's budget (several a day). Once
+# the month's actual cost reaches the budget amount it unlinks the project from its billing
+# account, which stops every paid service in it. Forecasts never trigger it. To recover, link
+# the billing account again (docs/SETUP.md §10).
+main:
+  params: [event]
+  steps:
+    - parse:
+        assign:
+          - project: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - notification: ${json.decode(base64.decode(event.data.message.data))}
+          - cost: ${double(notification.costAmount)}
+          - budget: ${double(notification.budgetAmount)}
+    - under_budget:
+        switch:
+          - condition: ${cost < budget}
+            return: '${"under budget: " + string(cost) + " of " + string(budget)}'
+    - log:
+        call: sys.log
+        args:
+          severity: ALERT
+          text: '${"cost " + string(cost) + " reached the budget " + string(budget) + ", disabling billing on " + project}'
+    # An empty billing account name unlinks the project (needs roles/billing.projectManager).
+    - disable_billing:
+        call: http.put
+        args:
+          url: ${"https://cloudbilling.googleapis.com/v1/projects/" + project + "/billingInfo"}
+          auth:
+            type: OAuth2
+          body:
+            billingAccountName: ""
+    - done:
+        return: ${"billing disabled on " + project}

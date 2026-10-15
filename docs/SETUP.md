@@ -35,6 +35,9 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
   `gcloud`, `bash` y `gh`. El script evita sintaxis de bash 4, así que también debería correr con
   el `bash` 3.2 de macOS.
 - Ser administrador del repositorio `glrodasz/haggler-agent` en GitHub (variables y Pages).
+- Para el presupuesto (§9): *Billing Account Administrator* o *Billing Account Costs Manager* en la
+  cuenta de facturación del proyecto. Ser *Owner* del proyecto no basta; sin ese rol el bootstrap
+  hace todo lo demás y avisa al final.
 - Opcional: [GitHub CLI](https://cli.github.com/) (`gh`) para fijar variables desde la terminal.
 
 ## 2. Bootstrap de GCP
@@ -64,6 +67,9 @@ Variables configurables (todas opcionales salvo `PROJECT_ID`):
 | `SCHEDULE_TZ` | `Europe/Stockholm` | zona horaria del cron (no se lee `$TZ` a propósito: muchas shells exportan `TZ=UTC`) |
 | `GITHUB_REPO` | `glrodasz/haggler-agent` | único repositorio autorizado por Workload Identity Federation |
 | `GITHUB_BRANCH` | `main` | única rama autorizada por Workload Identity Federation (la rama por defecto) |
+| `BUDGET_AMOUNT` | 5 si la cuenta de facturación usa USD, EUR, GBP o CHF | presupuesto mensual, en la moneda de la cuenta (solo el número: `7.50`, no `7.50USD`). Con otra moneda (SEK, COP…) es obligatoria: sin ella no se crea el presupuesto |
+| `BILLING_CAP` | `1` | `1` = corte automático: desvincula la facturación al alcanzar el presupuesto (§9); `0` = solo alertas por correo |
+| `BILLING_CAP_REGION` | `$SCHEDULER_REGION` | región del workflow y del trigger de Eventarc del corte |
 
 Por ejemplo, si Cloud Scheduler sí está disponible en Estocolmo:
 `PROJECT_ID=mi-proyecto SCHEDULER_REGION=europe-north2 ./infra/bootstrap.sh`.
@@ -72,7 +78,7 @@ Qué crea:
 
 | Recurso | Detalle |
 |---|---|
-| APIs | run, artifactregistry, cloudscheduler, aiplatform, storage, iam, iamcredentials, sts, logging, cloudbuild |
+| APIs | run, artifactregistry, cloudscheduler, aiplatform, storage, iam, iamcredentials, sts, logging, cloudbuild, cloudbilling, billingbudgets, pubsub; con `BILLING_CAP=1` también workflows y eventarc |
 | Artifact Registry `haggler` | Docker, política de limpieza: conserva las 5 versiones más recientes |
 | Bucket `gs://$PROJECT_ID-haggler-data` | acceso uniforme, *public access prevention*, borra `raw/` a los 90 días |
 | `haggler-job@` | cuenta del job: `roles/aiplatform.user` y `roles/logging.logWriter` (proyecto), `roles/storage.objectAdmin` (bucket) |
@@ -81,6 +87,10 @@ Qué crea:
 | Workload Identity Federation | pool `github` + proveedor OIDC `github` (`token.actions.githubusercontent.com`), condición `assertion.repository=='glrodasz/haggler-agent' && assertion.ref=='refs/heads/main'`; `roles/iam.workloadIdentityUser` de `haggler-github` para ese repositorio |
 | Cloud Run Job `haggler-daily` | **marcador de posición** con una imagen pública de ejemplo, solo si no existe (para que el Scheduler tenga destino); `deploy-job.yml` despliega la imagen real |
 | Cloud Scheduler `haggler-daily-trigger` | `POST https://run.googleapis.com/v2/projects/…/locations/europe-north2/jobs/haggler-daily:run` con token OAuth de `haggler-scheduler`, 04:17 hora de Estocolmo |
+| Presupuesto `haggler PROYECTO` | en la cuenta de facturación, solo este proyecto, mensual; correos al 50/90/100 % del gasto real y al 100 % del pronosticado; con `BILLING_CAP=1` notifica al tópico `haggler-budget` (§9) |
+| Tópico Pub/Sub `haggler-budget` | (`BILLING_CAP=1`) recibe las notificaciones del presupuesto; `roles/pubsub.publisher` para `billing-budget-alert@system.gserviceaccount.com` |
+| `haggler-billing-cap@` | (`BILLING_CAP=1`) `roles/billing.projectManager`, `roles/workflows.invoker`, `roles/eventarc.eventReceiver`, `roles/logging.logWriter` (proyecto) |
+| Workflow + trigger de Eventarc `haggler-billing-cap` | (`BILLING_CAP=1`) en `europe-north1`; `infra/billing_cap.yaml` corre con cada mensaje del tópico y desvincula la facturación cuando el gasto real alcanza el presupuesto |
 
 No se crean claves de cuentas de servicio: GitHub Actions se autentica con tokens OIDC de corta
 duración (WIF), y el job usa la identidad de su cuenta de servicio.
@@ -302,8 +312,61 @@ verificar en la calculadora de GCP:
 | Cloud Logging | pocos MB | 0 (50 GiB gratis) |
 | GitHub Actions / Pages | repo público | 0 |
 
-Total típico: **< 1 USD/mes**; peor caso realista: ~5 USD/mes. Recomendado: crear un presupuesto
-con alertas en **Billing → Budgets & alerts** (por ejemplo 5 USD).
+Total típico: **< 1 USD/mes**; peor caso realista: ~5 USD/mes.
+
+### Presupuesto y corte automático
+
+Un presupuesto de GCP **solo avisa: no detiene el gasto**. El bootstrap crea los dos:
+
+- **Presupuesto `haggler PROYECTO`** (siempre): `BUDGET_AMOUNT` por mes, solo este proyecto,
+  correos a los administradores de la cuenta de facturación al 50, 90 y 100 % del gasto real y al
+  100 % del pronosticado.
+- **Corte** (`BILLING_CAP=1`, por defecto): el presupuesto publica en el tópico `haggler-budget`
+  varias veces al día; cada mensaje lanza el workflow `haggler-billing-cap`
+  (`infra/billing_cap.yaml`). Cuando el **gasto real** del mes llega al presupuesto, desvincula el
+  proyecto de su cuenta de facturación y **todo lo que es de pago se detiene**: los jobs, el
+  Scheduler, Vertex AI. El pronóstico nunca dispara el corte. Para recuperarlo, §10.
+
+Limitaciones:
+
+- Los datos de costo llegan con horas de retraso (hasta un día): el gasto puede pasar un poco del
+  presupuesto antes del corte.
+- Con la facturación desvinculada mucho tiempo, Google puede borrar recursos: si el corte salta,
+  decide pronto si vuelves a vincularla.
+- Los presupuestos viven en la cuenta de facturación: crearlo exige *Billing Account
+  Administrator* o *Costs Manager* allí (§1). Sin ese rol el bootstrap avisa y deja el corte
+  desplegado pero inactivo; créalo a mano en **Billing → Budgets & alerts** (alcance: este
+  proyecto; *Connect a Pub/Sub topic*: `projects/PROYECTO/topics/haggler-budget`) o pídele a quien
+  tenga el rol que corra el bootstrap.
+
+Ejemplos:
+
+```bash
+PROJECT_ID=mi-proyecto ./infra/bootstrap.sh                        # 5 en USD/EUR/GBP/CHF, con corte
+PROJECT_ID=mi-proyecto BUDGET_AMOUNT=60 ./infra/bootstrap.sh        # cuenta en SEK: 60 SEK
+PROJECT_ID=mi-proyecto BILLING_CAP=0 ./infra/bootstrap.sh           # solo alertas
+```
+
+Probar el workflow **sin** cortar nada (un gasto menor que el presupuesto):
+
+```bash
+MSG=$(printf '{"costAmount": 1, "budgetAmount": 5}' | base64)
+gcloud workflows run haggler-billing-cap --location europe-north1 \
+  --data="{\"data\": {\"message\": {\"data\": \"${MSG}\"}}}"
+# result: "under budget: …"; nada más se ejecuta
+```
+
+Ver qué hizo con las notificaciones reales:
+
+```bash
+gcloud workflows executions list haggler-billing-cap --location europe-north1 --limit 5
+gcloud billing budgets list --billing-account CUENTA \
+  --format='table(displayName, amount.specifiedAmount, notificationsRule.pubsubTopic)'
+```
+
+Los topes de la aplicación siguen siendo la primera línea: `HAGGLER_MAX_LLM_CALLS`,
+`HAGGLER_RESEARCH_MAX_CALLS`, `HAGGLER_RESEARCH_MAX_QUERIES` y
+`HAGGLER_RESEARCH_MAX_MONTH_QUERIES` (`.env.example`).
 
 ## 10. Cómo desactivar
 
@@ -313,6 +376,26 @@ con alertas en **Billing → Budgets & alerts** (por ejemplo 5 USD).
 gcloud scheduler jobs pause haggler-daily-trigger --location europe-north1
 gcloud scheduler jobs resume haggler-daily-trigger --location europe-north1   # reanudar
 gcloud scheduler jobs pause haggler-research-trigger --location europe-north1  # solo la investigación
+```
+
+**Desactivar el corte automático** (el presupuesto sigue mandando correos):
+
+```bash
+gcloud eventarc triggers delete haggler-billing-cap --location europe-north1
+# reactivarlo: volver a correr el bootstrap (BILLING_CAP=1)
+```
+
+Volver a correr el bootstrap con `BILLING_CAP=0` no basta: deja el tópico en el presupuesto y el
+trigger existente.
+
+**Si el corte saltó** (el proyecto quedó sin facturación): primero sube el presupuesto o borra el
+trigger, porque la siguiente notificación del mes volvería a cortar; luego vuelve a vincular la
+cuenta:
+
+```bash
+PROJECT_ID=mi-proyecto BUDGET_AMOUNT=10 ./infra/bootstrap.sh   # o el trigger delete de arriba
+gcloud billing projects link mi-proyecto --billing-account CUENTA
+gcloud scheduler jobs list --location europe-north1            # comprobar que siguen ENABLED
 ```
 
 **Pausar la publicación / despliegues**:
@@ -339,7 +422,11 @@ gcloud run jobs delete haggler-research --region europe-north2 --project $P
 gcloud artifacts repositories delete haggler --location europe-north2 --project $P
 gcloud storage rm --recursive gs://$P-haggler-data          # borra también el bucket
 gcloud iam workload-identity-pools delete github --location global --project $P
-for sa in haggler-job haggler-scheduler haggler-github; do
+gcloud eventarc triggers delete haggler-billing-cap --location europe-north1 --project $P
+gcloud workflows delete haggler-billing-cap --location europe-north1 --project $P
+gcloud pubsub topics delete haggler-budget --project $P
+gcloud billing budgets list --billing-account CUENTA       # y luego: budgets delete ID
+for sa in haggler-job haggler-scheduler haggler-github haggler-billing-cap; do
   gcloud iam service-accounts delete $sa@$P.iam.gserviceaccount.com --project $P
 done
 ```
@@ -353,6 +440,9 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 | Síntoma | Causa probable / solución |
 |---|---|
 | `bootstrap.sh`: Cloud Scheduler no disponible en la región | usar otra `SCHEDULER_REGION` (por defecto `europe-north1`); el job sigue en `REGION` |
+| `bootstrap.sh`: *warning* "cannot list the budgets" / "could not create budget" | tu cuenta no tiene *Billing Account Administrator* ni *Costs Manager* en la cuenta de facturación; el resto quedó creado. Crear el presupuesto a mano o correr el bootstrap con alguien que tenga el rol (§9) |
+| `bootstrap.sh`: *warning* "bills in 'SEK'" (u otra moneda) | el valor por defecto de 5 solo vale para USD/EUR/GBP/CHF; volver a correrlo con `BUDGET_AMOUNT` en la moneda de la cuenta |
+| Todo dejó de funcionar a mitad de mes; `gcloud billing projects describe` dice `billingEnabled: false` | saltó el corte (§9): `gcloud workflows executions list haggler-billing-cap --location europe-north1` muestra la ejecución. Recuperarlo como en §10 |
 | `bootstrap.sh`: "service account does not exist" justo después de crearla | propagación de IAM; el script reintenta 6 veces cada 10 s. Si aun así falla, volver a correrlo |
 | `google-github-actions/auth`: `Permission 'iam.serviceAccounts.getAccessToken' denied` o `unauthorized_client` / "rejected by the attribute condition" | `GCP_WIF_PROVIDER` o `GCP_GITHUB_SA` mal copiados, o el run no coincide con la condición: otro repositorio (`GITHUB_REPO`, distingue mayúsculas) u otra rama (`GITHUB_BRANCH`, solo `main`). Tras crear WIF puede tardar ~5 min en propagarse |
 | `deploy-job`: `denied: Permission "artifactregistry.repositories.uploadArtifacts"` | `GCP_REGION`/`AR_REPOSITORY` no coinciden con el repo creado; volver a correr el bootstrap |
@@ -379,6 +469,9 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
   credenciales de GCP. Para que esto valga, protege `main` (*Settings → Branches*): quien puede
   hacer push a `main` puede desplegar el job. Si corriste el bootstrap con una versión anterior
   (condición solo por repositorio), vuelve a correrlo: reaplica la condición del proveedor.
+- `haggler-billing-cap` solo puede desvincular (o vincular) la facturación del proyecto y lanzar
+  su workflow; no lee datos. Quien pueda publicar en el tópico `haggler-budget` puede dispararlo
+  con un gasto inventado: solo Cloud Billing y los *Owner/Editor* del proyecto tienen ese permiso.
 - `haggler-github` puede publicar imágenes y desplegar el job, y solo **leer** el bucket.
   `haggler-job` escribe en el bucket y llama a Vertex AI. `haggler-scheduler` solo puede ejecutar
   el job.

@@ -556,3 +556,161 @@ def test_setup_watch_only_run_is_the_deployed_research_job_plus_the_flag() -> No
     argv = [*job_args.group(1).split(",")[2:], "--watch-only"]
     options = options_from_args(add_run_arguments(argparse.ArgumentParser()).parse_args(argv))
     assert options.watch_only and options.store == "gcs"
+
+
+# ------------------------------------------------------------------ billing (docs/SETUP.md §9)
+
+BOOTSTRAP = ROOT / "infra" / "bootstrap.sh"
+BILLING_ACCOUNT = "AAAAAA-BBBBBB-CCCCCC"
+
+# Answers only what the bootstrap reads; every other call succeeds silently and is recorded.
+# FAKE_EXISTS makes every describe (and the budget listing) find the resource.
+FAKE_GCLOUD = f"""\
+echo "gcloud $*" >> "$GCLOUD_RECORD"
+case "$*" in
+  "auth list"*) echo me@example.com ;;
+  "projects describe"*) echo 123456789012 ;;
+  "billing projects describe"*billingEnabled*) echo True ;;
+  "billing projects describe"*billingAccountName*) echo billingAccounts/{BILLING_ACCOUNT} ;;
+  "billing accounts describe"*) echo "$FAKE_CURRENCY" ;;
+  "billing budgets list"*)
+    [ -n "$FAKE_NO_BILLING_ROLE" ] && exit 1
+    [ -n "$FAKE_EXISTS" ] && printf 'billingAccounts/{BILLING_ACCOUNT}/budgets/b-1\\thaggler p\\n'
+    exit 0 ;;
+  "services list"*) ;;
+  *describe*) [ -n "$FAKE_EXISTS" ] || exit 1 ;;
+esac
+"""
+
+
+def _run_bootstrap(tmp_path: Path, **env: str) -> tuple[subprocess.CompletedProcess, list[str]]:
+    bin_dir = _fake_bin(tmp_path, "gcloud", FAKE_GCLOUD)
+    record = tmp_path / "gcloud-calls.txt"
+    result = subprocess.run(
+        ["bash", str(BOOTSTRAP)],
+        env={
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+            "GCLOUD_RECORD": str(record),
+            "PROJECT_ID": "p",
+            "FAKE_CURRENCY": "EUR",
+            **env,
+        },
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    calls = record.read_text().splitlines() if record.exists() else []
+    return result, calls
+
+
+def _calls(calls: list[str], prefix: str) -> list[str]:
+    return [c for c in calls if c.startswith(f"gcloud {prefix}")]
+
+
+def test_billing_cap_workflow_only_unlinks_billing_once_actual_spend_reaches_the_budget() -> None:
+    workflow = yaml.safe_load((ROOT / "infra" / "billing_cap.yaml").read_text(encoding="utf-8"))
+    main = workflow["main"]
+    assert main["params"] == ["event"]
+    names = [next(iter(s)) for s in main["steps"]]
+    by_name = {name: s[name] for name, s in zip(names, main["steps"], strict=True)}
+    assigned = {k: v for a in by_name["parse"]["assign"] for k, v in a.items()}
+    # The budget notification (Pub/Sub via Eventarc): actual spend, never the forecast.
+    assert assigned["notification"] == "${json.decode(base64.decode(event.data.message.data))}"
+    assert assigned["cost"] == "${double(notification.costAmount)}"
+    assert assigned["budget"] == "${double(notification.budgetAmount)}"
+    (guard,) = by_name["under_budget"]["switch"]
+    assert guard["condition"] == "${cost < budget}"
+    assert "return" in guard
+    assert names.index("under_budget") < names.index("disable_billing")
+    disable = by_name["disable_billing"]
+    assert disable["call"] == "http.put"
+    assert disable["args"]["url"].endswith('project + "/billingInfo"}')
+    assert disable["args"]["auth"] == {"type": "OAuth2"}
+    assert disable["args"]["body"] == {"billingAccountName": ""}
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_bootstrap_creates_the_budget_and_wires_the_kill_switch(tmp_path: Path) -> None:
+    result, calls = _run_bootstrap(tmp_path)
+    assert result.returncode == 0, result.stderr
+    (create,) = _calls(calls, "billing budgets create")
+    for flag in (
+        "--display-name=haggler p",
+        f"--billing-account={BILLING_ACCOUNT}",
+        "--budget-amount=5",
+        "--calendar-period=month",
+        "--filter-projects=projects/p",
+        "--notifications-rule-pubsub-topic=projects/p/topics/haggler-budget",
+        "--threshold-rule=percent=1.0 ",
+        "--threshold-rule=percent=1.0,basis=forecasted-spend",
+    ):
+        assert flag in create + " ", flag
+    (trigger,) = _calls(calls, "eventarc triggers create")
+    assert "--transport-topic=projects/p/topics/haggler-budget" in trigger
+    assert "--destination-workflow=haggler-billing-cap" in trigger
+    (deploy,) = _calls(calls, "workflows deploy haggler-billing-cap")
+    assert "infra/billing_cap.yaml" in deploy
+    assert any("--role=roles/billing.projectManager" in c for c in calls)
+    assert "Kill switch: ON" in result.stdout
+    assert "Budget: 5 EUR/month" in result.stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_bootstrap_rerun_updates_the_budget_in_place(tmp_path: Path) -> None:
+    result, calls = _run_bootstrap(tmp_path, FAKE_EXISTS="1")
+    assert result.returncode == 0, result.stderr
+    assert not _calls(calls, "billing budgets create")
+    assert not _calls(calls, "eventarc triggers create")
+    (update,) = _calls(calls, "billing budgets update b-1 ")
+    assert "--clear-threshold-rules" in update
+    assert "--notifications-rule-pubsub-topic=projects/p/topics/haggler-budget" in update
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_bootstrap_alerts_only_skips_the_kill_switch(tmp_path: Path) -> None:
+    result, calls = _run_bootstrap(tmp_path, BILLING_CAP="0")
+    assert result.returncode == 0, result.stderr
+    assert not [c for c in calls if " pubsub " in c or "eventarc" in c or "workflows" in c]
+    (create,) = _calls(calls, "billing budgets create")
+    assert "--notifications-rule-pubsub-topic" not in create
+    assert "Kill switch: OFF" in result.stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+@pytest.mark.parametrize(
+    ("env", "warning"),
+    [
+        ({"FAKE_CURRENCY": "SEK"}, "bills in 'SEK'"),
+        ({"FAKE_NO_BILLING_ROLE": "1"}, "cannot list the budgets"),
+    ],
+)
+def test_bootstrap_without_a_safe_budget_warns_and_finishes(
+    tmp_path: Path, env: dict[str, str], warning: str
+) -> None:
+    result, calls = _run_bootstrap(tmp_path, **env)
+    assert result.returncode == 0, result.stderr
+    assert not _calls(calls, "billing budgets create")
+    assert warning in result.stderr
+    assert "Kill switch: deployed but IDLE" in result.stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+def test_bootstrap_takes_an_explicit_amount_in_any_currency(tmp_path: Path) -> None:
+    result, calls = _run_bootstrap(tmp_path, FAKE_CURRENCY="SEK", BUDGET_AMOUNT="60")
+    assert result.returncode == 0, result.stderr
+    (create,) = _calls(calls, "billing budgets create")
+    assert "--budget-amount=60 " in create
+    assert "Budget: 60 SEK/month" in result.stdout
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not installed")
+@pytest.mark.parametrize(
+    "env", [{"BUDGET_AMOUNT": "5USD"}, {"BUDGET_AMOUNT": "0"}, {"BILLING_CAP": "yes"}]
+)
+def test_bootstrap_rejects_bad_billing_settings_before_touching_gcp(
+    tmp_path: Path, env: dict[str, str]
+) -> None:
+    result, calls = _run_bootstrap(tmp_path, **env)
+    assert result.returncode == 1
+    assert "ERROR:" in result.stderr
+    assert not _calls(calls, "services enable")
