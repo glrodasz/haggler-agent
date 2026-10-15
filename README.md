@@ -63,30 +63,30 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 
 | Step | How |
 |---|---|
-| **Sources** | Official pages addressable by country (iCloud+ support, apple.com/{country}, spotify.com/{country}, Netflix help, Microsoft Store catalog). For services that price by IP (YouTube Premium, Google One, HBO Max) or disallow bots in robots.txt (Disney+), each country's **App Store** in-app purchase listing. A secondary Netflix dataset (tompec, CC BY 4.0) for cross-checking. |
-| **Extraction** | Deterministic parsers, with a quote-only Gemini fallback (see above). |
-| **Normalization** | ECB and central bank rates via Frankfurter (COP from BanRep, ARS from BCRA…), monthly equivalent, VAT included yes/no. |
-| **Validation** | Currency vs. country, plausible ranges, plan ordering, changes over 30 % quarantined until confirmed, last known value carried forward when a source fails. Quarantined rows get an independent LLM read, and only agreement with the parser releases them. |
-| **Publishing** | Full snapshots in GCS, `data/latest/` and `data/changes/*.jsonl` in the repo, static site on GitHub Pages. |
+| Sources | Official pages addressable by country (iCloud+ support, apple.com/{country}, spotify.com/{country}, Netflix help, Microsoft Store catalog) and, for services that price by IP (YouTube Premium, Google One, HBO Max) or disallow bots in robots.txt (Disney+), each country's **App Store** in-app purchase listing. A secondary Netflix dataset (tompec, CC BY 4.0) for cross-checking. |
+| Extraction | Deterministic parsers, with a quote-only Gemini fallback (see above). |
+| Normalization | ECB and central bank rates via Frankfurter (COP from BanRep, ARS from BCRA…), monthly equivalent, VAT included yes/no. |
+| Validation | Currency vs. country, plausible ranges, plan ordering, changes over 30 % quarantined until confirmed, last known value carried forward when a source fails. Quarantined rows get an independent LLM read, and only agreement with the parser releases them. |
+| Publishing | Full snapshots in GCS, `data/latest/` and `data/changes/*.jsonl` in the repo, static site on GitHub Pages. |
 
 ### Weekly feasibility research
 
 | Step | How |
 |---|---|
-| **Plan** | Only service/country pairs saving at least 1 €/month and 15 % are worth researching. Caps per run (pairs, services, payment instruments) and per month (search queries). |
-| **Discover** | Three ADK `single_turn` agents with Gemini, Google Search and structured output. |
-| **Verify** | Our fetch must find the literal quote on the cited page or on the subject's known official pages. |
-| **Evaluate** | The pure evaluator derives the three axes per profile: card country, presence, documents, address. Curated data wins, and upgrading a verdict requires an official source. |
-| **Review** | `haggler research review` / `accept`. The comparator excludes unreviewed findings unless the visitor opts in. |
+| Plan | Only service/country pairs saving at least 1 €/month and 15 % are worth researching. Caps per run (pairs, services, payment instruments) and per month (search queries). |
+| Discover | Three ADK `single_turn` agents with Gemini, Google Search and structured output. |
+| Verify | Our fetch must find the literal quote on the cited page or on the subject's known official pages. |
+| Evaluate | The pure evaluator derives the three axes per profile: card country, presence, documents, address. Curated data wins, and upgrading a verdict requires an official source. |
+| Review | `haggler research review` / `accept`. The comparator excludes unreviewed findings unless the visitor opts in. |
 
 ### Bundle monitoring
 
 | Step | How |
 |---|---|
-| **Values** | [`data/curated/bundles.yaml`](data/curated/bundles.yaml) is the single source of truth; no job writes to it. Each value is pinned by an **anchor**, a literal quote from the official page. |
-| **Watch** | An LLM-free watcher reads bundle pages and versioned PDF price lists on the bundle country's official domains, checks every anchor and detects new editions. |
-| **Propose** | A search agent proposes values and requirements for up to two bundles a week. A value only counts if an official page of that country states it (value-quote check). |
-| **Display** | Derived status (verified, needs review, manual verification, unverified, expired), monthly price with and without the 2 % currency exchange fee, savings excluding intro prices, and a verdict per profile. |
+| Values | [`data/curated/bundles.yaml`](data/curated/bundles.yaml) is the single source of truth; no job writes to it. Each value is pinned by an **anchor**, a literal quote from the official page. |
+| Watch | An LLM-free watcher reads bundle pages and versioned PDF price lists on the bundle country's official domains, checks every anchor and detects new editions. |
+| Propose | A search agent proposes values and requirements for up to two bundles a week. A value only counts if an official page of that country states it (value-quote check). |
+| Display | Derived status (verified, needs review, manual verification, unverified, expired), monthly price with and without the 2 % currency exchange fee, savings excluding intro prices, and a verdict per profile. |
 
 ## Architecture
 
@@ -127,7 +127,7 @@ residence and ties the visitor describes.
 **Backend:** Python 3.12, Pydantic, httpx, selectolax, pypdf, uv ·
 **Infra:** Cloud Run Jobs, Cloud Scheduler, Cloud Storage, Cloud Workflows, Eventarc, Workload
 Identity · **Front end:** Astro, Preact, TypeScript, Vitest · **CI/CD:** GitHub Actions, GitHub
-Pages · **Quality:** ruff, pytest (1,100+ tests, offline replay fixtures), catalog validation in CI
+Pages · **Quality:** ruff, pytest (2,300+ tests, offline replay fixtures), catalog validation in CI
 
 ## Quickstart
 
