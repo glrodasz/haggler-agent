@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { ServiceMark } from "../components/ServiceMark";
 import { es } from "../i18n/es";
 import {
   cheapestFor,
@@ -365,9 +366,7 @@ export default function Comparador(props: ComparadorProps) {
                       checked={checked}
                       onChange={(e) => toggleService(s.id, e.currentTarget.checked)}
                     />
-                    <span class="monogram" aria-hidden="true">
-                      {s.name.charAt(0).toUpperCase()}
-                    </span>
+                    <ServiceMark id={s.id} name={s.name} />
                     <span class="service-name">{s.name}</span>
                   </label>
                   <label class="visually-hidden" for={`plan-${s.id}`}>

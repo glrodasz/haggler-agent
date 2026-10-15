@@ -1,5 +1,6 @@
 ---
 import CountryLabel from "../../components/CountryLabel.astro";
+import { ServiceMark } from "../../components/ServiceMark";
 import TableWrap from "../../components/TableWrap.astro";
 import { es, lookup } from "../../i18n/es";
 import Base from "../../layouts/Base.astro";
@@ -39,7 +40,10 @@ const countriesWith = (id: string) => new Set(site.offersForService(id).map((o) 
             return (
               <tr>
                 <th scope="row">
-                  <a href={routes.service(s.id)}>{s.name}</a>
+                  <span class="service-title">
+                    <ServiceMark id={s.id} name={s.name} />
+                    <a href={routes.service(s.id)}>{s.name}</a>
+                  </span>
                 </th>
                 <td>{lookup(es.categories, s.category)}</td>
                 <td class="num">{countriesWith(s.id)}</td>
