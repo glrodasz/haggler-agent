@@ -36,7 +36,7 @@ describe("formatMoney", () => {
 
   it("groups thousands with a no-break space, four-digit amounts included", () => {
     expect(formatMoney(3834, "SEK")).toBe("3\u00A0834,00\u00A0SEK");
-    expect(plain(formatMoney(1234567.5, "COP"))).toBe("1 234 567,50 COP");
+    expect(plain(formatMoney(1234567.5, "EUR"))).toBe("1 234 567,50 €");
   });
 
   it("does not crash on an invalid currency code", () => {
