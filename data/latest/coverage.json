@@ -901,7 +901,7 @@
     "country": "DE",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1021,7 +1021,7 @@
     "country": "PH",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1381,7 +1381,7 @@
     "country": "CH",
     "failing_since": null,
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "not_available"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1443,17 +1443,17 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "ES",
-    "failing_since": "2026-10-15",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "FI",
-    "failing_since": "2026-10-15",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1531,9 +1531,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "NO",
-    "failing_since": "2026-10-15",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1555,9 +1555,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "PK",
-    "failing_since": "2026-10-15",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1587,9 +1587,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SE",
-    "failing_since": null,
+    "failing_since": "2026-10-15",
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2941,7 +2941,7 @@
     "country": "PE",
     "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
