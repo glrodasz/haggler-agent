@@ -175,6 +175,31 @@ const profileRefs: Check = (value, path, problems) => {
   });
 };
 
+const ruleVerdict = shape({
+  label: str,
+  rank: num,
+  eu_badge: bool,
+  provenance: nullable(oneOf([...PROVENANCES, "home"])),
+});
+
+/** A rule tree node: a {verdict} leaf, or {ask, answers} with a subtree per answer. */
+const ruleTree: Check = (value, path, problems) => {
+  if (isObject(value) && "verdict" in value) {
+    ruleVerdict(value.verdict, `${path}.verdict`, problems);
+    return;
+  }
+  shape({ ask: list(str), answers: mapOf(ruleTree) })(value, path, problems);
+};
+
+const profileCapabilities = shape({
+  residence_country: str,
+  id_document_countries: list(str),
+  phone_countries: list(str),
+  address_countries: list(str),
+  card_countries: list(str),
+  presence: mapOf(oneOf(["once", "periodic"])),
+});
+
 const changeValue = anyOf(
   "número, texto, {amount, currency} o null",
   nullable(num),
@@ -379,7 +404,16 @@ export const SITE_DATA_SCHEMA = {
     shape({
       labels: list(shape({ id: str, rank: num, name_es: str, description_es: str })),
       default_profile: str,
-      profiles: list(shape({ id: str, name_es: str, description_es: str, residence_country: str })),
+      profiles: list(
+        shape({
+          id: str,
+          name_es: str,
+          description_es: str,
+          residence_country: str,
+          citizenships: list(str),
+          capabilities: profileCapabilities,
+        }),
+      ),
       records: list(
         shape({
           profile: str,
@@ -411,6 +445,15 @@ export const SITE_DATA_SCHEMA = {
           researched_on: nullable(str),
         }),
       ),
+      rules: list(
+        shape({
+          service_id: str,
+          target_country: str,
+          reviewed: ruleTree,
+          pending: nullable(ruleTree),
+        }),
+      ),
+      eea_countries: list(str),
     }),
     profileRefs,
   ),

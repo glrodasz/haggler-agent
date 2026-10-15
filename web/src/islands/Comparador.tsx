@@ -2,8 +2,9 @@
  * Comparador: the only interactive island. Controls render on the server; the offers list is
  * read from an inline <script type="application/json"> after hydration because passing ~1-2k
  * offers as island props would bloat the HTML with Astro's prop encoding. The feasibility
- * records travel the same way: the offers carry the default profile's labels and are relabelled
- * (logic/verdicts.ts) when the visitor picks another profile or includes pending findings.
+ * rules travel the same way: the offers carry the default profile's labels and are relabelled
+ * (logic/verdicts.ts) when the visitor picks or describes another profile (logic/profile.ts) or
+ * includes pending findings.
  */
 
 import { useEffect, useMemo, useState } from "preact/hooks";
@@ -25,12 +26,27 @@ import {
   formatSignedMoney,
   periodSuffix,
 } from "../logic/format";
-import { type CompareState, decodeState, defaultState, encodeState } from "../logic/selection";
-import { unpackOffers, unpackVerdicts } from "../logic/transport";
-import { RISK_LEVELS, type RiskLevel } from "../logic/types";
 import {
+  changeResidence,
+  emptyTie,
+  fromCapabilities,
+  type Presence,
+  type Tie,
+  toCapabilities,
+  type VisitorProfile,
+} from "../logic/profile";
+import { type CompareState, decodeState, defaultState, encodeState } from "../logic/selection";
+import { unpackOffers } from "../logic/transport";
+import {
+  type FeasibilityRule,
+  type ProfileCapabilities,
+  RISK_LEVELS,
+  type RiskLevel,
+} from "../logic/types";
+import {
+  capabilitiesOf,
+  matchingPreset,
   relabelOffers,
-  type VerdictRecord,
   type VerdictSource,
   verdictLookup,
 } from "../logic/verdicts";
@@ -54,9 +70,16 @@ export interface ComparadorProfile {
   id: string;
   name: string;
   description: string;
-  residence: string;
-  residenceName: string;
-  residenceCurrency: string;
+  capabilities: ProfileCapabilities;
+}
+
+export interface ComparadorCountry {
+  cc: string;
+  name: string;
+}
+
+export interface ComparadorResidence extends ComparadorCountry {
+  currency: string;
 }
 
 export interface ComparadorProps {
@@ -77,14 +100,34 @@ export interface ComparadorProps {
   defaultCurrency: string;
   /** id of the inline JSON element holding the packed offers (see logic/transport.ts). */
   dataId: string;
-  /** Public profiles, default first; the selector only renders with two or more. */
+  /** Public profiles, default first. */
   profiles: ComparadorProfile[];
   defaultProfile: string;
-  /** Whether any record is pending review (the checkbox only renders then). */
+  /** Countries a visitor can live in: the ones with prices, sorted by name. */
+  residences: ComparadorResidence[];
+  /** Every country a visitor can have ties with, sorted by name. */
+  tieCountries: ComparadorCountry[];
+  eeaCountries: string[];
+  /** Whether any verdict depends on findings pending review (the checkbox only renders then). */
   hasPending: boolean;
-  /** id of the inline JSON element holding the packed feasibility records. */
+  /** id of the inline JSON element holding the feasibility rules. */
   verdictsId: string;
 }
+
+const PRESENCES: Presence[] = ["none", "once", "periodic"];
+
+/** A profile that only lives in `residence`, with its ID, phone and address. */
+function emptyCaps(residence: string): ProfileCapabilities {
+  return {
+    residence_country: residence,
+    id_document_countries: [residence],
+    phone_countries: [residence],
+    address_countries: [residence],
+    card_countries: [],
+    presence: {},
+  };
+}
+const CUSTOM = "__custom";
 
 const t = es.compare;
 
@@ -92,46 +135,82 @@ function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
 }
 
+function unpackRules(value: unknown): FeasibilityRule[] {
+  const rules = (value as { rules?: unknown } | null)?.rules;
+  return Array.isArray(rules) ? (rules as FeasibilityRule[]) : [];
+}
+
 export default function Comparador(props: ComparadorProps) {
   const { services, rates, feePct } = props;
-  const currencies = useMemo(
-    () => props.currencies.filter((c) => c === "EUR" || (rates[c] ?? 0) > 0),
-    [props.currencies, rates],
+  const [state, setState] = useState<CompareState>(() =>
+    defaultState(services, props.defaultCurrency),
   );
-  const initial = useMemo(
-    () =>
-      defaultState(
-        services,
-        currencies.includes(props.defaultCurrency)
-          ? props.defaultCurrency
-          : (currencies[0] ?? "EUR"),
-      ),
-    [services, currencies, props.defaultCurrency],
-  );
-  const [state, setState] = useState<CompareState>(initial);
   const [offers, setOffers] = useState<CompareOfferFields[] | null>(null);
-  const [records, setRecords] = useState<VerdictRecord[]>([]);
+  const [rules, setRules] = useState<FeasibilityRule[]>([]);
   const [ready, setReady] = useState(false);
-  const showProfiles = props.profiles.length >= 2;
+
+  const source: VerdictSource = useMemo(
+    () => ({
+      default_profile: props.defaultProfile,
+      profiles: props.profiles,
+      rules,
+      eea_countries: props.eeaCountries,
+    }),
+    [props.defaultProfile, props.profiles, rules, props.eeaCountries],
+  );
+  const choice = state.custom ? toCapabilities(state.custom) : state.profile;
+  const caps = capabilitiesOf(source, choice);
+  const preset = props.profiles.find((p) => p.id === (state.profile ?? props.defaultProfile));
+  const visitor: VisitorProfile | null = state.custom ?? (caps ? fromCapabilities(caps) : null);
+
+  const residenceById = useMemo(
+    () => new Map(props.residences.map((r) => [r.cc, r])),
+    [props.residences],
+  );
+  const countryName = useMemo(() => {
+    const names = new Map(props.tieCountries.map((c) => [c.cc, c.name]));
+    return (cc: string) => names.get(cc) ?? props.countryNames[cc] ?? cc;
+  }, [props.tieCountries, props.countryNames]);
+  const residence = caps?.residence_country ?? props.residence;
+  const home = residenceById.get(residence);
+  const residenceName = home?.name ?? props.residenceName;
+  const residenceCurrency = home?.currency ?? props.residenceCurrency;
+
+  const currencies = useMemo(
+    () =>
+      [...new Set([residenceCurrency, ...props.currencies])].filter(
+        (c) => c === "EUR" || (rates[c] ?? 0) > 0,
+      ),
+    [residenceCurrency, props.currencies, rates],
+  );
 
   useEffect(() => {
-    const read = <T,>(id: string, unpack: (value: unknown) => T[]): T[] => {
+    const read = <T,>(id: string, unpack: (value: unknown) => T): T => {
+      let value: unknown = null;
       try {
-        return unpack(JSON.parse(document.getElementById(id)?.textContent ?? "{}"));
+        value = JSON.parse(document.getElementById(id)?.textContent ?? "{}");
       } catch {
-        return [];
+        value = null;
       }
+      return unpack(value);
     };
     setOffers(read(props.dataId, unpackOffers));
-    setRecords(read(props.verdictsId, unpackVerdicts));
-    setState(
-      decodeState(window.location.hash, services, currencies, initial, {
-        profiles: showProfiles
-          ? props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile)
-          : [],
+    setRules(read(props.verdictsId, unpackRules));
+    const decoded = decodeState(
+      window.location.hash,
+      services,
+      [...new Set([...props.residences.map((r) => r.currency), ...props.currencies])].filter(
+        (c) => c === "EUR" || (rates[c] ?? 0) > 0,
+      ),
+      state,
+      {
+        profiles: props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile),
         pending: props.hasPending,
-      }),
+        residences: props.residences.map((r) => r.cc),
+        countries: new Set(props.tieCountries.map((c) => c.cc)),
+      },
     );
+    setState(normalizeProfile(decoded));
     setReady(true);
   }, []);
 
@@ -143,32 +222,17 @@ export default function Comparador(props: ComparadorProps) {
     }
   }, [state, ready]);
 
-  const profile =
-    props.profiles.find((p) => p.id === (state.profile ?? props.defaultProfile)) ??
-    props.profiles.find((p) => p.id === props.defaultProfile);
-  const residence = profile?.residence ?? props.residence;
-  const residenceName = profile?.residenceName ?? props.residenceName;
-  const residenceCurrency = profile?.residenceCurrency ?? props.residenceCurrency;
-
-  const source: VerdictSource = useMemo(
-    () => ({
-      default_profile: props.defaultProfile,
-      profiles: props.profiles.map((p) => ({ id: p.id, residence_country: p.residence })),
-      records,
-    }),
-    [props.defaultProfile, props.profiles, records],
-  );
   const verdict = useMemo(
-    () => verdictLookup(source, state.profile, state.pending),
-    [source, state.profile, state.pending],
+    () => verdictLookup(source, choice, state.pending),
+    [source, state.custom, state.profile, state.pending],
   );
   // offers.json already carries the default profile's verdicts without pending findings.
   const relabelled = useMemo(
     () =>
-      offers && (state.profile !== null || state.pending)
-        ? relabelOffers(offers, source, state.profile, state.pending)
+      offers && (state.custom || state.profile !== null || state.pending)
+        ? relabelOffers(offers, source, choice, state.pending)
         : offers,
-    [offers, source, state.profile, state.pending],
+    [offers, source, state.custom, state.profile, state.pending],
   );
 
   const ctx: CompareContext = useMemo(
@@ -206,7 +270,46 @@ export default function Comparador(props: ComparadorProps) {
   const setRisk = (risk: RiskLevel) => setState((s) => ({ ...s, risk }));
   const setCurrency = (currency: string) => setState((s) => ({ ...s, currency }));
   const setProfile = (id: string) =>
-    setState((s) => ({ ...s, profile: id === props.defaultProfile ? null : id }));
+    setState((s) =>
+      followCurrency(s, { ...s, custom: null, profile: id === props.defaultProfile ? null : id }),
+    );
+  /** A described profile with a curated profile's capabilities is that profile. */
+  function normalizeProfile(s: CompareState): CompareState {
+    if (!s.custom) return s;
+    const id = matchingPreset(source, toCapabilities(s.custom));
+    if (id === null) return s;
+    return { ...s, custom: null, profile: id === props.defaultProfile ? null : id };
+  }
+  const usable = (c: string) => c === "EUR" || (rates[c] ?? 0) > 0;
+  const homeOf = (s: CompareState) =>
+    residenceById.get(
+      capabilitiesOf(source, s.custom ? toCapabilities(s.custom) : s.profile)?.residence_country ??
+        "",
+    );
+  /** A residence change takes the display currency along when it was the old home one. */
+  const followCurrency = (prev: CompareState, next: CompareState): CompareState => {
+    const before = homeOf(prev)?.currency;
+    const after = homeOf(next)?.currency;
+    return after && before !== after && prev.currency === before && usable(after)
+      ? { ...next, currency: after }
+      : next;
+  };
+  const editProfile = (edit: (v: VisitorProfile) => VisitorProfile) =>
+    setState((s) => {
+      const current =
+        s.custom ??
+        fromCapabilities(capabilitiesOf(source, s.profile) ?? emptyCaps(props.residence));
+      return followCurrency(s, normalizeProfile({ ...s, custom: edit(current) }));
+    });
+  const setTie = (i: number, patch: Partial<Tie>) =>
+    editProfile((v) => ({
+      ...v,
+      ties: v.ties.map((t, j) => (j === i ? { ...t, ...patch } : t)),
+    }));
+  const addTie = (cc: string) =>
+    cc && editProfile((v) => ({ ...v, ties: [...v.ties, emptyTie(cc)] }));
+  const removeTie = (i: number) =>
+    editProfile((v) => ({ ...v, ties: v.ties.filter((_, j) => j !== i) }));
   const setPending = (pending: boolean) => setState((s) => ({ ...s, pending }));
 
   const planLabel = (serviceId: string, planId: string) =>
@@ -264,57 +367,121 @@ export default function Comparador(props: ComparadorProps) {
         </fieldset>
 
         <div class="side">
-          {(showProfiles || props.hasPending) && (
-            <fieldset>
-              <legend>{t.profileLegend}</legend>
-              <p class="fieldset-help">{t.profileHelp}</p>
-              {showProfiles ? (
-                <>
-                  <label class="visually-hidden" for="perfil">
-                    {t.profileLabel}
-                  </label>
+          <fieldset>
+            <legend>{t.profileLegend}</legend>
+            <p class="fieldset-help">{t.profileHelp}</p>
+            <div class="field">
+              <label for="perfil">{t.profileStart}</label>
+              <select
+                id="perfil"
+                value={state.custom ? CUSTOM : (preset?.id ?? props.defaultProfile)}
+                aria-describedby="perfil-descripcion"
+                onChange={(e) => {
+                  const id = e.currentTarget.value;
+                  if (id !== CUSTOM) setProfile(id);
+                }}
+              >
+                {props.profiles.map((p) => (
+                  <option value={p.id} key={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+                {state.custom && <option value={CUSTOM}>{t.profileCustom}</option>}
+              </select>
+            </div>
+            <p id="perfil-descripcion" class="profile-desc">
+              {state.custom ? t.profileCustomDesc : preset?.description}
+            </p>
+            {visitor && (
+              <>
+                <div class="field">
+                  <label for="residencia">{t.residenceLabel}</label>
                   <select
-                    id="perfil"
-                    value={profile?.id ?? props.defaultProfile}
-                    aria-describedby="perfil-descripcion"
-                    onChange={(e) => setProfile(e.currentTarget.value)}
+                    id="residencia"
+                    value={visitor.residence}
+                    aria-describedby="residencia-ayuda"
+                    onChange={(e) => {
+                      const cc = e.currentTarget.value;
+                      editProfile((v) => changeResidence(v, cc));
+                    }}
                   >
-                    {props.profiles.map((p) => (
-                      <option value={p.id} key={p.id}>
-                        {p.name}
+                    {props.residences.map((r) => (
+                      <option value={r.cc} key={r.cc}>
+                        {r.name}
                       </option>
                     ))}
                   </select>
-                  <p id="perfil-descripcion" class="profile-desc">
-                    {profile?.description}
+                  <p id="residencia-ayuda" class="fieldset-help">
+                    {t.residenceHelp}
                   </p>
-                </>
-              ) : (
-                profile && (
-                  <p class="profile-desc">
-                    <strong>{profile.name}.</strong> {profile.description}
-                  </p>
-                )
-              )}
-              {props.hasPending && (
-                <>
-                  <label class="check" for="pendientes">
-                    <input
-                      type="checkbox"
-                      id="pendientes"
-                      checked={state.pending}
-                      aria-describedby="pendientes-ayuda"
-                      onChange={(e) => setPending(e.currentTarget.checked)}
-                    />
-                    {t.pendingLabel}
+                </div>
+                <fieldset class="ties">
+                  <legend>{t.tiesLabel}</legend>
+                  <p class="fieldset-help">{t.tiesHelp}</p>
+                  {visitor.ties.length === 0 && <p class="small muted">{t.tiesNone}</p>}
+                  <ul class="tie-list">
+                    {visitor.ties.map((tie, i) => (
+                      <TieRow
+                        key={tie.cc}
+                        index={i}
+                        tie={tie}
+                        name={countryName(tie.cc)}
+                        options={props.tieCountries.filter(
+                          (c) =>
+                            c.cc === tie.cc ||
+                            (c.cc !== visitor.residence &&
+                              !visitor.ties.some((other) => other.cc === c.cc)),
+                        )}
+                        onChange={(patch) => setTie(i, patch)}
+                        onRemove={() => removeTie(i)}
+                      />
+                    ))}
+                  </ul>
+                  <label class="visually-hidden" for="vinculo-nuevo">
+                    {t.tieAdd}
                   </label>
-                  <p id="pendientes-ayuda" class="fieldset-help">
-                    {t.pendingHelp}
-                  </p>
-                </>
-              )}
-            </fieldset>
-          )}
+                  <select
+                    id="vinculo-nuevo"
+                    value=""
+                    onChange={(e) => {
+                      addTie(e.currentTarget.value);
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">{t.tieAdd}</option>
+                    {props.tieCountries
+                      .filter(
+                        (c) =>
+                          c.cc !== visitor.residence &&
+                          !visitor.ties.some((other) => other.cc === c.cc),
+                      )
+                      .map((c) => (
+                        <option value={c.cc} key={c.cc}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                </fieldset>
+              </>
+            )}
+            {props.hasPending && (
+              <>
+                <label class="check" for="pendientes">
+                  <input
+                    type="checkbox"
+                    id="pendientes"
+                    checked={state.pending}
+                    aria-describedby="pendientes-ayuda"
+                    onChange={(e) => setPending(e.currentTarget.checked)}
+                  />
+                  {t.pendingLabel}
+                </label>
+                <p id="pendientes-ayuda" class="fieldset-help">
+                  {t.pendingHelp}
+                </p>
+              </>
+            )}
+          </fieldset>
 
           <fieldset>
             <legend>{t.riskLegend}</legend>
@@ -559,5 +726,80 @@ function OfferCell(props: {
       </span>
       {props.isHome && <span class="small">{t.homeIsBest}</span>}
     </div>
+  );
+}
+
+function TieRow(props: {
+  index: number;
+  tie: Tie;
+  name: string;
+  options: ComparadorCountry[];
+  onChange: (patch: Partial<Tie>) => void;
+  onRemove: () => void;
+}) {
+  const { tie, index } = props;
+  const id = `vinculo-${index}`;
+  const flags = [
+    ["doc", t.tieDoc],
+    ["card", t.tieCard],
+    ["phone", t.tiePhone],
+    ["address", t.tieAddress],
+  ] as const;
+  return (
+    <li class="tie">
+      <div class="tie-head">
+        <label class="visually-hidden" for={`${id}-pais`}>
+          {t.tieCountry(index + 1)}
+        </label>
+        <select
+          id={`${id}-pais`}
+          value={tie.cc}
+          onChange={(e) => props.onChange({ cc: e.currentTarget.value })}
+        >
+          {props.options.map((c) => (
+            <option value={c.cc} key={c.cc}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          class="link-button"
+          aria-label={t.tieRemove(props.name)}
+          onClick={props.onRemove}
+        >
+          {t.tieRemoveText}
+        </button>
+      </div>
+      <ul class="tie-flags">
+        {flags.map(([key, label]) => (
+          <li key={key}>
+            <label class="check" for={`${id}-${key}`}>
+              <input
+                type="checkbox"
+                id={`${id}-${key}`}
+                checked={tie[key]}
+                onChange={(e) => props.onChange({ [key]: e.currentTarget.checked })}
+              />
+              {label}
+            </label>
+          </li>
+        ))}
+      </ul>
+      <div class="tie-presence">
+        <label for={`${id}-viajes`}>{t.tiePresence}</label>
+        <select
+          id={`${id}-viajes`}
+          value={tie.presence}
+          onChange={(e) => props.onChange({ presence: e.currentTarget.value as Presence })}
+        >
+          {PRESENCES.map((p) => (
+            <option value={p} key={p}>
+              {t.presence[p]}
+            </option>
+          ))}
+        </select>
+      </div>
+    </li>
   );
 }

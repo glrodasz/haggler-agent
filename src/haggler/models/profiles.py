@@ -5,13 +5,22 @@ countries of their ID documents, phone numbers and addresses, the payment instru
 and the countries they can be physically present in. The research evaluator
 (haggler.research.evaluate) derives every verdict from these capabilities and the verified facts;
 it never assumes a capability the profile does not list.
+
+The evaluator only reads a profile through the predicate methods below (lives_in, has_document,
+presence_in ...), never its fields: haggler.profile_rules swaps in a symbolic profile that
+answers them one by one, so the site can evaluate any combination of residence and ties in the
+browser with the same rules.
 """
 
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+if TYPE_CHECKING:
+    from haggler.models.curated import FeasibilityFile, FeasibilityRecord
 
 PresenceKind = Literal["once", "periodic"]
 _CC = r"^[A-Z]{2}$"
@@ -31,6 +40,9 @@ class Profile(BaseModel):
     address_countries: list[str] = Field(default_factory=list)
     # Ids from data/curated/payment_instruments.yaml.
     instruments_held: list[str] = Field(default_factory=list)
+    # Countries where a card the person holds was issued, when it is not a curated instrument
+    # (the site's profile builder describes cards this way).
+    card_countries: list[str] = Field(default_factory=list)
     # May the evaluator count instruments the person could open online (eligible for the
     # residence, documents they have)?
     obtain_remote_instruments: bool = True
@@ -56,7 +68,67 @@ class Profile(BaseModel):
             *self.id_document_countries,
             *self.phone_countries,
             *self.address_countries,
+            *self.card_countries,
             *self.presence,
+        }
+
+    # ------------------------------------------------------------- evaluator predicates
+
+    def lives_in(self, cc: str) -> bool:
+        return self.residence_country == cc
+
+    def lives_in_eea(self, eea: frozenset[str]) -> bool:
+        return self.residence_country in eea
+
+    def has_document(self, cc: str) -> bool:
+        return cc in self.id_document_countries
+
+    def has_any_document(self) -> bool:
+        return bool(self.id_document_countries)
+
+    def has_eea_document(self, eea: frozenset[str]) -> bool:
+        return any(cc in eea for cc in self.id_document_countries)
+
+    def has_residence_document(self) -> bool:
+        return self.residence_country in self.id_document_countries
+
+    def has_phone(self, cc: str) -> bool:
+        return cc in self.phone_countries
+
+    def has_address(self, cc: str) -> bool:
+        return cc in self.addresses()
+
+    def holds_card_of(self, cc: str) -> bool:
+        """A card issued in `cc` that is not a curated instrument (see instruments_held)."""
+        return cc in self.card_countries
+
+    def presence_in(self, cc: str) -> PresenceKind | None:
+        return self.presence.get(cc)
+
+    def curated_record(
+        self, feasibility: FeasibilityFile, service_id: str, target: str
+    ) -> FeasibilityRecord | None:
+        from haggler.feasibility import find_record
+
+        return find_record(
+            feasibility,
+            service_id,
+            target,
+            residence_country=self.residence_country,
+            profile=self.id,
+        )
+
+    def capabilities(self, held_card_countries: Iterable[str] = ()) -> dict[str, object]:
+        """What the evaluator can tell about this profile, as the site describes a visitor's
+        own profile (haggler.profile_rules.matches): `held_card_countries` are the observed
+        card countries of instruments_held."""
+        return {
+            "residence_country": self.residence_country,
+            "id_document_countries": sorted(set(self.id_document_countries)),
+            "phone_countries": sorted(set(self.phone_countries)),
+            "address_countries": sorted(self.addresses()),
+            "card_countries": sorted({*self.card_countries, *held_card_countries}),
+            "presence": dict(sorted(self.presence.items())),
         }
 
 

@@ -76,8 +76,15 @@ OFFER_KEYS = {
     "rank",
     "eu_badge",
 }
-FEASIBILITY_KEYS = {"labels", "records", "profiles", "default_profile"}
-PROFILE_KEYS = {"id", "name_es", "description_es", "residence_country"}
+FEASIBILITY_KEYS = {"labels", "records", "profiles", "default_profile", "rules", "eea_countries"}
+PROFILE_KEYS = {
+    "id",
+    "name_es",
+    "description_es",
+    "residence_country",
+    "citizenships",
+    "capabilities",
+}
 STEP_KEYS = {"type", "value", "requires_presence", "requires_false_declaration"}
 EVIDENCE_KEYS = {"url", "kind", "quote", "retrieved_at", "verified"}
 PROVENANCES = {"curated", "agent_reviewed", "agent_pending"}

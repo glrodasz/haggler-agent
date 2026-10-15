@@ -66,6 +66,7 @@ from haggler.models.observations import PublishedPrice
 from haggler.models.profiles import Profile, ProfilesFile
 from haggler.models.research import ReviewFile, subject_key
 from haggler.models.run import CoverageRow
+from haggler.profile_rules import explore
 from haggler.research.evaluate import UNKNOWN_RANK, Assessment, EvalContext, assess
 from haggler.research.fields import FIELD_SPECS
 from haggler.store import Store, dumps_lines
@@ -815,6 +816,74 @@ def _public_profiles(profiles: ProfilesFile, default: Profile) -> list[Profile]:
     return [default, *(p for p in profiles.public() if p.id != default.id)]
 
 
+def _verdict_leaf(a: Assessment) -> dict[str, Any]:
+    return {
+        "label": a.label,
+        "rank": a.rank,
+        "eu_badge": a.eu_badge,
+        "provenance": None if a.provenance == "none" else a.provenance,
+    }
+
+
+def _plain_tree(cc: str) -> dict[str, Any]:
+    """The rule the site applies to a pair without one: home in T, else unknown."""
+    home = {"label": LABELS[0], "rank": 0, "eu_badge": False, "provenance": "home"}
+    unknown = {"label": UNKNOWN_LABEL, "rank": UNKNOWN_RANK, "eu_badge": False, "provenance": None}
+    return {
+        "ask": ["lives", cc],
+        "answers": {"true": {"verdict": home}, "false": {"verdict": unknown}},
+    }
+
+
+def _pair_tree(service_id: str, cc: str, ctx: EvalContext, *, include_pending: bool) -> Any:
+    def run(profile: Any) -> Assessment:
+        return assess(service_id, cc, profile, ctx, include_pending=include_pending)
+
+    return explore(run, _verdict_leaf)
+
+
+def _rules_json(ctx: EvalContext, rows: list[PublishedPrice]) -> list[dict[str, Any]]:
+    """Every pair's verdict as a decision tree over the profile (haggler.profile_rules), so the
+    site can evaluate a profile the visitor describes. Pairs whose tree is the plain rule
+    (_plain_tree, e.g. nobody researched them) are left out; `pending` (findings still pending
+    review included) is null when it equals `reviewed`."""
+    keys = {(p.service_id, p.country) for p in rows}
+    keys |= {(rec.service_id, rec.target_country) for rec in ctx.feasibility.records}
+    keys |= {
+        (k.split(":")[1], k.split(":")[2])
+        for k in ctx.facts
+        if k.startswith("pair:") and k.count(":") == 2
+    }
+    out: list[dict[str, Any]] = []
+    for service_id, cc in sorted(keys):
+        reviewed = _pair_tree(service_id, cc, ctx, include_pending=False)
+        pending = _pair_tree(service_id, cc, ctx, include_pending=True)
+        plain = _plain_tree(cc)
+        if reviewed == plain and pending == plain:
+            continue
+        out.append(
+            {
+                "service_id": service_id,
+                "target_country": cc,
+                "reviewed": reviewed,
+                "pending": None if pending == reviewed else pending,
+            }
+        )
+    return out
+
+
+def profile_capabilities(profile: Profile, ctx: EvalContext) -> dict[str, Any]:
+    """A curated profile as the site's profile builder describes one: held instruments count
+    as cards of their observed BIN country."""
+    held = set(profile.instruments_held)
+    cards = [
+        i.card_bin_country_observed.value
+        for i in ctx.instruments.instruments
+        if i.id in held and i.card_bin_country_observed.value
+    ]
+    return profile.capabilities(cards)
+
+
 def _feasibility_json(
     profiles: ProfilesFile, default: Profile, ctx: EvalContext, rows: list[PublishedPrice]
 ) -> dict[str, Any]:
@@ -847,10 +916,14 @@ def _feasibility_json(
                 "name_es": p.name_es,
                 "description_es": " ".join(p.description_es.split()),
                 "residence_country": p.residence_country,
+                "citizenships": list(p.citizenships),
+                "capabilities": profile_capabilities(p, ctx),
             }
             for p in public
         ],
         "records": records,
+        "rules": _rules_json(ctx, rows),
+        "eea_countries": sorted(ctx.eea_countries),
     }
 
 

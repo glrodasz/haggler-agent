@@ -140,12 +140,60 @@ export type KnownEvidenceKind = "official" | "press" | "forum" | "aggregator" | 
 /** Unknown future source classes must still render, so the type stays open. */
 export type EvidenceKind = KnownEvidenceKind | (string & {});
 
+/**
+ * What the evaluator can tell about a profile (haggler.models.profiles.Profile.capabilities):
+ * the comparator's profile builder edits one of these, and the rules (FeasibilityRule) ask it
+ * questions. address_countries includes the residence.
+ */
+export interface ProfileCapabilities {
+  residence_country: string;
+  id_document_countries: string[];
+  phone_countries: string[];
+  address_countries: string[];
+  /** Countries where a card the person holds was issued. */
+  card_countries: string[];
+  /** Country -> how often the person can be there. */
+  presence: Record<string, PresenceKind>;
+}
+
+export type PresenceKind = "once" | "periodic";
+
 /** A public profile: who the verdicts are computed for (default profile first). */
 export interface Profile {
   id: string;
   name_es: string;
   description_es: string;
   residence_country: string;
+  citizenships: string[];
+  capabilities: ProfileCapabilities;
+}
+
+/** The verdict at a leaf of a rule tree (provenance null = no evaluated record). */
+export interface RuleVerdict {
+  label: LabelId;
+  rank: number;
+  eu_badge: boolean;
+  provenance: Provenance | "home" | null;
+}
+
+/**
+ * A pair's verdict as a decision tree over the profile (haggler.profile_rules): an inner node
+ * asks one question (["lives", "CO"], ["doc", "CO"], ["presence", "CO"], ["preset", id] ...)
+ * and follows the branch of the answer ("true" | "false", or "none" | "once" | "periodic").
+ */
+export type RuleTree =
+  { verdict: RuleVerdict } | { ask: string[]; answers: Record<string, RuleTree> };
+
+/**
+ * One (service, country) pair's rule. Pairs without one get the plain rule: official_home in
+ * the residence country, else unknown. pending (findings pending review included) is null when
+ * it equals reviewed.
+ */
+export interface FeasibilityRule {
+  service_id: string;
+  target_country: string;
+  reviewed: RuleTree;
+  pending: RuleTree | null;
 }
 
 /** One step of the route to the foreign offer (e.g. a payment card or a trip to the country). */
@@ -203,6 +251,10 @@ export interface FeasibilityData {
   default_profile: string;
   profiles: Profile[];
   records: FeasibilityView[];
+  /** Verdicts for any profile, for the comparator's profile builder. */
+  rules: FeasibilityRule[];
+  /** EU/EEA country codes (the rules' "lives_eea" and "doc_eea" questions). */
+  eea_countries: string[];
 }
 
 export interface OfferRef {

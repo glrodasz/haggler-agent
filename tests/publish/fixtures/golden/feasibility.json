@@ -1,5 +1,37 @@
 {
   "default_profile": "se_resident_co_citizen",
+  "eea_countries": [
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "GR",
+    "HR",
+    "HU",
+    "IE",
+    "IS",
+    "IT",
+    "LI",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "NO",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK"
+  ],
   "labels": [
     {
       "description_es": "Precio del país donde vives, contratado de la forma normal. Sin riesgo de incumplir los términos del servicio.",
@@ -40,6 +72,17 @@
   ],
   "profiles": [
     {
+      "capabilities": {
+        "address_countries": [
+          "SE"
+        ],
+        "card_countries": [],
+        "id_document_countries": [],
+        "phone_countries": [],
+        "presence": {},
+        "residence_country": "SE"
+      },
+      "citizenships": [],
       "description_es": "Vive en Suecia, ciudadano colombiano.",
       "id": "se_resident_co_citizen",
       "name_es": "se_resident_co_citizen",
@@ -159,6 +202,233 @@
       "target_country": "CO",
       "tos": "breach_enforced",
       "tos_clause_url": null
+    }
+  ],
+  "rules": [
+    {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "unknown",
+                  "provenance": null,
+                  "rank": 99
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "tos_breach_low_enforcement",
+                  "provenance": "curated",
+                  "rank": 2
+                }
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "CO"
+        ]
+      },
+      "service_id": "apple_one",
+      "target_country": "CO"
+    },
+    {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "unknown",
+                  "provenance": null,
+                  "rank": 99
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": true,
+                  "label": "eu_right_untested",
+                  "provenance": "curated",
+                  "rank": 1
+                }
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "LT"
+        ]
+      },
+      "service_id": "icloud_plus",
+      "target_country": "LT"
+    },
+    {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "unknown",
+                  "provenance": null,
+                  "rank": 99
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "tos_breach_low_enforcement",
+                  "provenance": "curated",
+                  "rank": 2
+                }
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "CO"
+        ]
+      },
+      "service_id": "netflix",
+      "target_country": "CO"
+    },
+    {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "unknown",
+                  "provenance": null,
+                  "rank": 99
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "not_feasible",
+                  "provenance": "curated",
+                  "rank": 4
+                }
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "US"
+        ]
+      },
+      "service_id": "netflix",
+      "target_country": "US"
+    },
+    {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "unknown",
+                  "provenance": null,
+                  "rank": 99
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "tos_breach_enforced",
+                  "provenance": "curated",
+                  "rank": 3
+                }
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "CO"
+        ]
+      },
+      "service_id": "spotify",
+      "target_country": "CO"
     }
   ]
 }
