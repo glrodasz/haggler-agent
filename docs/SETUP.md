@@ -520,6 +520,15 @@ gcloud storage cat gs://mi-proyecto-haggler-data/research/latest/run.json
 
 Para una prueba acotada: `--args='^;^research;run;--store;gcs;--services;netflix;--max-jobs;1'`.
 
+**Desde GitHub**: **Actions → research → Run workflow** (rama `main`) ejecuta el mismo job, espera
+a que termine y lanza `publish.yml`. Los campos `max_pairs` y `max_services` suben los límites
+solo para esa corrida (p. ej. `max_pairs = 40` para cubrir antes los pares); el tope mensual de
+consultas sigue valiendo.
+
+Los pares se eligen por el ahorro frente a **cualquier** país del catálogo como residencia, no
+solo la de los perfiles públicos: los hechos de un par no dependen de quién compra, así que una
+investigación sirve para cualquier perfil que el visitante describa.
+
 **Revisar y aceptar** (en tu copia del repo, con `data/` al día):
 
 ```bash

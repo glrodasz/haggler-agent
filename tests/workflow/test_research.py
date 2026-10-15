@@ -438,6 +438,45 @@ def test_savings_threshold_selects_pairs():
     assert savings[("netflix", "CO")] > Decimal("5")
 
 
+def test_pairs_count_savings_for_residences_without_a_public_profile():
+    """The site evaluates any residence a visitor describes, so a pair that only saves someone
+    living in CO (no public profile lives there) is still worth researching."""
+    from haggler.research.plan import pair_savings
+
+    rows = []
+    for cc, cur, amount in (("SE", "SEK", "169"), ("CO", "COP", "99000"), ("US", "USD", "17.99")):
+        rows.append(
+            PublishedPrice.model_validate(
+                {
+                    "obs_key": f"netflix:standard:{cc}:web",
+                    "service_id": "netflix",
+                    "plan_id": "standard",
+                    "plan_label_raw": "Standard",
+                    "country": cc,
+                    "currency": cur,
+                    "amount": amount,
+                    "billing_period": "month",
+                    "monthly_equiv": amount,
+                    "vat_included": True,
+                    "channel": "web",
+                    "source_url": "https://help.netflix.com/node/24926",
+                    "source_kind": "official",
+                    "adapter_id": "netflix_help",
+                    "extraction": "parser",
+                    "confidence": 1.0,
+                    "status": "accepted",
+                    "first_seen": "2026-10-01",
+                    "last_changed": "2026-10-01",
+                }
+            )
+        )
+    savings = pair_savings(
+        rows, W.fx_table(TODAY), load_catalog(), load_feasibility(), load_profiles()
+    )
+    # Both are dearer than SE (the only public profiles' residence) but cheaper than CO.
+    assert set(savings) == {("netflix", "SE"), ("netflix", "US")}
+
+
 async def test_previous_claim_is_kept_while_its_quote_still_verifies():
     """Same fact, differently quoted: the stored claim (and its review hash) stays."""
     llm = GroundedGemini(responder=default_responder)

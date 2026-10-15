@@ -15,7 +15,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
-OWN_WORKFLOWS = ("ci.yml", "probe.yml", "deploy-job.yml", "publish.yml")
+OWN_WORKFLOWS = ("ci.yml", "probe.yml", "deploy-job.yml", "publish.yml", "research.yml")
 
 # Majors checked to declare `runs.using: node24` (node20 is deprecated on the runners). Upload and
 # download artifact, and upload-pages-artifact/deploy-pages, are bumped together.
@@ -714,3 +714,15 @@ def test_bootstrap_rejects_bad_billing_settings_before_touching_gcp(
     assert result.returncode == 1
     assert "ERROR:" in result.stderr
     assert not _calls(calls, "services enable")
+
+
+def test_research_workflow_runs_the_research_job_from_the_default_branch() -> None:
+    research = load("research.yml")
+    assert research["env"]["RESEARCH_JOB_NAME"] == (
+        "${{ vars.GCP_RESEARCH_JOB_NAME || 'haggler-research' }}"
+    )
+    cfg = step(research, "research", "cfg")["run"]
+    assert 'if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]' in cfg
+    run = step(research, "research", "Execute the research job")["run"]
+    assert '"${RESEARCH_JOB_NAME}"' in run and "--wait" in run
+    assert "--update-env-vars" in run

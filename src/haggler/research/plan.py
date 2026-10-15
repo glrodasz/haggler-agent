@@ -4,9 +4,12 @@
   a pair after PAIR_DAYS, an instrument after INSTRUMENT_DAYS (since its last successful
   research). A subject that failed PAUSE_AFTER_FAILURES runs in a row is paused for PAUSE_DAYS.
 * Pairs are (service, country) offers worth at least MIN_SAVING_EUR a month AND MIN_SAVING_PCT
-  of the home price against the residence of a public profile, computed with compare.cheapest
-  WITHOUT feasibility (every verdict rank 0) on the latest published prices. A pair curated for
-  every public profile of that residence is skipped. Highest saving first.
+  of the home price against ANY catalog country as residence (visitors describe their own
+  profile on the site, so a pair matters as soon as it saves someone living anywhere), computed
+  with compare.cheapest WITHOUT feasibility (every verdict rank 0) on the latest published
+  prices. Pair facts do not depend on the profile, so one research serves every profile. A pair
+  curated for every public profile of that residence is skipped (residences without a public
+  profile have no curated records). Highest saving first.
 * Services: first those the selected pairs need (no fresh service facts), then other due
   priced services in catalog order.
 * Instruments: due instruments with official domains that some public profile does not hold
@@ -160,13 +163,14 @@ def pair_savings(
     *,
     fx_fee_pct: float = 2.0,
 ) -> dict[tuple[str, str], Decimal]:
-    """(service, country) -> best monthly EUR saving over any plan and any public profile's
-    residence, for pairs above both thresholds and not curated for every such profile."""
+    """(service, country) -> best monthly EUR saving over any plan and any catalog country as
+    residence, for pairs above both thresholds and not curated for every public profile living
+    there."""
     out: dict[tuple[str, str], Decimal] = {}
     if fx is None or not prices:
         return out
     public = profiles.public()
-    for residence in sorted({p.residence_country for p in public}):
+    for residence in sorted(catalog.country_codes()):
         same = [p for p in public if p.residence_country == residence]
         try:
             rows = cheapest(
@@ -175,7 +179,7 @@ def pair_savings(
                 catalog=catalog,
                 feasibility=feasibility,
                 residence=residence,
-                profile=same[0].id,
+                profile=same[0].id if same else "custom",
                 fx_fee_pct=fx_fee_pct,
                 verdicts=_rank0,
             )
@@ -191,7 +195,7 @@ def pair_savings(
                 saving = home - offer.cost_eur_with_fee
                 if saving < MIN_SAVING_EUR or saving * 100 / home < MIN_SAVING_PCT:
                     continue
-                if all(
+                if same and all(
                     find_record(
                         feasibility,
                         row.service_id,
