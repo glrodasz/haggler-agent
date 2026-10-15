@@ -1,0 +1,35 @@
+{
+  "as_of": "2026-10-15",
+  "files": {
+    "bundle_watch.json": "d46b606e1e5bf60dfb3d12223f9b9254854ced45fcccb368b4a3d50529e18aed",
+    "bundles.json": "eb3258341970749e0053929055fb265274dac8ea6765a821930a01b6471bb1c7",
+    "instruments.json": "4d8428510bfa49992f38e5535077bf10e21f943c767ea1d3c319dafc2e0becc5",
+    "pairs.json": "4aa749e995ffe2711c6883ccd92cef4d652ef5f833e153e54e2b3644d4b9320f",
+    "services.json": "ca1a29099c83f51d482c69906b9a04cfc950a145f4c888f16a434d662679ddd9"
+  },
+  "finished_at": "2026-10-15T18:43:46.060059+00:00",
+  "report": {
+    "bundle_watch": {
+      "anchors_verified": 25,
+      "bundles": 11,
+      "hints": 0,
+      "outcomes": {
+        "manual": 1,
+        "off": 3,
+        "ok": 7
+      },
+      "pages_over_budget": 0
+    },
+    "by_status": {
+      "nothing_found": 15,
+      "researched": 10,
+      "skipped": 2
+    },
+    "claims_verified": 24,
+    "errors": 0,
+    "planned": 27,
+    "queries": 202
+  },
+  "run_id": "2026-10-15-r129425",
+  "schema_version": 1
+}
