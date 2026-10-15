@@ -31,6 +31,10 @@ const fullTitle = title ? `${title} · ${es.site.name}` : `${es.site.name} · ${
 const canonical =
   indexable && Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 
+const dataLabel = site.isSample
+  ? es.site.sampleData
+  : es.site.dataAsOfShort(formatDate(site.meta.as_of));
+
 const nav: { key: NavKey; href: string }[] = [
   { key: "home", href: routes.home() },
   { key: "services", href: routes.services() },
@@ -49,8 +53,7 @@ const nav: { key: NavKey; href: string }[] = [
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" href={withBase("favicon.svg")} type="image/svg+xml" />
     {canonical && <link rel="canonical" href={canonical} />}
@@ -66,8 +69,8 @@ const nav: { key: NavKey; href: string }[] = [
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href={routes.home()}>
-          <LogoMark size={30} />
-          <span>{es.site.name}</span>
+          <LogoMark size={34} />
+          <span class="wordmark">{es.site.name}</span>
         </a>
         <nav class="site-nav" aria-label={es.site.navLabel}>
           <ul>
@@ -91,17 +94,28 @@ const nav: { key: NavKey; href: string }[] = [
         </div>
       )
     }
-    <main id="main" class:list={[wide ? "is-wide" : "container"]} tabindex="-1">
+    <main id="main" class:list={[wide ? "is-wide" : "container page"]} tabindex="-1">
+      {!wide && <p class="page-eyebrow">{es.site.pageEyebrow(dataLabel)}</p>}
       <slot />
+      {
+        !wide && current !== "home" && (
+          <p class="page-back">
+            <a class="button button-ghost" href={routes.home()}>
+              <span aria-hidden="true">←</span> {es.site.backToCompare}
+            </a>
+          </p>
+        )
+      }
     </main>
     <footer class="site-footer">
       <div class="container">
         <p class="footer-brand">
-          <LogoMark size={22} />
-          <span>{es.site.name}</span>
-          <span class="muted">· {es.site.tagline}</span>
+          <LogoMark size={30} />
+          <span class="wordmark">{es.site.name}</span>
         </p>
-        <p><strong>{es.site.footer.disclaimer}</strong></p>
+        <p class="footer-tagline">{es.site.tagline}.</p>
+        <p class="footer-disclaimer"><strong>{es.site.footer.disclaimer}</strong></p>
+        <hr />
         <p>
           {es.site.footer.dataAsOf(formatDate(site.meta.as_of), site.meta.run_id)} ·{" "}
           {es.site.footer.generatedAt(formatDateTime(site.meta.generated_at))}

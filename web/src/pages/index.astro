@@ -7,6 +7,7 @@ import Comparador, {
   type ComparadorService,
 } from "../islands/Comparador";
 import { es } from "../i18n/es";
+import Icon from "../components/Icon.astro";
 import LogoMark from "../components/LogoMark.astro";
 import Base from "../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../logic/compare";
@@ -98,14 +99,18 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
   <section class="hero" aria-labelledby="hero-titulo">
     <div class="container hero-inner">
       <div class="hero-copy">
-        <p class="eyebrow">{t.eyebrow}</p>
-        <h1 id="hero-titulo" class="hero-title">
+        <p class="eyebrow eyebrow-dot">{t.eyebrow}</p>
+        <h1 id="hero-titulo" class="hero-title dotted">
           {before}<span class="accent">{t.heroAccent}</span>{after}
         </h1>
         <p class="lead">{t.lead(site.residenceName)}</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#comparar">{t.ctaStart}</a>
-          <a class="button button-ghost" href={routes.methodology()}>{t.ctaMethod}</a>
+          <a class="button button-light" href="#comparar">
+            {t.ctaStart} <span aria-hidden="true">↓</span>
+          </a>
+          <a class="button button-link" href={routes.methodology()}>
+            {t.ctaMethod} <span aria-hidden="true">↗</span>
+          </a>
         </div>
         <ul class="hero-stats">
           <li>{t.stats.services(services.length)}</li>
@@ -117,16 +122,37 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
         <LogoMark size="100%" class="hero-mark" />
       </div>
     </div>
+    <div class="workflow">
+      <div class="container">
+        <p class="workflow-title"><Icon name="agent" size={16} /> {t.workflowTitle}</p>
+        <ol class="workflow-steps">
+          {
+            t.workflow.map((w, i) => (
+              <li>
+                <span class="workflow-icon">
+                  <Icon name={(["search", "shield", "coins"] as const)[i] ?? "search"} size={16} />
+                </span>
+                <span>
+                  <strong>{w.title}</strong>
+                  <span>{w.text}</span>
+                </span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
   </section>
 
   <section class="steps-intro" aria-labelledby="pasos-titulo">
     <div class="container">
-      <h2 id="pasos-titulo" class="section-title">{t.stepsTitle}</h2>
+      <h2 id="pasos-titulo" class="section-title dotted">{t.stepsTitle}</h2>
       <p class="section-lead">{t.stepsLead}</p>
       <ol class="step-cards">
         {
-          t.steps.map((step) => (
+          t.steps.map((step, i) => (
             <li class="step-card">
+              <Icon name={(["list", "sliders", "receipt"] as const)[i] ?? "list"} class="step-icon" />
               <h3>{step.title}</h3>
               <p>{step.text}</p>
             </li>
@@ -142,7 +168,7 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
   <section id="comparar" class="compare-section" aria-labelledby="comparar-titulo" tabindex="-1">
     <div class="container">
       <p class="eyebrow">{t.compareEyebrow}</p>
-      <h2 id="comparar-titulo" class="section-title">{t.compareTitle}</h2>
+      <h2 id="comparar-titulo" class="section-title dotted">{t.compareTitle}</h2>
       <p class="section-lead">{t.compareLead}</p>
 
       <noscript>
@@ -183,11 +209,19 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
 
   <section class="how-section" aria-labelledby="como-leer">
     <div class="container">
-      <h2 id="como-leer" class="section-title">{t.howTitle}</h2>
+      <h2 id="como-leer" class="section-title dotted">{t.howTitle}</h2>
+      <p><a class="button button-ghost" href={routes.methodology()}>{t.howLink}</a></p>
       <ul class="how-grid">
-        {t.howItems.map((item) => <li>{item}</li>)}
+        {
+          t.howItems.map((item, i) => (
+            <li>
+              <Icon name={(["scale", "user", "percent", "lock"] as const)[i] ?? "scale"} />
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </li>
+          ))
+        }
       </ul>
-      <p><a class="button button-ghost" href={routes.methodology()}>{es.site.footer.methodologyLink}</a></p>
     </div>
   </section>
 </Base>
