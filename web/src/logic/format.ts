@@ -1,13 +1,16 @@
 /**
  * Display formatting (es-ES). Intl does the heavy lifting; these helpers only add the
  * conventions the site needs: "—" for missing values, list prices without ",00", UTC dates
- * (ISO dates in the data have no time zone and must not shift a day in the browser).
+ * (ISO dates in the data have no time zone and must not shift a day in the browser), and
+ * thousands always grouped with a no-break space ("3 834", "12 345,68 €"): es-ES leaves
+ * four-digit numbers ungrouped and uses a dot, which reads poorly next to the decimal comma.
  */
 
 import { es } from "../i18n/es";
 
 export const LOCALE = "es-ES";
 export const DASH = "—";
+const GROUP_SEPARATOR = "\u00A0";
 
 const formatters = new Map<string, Intl.NumberFormat>();
 
@@ -15,10 +18,17 @@ function numberFormat(options: Intl.NumberFormatOptions): Intl.NumberFormat {
   const key = JSON.stringify(options);
   let nf = formatters.get(key);
   if (!nf) {
-    nf = new Intl.NumberFormat(LOCALE, options);
+    nf = new Intl.NumberFormat(LOCALE, { useGrouping: "always", ...options });
     formatters.set(key, nf);
   }
   return nf;
+}
+
+function formatWith(options: Intl.NumberFormatOptions, value: number): string {
+  return numberFormat(options)
+    .formatToParts(value)
+    .map((part) => (part.type === "group" ? GROUP_SEPARATOR : part.value))
+    .join("");
 }
 
 let currencyNames: Intl.DisplayNames | null | undefined;
@@ -51,7 +61,7 @@ function currencyFormat(
   extra: Intl.NumberFormatOptions = {},
 ): string {
   try {
-    return numberFormat({ style: "currency", currency, ...extra }).format(value);
+    return formatWith({ style: "currency", currency, ...extra }, value);
   } catch {
     // Unknown ISO code: still show something readable instead of crashing the build.
     return `${formatNumber(value, 2)} ${currency}`;
@@ -77,9 +87,7 @@ export function formatSignedMoney(value: number | null | undefined, currency: st
 
 export function formatNumber(value: number | null | undefined, digits = 2): string {
   if (!isNumber(value)) return DASH;
-  return numberFormat({ minimumFractionDigits: digits, maximumFractionDigits: digits }).format(
-    value,
-  );
+  return formatWith({ minimumFractionDigits: digits, maximumFractionDigits: digits }, value);
 }
 
 /** `pct` is a percentage (7.5 = 7,5 %), as in the data files. */
@@ -88,11 +96,14 @@ export function formatPercent(
   { signed = false, digits = 1 }: { signed?: boolean; digits?: number } = {},
 ): string {
   if (!isNumber(pct)) return DASH;
-  return numberFormat({
-    style: "percent",
-    maximumFractionDigits: digits,
-    signDisplay: signed ? "exceptZero" : "auto",
-  }).format(pct / 100);
+  return formatWith(
+    {
+      style: "percent",
+      maximumFractionDigits: digits,
+      signDisplay: signed ? "exceptZero" : "auto",
+    },
+    pct / 100,
+  );
 }
 
 function parseDate(iso: string | null | undefined): Date | null {

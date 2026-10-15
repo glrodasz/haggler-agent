@@ -24,7 +24,7 @@ describe("formatMoney", () => {
   it("uses es-ES conventions with currency decimals", () => {
     expect(plain(formatMoney(9.99, "EUR"))).toBe("9,99 €");
     expect(plain(formatMoney(139, "SEK"))).toBe("139,00 SEK");
-    expect(plain(formatMoney(12345.678, "EUR"))).toBe("12.345,68 €");
+    expect(plain(formatMoney(12345.678, "EUR"))).toBe("12 345,68 €");
     expect(plain(formatMoney(12.99, "USD"))).toBe("12,99 US$");
   });
 
@@ -32,6 +32,11 @@ describe("formatMoney", () => {
     expect(formatMoney(null, "EUR")).toBe(DASH);
     expect(formatMoney(undefined, "EUR")).toBe(DASH);
     expect(formatMoney(Number.NaN, "EUR")).toBe(DASH);
+  });
+
+  it("groups thousands with a no-break space, four-digit amounts included", () => {
+    expect(formatMoney(3834, "SEK")).toBe("3\u00A0834,00\u00A0SEK");
+    expect(plain(formatMoney(1234567.5, "COP"))).toBe("1 234 567,50 COP");
   });
 
   it("does not crash on an invalid currency code", () => {
@@ -42,7 +47,7 @@ describe("formatMoney", () => {
 describe("formatPrice", () => {
   it("drops ,00 on whole list prices but keeps real cents", () => {
     expect(plain(formatPrice(139, "SEK"))).toBe("139 SEK");
-    expect(plain(formatPrice(26900, "COP"))).toBe("26.900 COP");
+    expect(plain(formatPrice(26900, "COP"))).toBe("26 900 COP");
     expect(plain(formatPrice(129.9, "SEK"))).toBe("129,90 SEK");
     expect(plain(formatPrice(7.99, "EUR"))).toBe("7,99 €");
   });
@@ -67,8 +72,9 @@ describe("formatPercent and formatNumber", () => {
   });
 
   it("formats plain numbers", () => {
-    expect(formatNumber(1234.5)).toBe("1234,50");
-    expect(formatNumber(12345.5, 0)).toBe("12.346");
+    expect(plain(formatNumber(1234.5))).toBe("1 234,50");
+    expect(plain(formatNumber(12345.5, 0))).toBe("12 346");
+    expect(plain(formatNumber(3834, 0))).toBe("3 834");
   });
 });
 

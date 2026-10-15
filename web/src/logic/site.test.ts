@@ -622,7 +622,7 @@ describe("pending changes of a bundle", () => {
     pendingValueText(type, value, site);
 
   it("formats each vocabulary code for the card", () => {
-    expect(text("money", "21900 COP/month")).toBe(`${"21.900\u00a0COP"}/mes`);
+    expect(text("money", "21900 COP/month")).toBe(`${"21\u00a0900\u00a0COP"}/mes`);
     expect(text("money", "4.90 EUR/year")).toBe("4,90\u00a0€/año");
     expect(text("int", "2")).toBe("2 meses");
     expect(text("int", "1")).toBe("1 mes");
