@@ -564,16 +564,6 @@ select:disabled {
   font-size: var(--text-sm);
   color: var(--color-muted);
 }
-.segmented {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.segmented .radio {
-  grid-template-columns: auto auto;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-}
 .risk-strip {
   list-style: none;
   margin: 0 0 var(--space-4);

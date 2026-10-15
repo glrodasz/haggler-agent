@@ -460,6 +460,9 @@ export const es = {
     riskHelp:
       "Solo se eligen ofertas con un nivel de riesgo igual o menor. Las ofertas sin evaluar nunca se eligen.",
     currencyLegend: "Moneda",
+    currencyLabel: "Moneda para mostrar los importes",
+    currencyCommon: "Frecuentes",
+    currencyAll: "Todas las monedas",
     profileLegend: "Perfil",
     profileHelp:
       "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes.",

@@ -17,6 +17,7 @@ import {
   summarize,
 } from "../logic/compare";
 import {
+  currencyOption,
   flagEmoji,
   formatDate,
   formatMoney,
@@ -98,6 +99,14 @@ export default function Comparador(props: ComparadorProps) {
     () => props.currencies.filter((c) => c === "EUR" || (rates[c] ?? 0) > 0),
     [props.currencies, rates],
   );
+  // Residence currency, EUR and USD on top; every other one alphabetically below.
+  const [commonCurrencies, otherCurrencies] = useMemo(() => {
+    const common = new Set([props.residenceCurrency, "EUR", "USD"]);
+    return [
+      currencies.filter((c) => common.has(c)),
+      currencies.filter((c) => !common.has(c)).sort(),
+    ];
+  }, [currencies, props.residenceCurrency]);
   const initial = useMemo(
     () =>
       defaultState(
@@ -343,20 +352,27 @@ export default function Comparador(props: ComparadorProps) {
 
           <fieldset>
             <legend>{t.currencyLegend}</legend>
-            <div class="segmented">
-              {currencies.map((c) => (
-                <label class="radio" key={c}>
-                  <input
-                    type="radio"
-                    name="moneda"
-                    value={c}
-                    checked={cur === c}
-                    onChange={() => setCurrency(c)}
-                  />
-                  <span>{c}</span>
-                </label>
-              ))}
-            </div>
+            <label class="visually-hidden" for="moneda">
+              {t.currencyLabel}
+            </label>
+            <select id="moneda" value={cur} onChange={(e) => setCurrency(e.currentTarget.value)}>
+              <optgroup label={t.currencyCommon}>
+                {commonCurrencies.map((c) => (
+                  <option value={c} key={c}>
+                    {currencyOption(c)}
+                  </option>
+                ))}
+              </optgroup>
+              {otherCurrencies.length > 0 && (
+                <optgroup label={t.currencyAll}>
+                  {otherCurrencies.map((c) => (
+                    <option value={c} key={c}>
+                      {currencyOption(c)}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
           </fieldset>
         </div>
       </form>

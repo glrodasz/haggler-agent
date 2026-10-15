@@ -21,6 +21,26 @@ function numberFormat(options: Intl.NumberFormatOptions): Intl.NumberFormat {
   return nf;
 }
 
+let currencyNames: Intl.DisplayNames | null | undefined;
+
+/** "SEK · corona sueca"; just the code when Intl has no name for it. */
+export function currencyOption(code: string): string {
+  if (currencyNames === undefined) {
+    try {
+      currencyNames = new Intl.DisplayNames(LOCALE, { type: "currency", fallback: "none" });
+    } catch {
+      currencyNames = null;
+    }
+  }
+  let name: string | undefined;
+  try {
+    name = currencyNames?.of(code);
+  } catch {
+    name = undefined;
+  }
+  return name && name !== code ? `${code} · ${name}` : code;
+}
+
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }

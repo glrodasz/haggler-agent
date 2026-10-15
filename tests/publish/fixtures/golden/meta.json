@@ -25,7 +25,8 @@
   "display_currencies": [
     "SEK",
     "EUR",
-    "USD"
+    "USD",
+    "COP"
   ],
   "fx_fee_pct": 2.0,
   "generated_at": "2026-10-08T05:00:00Z",
