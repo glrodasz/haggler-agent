@@ -441,8 +441,38 @@ export const es = {
 
   home: {
     title: "Comparador de suscripciones",
+    eyebrow: "Precios oficiales, país por país",
+    heroTitle: "Paga lo justo por tus suscripciones",
+    heroAccent: "lo justo",
     lead: (residence: string) =>
-      `Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países, teniendo en cuenta el riesgo de cada opción y la comisión por pagar en otra moneda.`,
+      `Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países. Te decimos cuánto ahorrarías, con qué riesgo y cuánto se lleva la comisión de cambio.`,
+    ctaStart: "Calcular mi ahorro",
+    ctaMethod: "Cómo lo calculamos",
+    stats: {
+      services: (n: number) => `${n} servicios`,
+      countries: (n: number) => `${n} países`,
+      asOf: (date: string) => `Datos al ${date}`,
+    },
+    trust: ["Sin registro", "Sin cookies ni analítica", "Nunca te pedimos datos falsos"],
+    stepsTitle: "Tres pasos, un minuto",
+    stepsLead: "No hace falta registrarse. Todo se calcula en tu navegador.",
+    steps: [
+      {
+        title: "Elige lo que pagas",
+        text: "Marca tus suscripciones y el plan de cada una.",
+      },
+      {
+        title: "Cuéntanos tu situación",
+        text: "Tu perfil, el riesgo que aceptas y la moneda en la que piensas.",
+      },
+      {
+        title: "Mira tu ahorro real",
+        text: "La oferta más barata que encaja contigo, ya con la comisión de cambio.",
+      },
+    ],
+    compareEyebrow: "Tu comparación",
+    compareTitle: "Calcula tu ahorro paso a paso",
+    compareLead: "Cada cambio actualiza el resultado al instante.",
     howTitle: "Cómo leer el resultado",
     howItems: [
       "El precio de cada país es el oficial publicado por el servicio, convertido a la moneda que elijas.",
@@ -453,10 +483,10 @@ export const es = {
   },
 
   compare: {
-    servicesLegend: "Servicios",
+    servicesLegend: "Tus suscripciones",
     servicesHelp: "Marca los servicios que pagas y elige el plan.",
     planLabel: (service: string) => `Plan de ${service}`,
-    riskLegend: "Riesgo máximo aceptado",
+    riskLegend: "Riesgo que aceptas",
     riskHelp:
       "Solo se eligen ofertas con un nivel de riesgo igual o menor. Las ofertas sin evaluar nunca se eligen.",
     currencyLegend: "Moneda",
@@ -473,7 +503,12 @@ export const es = {
     noscript:
       "El comparador necesita JavaScript. Sin él puedes consultar los precios por servicio o por país.",
     noneSelected: "Elige al menos un servicio para ver la comparación.",
-    resultsTitle: "Resultado",
+    resultsTitle: "Tu resultado",
+    savingYearLabel: "Ahorro neto al año",
+    savingMonthLabel: (amount: string) => `${amount} al mes`,
+    savingNone: "Con este riesgo, tu país ya es la opción más barata.",
+    savingMore: (amount: string) =>
+      `Aceptando más riesgo podrías ahorrar hasta ${amount} al mes. Compáralo abajo.`,
     tableCaption: (residence: string, risk: string) =>
       `Precio mensual en ${residence} frente a la oferta más barata con riesgo hasta «${risk}»`,
     colService: "Servicio",

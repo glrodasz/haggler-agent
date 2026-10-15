@@ -189,6 +189,7 @@ export default function Comparador(props: ComparadorProps) {
   );
   const summary = useMemo(() => summarize(rows, state.risk, display), [rows, state.risk, display]);
   const byRisk = useMemo(() => savingsByRisk(rows, display), [rows, display]);
+  const maxSaving = Math.max(0, ...RISK_LEVELS.map((k) => byRisk[k]));
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const cur = state.currency;
@@ -369,6 +370,27 @@ export default function Comparador(props: ComparadorProps) {
           <p class="callout">{t.noneSelected}</p>
         ) : (
           <>
+            <div class={`saving-hero ${totals.saving > 0.005 ? "is-positive" : ""}`}>
+              {totals.saving > 0.005 ? (
+                <>
+                  <span class="saving-hero-label">{t.savingYearLabel}</span>
+                  <span class="saving-hero-amount">{formatMoney(totals.saving * 12, cur)}</span>
+                  <span class="saving-hero-sub">
+                    {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span class="saving-hero-sub">{t.savingNone}</span>
+                  {maxSaving > 0.005 && (
+                    <span class="saving-hero-sub">
+                      {t.savingMore(formatMoney(maxSaving, cur))}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+
             <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
             <p class="small muted">{t.savingsByRiskHelp}</p>
             <ul class="risk-strip" aria-labelledby="ahorro-por-riesgo">

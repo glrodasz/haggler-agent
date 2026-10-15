@@ -1,11 +1,13 @@
-/* Design tokens + base styles. One small file, no external fonts or CDNs. */
+/* Design tokens + base styles. One file; fonts are self-hosted (Fontsource), no CDNs. */
 
 :root {
   color-scheme: light dark;
 
   --font-sans:
+    "Inter Variable",
     system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --space-1: 0.25rem;
@@ -15,20 +17,28 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
+  --radius-lg: 1.25rem;
   --radius-pill: 999px;
   --max-width: 80rem;
   --text-sm: 0.875rem;
   --text-xs: 0.8rem;
 
   --color-bg: #ffffff;
-  --color-surface: #f5f6f8;
-  --color-fg: #1a1d23;
-  --color-muted: #545b67;
-  --color-border: #d3d8df;
-  --color-accent: #0a56c8;
+  --color-surface: #f6f5fb;
+  --color-fg: #16142b;
+  --color-muted: #555369;
+  --color-border: #dcd9e8;
+  --color-accent: #4b2fe0;
   --color-accent-fg: #ffffff;
-  --color-focus: #0a56c8;
+  --color-focus: #4b2fe0;
+  --color-mint: #0e8f6e;
+  --color-hero-a: #ece8ff;
+  --color-hero-b: #ddf7ef;
+  --shadow-card: 0 1px 2px rgb(22 20 43 / 6%), 0 8px 24px -12px rgb(22 20 43 / 18%);
+  --logo-a: #4b2fe0;
+  --logo-b: #13b98f;
+  --logo-gap: var(--color-bg);
   --color-positive: #126330;
   --color-negative: #a3221d;
   --color-banner-bg: #fff4d1;
@@ -56,14 +66,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #111318;
-    --color-surface: #1a1d24;
-    --color-fg: #e7e9ee;
-    --color-muted: #a7aebb;
-    --color-border: #363c48;
-    --color-accent: #8db8ff;
-    --color-accent-fg: #0b1220;
-    --color-focus: #8db8ff;
+    --color-bg: #0e0d1a;
+    --color-surface: #18172a;
+    --color-fg: #ecebf5;
+    --color-muted: #adabc2;
+    --color-border: #34324d;
+    --color-accent: #a99bff;
+    --color-accent-fg: #120e2e;
+    --color-focus: #a99bff;
+    --color-mint: #5fe0bc;
+    --color-hero-a: #1f1a45;
+    --color-hero-b: #0f2b2a;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px -16px rgb(0 0 0 / 70%);
+    --logo-a: #8b78ff;
+    --logo-b: #2fd3a8;
     --color-positive: #7fd89b;
     --color-negative: #ff9d94;
     --color-banner-bg: #3a2f0d;
@@ -107,21 +123,29 @@ body {
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 1rem;
-  line-height: 1.55;
+  line-height: 1.6;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
 h3 {
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
   margin: var(--space-6) 0 var(--space-3);
+  text-wrap: balance;
 }
 h1 {
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
-  margin-top: var(--space-5);
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-top: var(--space-6);
 }
 h2 {
-  font-size: 1.35rem;
+  font-size: clamp(1.3rem, 3vw, 1.6rem);
 }
 h3 {
   font-size: 1.1rem;
@@ -183,44 +207,68 @@ a:hover {
 /* ---------------------------------------------------------------- header / footer */
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
 }
 .header-inner {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-5);
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
 }
 .brand {
-  font-weight: 700;
-  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
   color: var(--color-fg);
   text-decoration: none;
+}
+.site-nav {
+  min-width: 0;
+  margin-left: auto;
+  /* One scrollable row on phones instead of three wrapped lines of links. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+}
+.site-nav::-webkit-scrollbar {
+  display: none;
 }
 .site-nav ul {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
+  gap: var(--space-1);
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1.5rem 0 0;
 }
 .site-nav a {
   display: inline-block;
-  padding: var(--space-1) 0;
-  color: var(--color-fg);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
 }
 .site-nav a:hover {
-  text-decoration: underline;
+  color: var(--color-fg);
+  background: var(--color-surface);
 }
 .site-nav a[aria-current="page"] {
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  font-weight: 600;
 }
 
 .banner {
@@ -240,6 +288,21 @@ a:hover {
 }
 .site-footer p {
   margin-bottom: var(--space-2);
+}
+.footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-fg);
+}
+.footer-brand .muted {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--text-sm);
 }
 
 main {
@@ -465,14 +528,21 @@ tr.is-pending > * {
 
 /* ---------------------------------------------------------------- comparator */
 
+/* A numbered vertical stepper: every fieldset is a step, the result is the last one. The
+   numbers come from CSS counters, so a step that only renders sometimes (profile) never leaves
+   a gap in the sequence. */
 .comparador {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
   margin-top: var(--space-5);
+  counter-reset: step;
 }
 .controls {
   display: grid;
   gap: var(--space-4);
+}
+.controls .side {
+  display: contents;
 }
 /* Grid items default to min-width:auto; without this a wide table widens the whole page. */
 .comparador > *,
@@ -489,6 +559,57 @@ fieldset {
 legend {
   font-weight: 700;
   padding: 0 var(--space-1);
+}
+.controls fieldset,
+.comparador > section {
+  position: relative;
+  counter-increment: step;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4) var(--space-4) var(--space-5);
+}
+/* Floated so the legend sits inside the card like a heading instead of on its border. */
+.controls legend {
+  float: left;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.2rem 0 0 2.75rem;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+.controls legend + * {
+  clear: both;
+}
+.controls legend::before,
+.comparador > section > h2:first-child::before {
+  content: counter(step);
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.comparador > section > h2:first-child {
+  margin-top: 0;
+  min-height: 2rem;
+  padding-left: 2.75rem;
+  font-size: 1.35rem;
+}
+.comparador > section > h2:first-child::before {
+  top: var(--space-4);
 }
 .fieldset-help {
   margin: 0 0 var(--space-3);
@@ -744,13 +865,407 @@ blockquote {
   .container {
     padding: 0 var(--space-5);
   }
-  .controls {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
+}
+
+/* ---------------------------------------------------------------- stepper details */
+
+/* The thread between step numbers (wider screens, where the content is indented under it). */
+.controls fieldset::after {
+  display: none;
+  content: "";
+  position: absolute;
+  left: calc(var(--space-4) + 1rem - 1px);
+  top: calc(var(--space-4) + 2.5rem);
+  bottom: calc(-1 * var(--space-4) - 1px);
+  width: 2px;
+  background: linear-gradient(var(--color-border), color-mix(in srgb, var(--logo-b) 45%, var(--color-border)));
+  border-radius: 1px;
+}
+.controls .service-list {
+  gap: var(--space-1) var(--space-5);
+}
+.controls .radio:has(input:checked) {
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg));
+  outline: 1.5px solid var(--color-accent);
+}
+.controls .segmented .radio {
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.controls .segmented input {
+  accent-color: var(--color-accent-fg);
+}
+.controls .segmented .radio:has(input:checked) {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  outline: none;
+  border-color: var(--color-accent);
+}
+select {
+  border-radius: var(--radius);
+}
+.comparador > section > h3 {
+  font-size: 1.05rem;
+}
+.risk-strip button {
+  border-radius: var(--radius);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.risk-strip button:hover {
+  border-color: var(--color-accent);
+}
+
+.saving-hero {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-3) 0 var(--space-5);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.saving-hero.is-positive {
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--logo-b) 28%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--color-hero-a), var(--color-hero-b));
+  border-color: transparent;
+}
+.saving-hero-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+.saving-hero-amount {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 9vw, 3.6rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg);
+}
+.saving-hero-sub {
+  color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------------- landing */
+
+main.is-wide {
+  padding-bottom: 0;
+}
+/* Anchored sections land below the sticky header. */
+[id] {
+  scroll-margin-top: 4.5rem;
+}
+.eyebrow {
+  display: inline-block;
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3rem;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid transparent;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.button-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
+.button-primary::after {
+  content: "↓";
+}
+.button-primary:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+.button-ghost {
+  border-color: var(--color-border);
+  color: var(--color-fg);
+  background: var(--color-bg);
+}
+.button-ghost:hover {
+  border-color: var(--color-accent);
+  text-decoration: none;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, var(--color-hero-b), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 10%, var(--color-hero-a), transparent 70%);
+  border-bottom: 1px solid var(--color-border);
+}
+.hero-inner {
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+  padding-top: clamp(2.5rem, 8vw, 6rem);
+  padding-bottom: clamp(2.5rem, 8vw, 5.5rem);
+}
+.hero-title {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(2.4rem, 8.5vw, 4.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  max-width: 14ch;
+}
+.hero-title .accent {
+  background: linear-gradient(100deg, var(--logo-a), var(--logo-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero .lead {
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  max-width: 38rem;
+  margin-bottom: var(--space-5);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hero-stats li {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.hero-art {
+  display: none;
+}
+.orbit {
+  position: relative;
+  width: min(100%, 24rem);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.orbit::before {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.hero-mark {
+  position: absolute;
+  inset: 24%;
+  width: 52%;
+  height: 52%;
+  filter: drop-shadow(0 18px 30px color-mix(in srgb, var(--logo-a) 35%, transparent));
+}
+.orbit-flag {
+  --angle: calc(360deg / var(--n) * var(--i));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin: -1.5rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card);
+  font-size: 1.5rem;
+  transform: rotate(var(--angle)) translate(min(44vw, 10.6rem)) rotate(calc(-1 * var(--angle)));
+}
+
+.steps-intro,
+.compare-section,
+.how-section {
+  padding: clamp(2.5rem, 7vw, 4.5rem) 0;
+}
+.compare-section {
+  background: var(--color-surface);
+  border-block: 1px solid var(--color-border);
+}
+.compare-section:focus {
+  outline: none;
+}
+.section-title {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  letter-spacing: -0.03em;
+}
+.section-lead {
+  margin: 0 0 var(--space-5);
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  max-width: 40rem;
+}
+.step-cards {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  counter-reset: intro;
+}
+.step-card {
+  counter-increment: intro;
+  position: relative;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card);
+}
+.step-card::before {
+  content: "0" counter(intro);
+  float: left;
+  margin: 0 var(--space-4) var(--space-1) 0;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.step-card h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 1.2rem;
+}
+.step-card p {
+  margin: 0;
+  color: var(--color-muted);
+}
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.trust li::before {
+  content: "✓";
+  margin-right: var(--space-2);
+  color: var(--color-mint);
+  font-weight: 800;
+}
+.how-grid {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+.how-grid li {
+  padding: var(--space-4) var(--space-4) var(--space-4) calc(var(--space-4) + 1.75rem);
+  position: relative;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.how-grid li::before {
+  content: "";
+  position: absolute;
+  left: var(--space-4);
+  top: calc(var(--space-4) + 0.45rem);
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--logo-a), var(--logo-b));
+}
+
+@media (min-width: 40rem) {
+  .step-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .controls .side {
-    display: grid;
-    gap: var(--space-4);
+  .step-card {
+    padding: var(--space-5);
+  }
+  .step-card::before {
+    float: none;
+    display: block;
+    margin: 0 0 var(--space-3);
+  }
+  .how-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .controls .service-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .controls .radio-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .controls fieldset,
+  .comparador > section {
+    padding: var(--space-5) var(--space-5) var(--space-5) calc(var(--space-5) + 2.75rem);
+  }
+  .controls legend,
+  .comparador > section > h2:first-child {
+    padding-left: 0;
+  }
+  .controls fieldset::after {
+    display: block;
+  }
+  .controls legend::before,
+  .comparador > section > h2:first-child::before {
+    left: var(--space-5);
+    top: var(--space-5);
+  }
+  .controls fieldset::after {
+    left: calc(var(--space-5) + 1rem - 1px);
+    top: calc(var(--space-5) + 2.5rem);
+  }
+}
+
+@media (min-width: 60rem) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+  .hero-art {
+    display: block;
+  }
+  .orbit-flag {
+    transform: rotate(var(--angle)) translate(10.6rem) rotate(calc(-1 * var(--angle)));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-mark {
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    50% {
+      transform: translateY(-8px) rotate(-2deg);
+    }
   }
 }
 
