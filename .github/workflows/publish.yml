@@ -8,12 +8,20 @@
 # (e.g. branch protection) leaves a warning and the site is still built from the synced data.
 # After a sync, the run's summary also counts the bundles' pending proposals and findings
 # (haggler research review --bundles --summary); that step never fails the job.
+# It also runs after every green ci run of a push to main (a merged pull request) whose commit
+# touches what the site is built from: ci passing is the gate, so a red merge never deploys, and
+# the site is built from exactly the commit ci checked. Pushes made with GITHUB_TOKEN (the data/
+# commit below) start no workflows, so a publish never triggers another.
 name: publish
 
 on:
   schedule:
     - cron: "15 5 * * *" # UTC; the Cloud Run Job runs at 04:17 Europe/Stockholm
   workflow_dispatch:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -23,8 +31,54 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Schedule and manual runs always go ahead. After ci: only a successful run of a push to this
+  # repository's main (not a pull request from a fork branch that happens to be called main), and
+  # only if the commit changed the site's inputs; a README-only merge does not redeploy.
+  gate:
+    name: should publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.gate.outputs.go }}
+    steps:
+      - uses: actions/checkout@v7
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Decide
+        id: gate
+        env:
+          EVENT: ${{ github.event_name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+        run: |
+          if [ "$EVENT" != "workflow_run" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$CONCLUSION" != "success" ] || [ "$RUN_EVENT" != "push" ] \
+            || [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "ci: ${CONCLUSION} (${RUN_EVENT} desde ${HEAD_REPO}); no se publica." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # First parent: the previous main, for a merge commit and a squash merge alike.
+          changed="$(git diff --name-only HEAD^1 HEAD -- web src catalog data pyproject.toml uv.lock \
+            .github/workflows/publish.yml || echo "?")"
+          if [ -z "$changed" ]; then
+            echo "El commit no toca el sitio ni sus datos; no se publica." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
   sync:
     name: sync data from GCS
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -185,7 +239,10 @@ jobs:
     outputs:
       has_data: ${{ steps.data.outputs.has_data }}
     steps:
+      # After ci, the commit ci checked (main may have moved since); otherwise the run's commit.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       # The artifact holds the whole data/ tree, so files removed by the sync stay removed.
       - name: Drop checked-out data/
