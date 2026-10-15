@@ -250,6 +250,73 @@ def test_publish_push_rejected_by_branch_protection_is_a_warning(tmp_path: Path)
     assert "se publica con los datos sincronizados" in summary.read_text()
 
 
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_protected_main_gets_data_on_a_branch_and_a_pr(tmp_path: Path) -> None:
+    """main rejects pushes, other branches do not: data/ lands on data-sync and gh opens a PR."""
+    script = step(load("publish.yml"), "sync", "Commit and push data/")["run"]
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    gh_log = tmp_path / "gh.log"
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(f'#!/bin/sh\necho "$@" >> {gh_log}\nexit 0\n')
+    fake_gh.chmod(0o755)
+    env = {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "HOME": str(tmp_path),
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remote), env=env)
+    _git(tmp_path, "init", "-q", "-b", "main", str(work), env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "init", env=env)
+    _git(work, "remote", "add", "origin", str(remote), env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    hook = remote / "hooks" / "pre-receive"
+    hook.write_text(
+        "#!/bin/sh\nwhile read old new ref; do\n"
+        '  [ "$ref" = refs/heads/main ] && { echo GH006 >&2; exit 1; }\n'
+        "done\nexit 0\n"
+    )
+    hook.chmod(0o755)
+    (work / "data" / "latest").mkdir(parents=True)
+    (work / "data" / "latest" / "run.json").write_text('{"as_of": "2026-10-08"}\n')
+
+    summary = tmp_path / "summary.md"
+    result = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=work,
+        env={
+            **env,
+            "IS_DEFAULT_BRANCH": "true",
+            "GITHUB_REF_NAME": "main",
+            "GITHUB_STEP_SUMMARY": str(summary),
+            "DATA_BRANCH": "data-sync",
+        },
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "::notice title=data/ en PR::" in result.stdout
+    branches = subprocess.run(
+        ["git", "branch", "--list"], cwd=remote, env=env, capture_output=True, text=True
+    ).stdout
+    assert "data-sync" in branches
+    calls = gh_log.read_text()
+    assert "pr list --head data-sync" in calls
+    assert "pr create --head data-sync --base main" in calls
+
+
 def test_publish_build_can_read_the_pages_site() -> None:
     assert load("publish.yml")["jobs"]["build"]["permissions"] == {
         "contents": "read",
