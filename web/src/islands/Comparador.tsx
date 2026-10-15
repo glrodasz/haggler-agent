@@ -239,10 +239,11 @@ export default function Comparador(props: ComparadorProps) {
         countries: new Set(props.tieCountries.map((c) => c.cc)),
       },
     );
-    // Without a profile in the link, start from the visitor's country (browser hints only;
-    // nothing leaves the browser) with no ties, not from a curated profile.
+    // A fresh visit (no comparison in the link) starts from the visitor's country (browser
+    // hints only; nothing leaves the browser) with no ties. A shared link keeps its profile,
+    // including the default one, which it encodes by leaving p and pf out.
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    if (params.has("p") || params.has("pf")) {
+    if (["s", "p", "pf"].some((k) => params.has(k))) {
       setState(normalizeProfile(decoded));
     } else {
       const guess = guessFromBrowser();
