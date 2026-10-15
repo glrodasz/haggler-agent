@@ -1695,5 +1695,111 @@
     "SE",
     "SI",
     "SK"
+  ],
+  "instruments": [
+    {
+      "id": "revolut_eea",
+      "name": "Revolut",
+      "issuer_country": "LT",
+      "iban_country": "LT",
+      "eligible_residence": [
+        "EEA"
+      ],
+      "required_id_countries": [],
+      "card_country": null,
+      "currencies": [
+        "EUR",
+        "SEK",
+        "USD"
+      ],
+      "url": "https://revolut.com/",
+      "notes_es": "Licencia bancaria lituana; IBAN LT para residentes en Suecia (Revolut está desplegando IBAN locales país por país). El país BIN de la tarjeta debe observarse."
+    },
+    {
+      "id": "wise_eea",
+      "name": "Wise",
+      "issuer_country": "BE",
+      "iban_country": "BE",
+      "eligible_residence": [
+        "EEA"
+      ],
+      "required_id_countries": [],
+      "card_country": null,
+      "currencies": [
+        "EUR",
+        "SEK",
+        "USD",
+        "GBP"
+      ],
+      "url": "https://wise.com/help/articles/2968915",
+      "notes_es": ""
+    },
+    {
+      "id": "n26",
+      "name": "N26",
+      "issuer_country": "DE",
+      "iban_country": "DE",
+      "eligible_residence": [
+        "SE",
+        "EEA"
+      ],
+      "required_id_countries": [],
+      "card_country": null,
+      "currencies": [
+        "EUR"
+      ],
+      "url": "https://support.n26.com/en-eu/account-and-personal-details/opening-an-account/can-i-open-an-account-if-i-live-outside-the-eurozone",
+      "notes_es": ""
+    },
+    {
+      "id": "bunq",
+      "name": "bunq",
+      "issuer_country": "NL",
+      "iban_country": "NL",
+      "eligible_residence": [
+        "EEA"
+      ],
+      "required_id_countries": [],
+      "card_country": null,
+      "currencies": [
+        "EUR"
+      ],
+      "url": "https://bunq.com/",
+      "notes_es": ""
+    },
+    {
+      "id": "paysera",
+      "name": "Paysera",
+      "issuer_country": "LT",
+      "iban_country": "LT",
+      "eligible_residence": [
+        "EEA"
+      ],
+      "required_id_countries": [],
+      "card_country": null,
+      "currencies": [
+        "EUR"
+      ],
+      "url": "https://www.paysera.lt/v2/en-LT/faq/where-paysera-works",
+      "notes_es": "Una cuenta por persona; puede pedir prueba de residencia."
+    },
+    {
+      "id": "bancolombia_exterior",
+      "name": "Bancolombia Cuenta Colombianos en el Exterior",
+      "issuer_country": "CO",
+      "iban_country": null,
+      "eligible_residence": [
+        "ANY"
+      ],
+      "required_id_countries": [
+        "CO"
+      ],
+      "card_country": null,
+      "currencies": [
+        "COP"
+      ],
+      "url": "https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior",
+      "notes_es": "Para ciudadanos colombianos con cédula; tarjeta débito virtual en la app."
+    }
   ]
 }

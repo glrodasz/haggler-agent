@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { ServiceMark } from "../components/ServiceMark";
 import { es } from "../i18n/es";
+import { instrumentAdvice } from "../logic/advice";
 import {
   cheapestFor,
   type CompareContext,
@@ -29,6 +30,7 @@ import {
   formatSignedMoney,
   periodSuffix,
 } from "../logic/format";
+import { GEO_IP_HOST, guessFromBrowser, type Located, lookupIp } from "../logic/locate";
 import {
   changeResidence,
   emptyTie,
@@ -42,6 +44,7 @@ import { type CompareState, decodeState, defaultState, encodeState } from "../lo
 import { unpackOffers } from "../logic/transport";
 import {
   type FeasibilityRule,
+  type PaymentInstrumentView,
   type ProfileCapabilities,
   RISK_LEVELS,
   type RiskLevel,
@@ -115,6 +118,8 @@ export interface ComparadorProps {
   hasPending: boolean;
   /** id of the inline JSON element holding the feasibility rules. */
   verdictsId: string;
+  /** Payment instruments that can be opened online, for the residence advice. */
+  instruments: PaymentInstrumentView[];
 }
 
 const PRESENCES: Presence[] = ["none", "once", "periodic"];
@@ -130,7 +135,17 @@ function emptyCaps(residence: string): ProfileCapabilities {
     presence: {},
   };
 }
-const CUSTOM = "__custom";
+
+/** Someone who only lives in `cc`: its ID document and phone, no ties (the starting point). */
+function neutralProfile(cc: string): VisitorProfile {
+  return {
+    residence: cc,
+    residenceDoc: true,
+    residencePhone: true,
+    residenceCard: false,
+    ties: [],
+  };
+}
 
 const t = es.compare;
 
@@ -152,6 +167,9 @@ export default function Comparador(props: ComparadorProps) {
   const [rules, setRules] = useState<FeasibilityRule[]>([]);
   const [ready, setReady] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "copied" | "failed">("idle");
+  /** Where the visitor seems to be (browser hints, or their IP when they ask for it). */
+  const [located, setLocated] = useState<Located | null>(null);
+  const [ipState, setIpState] = useState<"idle" | "loading" | "failed">("idle");
 
   const source: VerdictSource = useMemo(
     () => ({
@@ -222,7 +240,23 @@ export default function Comparador(props: ComparadorProps) {
         countries: new Set(props.tieCountries.map((c) => c.cc)),
       },
     );
-    setState(normalizeProfile(decoded));
+    // A fresh visit (no comparison in the link) starts from the visitor's country (browser
+    // hints only; nothing leaves the browser) with no ties. A shared link keeps its profile,
+    // including the default one, which it encodes by leaving p and pf out.
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (["s", "p", "pf"].some((k) => params.has(k))) {
+      setState(normalizeProfile(decoded));
+    } else {
+      const guess = guessFromBrowser();
+      setLocated(guess);
+      const cc = guess && residenceById.has(guess.cc) ? guess.cc : props.residence;
+      setState(
+        followCurrency(
+          decoded,
+          normalizeProfile({ ...decoded, profile: null, custom: neutralProfile(cc) }),
+        ),
+      );
+    }
     setReady(true);
   }, []);
 
@@ -267,6 +301,7 @@ export default function Comparador(props: ComparadorProps) {
   const byRisk = useMemo(() => savingsByRisk(rows, display), [rows, display]);
   const maxSaving = Math.max(0, ...RISK_LEVELS.map((k) => byRisk[k]));
 
+  const eea = useMemo(() => new Set(props.eeaCountries), [props.eeaCountries]);
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const cur = state.currency;
   const riskName = props.riskOptions.find((o) => o.rank === state.risk)?.name ?? `${state.risk}`;
@@ -324,6 +359,17 @@ export default function Comparador(props: ComparadorProps) {
   const removeTie = (i: number) =>
     editProfile((v) => ({ ...v, ties: v.ties.filter((_, j) => j !== i) }));
   const setPending = (pending: boolean) => setState((s) => ({ ...s, pending }));
+  const detectByIp = async () => {
+    setIpState("loading");
+    const found = await lookupIp();
+    if (!found) {
+      setIpState("failed");
+      return;
+    }
+    setIpState("idle");
+    setLocated(found);
+    if (residenceById.has(found.cc)) editProfile((v) => changeResidence(v, found.cc));
+  };
 
   const planLabel = (serviceId: string, planId: string) =>
     serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label_es ?? planId;
@@ -394,28 +440,6 @@ export default function Comparador(props: ComparadorProps) {
           <fieldset>
             <legend>{t.profileLegend}</legend>
             <p class="fieldset-help">{t.profileHelp}</p>
-            <div class="field">
-              <label for="perfil">{t.profileStart}</label>
-              <select
-                id="perfil"
-                value={state.custom ? CUSTOM : (preset?.id ?? props.defaultProfile)}
-                aria-describedby="perfil-descripcion"
-                onChange={(e) => {
-                  const id = e.currentTarget.value;
-                  if (id !== CUSTOM) setProfile(id);
-                }}
-              >
-                {props.profiles.map((p) => (
-                  <option value={p.id} key={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-                {state.custom && <option value={CUSTOM}>{t.profileCustom}</option>}
-              </select>
-            </div>
-            <p id="perfil-descripcion" class="profile-desc">
-              {state.custom ? t.profileCustomDesc : preset?.description}
-            </p>
             {visitor && (
               <>
                 <div class="field">
@@ -423,7 +447,7 @@ export default function Comparador(props: ComparadorProps) {
                   <select
                     id="residencia"
                     value={visitor.residence}
-                    aria-describedby="residencia-ayuda"
+                    aria-describedby="residencia-origen residencia-ayuda"
                     onChange={(e) => {
                       const cc = e.currentTarget.value;
                       editProfile((v) => changeResidence(v, cc));
@@ -435,10 +459,53 @@ export default function Comparador(props: ComparadorProps) {
                       </option>
                     ))}
                   </select>
+                  <p id="residencia-origen" class="fieldset-help locate-note" aria-live="polite">
+                    {ipState === "loading"
+                      ? t.locateLoading
+                      : ipState === "failed"
+                        ? t.locateFailed
+                        : located && !residenceById.has(located.cc)
+                          ? t.locateUncovered(countryName(located.cc))
+                          : located && located.cc === visitor.residence
+                            ? t.locateFound[located.source]
+                            : null}{" "}
+                    {located?.source !== "ip" && ipState !== "loading" && (
+                      <button type="button" class="link-button" onClick={detectByIp}>
+                        {t.locateIp}
+                      </button>
+                    )}
+                  </p>
                   <p id="residencia-ayuda" class="fieldset-help">
-                    {t.residenceHelp}
+                    {t.residenceHelp(GEO_IP_HOST)}
                   </p>
                 </div>
+                <fieldset class="own">
+                  <legend>{t.ownLabel(residenceName)}</legend>
+                  <ul class="tie-flags">
+                    {(
+                      [
+                        ["residenceDoc", t.ownDoc],
+                        ["residencePhone", t.tiePhone],
+                        ["residenceCard", t.tieCard],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <li key={key}>
+                        <label class="check" for={`propio-${key}`}>
+                          <input
+                            type="checkbox"
+                            id={`propio-${key}`}
+                            checked={visitor[key]}
+                            onChange={(e) => {
+                              const on = e.currentTarget.checked;
+                              editProfile((v) => ({ ...v, [key]: on }));
+                            }}
+                          />
+                          {label}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </fieldset>
                 <fieldset class="ties">
                   <legend>{t.tiesLabel}</legend>
                   <p class="fieldset-help">{t.tiesHelp}</p>
@@ -488,6 +555,23 @@ export default function Comparador(props: ComparadorProps) {
                 </fieldset>
               </>
             )}
+            <p id="perfil-descripcion" class="profile-desc">
+              {state.custom ? t.profileCustomDesc : preset?.description}
+            </p>
+            <p class="profile-examples">
+              <span class="small muted">{t.profileExamples}</span>
+              {props.profiles.map((p) => (
+                <button
+                  type="button"
+                  class="chip"
+                  key={p.id}
+                  aria-pressed={!state.custom && preset?.id === p.id}
+                  onClick={() => setProfile(p.id)}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </p>
             {props.hasPending && (
               <>
                 <label class="check" for="pendientes">
@@ -783,6 +867,84 @@ export default function Comparador(props: ComparadorProps) {
           {state.pending && <p class="note">{t.pendingNote}</p>}
         </div>
       )}
+      {caps && (
+        <ResidenceAdvice
+          caps={caps}
+          residenceName={residenceName}
+          instruments={props.instruments}
+          eea={eea}
+          countryName={countryName}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * What the residence (and the documents the visitor marked) opens up for paying: accounts that
+ * can be opened online, and the EU rules an EU/EEA resident can rely on. Never a way around a
+ * service's terms: the labels above already count these accounts.
+ */
+function ResidenceAdvice(props: {
+  caps: ProfileCapabilities;
+  residenceName: string;
+  instruments: PaymentInstrumentView[];
+  eea: ReadonlySet<string>;
+  countryName: (cc: string) => string;
+}) {
+  const { caps, countryName } = props;
+  const advice = instrumentAdvice(props.instruments, caps, props.eea);
+  const inEea = props.eea.has(caps.residence_country);
+  const facts = (i: PaymentInstrumentView) =>
+    [
+      t.adviceIssuer(countryName(i.issuer_country)),
+      i.card_country ? t.adviceCard(countryName(i.card_country)) : t.adviceCardUnknown,
+      i.currencies.join(", "),
+    ].join(" · ");
+  const name = (i: PaymentInstrumentView) =>
+    i.url ? (
+      <a href={i.url} rel="noopener noreferrer">
+        {i.name}
+      </a>
+    ) : (
+      i.name
+    );
+  return (
+    <div class="advice" role="region" aria-labelledby="ventajas-titulo">
+      <h3 id="ventajas-titulo" class="detail-title">
+        {t.adviceTitle(props.residenceName)}
+      </h3>
+      <p class="note">{t.adviceLead}</p>
+      {advice.open.length > 0 ? (
+        <ul class="advice-list">
+          {advice.open.map((i) => (
+            <li key={i.id}>
+              <strong>{name(i)}</strong>
+              <span class="small muted">{facts(i)}</span>
+              {i.notes_es && <span class="small">{i.notes_es}</span>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="note">{t.adviceNone}</p>
+      )}
+      {advice.needsDocument.length > 0 && (
+        <>
+          <h4 class="advice-subtitle">{t.adviceNeedsDocTitle}</h4>
+          <ul class="advice-list">
+            {advice.needsDocument.map(({ instrument: i, missing }) => (
+              <li key={i.id}>
+                <strong>{name(i)}</strong>
+                <span class="small muted">
+                  {t.adviceNeedsDoc(missing.map(countryName).join(" o "))} · {facts(i)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {inEea && <p class="note">{t.adviceEea}</p>}
+      <p class="note">{t.adviceHonest}</p>
     </div>
   );
 }

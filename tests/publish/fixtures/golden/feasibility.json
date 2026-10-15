@@ -32,6 +32,7 @@
     "SI",
     "SK"
   ],
+  "instruments": [],
   "labels": [
     {
       "description_es": "Precio del país donde vives, contratado de la forma normal. Sin riesgo de incumplir los términos del servicio.",

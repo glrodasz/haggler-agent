@@ -201,6 +201,7 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
         eeaCountries={site.feasibility.eea_countries}
         hasPending={hasPending}
         verdictsId="comparador-veredictos"
+        instruments={site.feasibility.instruments}
       />
       <script type="application/json" id="comparador-ofertas" is:inline set:html={offersJson} />
       <script type="application/json" id="comparador-veredictos" is:inline set:html={verdictsJson} />

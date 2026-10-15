@@ -76,7 +76,15 @@ OFFER_KEYS = {
     "rank",
     "eu_badge",
 }
-FEASIBILITY_KEYS = {"labels", "records", "profiles", "default_profile", "rules", "eea_countries"}
+FEASIBILITY_KEYS = {
+    "labels",
+    "records",
+    "profiles",
+    "default_profile",
+    "rules",
+    "eea_countries",
+    "instruments",
+}
 PROFILE_KEYS = {
     "id",
     "name_es",
