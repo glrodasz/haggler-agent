@@ -270,6 +270,14 @@ export interface SummaryRow {
   bestCost: number | null;
   /** home - best in the display currency; null if either side is missing. */
   saving: number | null;
+  /**
+   * When the best offer is the residence country's own: the cheapest offer from another country,
+   * i.e. what it was compared against. Within the threshold when there is one, else the cheapest
+   * feasible one above it (runnerUpAboveRisk). Null otherwise or when there is none.
+   */
+  runnerUp: PricedOffer | null;
+  runnerUpCost: number | null;
+  runnerUpAboveRisk: boolean;
 }
 
 export interface Totals {
@@ -306,6 +314,12 @@ export function summarize(
     const homeCost = row.home ? displayCost(row.home, currency, rates, feePct) : null;
     const bestCost = best ? displayCost(best, currency, rates, feePct) : null;
     const saving = homeCost !== null && bestCost !== null ? homeCost - bestCost : null;
+    const foreign =
+      best && best.country === row.home?.country
+        ? row.offers.filter((o) => o.country !== best.country)
+        : [];
+    const withinK = foreign.find((o) => withinRisk(o, k)) ?? null;
+    const runnerUp = withinK ?? foreign.find((o) => withinRisk(o, 3)) ?? null;
     out.push({
       service_id: row.service_id,
       plan_id: row.plan_id,
@@ -314,6 +328,9 @@ export function summarize(
       homeCost,
       bestCost,
       saving,
+      runnerUp,
+      runnerUpCost: runnerUp ? displayCost(runnerUp, currency, rates, feePct) : null,
+      runnerUpAboveRisk: runnerUp !== null && withinK === null,
     });
     if (homeCost !== null && bestCost !== null && best) {
       totals.comparable += 1;

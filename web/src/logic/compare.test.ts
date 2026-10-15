@@ -270,6 +270,26 @@ describe("summarize", () => {
     expect(totals.withoutOffers).toEqual(["vix"]);
   });
 
+  it("names the cheapest foreign offer when the home offer wins", () => {
+    const cheapHome = cheapestFor(
+      "netflix",
+      "standard",
+      [offer({ country: "SE", currency: "SEK", monthly_equiv: 50 }), co, us],
+      ctx,
+    );
+    const [row] = summarize([cheapHome], 3, display).rows;
+    expect(row?.best?.country).toBe("SE");
+    expect(row?.runnerUp?.country).toBe("CO");
+    expect(row?.runnerUpCost).toBeCloseTo(7.68 * 11, 6);
+    expect(row?.runnerUpAboveRisk).toBe(false);
+    expect(summarize([netflix], 2, display).rows[0]?.runnerUp).toBeNull();
+    const [strict] = summarize([cheapHome], 0, display).rows;
+    expect(strict?.runnerUp?.country).toBe("CO");
+    expect(strict?.runnerUpAboveRisk).toBe(true);
+    const onlyUnknown = cheapestFor("netflix", "standard", [se, tr], ctx);
+    expect(summarize([onlyUnknown], 3, display).rows[0]?.runnerUp).toBeNull();
+  });
+
   it("is zero saving at the most conservative level", () => {
     expect(summarize([netflix], 0, display).totals.saving).toBe(0);
   });
