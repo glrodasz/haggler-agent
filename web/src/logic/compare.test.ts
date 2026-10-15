@@ -291,6 +291,26 @@ describe("summarize", () => {
     expect(summarize([onlyUnknown], 3, display).rows[0]?.runnerUp).toBeNull();
   });
 
+  it("shows a cheaper unevaluated offer without choosing or summing it", () => {
+    const onlyUnknown = cheapestFor("netflix", "standard", [se, tr], ctx);
+    const { rows, totals } = summarize([onlyUnknown], 3, display);
+    expect(rows[0]?.best?.country).toBe("SE");
+    expect(rows[0]?.unevaluated?.country).toBe("TR");
+    expect(totals.saving).toBe(0);
+    expect(totals.unevaluatedSaving).toBeCloseTo(
+      (rows[0]?.homeCost ?? 0) - (rows[0]?.unevaluatedCost ?? 0),
+      6,
+    );
+    expect(totals.unevaluatedSaving).toBeGreaterThan(0);
+    const cheapHome = cheapestFor(
+      "netflix",
+      "standard",
+      [offer({ country: "SE", currency: "SEK", monthly_equiv: 1 }), tr],
+      ctx,
+    );
+    expect(summarize([cheapHome], 3, display).rows[0]?.unevaluated).toBeNull();
+  });
+
   it("is zero saving at the most conservative level", () => {
     expect(summarize([netflix], 0, display).totals.saving).toBe(0);
   });
