@@ -1,0 +1,1113 @@
+[
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "1190",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.9,
+      "content_hash": "ad53d8987be4ab22",
+      "country": "HU",
+      "currency": "HUF",
+      "evidence_snippet": "em újítod meg diák-előfizetésedet az Apple Music szolgáltatásra. Az ajánlatot csak igazolt hallgatói jogviszonnyal rendelkező felsőoktatási hallgatók vehetik igénybe; a hozzáférés nem osztható meg más felhasználókkal a Családi megosztásban.",
+      "extraction": "parser",
+      "flags": [
+        "apple_billing",
+        "tier_order"
+      ],
+      "monthly_equiv": "1190.00",
+      "monthly_eur": "3.2755",
+      "obs_key": "apple_music:family:HU:web:month",
+      "observed_at": "2026-10-15T00:57:16.088337Z",
+      "plan_id": "family",
+      "plan_label_raw": "Csak új előfizetőknek. Az előfizetés a lemondásáig automatikusan megújul 1190 Ft/hó havonta a lemondásig. Csak felsőokta",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/hu/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:family:HU:web:month",
+    "previous": null,
+    "rule": "tier_order",
+    "rules": [
+      "tier_order"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "219",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "9f2034d72822690f",
+      "country": "NO",
+      "currency": "NOK",
+      "evidence_snippet": "Familieabonnement\nkr 219 per måned, og én måned er gratis for nye abonnenter.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "219.00",
+      "monthly_eur": "20.6536",
+      "obs_key": "apple_music:family:NO:web:month",
+      "observed_at": "2026-10-15T01:08:31.428213Z",
+      "plan_id": "family",
+      "plan_label_raw": "Familieabonnement",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/no/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:family:NO:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "185",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "ab57da82b50079ec",
+      "country": "CZ",
+      "currency": "CZK",
+      "evidence_snippet": "Individuální tarif\n185 Kč/měsíc,\nprvní měsíc pro nové předplatitele zdarma.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "185.00",
+      "monthly_eur": "7.5954",
+      "obs_key": "apple_music:individual:CZ:web:month",
+      "observed_at": "2026-10-15T01:08:31.427861Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Individuální tarif",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/cz/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:individual:CZ:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "119",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "bb3f68036ef31897",
+      "country": "DK",
+      "currency": "DKK",
+      "evidence_snippet": "Enkeltperson\n119 kr./måned,\nden første måned er gratis for nye abonnenter.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "119.00",
+      "monthly_eur": "15.9189",
+      "obs_key": "apple_music:individual:DK:web:month",
+      "observed_at": "2026-10-15T01:08:31.427979Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Enkeltperson",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/dk/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:individual:DK:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "11.99",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "5cdc6d56788b516b",
+      "country": "FI",
+      "currency": "EUR",
+      "evidence_snippet": "Oma\n11,99 €/kk,\nensimmäinen kuukausi maksutta uusille tilaajille.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "11.99",
+      "monthly_eur": "11.9900",
+      "obs_key": "apple_music:individual:FI:web:month",
+      "observed_at": "2026-10-15T01:08:31.428088Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Oma",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/fi/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:individual:FI:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "139",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "9f2034d72822690f",
+      "country": "NO",
+      "currency": "NOK",
+      "evidence_snippet": "Individuelt abonnement\nkr 139 per måned,",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "139.00",
+      "monthly_eur": "13.1089",
+      "obs_key": "apple_music:individual:NO:web:month",
+      "observed_at": "2026-10-15T01:08:31.428191Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Individuelt abonnement",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/no/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:individual:NO:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "99",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "ab57da82b50079ec",
+      "country": "CZ",
+      "currency": "CZK",
+      "evidence_snippet": "Studentský tarif\nExtra úspora s cenou jen 99 Kč/měsíc, první měsíc zdarma pro nové předplatitele.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "99.00",
+      "monthly_eur": "4.0645",
+      "obs_key": "apple_music:student:CZ:web:month",
+      "observed_at": "2026-10-15T01:08:31.427914Z",
+      "plan_id": "student",
+      "plan_label_raw": "Studentský tarif",
+      "reused": false,
+      "service_id": "apple_music",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/cz/apple-music/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_music:student:CZ:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "479",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "55fa9cd35c6a807c",
+      "country": "CZ",
+      "currency": "CZK",
+      "evidence_snippet": "Rodinný tarif\n479 Kč/měs.měsíčně",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "479.00",
+      "monthly_eur": "19.6658",
+      "obs_key": "apple_one:family:CZ:web:month",
+      "observed_at": "2026-10-15T01:08:31.427349Z",
+      "plan_id": "family",
+      "plan_label_raw": "Rodinný tarif",
+      "reused": false,
+      "service_id": "apple_one",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/cz/apple-one/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_one:family:CZ:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "339",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "55fa9cd35c6a807c",
+      "country": "CZ",
+      "currency": "CZK",
+      "evidence_snippet": "Individuální tarif\n339 Kč/měs.měsíčně",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "339.00",
+      "monthly_eur": "13.9180",
+      "obs_key": "apple_one:individual:CZ:web:month",
+      "observed_at": "2026-10-15T01:08:31.427288Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Individuální tarif",
+      "reused": false,
+      "service_id": "apple_one",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/cz/apple-one/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_one:individual:CZ:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "179",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "6750be65302db5d9",
+      "country": "DK",
+      "currency": "DKK",
+      "evidence_snippet": "Enkeltperson\n179 kr./måned om måneden",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "179.00",
+      "monthly_eur": "23.9452",
+      "obs_key": "apple_one:individual:DK:web:month",
+      "observed_at": "2026-10-15T01:08:31.428293Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Enkeltperson",
+      "reused": false,
+      "service_id": "apple_one",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/dk/apple-one/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_one:individual:DK:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "20.95",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "9213066914844536",
+      "country": "FI",
+      "currency": "EUR",
+      "evidence_snippet": "Oma\n20,95 €/kk kuukaudessa",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "20.95",
+      "monthly_eur": "20.9500",
+      "obs_key": "apple_one:individual:FI:web:month",
+      "observed_at": "2026-10-15T01:08:31.428370Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Oma",
+      "reused": false,
+      "service_id": "apple_one",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/fi/apple-one/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_one:individual:FI:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "219",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "8c14d39a466ec9cd",
+      "country": "NO",
+      "currency": "NOK",
+      "evidence_snippet": "Individuelt\nkr 219 per mnd.per måned",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "219.00",
+      "monthly_eur": "20.6536",
+      "obs_key": "apple_one:individual:NO:web:month",
+      "observed_at": "2026-10-15T01:08:31.428468Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Individuelt",
+      "reused": false,
+      "service_id": "apple_one",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/no/apple-one/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_one:individual:NO:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "199",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "3387c761a02188f0",
+      "country": "CZ",
+      "currency": "CZK",
+      "evidence_snippet": "Po uplynutí sedmidenního zkušebního období stojí měsíční předplatné jen 199 Kč",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "199.00",
+      "monthly_eur": "8.1701",
+      "obs_key": "apple_tv:standard:CZ:web:month",
+      "observed_at": "2026-10-15T01:08:31.427481Z",
+      "plan_id": "standard",
+      "plan_label_raw": "měsíční předplatné",
+      "reused": false,
+      "service_id": "apple_tv",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/cz/apple-tv/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_tv:standard:CZ:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "2790",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "d7828f16f99cd306",
+      "country": "HU",
+      "currency": "HUF",
+      "evidence_snippet": "Az egyhetes ingyenes próbaidőszak után az ára havonta csak 2790 Ft",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "2790.00",
+      "monthly_eur": "7.6796",
+      "obs_key": "apple_tv:standard:HU:web:month",
+      "observed_at": "2026-10-15T01:08:31.427550Z",
+      "plan_id": "standard",
+      "plan_label_raw": "Apple TV",
+      "reused": false,
+      "service_id": "apple_tv",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/hu/apple-tv/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_tv:standard:HU:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "apple_marketing",
+      "amount": "179000",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "9502505795cb80d9",
+      "country": "VN",
+      "currency": "VND",
+      "evidence_snippet": "(1) Gói đăng ký hàng tháng chỉ 179.000đ mỗi tháng sau 7 ngày dùng thử miễn phí.",
+      "extraction": "llm",
+      "flags": [
+        "apple_billing",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "179000.00",
+      "monthly_eur": "6.1799",
+      "obs_key": "apple_tv:standard:VN:web:month",
+      "observed_at": "2026-10-15T01:08:31.427651Z",
+      "plan_id": "standard",
+      "plan_label_raw": "Gói đăng ký hàng tháng",
+      "reused": false,
+      "service_id": "apple_tv",
+      "source_kind": "official",
+      "source_url": "https://www.apple.com/vn/apple-tv/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "apple_tv:standard:VN:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "15.99",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "dedd5ef41a9c273d",
+      "country": "ES",
+      "currency": "EUR",
+      "evidence_snippet": "Disney+ Prémium — 15,99 €",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "15.99",
+      "monthly_eur": "15.9900",
+      "obs_key": "disney_plus:premium:ES:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429080Z",
+      "plan_id": "premium",
+      "plan_label_raw": "Disney+ Prémium",
+      "reused": false,
+      "service_id": "disney_plus",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/es/app/disney/id1446075923",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "disney_plus:premium:ES:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "159.99",
+      "billing_period": "year",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "dedd5ef41a9c273d",
+      "country": "ES",
+      "currency": "EUR",
+      "evidence_snippet": "Disney+ Prémium — 159,99 €",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "13.33",
+      "monthly_eur": "13.3300",
+      "obs_key": "disney_plus:premium:ES:ios_iap:year",
+      "observed_at": "2026-10-15T01:08:31.429102Z",
+      "plan_id": "premium",
+      "plan_label_raw": "Disney+ Prémium",
+      "reused": false,
+      "service_id": "disney_plus",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/es/app/disney/id1446075923",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "disney_plus:premium:ES:ios_iap:year",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "9.99",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "4b6d81278b6c724a",
+      "country": "FI",
+      "currency": "EUR",
+      "evidence_snippet": "Google AI Plus (2 TB) — 9,99 €",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "9.99",
+      "monthly_eur": "9.9900",
+      "obs_key": "google_one:ai_plus:FI:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429260Z",
+      "plan_id": "ai_plus",
+      "plan_label_raw": "Google AI Plus (2 TB)",
+      "reused": false,
+      "service_id": "google_one",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/fi/app/google-one/id1451784328",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "google_one:ai_plus:FI:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "9.90",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "ab68a52e2972b982",
+      "country": "CH",
+      "currency": "CHF",
+      "evidence_snippet": "Basis mit Werbung — CHF 9.90",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "9.90",
+      "monthly_eur": "10.6109",
+      "obs_key": "hbo_max:basic_with_ads:CH:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429366Z",
+      "plan_id": "basic_with_ads",
+      "plan_label_raw": "Basis mit Werbung",
+      "reused": false,
+      "service_id": "hbo_max",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/ch/app/hbo-max-filme-und-serien/id1666653815",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "hbo_max:basic_with_ads:CH:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "5.99",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "77d206523ad80309",
+      "country": "DE",
+      "currency": "EUR",
+      "evidence_snippet": "Basis mit Werbung — 5,99 €",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "5.99",
+      "monthly_eur": "5.9900",
+      "obs_key": "hbo_max:basic_with_ads:DE:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429427Z",
+      "plan_id": "basic_with_ads",
+      "plan_label_raw": "Basis mit Werbung",
+      "reused": false,
+      "service_id": "hbo_max",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/de/app/hbo-max-filme-und-serien/id1666653815",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "hbo_max:basic_with_ads:DE:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "129.00",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "ea261cc3ce010655",
+      "country": "DK",
+      "currency": "DKK",
+      "evidence_snippet": "Standard — 129,00 kr",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "129.00",
+      "monthly_eur": "17.2566",
+      "obs_key": "hbo_max:standard:DK:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429481Z",
+      "plan_id": "standard",
+      "plan_label_raw": "Standard",
+      "reused": false,
+      "service_id": "hbo_max",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/dk/app/hbo-max-watch-movies-tv/id1666653815",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "hbo_max:standard:DK:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "39.99",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "6bab5280d8ac9d07",
+      "country": "PL",
+      "currency": "PLN",
+      "evidence_snippet": "Standard — 39,99 zł",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "39.99",
+      "monthly_eur": "9.1598",
+      "obs_key": "hbo_max:standard:PL:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429583Z",
+      "plan_id": "standard",
+      "plan_label_raw": "Standard",
+      "reused": false,
+      "service_id": "hbo_max",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/pl/app/hbo-max-watch-movies-tv/id1666653815",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "hbo_max:standard:PL:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "spotify_premium",
+      "amount": "1900",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.9,
+      "content_hash": "92e036e689f5b0aa",
+      "country": "CO",
+      "currency": "COP",
+      "evidence_snippet": "Premium Individual: $ 1.900",
+      "extraction": "parser",
+      "flags": [
+        "tier_order"
+      ],
+      "monthly_equiv": "1900.00",
+      "monthly_eur": "0.5308",
+      "obs_key": "spotify:individual:CO:web:month",
+      "observed_at": "2026-10-15T00:54:31.538999Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Premium Individual",
+      "reused": false,
+      "service_id": "spotify",
+      "source_kind": "official",
+      "source_url": "https://www.spotify.com/co-es/premium/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "spotify:individual:CO:web:month",
+    "previous": null,
+    "rule": "tier_order",
+    "rules": [
+      "tier_order"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "spotify_premium",
+      "amount": "59900",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "8c9828acf02e0db1",
+      "country": "ID",
+      "currency": "IDR",
+      "evidence_snippet": "Premium\nStandard\nRp 59.900 selama 2 bulan\nRp 59.900/bulan sesudahnya",
+      "extraction": "llm",
+      "flags": [
+        "llm_new_key"
+      ],
+      "monthly_equiv": "59900.00",
+      "monthly_eur": "2.9856",
+      "obs_key": "spotify:individual:ID:web:month",
+      "observed_at": "2026-10-15T01:08:31.428827Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Premium Standard",
+      "reused": false,
+      "service_id": "spotify",
+      "source_kind": "official",
+      "source_url": "https://www.spotify.com/id-id/premium/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "spotify:individual:ID:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "spotify_premium",
+      "amount": "139",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "c93922eb283f099c",
+      "country": "IN",
+      "currency": "INR",
+      "evidence_snippet": "Premium\nStandard\n₹139 for 2 months\n₹139/month after",
+      "extraction": "llm",
+      "flags": [
+        "llm_new_key"
+      ],
+      "monthly_equiv": "139.00",
+      "monthly_eur": "1.3048",
+      "obs_key": "spotify:individual:IN:web:month",
+      "observed_at": "2026-10-15T01:08:31.428914Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Premium Standard",
+      "reused": false,
+      "service_id": "spotify",
+      "source_kind": "official",
+      "source_url": "https://www.spotify.com/in-en/premium/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "spotify:individual:IN:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "spotify_premium",
+      "amount": "59",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.9,
+      "content_hash": "8a020b4a6d4086b5",
+      "country": "TR",
+      "currency": "TRY",
+      "evidence_snippet": "Premium Bireysel: ₺59",
+      "extraction": "parser",
+      "flags": [
+        "tier_order"
+      ],
+      "monthly_equiv": "59.00",
+      "monthly_eur": "1.0671",
+      "obs_key": "spotify:individual:TR:web:month",
+      "observed_at": "2026-10-15T00:55:28.362030Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Premium Bireysel",
+      "reused": false,
+      "service_id": "spotify",
+      "source_kind": "official",
+      "source_url": "https://www.spotify.com/tr-tr/premium/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "spotify:individual:TR:web:month",
+    "previous": null,
+    "rule": "tier_order",
+    "rules": [
+      "tier_order"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "spotify_premium",
+      "amount": "69.99",
+      "billing_period": "month",
+      "channel": "web",
+      "confidence": 0.7,
+      "content_hash": "660e9f89de61a874",
+      "country": "ZA",
+      "currency": "ZAR",
+      "evidence_snippet": "R 69,99/month after",
+      "extraction": "llm",
+      "flags": [
+        "llm_new_key"
+      ],
+      "monthly_equiv": "69.99",
+      "monthly_eur": "3.7959",
+      "obs_key": "spotify:individual:ZA:web:month",
+      "observed_at": "2026-10-15T01:08:31.428997Z",
+      "plan_id": "individual",
+      "plan_label_raw": "Standard",
+      "reused": false,
+      "service_id": "spotify",
+      "source_kind": "official",
+      "source_url": "https://www.spotify.com/za-en/premium/",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "spotify:individual:ZA:web:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "7.49",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "6d6e0e9f54a29002",
+      "country": "AR",
+      "currency": "USD",
+      "evidence_snippet": "YouTube Premium Two-person — USD 7.49",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "7.49",
+      "monthly_eur": "6.6905",
+      "obs_key": "youtube_premium:duo:AR:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429679Z",
+      "plan_id": "duo",
+      "plan_label_raw": "YouTube Premium Two-person",
+      "reused": false,
+      "service_id": "youtube_premium",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/ar/app/youtube/id544007664",
+      "status": "quarantined",
+      "vat_included": null
+    },
+    "obs_key": "youtube_premium:duo:AR:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "289",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "2988082359b1c176",
+      "country": "IN",
+      "currency": "INR",
+      "evidence_snippet": "YouTube Premium Two-person — ₹ 289",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "289.00",
+      "monthly_eur": "2.7129",
+      "obs_key": "youtube_premium:duo:IN:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.430138Z",
+      "plan_id": "duo",
+      "plan_label_raw": "YouTube Premium Two-person",
+      "reused": false,
+      "service_id": "youtube_premium",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "youtube_premium:duo:IN:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "4.99",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "6d6e0e9f54a29002",
+      "country": "AR",
+      "currency": "USD",
+      "evidence_snippet": "YouTube Premium — USD 4.99",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "4.99",
+      "monthly_eur": "4.4573",
+      "obs_key": "youtube_premium:individual:AR:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.429654Z",
+      "plan_id": "individual",
+      "plan_label_raw": "YouTube Premium",
+      "reused": false,
+      "service_id": "youtube_premium",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/ar/app/youtube/id544007664",
+      "status": "quarantined",
+      "vat_included": null
+    },
+    "obs_key": "youtube_premium:individual:AR:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "195",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "2988082359b1c176",
+      "country": "IN",
+      "currency": "INR",
+      "evidence_snippet": "YouTube Premium — ₹ 195",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "195.00",
+      "monthly_eur": "1.8305",
+      "obs_key": "youtube_premium:individual:IN:ios_iap:month",
+      "observed_at": "2026-10-15T01:08:31.430111Z",
+      "plan_id": "individual",
+      "plan_label_raw": "YouTube Premium",
+      "reused": false,
+      "service_id": "youtube_premium",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "youtube_premium:individual:IN:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
+    ]
+  }
+]

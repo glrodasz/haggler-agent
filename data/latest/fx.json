@@ -1,0 +1,214 @@
+{
+  "as_of": "2026-10-15",
+  "base": "EUR",
+  "rates": {
+    "ARS": {
+      "as_of": "2026-10-13",
+      "currency": "ARS",
+      "per_eur": "1693.24375",
+      "provider": "BCRA",
+      "source": "frankfurter",
+      "stale": false
+    },
+    "BRL": {
+      "as_of": "2026-10-14",
+      "currency": "BRL",
+      "per_eur": "5.6246",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "CAD": {
+      "as_of": "2026-10-14",
+      "currency": "CAD",
+      "per_eur": "1.5918",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "CHF": {
+      "as_of": "2026-10-14",
+      "currency": "CHF",
+      "per_eur": "0.9330",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "CLP": {
+      "as_of": "2026-10-14",
+      "currency": "CLP",
+      "per_eur": "1097.69",
+      "provider": "BCCH",
+      "source": "frankfurter",
+      "stale": false
+    },
+    "COP": {
+      "as_of": "2026-10-14",
+      "currency": "COP",
+      "per_eur": "3579.769175",
+      "provider": "BANREP",
+      "source": "frankfurter",
+      "stale": false
+    },
+    "CZK": {
+      "as_of": "2026-10-14",
+      "currency": "CZK",
+      "per_eur": "24.357",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "DKK": {
+      "as_of": "2026-10-14",
+      "currency": "DKK",
+      "per_eur": "7.4754",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "EGP": {
+      "as_of": "2026-10-14",
+      "currency": "EGP",
+      "per_eur": "59.42935",
+      "provider": "CBE",
+      "source": "frankfurter",
+      "stale": false
+    },
+    "GBP": {
+      "as_of": "2026-10-14",
+      "currency": "GBP",
+      "per_eur": "0.84385",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "HUF": {
+      "as_of": "2026-10-14",
+      "currency": "HUF",
+      "per_eur": "363.30",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "IDR": {
+      "as_of": "2026-10-14",
+      "currency": "IDR",
+      "per_eur": "20062.67",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "INR": {
+      "as_of": "2026-10-14",
+      "currency": "INR",
+      "per_eur": "106.5283",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "MXN": {
+      "as_of": "2026-10-14",
+      "currency": "MXN",
+      "per_eur": "20.5600",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "NGN": {
+      "as_of": "2026-10-14",
+      "currency": "NGN",
+      "per_eur": "1491.0076",
+      "provider": "CBN",
+      "source": "frankfurter",
+      "stale": false
+    },
+    "NOK": {
+      "as_of": "2026-10-14",
+      "currency": "NOK",
+      "per_eur": "10.6035",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "PEN": {
+      "as_of": "2026-10-14",
+      "currency": "PEN",
+      "per_eur": "3.8481",
+      "provider": null,
+      "source": "frankfurter",
+      "stale": false
+    },
+    "PHP": {
+      "as_of": "2026-10-14",
+      "currency": "PHP",
+      "per_eur": "70.393",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "PKR": {
+      "as_of": "2026-10-14",
+      "currency": "PKR",
+      "per_eur": "310.69",
+      "provider": null,
+      "source": "frankfurter",
+      "stale": false
+    },
+    "PLN": {
+      "as_of": "2026-10-14",
+      "currency": "PLN",
+      "per_eur": "4.3658",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "RON": {
+      "as_of": "2026-10-14",
+      "currency": "RON",
+      "per_eur": "5.3442",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "SEK": {
+      "as_of": "2026-10-14",
+      "currency": "SEK",
+      "per_eur": "11.1580",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "TRY": {
+      "as_of": "2026-10-14",
+      "currency": "TRY",
+      "per_eur": "55.2921",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "USD": {
+      "as_of": "2026-10-14",
+      "currency": "USD",
+      "per_eur": "1.1195",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    },
+    "VND": {
+      "as_of": "2026-10-15",
+      "currency": "VND",
+      "per_eur": "28965",
+      "provider": null,
+      "source": "frankfurter",
+      "stale": false
+    },
+    "ZAR": {
+      "as_of": "2026-10-14",
+      "currency": "ZAR",
+      "per_eur": "18.4382",
+      "provider": "ECB",
+      "source": "ecb",
+      "stale": false
+    }
+  }
+}

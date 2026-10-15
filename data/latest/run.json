@@ -1,0 +1,45 @@
+{
+  "as_of": "2026-10-15",
+  "files": {
+    "coverage.json": "91032ae1bdbee02a9a4b84546edf03c736143a4896b416745b8424aaf7091453",
+    "fx.json": "138e33097d05b434f3abff0dd042830c430a25b80c1652f9b7c45df24a6ee7b6",
+    "prices.json": "9be26038962804624603642398682f7ea21c8bd505778dff322a28ef245a87c5",
+    "review_queue.json": "0a0bb410fa69dcef789eed9893846cbe748088e2084e1c1b9b079ae098b3a0eb"
+  },
+  "finished_at": "2026-10-15T01:08:43.543507+00:00",
+  "report": {
+    "anomalies": 62,
+    "dry_run": false,
+    "errors": [],
+    "finished_at": "2026-10-15T01:08:43.543507Z",
+    "llm": {
+      "accepted_items": 29,
+      "calls": 63,
+      "errors": 0,
+      "jobs": 74,
+      "rejected_items": 39,
+      "reused": 0,
+      "skipped_budget": 11
+    },
+    "obs_by_status": {
+      "accepted": 1121,
+      "quarantined": 31,
+      "rejected": 16
+    },
+    "run_date": "2026-10-15",
+    "run_id": "2026-10-15-0534d2",
+    "started_at": "2026-10-15T00:53:08.247666Z",
+    "success_ratio": 0.9545,
+    "tasks_by_status": {
+      "failed": 11,
+      "not_available": 15,
+      "not_configured": 15,
+      "ok": 295,
+      "partial": 5,
+      "wrong_country": 4
+    },
+    "tasks_total": 345
+  },
+  "run_id": "2026-10-15-0534d2",
+  "schema_version": 1
+}

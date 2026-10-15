@@ -1,0 +1,3026 @@
+[
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_music",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_music",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_music",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_music",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "apple_music",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_music",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_one",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "apple_one",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_tv",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_configured"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": "2026-10-15",
+    "service_id": "apple_tv",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "apple_marketing",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "apple_tv",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "google_one",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": "2026-10-15",
+    "service_id": "hbo_max",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "hbo_max",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "icloud_support",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "icloud_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "microsoft_365",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "netflix_help",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "netflix",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "spotify_premium",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "spotify",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "youtube_premium",
+    "status": "ok"
+  }
+]
