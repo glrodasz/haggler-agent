@@ -6,6 +6,7 @@ import EuBadge from "../../components/EuBadge.astro";
 import FeasibilityTable from "../../components/FeasibilityTable.astro";
 import OfferTable from "../../components/OfferTable.astro";
 import RiskBadge from "../../components/RiskBadge.astro";
+import { ServiceMark } from "../../components/ServiceMark";
 import TableWrap from "../../components/TableWrap.astro";
 import { es, lookup } from "../../i18n/es";
 import Base from "../../layouts/Base.astro";
@@ -37,7 +38,10 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
 
 <Base title={service.name} current="services" description={`${service.name}: ${t.offersTitle}`}>
   <p class="small"><a href={routes.services()}>← {t.backToServices}</a></p>
-  <h1>{service.name}</h1>
+  <h1 class="service-title">
+    <ServiceMark id={service.id} name={service.name} />
+    {service.name}
+  </h1>
   <ul class="facts">
     <li>{t.category}: <strong>{lookup(es.categories, service.category)}</strong></li>
     <li>{t.defaultPlan}: <strong>{defaultPlan}</strong></li>

@@ -788,6 +788,25 @@ input[type="radio"] {
   font-size: var(--text-sm);
   font-weight: 700;
 }
+.service-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+h1.service-title {
+  display: block;
+}
+h1.service-title .monogram {
+  display: inline-grid;
+  vertical-align: middle;
+  margin-right: var(--space-3);
+  width: 2.75rem;
+  height: 2.75rem;
+}
+h1.service-title .monogram svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
 .service-row .check {
   gap: var(--space-2);
   align-items: center;
