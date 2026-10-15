@@ -792,6 +792,13 @@ input[type="radio"] {
   font-size: var(--text-sm);
   font-weight: 700;
 }
+.monogram.is-wordmark {
+  font-size: 0.625rem;
+  letter-spacing: -0.02em;
+}
+h1.service-title .monogram.is-wordmark {
+  font-size: var(--text-sm);
+}
 .service-title {
   display: inline-flex;
   align-items: center;
