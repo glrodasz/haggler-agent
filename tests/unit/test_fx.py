@@ -121,7 +121,7 @@ class FakeFrankfurter:
         params = dict(request.url.params)
         self.requests.append(params)
         base = params.get("base", "EUR")
-        quotes = params.get("quotes", "").split(",")
+        quotes = params["quotes"].split(",") if "quotes" in params else None
         provider = params.get("providers")
         if provider:
             table = self.providers.get((provider, base), {})
@@ -130,7 +130,7 @@ class FakeFrankfurter:
         records = [
             {"date": day, "base": base, "quote": q, "rate": rate}
             for q, (rate, day) in sorted(table.items())
-            if q in quotes
+            if quotes is None or q in quotes
         ]
         return httpx.Response(200, json=records)
 
@@ -474,6 +474,54 @@ async def test_unknown_pinned_provider_error_falls_through(router):
     _, table = await build(router, currencies={"COP"}, pins={"COP": "NOPE"})
 
     assert summary(table) == {"COP": ("frankfurter", None, False)}
+
+
+async def test_display_all_adds_every_published_currency(router):
+    fake = FakeFrankfurter(
+        blended={
+            "SEK": (10.9901, "2026-10-07"),
+            "PEN": (3.9855, "2026-10-07"),
+            "KZT": (612.4, "2026-10-07"),
+            "XYZ": (2.5, "2026-09-01"),  # too old for a display-only rate
+        }
+    )
+    router.get(ECB_DAILY_URL).mock(return_value=httpx.Response(200, content=ECB_XML))
+    router.get(FF_RATES).mock(side_effect=fake)
+    router.get(OPEN_ER).mock(return_value=httpx.Response(200, json=OPEN_ER_PAYLOAD))
+    previous = FxTable(
+        as_of=date(2026, 10, 7),
+        rates={
+            "KES": FxRate(
+                currency="KES", per_eur=Decimal("150.1"), source="frankfurter", as_of=AS_OF
+            ),
+            "OLD": FxRate(
+                currency="OLD", per_eur=Decimal("1.5"), source="ecb", as_of=date(2026, 8, 1)
+            ),
+        },
+    )
+
+    svc, table = await build(
+        router, previous=previous, currencies={"SEK", "PEN"}, pins={}, display_all=True
+    )
+
+    assert summary(table)["SEK"] == ("ecb", "ECB", False)
+    assert summary(table)["PEN"] == ("frankfurter", None, False)
+    assert summary(table)["JPY"] == ("ecb", "ECB", False)  # ECB extra
+    assert summary(table)["KZT"] == ("frankfurter", None, False)  # Frankfurter-only extra
+    assert summary(table)["KES"] == ("previous", None, True)  # carried for one outage
+    assert "XYZ" not in table.rates and "OLD" not in table.rates and "EUR" not in table.rates
+    assert {"base": "EUR"} in fake.requests
+    assert svc.errors == []
+
+
+async def test_display_all_off_keeps_only_wanted(router):
+    router.get(ECB_DAILY_URL).mock(return_value=httpx.Response(200, content=ECB_XML))
+    router.get(FF_RATES).mock(side_effect=default_frankfurter())
+    router.get(OPEN_ER).mock(return_value=httpx.Response(200, json=OPEN_ER_PAYLOAD))
+
+    _, table = await build(router, currencies={"SEK"})
+
+    assert set(table.rates) == {"SEK"}
 
 
 async def test_static_service_returns_its_table():

@@ -10,7 +10,18 @@
   "display_currencies": [
     "SEK",
     "EUR",
-    "USD"
+    "USD",
+    "BRL",
+    "CHF",
+    "COP",
+    "CZK",
+    "DKK",
+    "GBP",
+    "INR",
+    "MXN",
+    "NOK",
+    "PLN",
+    "TRY"
   ],
   "attributions": [
     {

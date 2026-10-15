@@ -168,7 +168,9 @@ class LazyFxService:
             from haggler.fx.service import DefaultFxService
 
             self._client = httpx.AsyncClient(timeout=FX_TIMEOUT, follow_redirects=True)
-            self._inner = DefaultFxService(self._client, self.pins, user_agent=self.user_agent)
+            self._inner = DefaultFxService(
+                self._client, self.pins, user_agent=self.user_agent, display_all=True
+            )
         try:
             return await self._inner.build_table(currencies, as_of=as_of, previous=previous)
         finally:

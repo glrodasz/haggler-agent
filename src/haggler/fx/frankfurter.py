@@ -99,7 +99,48 @@ async def fetch_rates(
     wanted = sorted({q.upper() for q in quotes} - {base.upper()})
     if not wanted:
         return {}
-    params = {"base": base.upper(), "quotes": ",".join(wanted)}
+    rates = await _get_rates(
+        client,
+        {"base": base.upper(), "quotes": ",".join(wanted)},
+        base=base,
+        providers=providers,
+        base_url=base_url,
+        headers=headers,
+        timeout=timeout,
+    )
+    return {q: r for q, r in rates.items() if q in wanted}
+
+
+async def fetch_all_rates(
+    client: httpx.AsyncClient,
+    *,
+    base: str = "EUR",
+    base_url: str = DEFAULT_BASE_URL,
+    headers: dict[str, str] | None = None,
+    timeout: httpx.Timeout = DEFAULT_TIMEOUT,
+) -> dict[str, FrankfurterRate]:
+    """Latest blended rate of every currency Frankfurter publishes against `base`."""
+    return await _get_rates(
+        client,
+        {"base": base.upper()},
+        base=base,
+        providers=None,
+        base_url=base_url,
+        headers=headers,
+        timeout=timeout,
+    )
+
+
+async def _get_rates(
+    client: httpx.AsyncClient,
+    params: dict[str, str],
+    *,
+    base: str,
+    providers: Sequence[str] | str | None,
+    base_url: str,
+    headers: dict[str, str] | None,
+    timeout: httpx.Timeout,
+) -> dict[str, FrankfurterRate]:
     if providers:
         names = [providers] if isinstance(providers, str) else list(providers)
         params["providers"] = ",".join(p.upper() for p in names)
@@ -114,5 +155,4 @@ async def fetch_rates(
         return {}
     resp.raise_for_status()
     payload = resp.json(parse_float=Decimal, parse_int=Decimal)
-    rates = parse_rates(payload, base=base)
-    return {q: r for q, r in rates.items() if q in wanted}
+    return parse_rates(payload, base=base)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  currencyOption,
   DASH,
   documentName,
   flagEmoji,
@@ -130,5 +131,16 @@ describe("hostOf and isPdfUrl", () => {
     expect(isPdfUrl("https://example.com/precios.pdf?v=2#p3")).toBe(true);
     expect(isPdfUrl("https://example.com/pdf/planes")).toBe(false);
     expect(isPdfUrl("precios.pdf")).toBe(false);
+  });
+});
+
+describe("currencyOption", () => {
+  it("adds the Spanish currency name after the code", () => {
+    expect(currencyOption("SEK")).toBe("SEK · corona sueca");
+    expect(currencyOption("USD")).toBe("USD · dólar estadounidense");
+  });
+
+  it("falls back to the bare code when Intl has no name", () => {
+    expect(currencyOption("XQZ")).toBe("XQZ");
   });
 });
