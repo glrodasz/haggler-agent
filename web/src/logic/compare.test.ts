@@ -10,6 +10,7 @@ import {
   priceOffer,
   roundTo,
   savingsByRisk,
+  savingsPctByRisk,
   summarize,
   toOfferRef,
 } from "./compare";
@@ -300,6 +301,16 @@ describe("summarize", () => {
     expect(byRisk[1]).toBe(0);
     expect(byRisk[2]).toBeGreaterThan(0);
     expect(byRisk[3]).toBe(byRisk[2]);
+  });
+
+  it("reports the saving as a share of the home cost", () => {
+    const pct = savingsPctByRisk([netflix], display);
+    const { home, saving } = summarize([netflix], 2, display).totals;
+    expect(pct[0]).toBe(0);
+    expect(pct[2]).toBeCloseTo((saving / home) * 100, 9);
+    expect(pct[2]).toBeGreaterThan(0);
+    expect(pct[2]).toBeLessThan(100);
+    expect(savingsPctByRisk([], display)[3]).toBe(0);
   });
 
   it("applies the fee when the display currency equals a foreign offer currency", () => {

@@ -17,6 +17,7 @@ import {
   type CompareOfferFields,
   type PricedOffer,
   savingsByRisk,
+  savingsPctByRisk,
   summarize,
 } from "../logic/compare";
 import {
@@ -56,6 +57,7 @@ import {
   type VerdictSource,
   verdictLookup,
 } from "../logic/verdicts";
+import { RiskSlider } from "./RiskSlider";
 
 export interface ComparadorService {
   id: string;
@@ -299,6 +301,11 @@ export default function Comparador(props: ComparadorProps) {
   );
   const summary = useMemo(() => summarize(rows, state.risk, display), [rows, state.risk, display]);
   const byRisk = useMemo(() => savingsByRisk(rows, display), [rows, display]);
+  const pctByRisk = useMemo(() => savingsPctByRisk(rows, display), [rows, display]);
+  const riskNames = useMemo(
+    () => Object.fromEntries(props.riskOptions.map((o) => [o.rank, o.name])),
+    [props.riskOptions],
+  );
   const maxSaving = Math.max(0, ...RISK_LEVELS.map((k) => byRisk[k]));
 
   const eea = useMemo(() => new Set(props.eeaCountries), [props.eeaCountries]);
@@ -678,21 +685,14 @@ export default function Comparador(props: ComparadorProps) {
               <div class="result-body">
                 <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
                 <p class="visually-hidden">{t.savingsByRiskHelp}</p>
-                <ul class="risk-strip" aria-labelledby="ahorro-por-riesgo">
-                  {RISK_LEVELS.map((k) => (
-                    <li key={k}>
-                      <button
-                        type="button"
-                        aria-pressed={state.risk === k}
-                        title={props.riskOptions.find((o) => o.rank === k)?.name}
-                        onClick={() => setRisk(k)}
-                      >
-                        <span class={`risk-dot-label ${riskClass(k)}`}>{es.riskLevel(k)}</span>
-                        <span class="amount">{formatNumber(Math.round(byRisk[k] ?? 0), 0)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <RiskSlider
+                  levels={RISK_LEVELS}
+                  value={state.risk}
+                  onChange={setRisk}
+                  pct={pctByRisk}
+                  names={riskNames}
+                  labelledBy="ahorro-por-riesgo"
+                />
 
                 <ul class="result-rows">
                   {summary.rows.map((r) => (

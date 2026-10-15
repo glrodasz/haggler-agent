@@ -356,3 +356,20 @@ export function savingsByRisk(
   for (const k of RISK_LEVELS) out[k] = summarize(rows, k, display).totals.saving;
   return out;
 }
+
+/**
+ * The same saving as a percentage of what the visitor pays at home for the services that have an
+ * option at that threshold (7.5 = 7,5 %). A share keeps the level strip readable whatever the
+ * currency; the amounts are in the result card and the summary.
+ */
+export function savingsPctByRisk(
+  rows: readonly Cheapest[],
+  display: DisplayOptions,
+): Record<RiskLevel, number> {
+  const out = emptyByRisk(0);
+  for (const k of RISK_LEVELS) {
+    const { home, saving } = summarize(rows, k, display).totals;
+    out[k] = home > 0 ? (saving / home) * 100 : 0;
+  }
+  return out;
+}
