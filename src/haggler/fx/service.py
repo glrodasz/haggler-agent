@@ -6,6 +6,9 @@ Priority per currency:
   3. Frankfurter v2 blended rate (haggler.fx.frankfurter);
   4. open.er-api.com (haggler.fx.open_er_api), fetched with base EUR;
   5. the previous run's rate, marked stale=True (source="previous").
+With `display_all`, every other currency the ECB or Frankfurter publishes is added too (fresh
+rates only, else the previous run's marked stale) so the site can show totals in any of them;
+those extras never count as errors.
 A rate older than 5 business days is marked stale, and a stale rate only stands if no later
 source has a fresh one. EUR itself is implicit (never stored). Network errors in one provider
 never raise out of build_table: they are logged, collected in `errors` and we fall through.
@@ -22,13 +25,20 @@ from typing import Any, Protocol, TypeVar
 import httpx
 
 from haggler.fx.ecb import fetch_ecb
-from haggler.fx.frankfurter import DEFAULT_BASE_URL, FrankfurterRate, fetch_rates
+from haggler.fx.frankfurter import (
+    DEFAULT_BASE_URL,
+    FrankfurterRate,
+    fetch_all_rates,
+    fetch_rates,
+)
 from haggler.fx.open_er_api import fetch_open_er_api
 from haggler.models.fx import FxRate, FxTable
 
 log = logging.getLogger(__name__)
 
 STALE_AFTER_BUSINESS_DAYS = 5
+# A display-only rate missing from today's sources is carried this long, then dropped.
+EXTRA_CARRY_BUSINESS_DAYS = 20
 # Significant digits kept for rates we derive (bridged or rebased); published ones are kept as is.
 _DERIVED_DIGITS = 10
 
@@ -103,8 +113,10 @@ class DefaultFxService:
         *,
         frankfurter_base: str = DEFAULT_BASE_URL,
         user_agent: str | None = None,
+        display_all: bool = False,
     ) -> None:
         self.client = client
+        self.display_all = display_all
         self.pins = {cur.upper(): provider.upper() for cur, provider in pins.items()}
         self.frankfurter_base = frankfurter_base
         self.headers = {"User-Agent": user_agent} if user_agent else {}
@@ -130,13 +142,48 @@ class DefaultFxService:
                 if old is not None:
                     picker.offer(old.model_copy(update={"source": "previous", "stale": True}))
 
+        extras = await self._display_extras(set(wanted) | {"EUR"}, as_of, previous)
+
         missing = [c for c in wanted if c not in picker.best]
         if missing:
             self._error(f"fx: no rate at all for {','.join(missing)}")
         stale = sorted(c for c, r in picker.best.items() if r.stale)
         if stale:
             log.warning("fx: stale rates for %s", ",".join(stale))
-        return FxTable(as_of=as_of, rates={c: picker.best[c] for c in sorted(picker.best)})
+        rates = {**extras, **picker.best}
+        return FxTable(as_of=as_of, rates={c: rates[c] for c in sorted(rates)})
+
+    async def _display_extras(
+        self, skip: set[str], as_of: date, previous: FxTable | None
+    ) -> dict[str, FxRate]:
+        """Display-only rates for every other currency the ECB or Frankfurter publishes."""
+        if not self.display_all:
+            return {}
+        out: dict[str, FxRate] = {}
+
+        def keep(rate: FxRate) -> None:
+            if rate.currency in skip or rate.currency in out or len(rate.currency) != 3:
+                return
+            if business_days_between(rate.as_of, as_of) <= STALE_AFTER_BUSINESS_DAYS:
+                out[rate.currency] = rate
+
+        ecb = await self._ecb()
+        if ecb is not None:
+            day, ecb_rates = ecb
+            for cur, per in ecb_rates.items():
+                keep(FxRate(currency=cur, per_eur=per, source="ecb", provider="ECB", as_of=day))
+        got = await self._safe(
+            "frankfurter all",
+            fetch_all_rates(self.client, base_url=self.frankfurter_base, headers=self.headers),
+        )
+        for quote, r in (got or {}).items():
+            keep(FxRate(currency=quote, per_eur=r.rate, source="frankfurter", as_of=r.date))
+        if previous is not None:
+            for cur, old in previous.rates.items():
+                too_old = business_days_between(old.as_of, as_of) > EXTRA_CARRY_BUSINESS_DAYS
+                if cur not in skip and cur not in out and not too_old:
+                    out[cur] = old.model_copy(update={"source": "previous", "stale": True})
+        return out
 
     # ---- tiers
 

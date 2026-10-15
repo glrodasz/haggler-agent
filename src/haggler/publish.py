@@ -1400,7 +1400,9 @@ def build_site_data(
     except ValueError:
         as_of_day = None
     anchor = as_of_day or now.date()
-    display = list(dict.fromkeys([home_currency, "EUR", "USD"]))
+    # Residence currency, EUR and USD first, then every other currency the FX table has a rate for.
+    rated = sorted(latest.fx.rates) if latest.fx else []
+    display = list(dict.fromkeys([home_currency, "EUR", "USD", *rated]))
     return {
         "meta": {
             "generated_at": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),

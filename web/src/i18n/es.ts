@@ -460,6 +460,9 @@ export const es = {
     riskHelp:
       "Solo se eligen ofertas con un nivel de riesgo igual o menor. Las ofertas sin evaluar nunca se eligen.",
     currencyLegend: "Moneda",
+    currencyLabel: "Moneda para mostrar los importes",
+    currencyCommon: "Frecuentes",
+    currencyAll: "Todas las monedas",
     profileLegend: "Perfil",
     profileHelp:
       "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes.",
@@ -505,6 +508,11 @@ export const es = {
     noHome: "Sin precio local",
     noOffer: "Sin oferta con este riesgo",
     homeIsBest: "Tu país ya es la opción más barata",
+    runnerUp: (country: string, price: string, diff: string) =>
+      `Le sigue ${country}: ${price} al mes (${diff})`,
+    runnerUpAboveRisk: (country: string, price: string, diff: string) =>
+      `La más barata de otro país es ${country}, con más riesgo del aceptado: ${price} al mes (${diff})`,
+    noRunnerUp: "No hay ofertas viables de otros países",
     localPrice: (price: string) => `Precio local: ${price}`,
     totalsTitle: "Totales",
     totalsCaption: "Totales de los servicios comparables",
