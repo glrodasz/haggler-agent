@@ -177,3 +177,17 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
     </div>
   </section>
 </Base>
+
+<script>
+  // The comparator keeps its shareable selection in location.hash, so the "#comparar" CTA
+  // scrolls without replacing it; the plain href still works without JavaScript.
+  const target = document.getElementById("comparar");
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href="#comparar"]')) {
+    link.addEventListener("click", (event) => {
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView();
+      target.focus({ preventScroll: true });
+    });
+  }
+</script>
