@@ -864,20 +864,6 @@ blockquote {
   background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg));
   outline: 1.5px solid var(--color-accent);
 }
-.controls .segmented .radio {
-  border-radius: var(--radius-pill);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.controls .segmented input {
-  accent-color: var(--color-accent-fg);
-}
-.controls .segmented .radio:has(input:checked) {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  outline: none;
-  border-color: var(--color-accent);
-}
 select {
   border-radius: var(--radius);
 }
