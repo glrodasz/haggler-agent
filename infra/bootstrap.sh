@@ -109,10 +109,13 @@ exists() { "$@" >/dev/null 2>&1; }
 # IAM is eventually consistent: a service account created seconds ago can be "not found" by the
 # next binding call. Retry a few times before giving up, except on errors waiting won't fix.
 retry() {
-  local attempt=1 max=6 delay=10 err
+  local attempt=1 max=6 delay=10 err rc
   err="$(mktemp)"
-  until "$@" 2>"${err}"; do
-    cat "${err}" >&2
+  while :; do
+    # Stream stderr (long operations print progress there) while keeping a copy to inspect.
+    rc=0
+    { "$@" 2>&1 1>&3 3>&- | tee "${err}" >&2; } 3>&1 || rc=$?
+    ((rc == 0)) && break
     if ((attempt >= max)) || grep -q 'is not a valid location' "${err}"; then
       rm -f "${err}"
       return 1
@@ -121,7 +124,6 @@ retry() {
     sleep "${delay}"
     attempt=$((attempt + 1))
   done
-  cat "${err}" >&2
   rm -f "${err}"
 }
 
