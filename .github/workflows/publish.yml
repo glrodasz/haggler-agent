@@ -4,8 +4,9 @@
 # site is built from the data/ already committed: Workload Identity Federation only trusts the
 # default branch, so there is no sync, and nothing is pushed or deployed.
 # A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
-# leaves a warning and the site is rebuilt from the committed data/. A failed push of data/
-# (e.g. branch protection) leaves a warning and the site is still built from the synced data.
+# leaves a warning and the site is rebuilt from the committed data/. When main rejects the push
+# (branch protection), data/ goes to the data-sync branch with one open PR; if even that fails,
+# a warning. Either way the site is still built from the synced data.
 # After a sync, the run's summary also counts the bundles' pending proposals and findings
 # (haggler research review --bundles --summary); that step never fails the job.
 # It also runs after every green ci run of a push to main (a merged pull request) whose commit
@@ -83,6 +84,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write # commit data/
+      pull-requests: write # data PR when main is protected
       id-token: write # Workload Identity Federation
     outputs:
       synced: ${{ steps.sync.outcome == 'success' }}
@@ -173,6 +175,9 @@ jobs:
         id: push
         if: steps.sync.outcome == 'success'
         continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATA_BRANCH: data-sync
         run: |
           git add -A data/
           if git diff --cached --quiet; then
@@ -197,6 +202,19 @@ jobs:
             echo "push rechazado (intento ${attempt}); rebase y reintento"
             git pull --rebase origin "${GITHUB_REF_NAME}" || break
           done
+          # A protected main only takes pull requests: carry the commit on DATA_BRANCH (rewritten
+          # every run from main, only this bot writes it) and keep one open PR for it.
+          if git push -f origin "HEAD:refs/heads/${DATA_BRANCH}"; then
+            if [ -n "$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[].number' 2>/dev/null)" ] \
+              || gh pr create --head "${DATA_BRANCH}" --base "${GITHUB_REF_NAME}" \
+                --title "data: precios e investigación" \
+                --body "Datos sincronizados desde GCS por publish (main está protegida). El sitio ya se publicó con ellos; fusionar este PR solo los versiona en data/. Se actualiza en cada corrida."; then
+              echo "::notice title=data/ en PR::main está protegida: data/ va en la rama ${DATA_BRANCH} y su PR abierto. Ver docs/SETUP.md §11."
+              echo "data/ va en la rama \`${DATA_BRANCH}\` y su PR (main está protegida)." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "::warning title=PR de data/ falló::La rama ${DATA_BRANCH} tiene los datos, pero no se pudo abrir el PR (¿Settings → Actions → General → «Allow GitHub Actions to create and approve pull requests»?). Ver docs/SETUP.md §11."
+          fi
           echo "::warning title=push de data/ falló::No se pudo hacer push de data/ a ${GITHUB_REF_NAME} (¿rama protegida sin bypass para github-actions[bot]?). El sitio se publica igualmente con los datos sincronizados; data/ del repositorio queda desactualizado. Ver docs/SETUP.md §11."
           echo "⚠ No se pudo hacer push de data/; el sitio se publica con los datos sincronizados." >> "$GITHUB_STEP_SUMMARY"
           exit 1
