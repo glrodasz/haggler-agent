@@ -842,6 +842,9 @@ export default function Comparador(props: ComparadorProps) {
                               verdict(r.best.service_id, r.best.country).provenance ===
                                 "agent_pending"
                             }
+                            template={
+                              verdict(r.best.service_id, r.best.country).provenance === "template"
+                            }
                           />
                         ) : (
                           <div class="offer-cell">
@@ -994,6 +997,8 @@ function OfferCell(props: {
   unevaluated: UnevaluatedInfo | null;
   /** The verdict comes from findings still pending review. */
   pending: boolean;
+  /** The verdict reapplies the service's curated record to this country. */
+  template: boolean;
 }) {
   const { offer, label } = props;
   return (
@@ -1019,6 +1024,11 @@ function OfferCell(props: {
         {props.pending && (
           <span class="badge provenance-agent_pending" title={es.provenanceTitles.agent_pending}>
             {es.provenance.agent_pending}
+          </span>
+        )}
+        {props.template && (
+          <span class="badge provenance-template" title={es.provenanceTitles.template}>
+            {es.provenance.template}
           </span>
         )}
       </span>

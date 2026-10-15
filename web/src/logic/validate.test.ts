@@ -130,7 +130,7 @@ describe("site data contract (runtime)", () => {
     const cases: [(raw: Record<string, any>) => void, RegExp][] = [
       [
         (r) => (r.feasibility.records[0].provenance = "agent"),
-        /records\[0\]\.provenance: se esperaba curated \| agent_reviewed \| agent_pending, hay string/,
+        /records\[0\]\.provenance: se esperaba curated \| template \| agent_reviewed \| agent_pending, hay string/,
       ],
       [
         (r) => delete r.feasibility.records[1].provenance,
@@ -295,7 +295,7 @@ describe("site data contract (runtime)", () => {
       ],
       [["unverified", "verified"], (b, v) => (b.verdicts[0].status = v)],
       [
-        ["home", "curated", "agent_reviewed", "agent_pending"],
+        ["home", "curated", "template", "agent_reviewed", "agent_pending"],
         (b, v) => (b.verdicts[0].components[0].provenance = v),
       ],
       [["watcher", "agent"], (b, v) => (b.pending_changes[0].source = v)],
@@ -349,7 +349,7 @@ describe("site data contract (runtime)", () => {
       [(b) => (b.verdicts[0].confidence = "none"), /\.verdicts\[0\]\.confidence/],
       [
         (b) => (b.verdicts[0].components[0].provenance = "composed"),
-        /\.verdicts\[0\]\.components\[0\]\.provenance: se esperaba home \| curated \| agent_reviewed \| agent_pending/,
+        /\.verdicts\[0\]\.components\[0\]\.provenance: se esperaba home \| curated \| template \| agent_reviewed \| agent_pending/,
       ],
     ];
     for (const [mutate, expected] of cases) {

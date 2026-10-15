@@ -128,9 +128,10 @@ export interface RiskLabel {
 /**
  * Where a feasibility record comes from: written by hand ("curated", always wins), derived by the
  * research evaluator from findings a person accepted ("agent_reviewed"), or derived including
- * findings still pending review ("agent_pending": never used unless the visitor opts in).
+ * findings still pending review ("agent_pending": never used unless the visitor opts in), or a
+ * curated record of the same service reapplied to another country ("template").
  */
-export const PROVENANCES = ["curated", "agent_reviewed", "agent_pending"] as const;
+export const PROVENANCES = ["curated", "template", "agent_reviewed", "agent_pending"] as const;
 export type Provenance = (typeof PROVENANCES)[number];
 
 /** Axis value of a research-derived record whose facts are missing (its rank is then 99). */
@@ -371,6 +372,7 @@ export type BundleProvenance = (typeof BUNDLE_PROVENANCES)[number];
 export const COMPONENT_PROVENANCES = [
   "home",
   "curated",
+  "template",
   "agent_reviewed",
   "agent_pending",
 ] as const;
