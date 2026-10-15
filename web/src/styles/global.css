@@ -421,6 +421,9 @@ main:focus {
 /* ---------------------------------------------------------------- tables */
 
 .table-wrap {
+  /* Contains visually-hidden cell text, which otherwise escapes the scroller and widens
+     the page on phones. */
+  position: relative;
   overflow-x: auto;
   margin: 0 0 var(--space-4);
   border: 1px solid var(--color-border);
@@ -696,7 +699,8 @@ select {
   -webkit-appearance: none;
   appearance: none;
   font: inherit;
-  font-size: var(--text-sm);
+  /* 16px minimum: iOS Safari zooms the page when a smaller control gets focus. */
+  font-size: max(16px, 1rem);
   color: var(--color-fg);
   background: var(--color-bg)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E")

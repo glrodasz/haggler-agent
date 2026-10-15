@@ -8,7 +8,17 @@ export const es = {
     name: "Haggler",
     tagline: "Precios de suscripciones por país, con su riesgo",
     description: (residence: string) =>
-      `Comparador de precios oficiales de suscripciones (Netflix, Spotify, iCloud+, YouTube Premium…) en distintos países, con el riesgo de cada opción para alguien que vive en ${residence}.`,
+      `Compara los precios oficiales de Netflix, Spotify, iCloud+ y más en cada país, con el riesgo de cada opción si vives en ${residence}.`,
+    /** Social preview card (public/og/haggler.png, drawn by scripts/brand-assets.mjs). */
+    ogImageAlt: "Haggler: precios de suscripciones por país, con su riesgo.",
+    seo: {
+      serviceTitle: (name: string) => `${name}: precio en cada país`,
+      serviceDescription: (name: string, countries: number) =>
+        `Precio oficial de ${name} en ${countries} ${countries === 1 ? "país" : "países"}, convertido a tu moneda, con el riesgo de contratarlo desde fuera de tu país de residencia.`,
+      countryTitle: (name: string) => `Precios de suscripciones en ${name}`,
+      countryDescription: (name: string, currency: string) =>
+        `Precios oficiales de Netflix, Spotify, iCloud+ y otras suscripciones en ${name} (${currency}), paquetes locales y el riesgo de contratarlos desde fuera.`,
+    },
     skipToContent: "Saltar al contenido",
     navLabel: "Principal",
     nav: {
