@@ -58,6 +58,7 @@ import {
   type VerdictSource,
   verdictLookup,
 } from "../logic/verdicts";
+import { CountryCombobox } from "./CountryCombobox";
 import { RiskSlider } from "./RiskSlider";
 
 export interface ComparadorService {
@@ -465,21 +466,13 @@ export default function Comparador(props: ComparadorProps) {
               <>
                 <div class="field">
                   <label for="residencia">{t.residenceLabel}</label>
-                  <select
+                  <CountryCombobox
                     id="residencia"
+                    countries={props.residences}
                     value={visitor.residence}
-                    aria-describedby="residencia-origen residencia-ayuda"
-                    onChange={(e) => {
-                      const cc = e.currentTarget.value;
-                      editProfile((v) => changeResidence(v, cc));
-                    }}
-                  >
-                    {props.residences.map((r) => (
-                      <option value={r.cc} key={r.cc}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                    describedBy="residencia-origen residencia-ayuda"
+                    onSelect={(cc) => editProfile((v) => changeResidence(v, cc))}
+                  />
                   <p id="residencia-origen" class="fieldset-help locate-note" aria-live="polite">
                     {ipState === "loading"
                       ? t.locateLoading
@@ -552,27 +545,17 @@ export default function Comparador(props: ComparadorProps) {
                   <label class="visually-hidden" for="vinculo-nuevo">
                     {t.tieAdd}
                   </label>
-                  <select
+                  <CountryCombobox
                     id="vinculo-nuevo"
-                    value=""
-                    onChange={(e) => {
-                      addTie(e.currentTarget.value);
-                      e.currentTarget.value = "";
-                    }}
-                  >
-                    <option value="">{t.tieAdd}</option>
-                    {props.tieCountries
-                      .filter(
-                        (c) =>
-                          c.cc !== visitor.residence &&
-                          !visitor.ties.some((other) => other.cc === c.cc),
-                      )
-                      .map((c) => (
-                        <option value={c.cc} key={c.cc}>
-                          {c.name}
-                        </option>
-                      ))}
-                  </select>
+                    countries={props.tieCountries.filter(
+                      (c) =>
+                        c.cc !== visitor.residence &&
+                        !visitor.ties.some((other) => other.cc === c.cc),
+                    )}
+                    value={null}
+                    placeholder={t.tieAdd}
+                    onSelect={addTie}
+                  />
                 </fieldset>
               </>
             )}
