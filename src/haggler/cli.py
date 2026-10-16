@@ -7,6 +7,7 @@
   haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles|watch]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]
   haggler site-data [--data-dir data] [--out web/src/data] [--residence SE] [--profile P]
+  haggler coverage [--data-dir data] [--out coverage.md]   which profiles get savings
   haggler validate-catalog
 
 Heavy modules (the ADK pipeline, google-cloud-storage, httpx clients) are imported inside the
@@ -100,6 +101,10 @@ def build_parser() -> argparse.ArgumentParser:
     site.add_argument("--profile", default=None)
     site.add_argument("--catalog-dir", type=Path, default=None, help=argparse.SUPPRESS)
     site.add_argument("--curated-dir", type=Path, default=None, help=argparse.SUPPRESS)
+
+    cov = sub.add_parser("coverage", help="informe de qué perfiles y vínculos dan ahorro")
+    cov.add_argument("--data-dir", type=Path, default=Path("data"))
+    cov.add_argument("--out", type=Path, default=Path("coverage.md"))
 
     check = sub.add_parser("validate-catalog", help="valida catalog/*.yaml y data/curated/*.yaml")
     check.add_argument("--catalog-dir", type=Path, default=None)
@@ -232,6 +237,18 @@ def cmd_site_data(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_coverage(args: argparse.Namespace) -> int:
+    from haggler.coverage import write_report
+
+    try:
+        out = write_report(args.data_dir, args.out)
+    except (ValueError, OSError, KeyError) as exc:
+        _err(f"coverage falló: {exc}")
+        return 1
+    print(f"coverage: {out}")
+    return 0
+
+
 def cmd_validate_catalog(args: argparse.Namespace) -> int:
     import yaml
 
@@ -303,6 +320,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "probe": cmd_probe,
         "sync": cmd_sync,
         "site-data": cmd_site_data,
+        "coverage": cmd_coverage,
         "validate-catalog": cmd_validate_catalog,
     }
     if args.command not in commands:

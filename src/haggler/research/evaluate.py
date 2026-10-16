@@ -38,12 +38,15 @@ Pure (no I/O, no ADK). For a profile P living in R and a target country T:
 9. Confidence: high = reviewed, every decisive claim official, no assumptions; medium = ToS
    from official sources and no assumptions; low otherwise. Provenance agent_reviewed only when
    every decisive claim is accepted for its current hash, else agent_pending.
-10. Template (no research facts for the service nor the pair). A curated record of the same
-   service whose every step is about its own target (payment_country / store_region / presence
-   in T, no other country) is reapplied to any T and any profile: same ToS axis, practicality
-   from those steps (a card of T as in 4 for payment_country, presence in T for presence; either
-   missing -> unknown, never a guess). A step that needs a false declaration makes the route
-   not feasible (as in 5). Provenance "template", confidence low.
+10. Template (research has nothing decisive: no facts, only pending ones, or an unknown axis).
+   A curated record of the same service whose every step is about its own target
+   (payment_country / store_region / presence in T, no other country) is reapplied to any T and
+   any profile: same ToS axis, practicality from those steps (a card of T as in 4 for
+   payment_country, presence in T for presence; either missing -> unknown, never a guess). When
+   any curated record of the service asks for a billing address in its country, the template
+   does too, and without a real address in T it is a false declaration. A step that needs a
+   false declaration makes the route not feasible (as in 5). Provenance "template", confidence
+   low.
 
 The building blocks (Facts, Work, tos_axis, requirement, held_card, obtainable_card, obtainable,
 card_country, eea) are public because haggler.bundles.evaluate applies the same rules to a
@@ -709,7 +712,12 @@ def _template(feasibility: FeasibilityFile, service_id: str) -> FeasibilityRecor
 
 
 def _from_template(
-    record: FeasibilityRecord, target: str, profile: Profile, facts: Facts, base: dict[str, str]
+    feasibility: FeasibilityFile,
+    record: FeasibilityRecord,
+    target: str,
+    profile: Profile,
+    facts: Facts,
+    base: dict[str, str],
 ) -> Assessment | None:
     practical = "remote"
     false_declaration = False
@@ -727,6 +735,21 @@ def _from_template(
             practical = "presence_once"
         false_declaration = false_declaration or st.requires_false_declaration
         steps.append(st.model_copy(update={"value": target}))
+    # Another curated record of the same service asks for a billing address in the country
+    # (Apple): without a real address there, the route needs a false one.
+    if any(
+        st.type == "billing_address"
+        for other in feasibility.records
+        if other.service_id == record.service_id
+        for st in other.steps
+    ):
+        no_address = not profile.has_address(target)
+        steps.append(
+            FeasibilityStep(
+                type="billing_address", value=target, requires_false_declaration=no_address
+            )
+        )
+        false_declaration = false_declaration or no_address
     if false_declaration:
         legality, practical, rank = "requires_misrepresentation", "impossible", 4
     else:
@@ -803,10 +826,31 @@ def assess(
         confidence="low",
         provenance="none",
     )
+    researched = _researched(
+        service_id, target, profile, ctx, facts, base, svc_key, pair_key_, unknown
+    )
+    if researched.rank != UNKNOWN_RANK:
+        return researched
+    # Research says nothing decisive (none yet, all pending, or facts that leave an axis
+    # unknown): fall back to the service's curated template, when it has one.
+    template = _template(ctx.feasibility, service_id)
+    if template is not None:
+        return _from_template(ctx.feasibility, template, target, profile, facts, base) or researched
+    return researched
+
+
+def _researched(
+    service_id: str,
+    target: str,
+    profile: Profile,
+    ctx: EvalContext,
+    facts: Facts,
+    base: dict,
+    svc_key: str,
+    pair_key_: str,
+    unknown: Assessment,
+) -> Assessment:
     if facts.subject(svc_key) is None and facts.subject(pair_key_) is None:
-        template = _template(ctx.feasibility, service_id)
-        if template is not None:
-            return _from_template(template, target, profile, facts, base) or unknown
         return unknown
 
     w = Work()

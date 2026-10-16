@@ -531,6 +531,7 @@ export default function Comparador(props: ComparadorProps) {
                         index={i}
                         tie={tie}
                         name={countryName(tie.cc)}
+                        tracked={props.residences.some((r) => r.cc === tie.cc)}
                         options={props.tieCountries.filter(
                           (c) =>
                             c.cc === tie.cc ||
@@ -1066,6 +1067,8 @@ function TieRow(props: {
   index: number;
   tie: Tie;
   name: string;
+  /** Whether we track prices there: a tie with any other country unlocks no offer. */
+  tracked: boolean;
   options: ComparadorCountry[];
   onChange: (patch: Partial<Tie>) => void;
   onRemove: () => void;
@@ -1119,6 +1122,11 @@ function TieRow(props: {
           </li>
         ))}
       </ul>
+      {!props.tracked ? (
+        <p class="tie-note small muted">{t.tieUntracked(props.name)}</p>
+      ) : (
+        !tie.card && <p class="tie-note small muted">{t.tieNoCard(props.name)}</p>
+      )}
       <div class="tie-presence">
         <label for={`${id}-viajes`}>{t.tiePresence}</label>
         <select
