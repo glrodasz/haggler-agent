@@ -557,6 +557,9 @@ export const es = {
     tiesNone: "Ninguno.",
     tieCountry: (n: number) => `País del vínculo ${n}`,
     tieAdd: "Añadir un país…",
+    countryNoMatch: "Ningún país coincide.",
+    countryMatches: (n: number) =>
+      n === 0 ? "Ningún país coincide." : n === 1 ? "1 país coincide." : `${n} países coinciden.`,
     tieRemove: (country: string) => `Quitar ${country}`,
     tieRemoveText: "Quitar",
     tieDoc: "Documento de identidad o pasaporte",
