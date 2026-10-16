@@ -172,6 +172,40 @@ def test_curated_template_applies_to_other_countries_with_the_same_ties():
     assert assess("netflix", "TR", no_trip, ctx(feasibility=feas)).provenance == "none"
 
 
+def test_template_still_applies_when_research_is_not_decisive():
+    # The service was researched, but nothing settles the pair: the template still answers.
+    tr_user = Profile(
+        id="tr",
+        name_es="tr",
+        residence_country="DE",
+        id_document_countries=["DE"],
+        phone_countries=["DE"],
+        card_countries=["TR"],
+        presence={"TR": "once"},
+    )
+    a = assess("netflix", "TR", tr_user, ctx(subject(SVC), feasibility=load_feasibility()))
+    assert (a.provenance, a.rank) == ("template", 2)
+
+
+def test_template_asks_for_the_billing_address_another_record_requires():
+    # icloud_plus_lt_from_se asks for a billing address in the country, so the template does too.
+    card_only = Profile(
+        id="br",
+        name_es="br",
+        residence_country="SE",
+        id_document_countries=["SE"],
+        phone_countries=["SE"],
+        card_countries=["BR"],
+    )
+    feas = load_feasibility()
+    a = assess("icloud_plus", "BR", card_only, ctx(feasibility=feas))
+    assert (a.provenance, a.rank, a.legality) == ("template", 4, "requires_misrepresentation")
+    with_address = card_only.model_copy(update={"address_countries": ["BR"]})
+    b = assess("icloud_plus", "BR", with_address, ctx(feasibility=feas))
+    assert (b.provenance, b.rank) == ("template", 2)
+    assert ("billing_address", "BR") in [(s.type, s.value) for s in b.steps]
+
+
 def test_curated_record_wins_over_research():
     feas = load_feasibility()
     svc = subject(SVC, claim(SVC, "foreign_offer_allowed", "true"))

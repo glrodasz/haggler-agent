@@ -564,6 +564,10 @@ export const es = {
     tiePhone: "Número de teléfono",
     tieAddress: "Dirección real",
     tiePresence: "Viajes",
+    tieUntracked: (country: string) =>
+      `Aún no seguimos precios en ${country}, así que este vínculo no abre ninguna oferta de allí.`,
+    tieNoCard: (country: string) =>
+      `Sin una tarjeta de ${country}, casi ningún servicio de allí se puede contratar.`,
     presence: { none: "No viajo allí", once: "De vez en cuando", periodic: "Con regularidad" },
     adviceTitle: (country: string) => `Qué te abre vivir en ${country}`,
     adviceLead:
