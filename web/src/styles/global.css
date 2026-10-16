@@ -611,6 +611,10 @@ tr.is-pending > * {
   margin-top: var(--space-6);
   counter-reset: step;
 }
+.comparador-main {
+  display: grid;
+  gap: var(--space-6);
+}
 .controls {
   display: grid;
   gap: var(--space-6);
@@ -620,6 +624,7 @@ tr.is-pending > * {
 }
 /* Grid items default to min-width:auto; without this a wide table widens the whole page. */
 .comparador > *,
+.comparador-main > *,
 .controls > * {
   min-width: 0;
 }
@@ -646,7 +651,7 @@ legend {
 /* Floated so the legend sits inside the fieldset like a heading instead of on its border. */
 .controls > fieldset > legend,
 .controls > .side > fieldset > legend,
-.comparador > section > h2:first-child {
+.comparador-main > section > h2:first-child {
   float: left;
   display: flex;
   align-items: center;
@@ -663,7 +668,7 @@ legend {
 }
 .controls > fieldset > legend::before,
 .controls > .side > fieldset > legend::before,
-.comparador > section > h2:first-child::before {
+.comparador-main > section > h2:first-child::before {
   content: counter(step);
   display: grid;
   place-items: center;
@@ -677,10 +682,10 @@ legend {
   font-weight: 700;
   letter-spacing: 0;
 }
-.comparador > section {
+.comparador-main > section {
   counter-increment: step;
 }
-.comparador > section > h2:first-child {
+.comparador-main > section > h2:first-child {
   float: none;
   margin: 0 0 var(--space-4);
 }
@@ -1636,27 +1641,24 @@ main.is-wide {
   }
 }
 
-/* Wide screens: the steps on the left, the result card follows you on the right, and the
-   per-service detail spans both columns below. */
+/* Wide screens: the steps on the left and the result card following you on the right. The
+   card sticks only within .comparador-main, so it scrolls away before the full-width detail
+   and advice below instead of covering them. */
 @media (min-width: 72rem) {
-  .comparador {
+  .comparador-main {
     grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
     column-gap: var(--space-7);
   }
-  .comparador > .controls {
+  .comparador-main > .controls {
     grid-column: 1;
     grid-row: 1;
   }
-  .comparador > section {
+  .comparador-main > section {
     grid-column: 2;
     grid-row: 1;
     position: sticky;
     top: 6rem;
     align-self: start;
-  }
-  .comparador > .result-detail,
-  .comparador > .advice {
-    grid-column: 1 / -1;
   }
   .controls .service-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));

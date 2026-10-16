@@ -418,337 +418,341 @@ export default function Comparador(props: ComparadorProps) {
 
   return (
     <div class="comparador">
-      <form class="controls" onSubmit={(e) => e.preventDefault()}>
-        <fieldset>
-          <legend>{t.servicesLegend}</legend>
-          <p class="fieldset-help">{t.servicesHelp}</p>
-          <ul class="service-list">
-            {services.map((s) => {
-              const checked = state.services.includes(s.id);
-              return (
-                <li class={`service-row ${checked ? "is-on" : ""}`} key={s.id}>
-                  <label class="check" for={`svc-${s.id}`}>
-                    <input
-                      type="checkbox"
-                      id={`svc-${s.id}`}
-                      checked={checked}
-                      onChange={(e) => toggleService(s.id, e.currentTarget.checked)}
-                    />
-                    <ServiceMark id={s.id} name={s.name} />
-                    <span class="service-name">{s.name}</span>
-                  </label>
-                  <label class="visually-hidden" for={`plan-${s.id}`}>
-                    {t.planLabel(s.name)}
-                  </label>
-                  <select
-                    id={`plan-${s.id}`}
-                    value={state.plans[s.id] ?? s.default_plan}
-                    disabled={!checked}
-                    onChange={(e) => setPlan(s.id, e.currentTarget.value)}
-                  >
-                    {s.plans.map((p) => (
-                      <option value={p.id} key={p.id}>
-                        {p.label_es}
-                      </option>
-                    ))}
-                  </select>
-                </li>
-              );
-            })}
-          </ul>
-        </fieldset>
-
-        <div class="side">
+      <div class="comparador-main">
+        <form class="controls" onSubmit={(e) => e.preventDefault()}>
           <fieldset>
-            <legend>{t.profileLegend}</legend>
-            <p class="fieldset-help">{t.profileHelp}</p>
-            {visitor && (
-              <>
-                <div class="field">
-                  <label for="residencia">{t.residenceLabel}</label>
-                  <CountryCombobox
-                    id="residencia"
-                    countries={props.residences}
-                    value={visitor.residence}
-                    describedBy="residencia-origen residencia-ayuda"
-                    onSelect={(cc) => editProfile((v) => changeResidence(v, cc))}
-                  />
-                  <p id="residencia-origen" class="fieldset-help locate-note" aria-live="polite">
-                    {ipState === "loading"
-                      ? t.locateLoading
-                      : ipState === "failed"
-                        ? t.locateFailed
-                        : located && !residenceById.has(located.cc)
-                          ? t.locateUncovered(countryName(located.cc))
-                          : located && located.cc === visitor.residence
-                            ? t.locateFound[located.source]
-                            : null}{" "}
-                    {located?.source !== "ip" && ipState !== "loading" && (
-                      <button type="button" class="link-button" onClick={detectByIp}>
-                        {t.locateIp}
-                      </button>
-                    )}
-                  </p>
-                  <p id="residencia-ayuda" class="fieldset-help">
-                    {t.residenceHelp(GEO_IP_HOST)}
-                  </p>
-                </div>
-                <fieldset class="own">
-                  <legend>{t.ownLabel(residenceName)}</legend>
-                  <ul class="tie-flags">
-                    {(
-                      [
-                        ["residenceDoc", t.ownDoc],
-                        ["residencePhone", t.tiePhone],
-                        ["residenceCard", t.tieCard],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <li key={key}>
-                        <label class="check" for={`propio-${key}`}>
-                          <input
-                            type="checkbox"
-                            id={`propio-${key}`}
-                            checked={visitor[key]}
-                            onChange={(e) => {
-                              const on = e.currentTarget.checked;
-                              editProfile((v) => ({ ...v, [key]: on }));
-                            }}
-                          />
-                          {label}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </fieldset>
-                <fieldset class="ties">
-                  <legend>{t.tiesLabel}</legend>
-                  <p class="fieldset-help">{t.tiesHelp}</p>
-                  {visitor.ties.length === 0 && <p class="small muted">{t.tiesNone}</p>}
-                  <ul class="tie-list">
-                    {visitor.ties.map((tie, i) => (
-                      <TieRow
-                        key={tie.cc}
-                        index={i}
-                        tie={tie}
-                        name={countryName(tie.cc)}
-                        options={props.tieCountries.filter(
-                          (c) =>
-                            c.cc === tie.cc ||
-                            (c.cc !== visitor.residence &&
-                              !visitor.ties.some((other) => other.cc === c.cc)),
-                        )}
-                        onChange={(patch) => setTie(i, patch)}
-                        onRemove={() => removeTie(i)}
+            <legend>{t.servicesLegend}</legend>
+            <p class="fieldset-help">{t.servicesHelp}</p>
+            <ul class="service-list">
+              {services.map((s) => {
+                const checked = state.services.includes(s.id);
+                return (
+                  <li class={`service-row ${checked ? "is-on" : ""}`} key={s.id}>
+                    <label class="check" for={`svc-${s.id}`}>
+                      <input
+                        type="checkbox"
+                        id={`svc-${s.id}`}
+                        checked={checked}
+                        onChange={(e) => toggleService(s.id, e.currentTarget.checked)}
                       />
-                    ))}
-                  </ul>
-                  <label class="visually-hidden" for="vinculo-nuevo">
-                    {t.tieAdd}
-                  </label>
-                  <CountryCombobox
-                    id="vinculo-nuevo"
-                    countries={props.tieCountries.filter(
-                      (c) =>
-                        c.cc !== visitor.residence &&
-                        !visitor.ties.some((other) => other.cc === c.cc),
-                    )}
-                    value={null}
-                    placeholder={t.tieAdd}
-                    onSelect={addTie}
-                  />
-                </fieldset>
-              </>
-            )}
-            <p id="perfil-descripcion" class="profile-desc">
-              {state.custom ? t.profileCustomDesc : preset?.description}
-            </p>
-            <p class="profile-examples">
-              <span class="small muted">{t.profileExamples}</span>
-              {props.profiles.map((p) => (
-                <button
-                  type="button"
-                  class="chip"
-                  key={p.id}
-                  aria-pressed={!state.custom && preset?.id === p.id}
-                  onClick={() => setProfile(p.id)}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </p>
-            {props.hasPending && (
-              <>
-                <label class="check" for="pendientes">
-                  <input
-                    type="checkbox"
-                    id="pendientes"
-                    checked={state.pending}
-                    aria-describedby="pendientes-ayuda"
-                    onChange={(e) => setPending(e.currentTarget.checked)}
-                  />
-                  {t.pendingLabel}
-                </label>
-                <p id="pendientes-ayuda" class="fieldset-help">
-                  {t.pendingHelp}
-                </p>
-              </>
-            )}
-          </fieldset>
-
-          <fieldset>
-            <legend>{t.riskLegend}</legend>
-            <p class="fieldset-help">{t.riskHelp}</p>
-            <ul class="radio-list">
-              {props.riskOptions.map((o) => (
-                <li key={o.id}>
-                  <label class="radio">
-                    <input
-                      type="radio"
-                      name="riesgo"
-                      value={o.rank}
-                      checked={state.risk === o.rank}
-                      onChange={() => setRisk(o.rank as RiskLevel)}
-                    />
-                    <span class={`risk-dot-label ${riskClass(o.rank)}`}>
-                      {es.riskLevel(o.rank)}
-                    </span>
-                    <span class="radio-name">{o.name}</span>
-                    <span class="radio-desc">{o.description}</span>
-                  </label>
-                </li>
-              ))}
+                      <ServiceMark id={s.id} name={s.name} />
+                      <span class="service-name">{s.name}</span>
+                    </label>
+                    <label class="visually-hidden" for={`plan-${s.id}`}>
+                      {t.planLabel(s.name)}
+                    </label>
+                    <select
+                      id={`plan-${s.id}`}
+                      value={state.plans[s.id] ?? s.default_plan}
+                      disabled={!checked}
+                      onChange={(e) => setPlan(s.id, e.currentTarget.value)}
+                    >
+                      {s.plans.map((p) => (
+                        <option value={p.id} key={p.id}>
+                          {p.label_es}
+                        </option>
+                      ))}
+                    </select>
+                  </li>
+                );
+              })}
             </ul>
           </fieldset>
 
-          <fieldset>
-            <legend>{t.currencyLegend}</legend>
-            <label class="visually-hidden" for="moneda">
-              {t.currencyLabel}
-            </label>
-            <select id="moneda" value={cur} onChange={(e) => setCurrency(e.currentTarget.value)}>
-              <optgroup label={t.currencyCommon}>
-                {commonCurrencies.map((c) => (
-                  <option value={c} key={c}>
-                    {currencyOption(c)}
-                  </option>
+          <div class="side">
+            <fieldset>
+              <legend>{t.profileLegend}</legend>
+              <p class="fieldset-help">{t.profileHelp}</p>
+              {visitor && (
+                <>
+                  <div class="field">
+                    <label for="residencia">{t.residenceLabel}</label>
+                    <CountryCombobox
+                      id="residencia"
+                      countries={props.residences}
+                      value={visitor.residence}
+                      describedBy="residencia-origen residencia-ayuda"
+                      onSelect={(cc) => editProfile((v) => changeResidence(v, cc))}
+                    />
+                    <p id="residencia-origen" class="fieldset-help locate-note" aria-live="polite">
+                      {ipState === "loading"
+                        ? t.locateLoading
+                        : ipState === "failed"
+                          ? t.locateFailed
+                          : located && !residenceById.has(located.cc)
+                            ? t.locateUncovered(countryName(located.cc))
+                            : located && located.cc === visitor.residence
+                              ? t.locateFound[located.source]
+                              : null}{" "}
+                      {located?.source !== "ip" && ipState !== "loading" && (
+                        <button type="button" class="link-button" onClick={detectByIp}>
+                          {t.locateIp}
+                        </button>
+                      )}
+                    </p>
+                    <p id="residencia-ayuda" class="fieldset-help">
+                      {t.residenceHelp(GEO_IP_HOST)}
+                    </p>
+                  </div>
+                  <fieldset class="own">
+                    <legend>{t.ownLabel(residenceName)}</legend>
+                    <ul class="tie-flags">
+                      {(
+                        [
+                          ["residenceDoc", t.ownDoc],
+                          ["residencePhone", t.tiePhone],
+                          ["residenceCard", t.tieCard],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <li key={key}>
+                          <label class="check" for={`propio-${key}`}>
+                            <input
+                              type="checkbox"
+                              id={`propio-${key}`}
+                              checked={visitor[key]}
+                              onChange={(e) => {
+                                const on = e.currentTarget.checked;
+                                editProfile((v) => ({ ...v, [key]: on }));
+                              }}
+                            />
+                            {label}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </fieldset>
+                  <fieldset class="ties">
+                    <legend>{t.tiesLabel}</legend>
+                    <p class="fieldset-help">{t.tiesHelp}</p>
+                    {visitor.ties.length === 0 && <p class="small muted">{t.tiesNone}</p>}
+                    <ul class="tie-list">
+                      {visitor.ties.map((tie, i) => (
+                        <TieRow
+                          key={tie.cc}
+                          index={i}
+                          tie={tie}
+                          name={countryName(tie.cc)}
+                          options={props.tieCountries.filter(
+                            (c) =>
+                              c.cc === tie.cc ||
+                              (c.cc !== visitor.residence &&
+                                !visitor.ties.some((other) => other.cc === c.cc)),
+                          )}
+                          onChange={(patch) => setTie(i, patch)}
+                          onRemove={() => removeTie(i)}
+                        />
+                      ))}
+                    </ul>
+                    <label class="visually-hidden" for="vinculo-nuevo">
+                      {t.tieAdd}
+                    </label>
+                    <CountryCombobox
+                      id="vinculo-nuevo"
+                      countries={props.tieCountries.filter(
+                        (c) =>
+                          c.cc !== visitor.residence &&
+                          !visitor.ties.some((other) => other.cc === c.cc),
+                      )}
+                      value={null}
+                      placeholder={t.tieAdd}
+                      onSelect={addTie}
+                    />
+                  </fieldset>
+                </>
+              )}
+              <p id="perfil-descripcion" class="profile-desc">
+                {state.custom ? t.profileCustomDesc : preset?.description}
+              </p>
+              <p class="profile-examples">
+                <span class="small muted">{t.profileExamples}</span>
+                {props.profiles.map((p) => (
+                  <button
+                    type="button"
+                    class="chip"
+                    key={p.id}
+                    aria-pressed={!state.custom && preset?.id === p.id}
+                    onClick={() => setProfile(p.id)}
+                  >
+                    {p.name}
+                  </button>
                 ))}
-              </optgroup>
-              {otherCurrencies.length > 0 && (
-                <optgroup label={t.currencyAll}>
-                  {otherCurrencies.map((c) => (
+              </p>
+              {props.hasPending && (
+                <>
+                  <label class="check" for="pendientes">
+                    <input
+                      type="checkbox"
+                      id="pendientes"
+                      checked={state.pending}
+                      aria-describedby="pendientes-ayuda"
+                      onChange={(e) => setPending(e.currentTarget.checked)}
+                    />
+                    {t.pendingLabel}
+                  </label>
+                  <p id="pendientes-ayuda" class="fieldset-help">
+                    {t.pendingHelp}
+                  </p>
+                </>
+              )}
+            </fieldset>
+
+            <fieldset>
+              <legend>{t.riskLegend}</legend>
+              <p class="fieldset-help">{t.riskHelp}</p>
+              <ul class="radio-list">
+                {props.riskOptions.map((o) => (
+                  <li key={o.id}>
+                    <label class="radio">
+                      <input
+                        type="radio"
+                        name="riesgo"
+                        value={o.rank}
+                        checked={state.risk === o.rank}
+                        onChange={() => setRisk(o.rank as RiskLevel)}
+                      />
+                      <span class={`risk-dot-label ${riskClass(o.rank)}`}>
+                        {es.riskLevel(o.rank)}
+                      </span>
+                      <span class="radio-name">{o.name}</span>
+                      <span class="radio-desc">{o.description}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </fieldset>
+
+            <fieldset>
+              <legend>{t.currencyLegend}</legend>
+              <label class="visually-hidden" for="moneda">
+                {t.currencyLabel}
+              </label>
+              <select id="moneda" value={cur} onChange={(e) => setCurrency(e.currentTarget.value)}>
+                <optgroup label={t.currencyCommon}>
+                  {commonCurrencies.map((c) => (
                     <option value={c} key={c}>
                       {currencyOption(c)}
                     </option>
                   ))}
                 </optgroup>
-              )}
-            </select>
-          </fieldset>
-        </div>
-      </form>
-
-      <section aria-labelledby="resultado-titulo">
-        <h2 id="resultado-titulo">{t.resultsTitle}</h2>
-        {relabelled === null ? (
-          <p class="loading">{t.loading}</p>
-        ) : state.services.length === 0 ? (
-          <p class="callout">{t.noneSelected}</p>
-        ) : (
-          <>
-            <div class="result-card">
-              <div class={`result-top ${hasSaving ? "is-positive" : ""}`}>
-                {hasSaving ? (
-                  <>
-                    <span class="result-label">{t.savingYearLabel}</span>
-                    <span class="result-amount">
-                      {formatNumber(Math.round(totals.saving * 12), 0)}{" "}
-                      <span class="result-currency">{cur}</span>
-                    </span>
-                    <span class="result-sub">
-                      {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span class="result-sub result-none">
-                      {maxSaving <= 0.005 && totals.unevaluatedSaving > 0.005
-                        ? t.savingNoneEvaluated
-                        : t.savingNone}
-                    </span>
-                    {maxSaving > 0.005 && (
-                      <span class="result-sub">{t.savingMore(formatMoney(maxSaving, cur))}</span>
-                    )}
-                    {totals.unevaluatedSaving > 0.005 && (
-                      <span class="result-sub">
-                        {t.savingUnevaluated(formatMoney(totals.unevaluatedSaving, cur))}
-                      </span>
-                    )}
-                  </>
+                {otherCurrencies.length > 0 && (
+                  <optgroup label={t.currencyAll}>
+                    {otherCurrencies.map((c) => (
+                      <option value={c} key={c}>
+                        {currencyOption(c)}
+                      </option>
+                    ))}
+                  </optgroup>
                 )}
-                {feePct > 0 && <span class="result-chip">{t.feeChip(formatPercent(feePct))}</span>}
-              </div>
+              </select>
+            </fieldset>
+          </div>
+        </form>
 
-              <div class="result-body">
-                <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
-                <p class="visually-hidden">{t.savingsByRiskHelp}</p>
-                <RiskSlider
-                  levels={RISK_LEVELS}
-                  value={state.risk}
-                  onChange={setRisk}
-                  pct={pctByRisk}
-                  names={riskNames}
-                  labelledBy="ahorro-por-riesgo"
-                />
+        <section aria-labelledby="resultado-titulo">
+          <h2 id="resultado-titulo">{t.resultsTitle}</h2>
+          {relabelled === null ? (
+            <p class="loading">{t.loading}</p>
+          ) : state.services.length === 0 ? (
+            <p class="callout">{t.noneSelected}</p>
+          ) : (
+            <>
+              <div class="result-card">
+                <div class={`result-top ${hasSaving ? "is-positive" : ""}`}>
+                  {hasSaving ? (
+                    <>
+                      <span class="result-label">{t.savingYearLabel}</span>
+                      <span class="result-amount">
+                        {formatNumber(Math.round(totals.saving * 12), 0)}{" "}
+                        <span class="result-currency">{cur}</span>
+                      </span>
+                      <span class="result-sub">
+                        {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span class="result-sub result-none">
+                        {maxSaving <= 0.005 && totals.unevaluatedSaving > 0.005
+                          ? t.savingNoneEvaluated
+                          : t.savingNone}
+                      </span>
+                      {maxSaving > 0.005 && (
+                        <span class="result-sub">{t.savingMore(formatMoney(maxSaving, cur))}</span>
+                      )}
+                      {totals.unevaluatedSaving > 0.005 && (
+                        <span class="result-sub">
+                          {t.savingUnevaluated(formatMoney(totals.unevaluatedSaving, cur))}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {feePct > 0 && (
+                    <span class="result-chip">{t.feeChip(formatPercent(feePct))}</span>
+                  )}
+                </div>
 
-                <ul class="result-rows">
-                  {summary.rows.map((r) => (
-                    <li key={r.service_id}>
-                      <span class="result-row-name">
-                        <strong>{serviceById.get(r.service_id)?.name ?? r.service_id}</strong>
-                        <span class="small muted">
-                          {r.best && (
-                            <>
-                              <span aria-hidden="true">{flagEmoji(r.best.country)}</span>{" "}
-                              {props.countryNames[r.best.country] ?? r.best.country} ·{" "}
-                            </>
-                          )}
-                          {planLabel(r.service_id, r.plan_id)}
+                <div class="result-body">
+                  <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
+                  <p class="visually-hidden">{t.savingsByRiskHelp}</p>
+                  <RiskSlider
+                    levels={RISK_LEVELS}
+                    value={state.risk}
+                    onChange={setRisk}
+                    pct={pctByRisk}
+                    names={riskNames}
+                    labelledBy="ahorro-por-riesgo"
+                  />
+
+                  <ul class="result-rows">
+                    {summary.rows.map((r) => (
+                      <li key={r.service_id}>
+                        <span class="result-row-name">
+                          <strong>{serviceById.get(r.service_id)?.name ?? r.service_id}</strong>
+                          <span class="small muted">
+                            {r.best && (
+                              <>
+                                <span aria-hidden="true">{flagEmoji(r.best.country)}</span>{" "}
+                                {props.countryNames[r.best.country] ?? r.best.country} ·{" "}
+                              </>
+                            )}
+                            {planLabel(r.service_id, r.plan_id)}
+                          </span>
                         </span>
-                      </span>
-                      <span class="result-row-num">
-                        <strong class={r.saving !== null && r.saving > 0.005 ? "positive" : ""}>
-                          {formatSignedMoney(r.saving, cur)}
-                        </strong>
-                        <span class="small muted">
-                          {t.serviceSaving(formatMoney(r.bestCost, cur))}
+                        <span class="result-row-num">
+                          <strong class={r.saving !== null && r.saving > 0.005 ? "positive" : ""}>
+                            {formatSignedMoney(r.saving, cur)}
+                          </strong>
+                          <span class="small muted">
+                            {t.serviceSaving(formatMoney(r.bestCost, cur))}
+                          </span>
                         </span>
-                      </span>
+                      </li>
+                    ))}
+                    <li class="result-total">
+                      <span>{t.totalOptimized}</span>
+                      <strong>{formatMoney(totals.optimized, cur)}</strong>
                     </li>
-                  ))}
-                  <li class="result-total">
-                    <span>{t.totalOptimized}</span>
-                    <strong>{formatMoney(totals.optimized, cur)}</strong>
-                  </li>
-                </ul>
+                  </ul>
 
-                <button type="button" class="button button-dark share-button" onClick={share}>
-                  {shareState === "copied"
-                    ? t.shareCopied
-                    : shareState === "failed"
-                      ? t.shareFailed
-                      : t.shareButton}
-                </button>
-                <p class="small muted result-fx">
-                  {t.fxNote(formatDate(props.fxAsOf))} {t.shareNote}
-                </p>
+                  <button type="button" class="button button-dark share-button" onClick={share}>
+                    {shareState === "copied"
+                      ? t.shareCopied
+                      : shareState === "failed"
+                        ? t.shareFailed
+                        : t.shareButton}
+                  </button>
+                  <p class="small muted result-fx">
+                    {t.fxNote(formatDate(props.fxAsOf))} {t.shareNote}
+                  </p>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-        <p class="visually-hidden" aria-live="polite">
-          {liveText}
-        </p>
-      </section>
+            </>
+          )}
+          <p class="visually-hidden" aria-live="polite">
+            {liveText}
+          </p>
+        </section>
+      </div>
       {relabelled !== null && state.services.length > 0 && (
         <div class="result-detail">
           <h3 class="detail-title">{t.detailTitle}</h3>
