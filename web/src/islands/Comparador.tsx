@@ -115,7 +115,7 @@ export interface ComparadorProps {
   defaultProfile: string;
   /** Countries a visitor can live in: the ones with prices, sorted by name. */
   residences: ComparadorResidence[];
-  /** Every country a visitor can have ties with, sorted by name. */
+  /** Countries a visitor can have ties with: the ones with prices, sorted by name. */
   tieCountries: ComparadorCountry[];
   eeaCountries: string[];
   /** Whether any verdict depends on findings pending review (the checkbox only renders then). */
@@ -531,7 +531,6 @@ export default function Comparador(props: ComparadorProps) {
                         index={i}
                         tie={tie}
                         name={countryName(tie.cc)}
-                        tracked={props.residences.some((r) => r.cc === tie.cc)}
                         options={props.tieCountries.filter(
                           (c) =>
                             c.cc === tie.cc ||
@@ -942,21 +941,6 @@ function ResidenceAdvice(props: {
       ) : (
         <p class="note">{t.adviceNone}</p>
       )}
-      {advice.needsDocument.length > 0 && (
-        <>
-          <h4 class="advice-subtitle">{t.adviceNeedsDocTitle}</h4>
-          <ul class="advice-list">
-            {advice.needsDocument.map(({ instrument: i, missing }) => (
-              <li key={i.id}>
-                <strong>{name(i)}</strong>
-                <span class="small muted">
-                  {t.adviceNeedsDoc(missing.map(countryName).join(" o "))} · {facts(i)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
       {inEea && <p class="note">{t.adviceEea}</p>}
       <p class="note">{t.adviceHonest}</p>
     </div>
@@ -1067,8 +1051,6 @@ function TieRow(props: {
   index: number;
   tie: Tie;
   name: string;
-  /** Whether we track prices there: a tie with any other country unlocks no offer. */
-  tracked: boolean;
   options: ComparadorCountry[];
   onChange: (patch: Partial<Tie>) => void;
   onRemove: () => void;
@@ -1122,11 +1104,7 @@ function TieRow(props: {
           </li>
         ))}
       </ul>
-      {!props.tracked ? (
-        <p class="tie-note small muted">{t.tieUntracked(props.name)}</p>
-      ) : (
-        !tie.card && <p class="tie-note small muted">{t.tieNoCard(props.name)}</p>
-      )}
+      {!tie.card && <p class="tie-note small muted">{t.tieNoCard(props.name)}</p>}
       <div class="tie-presence">
         <label for={`${id}-viajes`}>{t.tiePresence}</label>
         <select

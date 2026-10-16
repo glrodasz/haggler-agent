@@ -1,7 +1,7 @@
 /**
  * What a residence (and the documents the visitor holds) opens up for paying subscriptions:
- * the payment instruments in feasibility.json `instruments` that can be opened online, split
- * into the ones the visitor qualifies for and the ones that need a document they did not mark.
+ * the payment instruments in feasibility.json `instruments` the visitor can open online. One that
+ * needs a document the visitor did not mark is left out (Bancolombia for a non-Colombian).
  *
  * Mirrors the eligibility the evaluator uses when it counts obtainable instruments
  * (haggler.research.evaluate): "ANY" residence, the residence country itself, or "EEA" for a
@@ -14,8 +14,6 @@ import type { PaymentInstrumentView, ProfileCapabilities } from "./types";
 export interface InstrumentAdvice {
   /** Can be opened online with this residence and these documents. */
   open: PaymentInstrumentView[];
-  /** The residence qualifies, but it needs an ID document of one of `missing`. */
-  needsDocument: { instrument: PaymentInstrumentView; missing: string[] }[];
 }
 
 export function residenceQualifies(
@@ -34,16 +32,14 @@ export function instrumentAdvice(
   eea: ReadonlySet<string>,
 ): InstrumentAdvice {
   const docs = new Set(caps.id_document_countries);
-  const out: InstrumentAdvice = { open: [], needsDocument: [] };
+  const out: InstrumentAdvice = { open: [] };
   for (const i of instruments) {
     if (!residenceQualifies(i, caps.residence_country, eea)) continue;
     const required = i.required_id_countries;
     if (required.length === 0 || required.some((cc) => docs.has(cc))) out.open.push(i);
-    else out.needsDocument.push({ instrument: i, missing: [...required] });
   }
   const byName = (a: PaymentInstrumentView, b: PaymentInstrumentView) =>
     a.name.localeCompare(b.name, "es");
   out.open.sort(byName);
-  out.needsDocument.sort((a, b) => byName(a.instrument, b.instrument));
   return out;
 }

@@ -27,7 +27,6 @@ describe("instrumentAdvice", () => {
       EEA,
     );
     expect(ids(a.open)).toEqual(["eea", "se"]);
-    expect(a.needsDocument.map((n) => [n.instrument.id, n.missing])).toEqual([["co", ["CO"]]]);
   });
 
   it("counts a held document of the required country", () => {
@@ -37,6 +36,5 @@ describe("instrumentAdvice", () => {
       EEA,
     );
     expect(ids(a.open)).toEqual(["co"]);
-    expect(a.needsDocument).toEqual([]);
   });
 });

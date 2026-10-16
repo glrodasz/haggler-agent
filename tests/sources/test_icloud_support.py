@@ -78,9 +78,10 @@ def test_plan_honours_source_country_filters(adapter, svc, catalog):
 # ---------------------------------------------------------------- full article
 
 
-def test_full_article_is_ok_and_lists_missing_countries(full):
-    assert full.status == "ok"
-    assert any("PK" in n and "EG" in n for n in full.notes)
+def test_full_article_lists_missing_countries(full):
+    # The fixture predates the 67-country catalog: the countries added since are not on it.
+    assert full.status == "partial"
+    assert any("PK" in n and "EG" in n and "BO" in n for n in full.notes)
 
 
 def test_sweden_all_tiers(full):
@@ -175,7 +176,7 @@ def test_table_layout(adapter, task, catalog):
     lt = _prices(result, "LT")
     assert lt["6tb"] == (Decimal("29.99"), "EUR")
     assert "12tb" not in lt  # "—" cell
-    assert {o.country for o in result.observations} == {"SE", "NO", "LT", "US"}
+    assert {o.country for o in result.observations} == {"SE", "NO", "LT", "US", "IS"}
 
 
 def test_few_countries_is_partial(adapter, task, catalog):
@@ -288,7 +289,10 @@ def test_footnote_sup_after_price_is_not_part_of_the_number(adapter, task, catal
 
 # ---------------------------------------------------------------- 2026 layout (probe-verified)
 
-EURO_WITHOUT_OWN_ROW = ("FI", "LT", "LV", "EE", "DE", "ES", "NL", "PT")
+EURO_WITHOUT_OWN_ROW = (
+    *("FI", "LT", "LV", "EE", "DE", "ES", "NL", "PT", "AT", "BE", "FR", "IT", "LU", "GR"),
+    *("CY", "MT", "SK", "SI", "BG", "ME"),
+)
 
 
 @pytest.fixture(scope="module")
@@ -324,10 +328,10 @@ def test_2026_euro_row_covers_euro_countries_without_their_own_row(tables):
 
 
 def test_2026_own_row_beats_the_euro_row(tables):
-    # Ireland has a row of its own (listed before "Euro"); Croatia's is not a catalog country.
+    # Ireland has a row of its own (listed before "Euro").
     assert _prices(tables, "IE")["200gb"] == (Decimal("3.49"), "EUR")
     assert "IE" not in next(n for n in tables.notes if n.startswith("EUR row applied"))
-    # Non-catalog rows (Croatia, Cameroon, Japan) never leak into other countries.
+    # Other rows (Croatia's own, Cameroon, Japan) never leak into other countries.
     assert not [
         o for o in tables.observations if o.amount in (Decimal("3.49"),) and o.country != "IE"
     ]
@@ -347,9 +351,10 @@ def test_2026_tables_status_and_missing_countries(tables, task):
         "TR",
         "GB",
         "VN",
+        "HR",
         *EURO_WITHOUT_OWN_ROW,
     }
-    assert tables.status == "partial"  # 18 of 35: the rest of this fixture is illustrative
+    assert tables.status == "partial"  # 31 of 67: the rest of this fixture is illustrative
     assert any(n.startswith("countries not on page:") and "NO" in n for n in tables.notes)
 
 

@@ -26,8 +26,8 @@ instruments:
     evidence:
       - {url: "https://community.revolut.com/t/living-in-sweden-with-revolut/162181", kind: forum}
     notes_es: >-
-      Licencia bancaria lituana; IBAN LT para residentes en Suecia (Revolut está desplegando IBAN
-      locales país por país). El país BIN de la tarjeta debe observarse.
+      Licencia bancaria lituana; IBAN LT o local según el país de residencia (Revolut está
+      desplegando IBAN locales país por país). El país BIN de la tarjeta debe observarse.
 
   - id: wise_eea
     name: Wise

@@ -34,10 +34,13 @@ def test_every_researchable_subject_has_official_domains():
 
 def test_catalog_shape():
     cat = load_catalog()
-    assert len(cat.countries) == 35
+    assert len(cat.countries) == 67
     priced = [s for s in cat.services if s.sources]
     assert len(priced) == 11
     assert {"SE", "LT", "CO", "US"} <= set(cat.country_codes())
+    # Dollarized markets accept their own currency and the one services bill in there.
+    assert cat.country("BO").expected_currencies("web") == ["BOB", "USD"]
+    assert cat.country("EC").expected_currencies("web") == ["USD"]
 
 
 def test_country_lookup_by_vendor_spelling():

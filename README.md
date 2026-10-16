@@ -4,7 +4,7 @@
 
 # Haggler
 
-**An agentic pipeline that tracks subscription prices across 35 countries and tells you which
+**An agentic pipeline that tracks subscription prices across 67 countries and tells you which
 cheaper offers you can actually get, and at what risk.**
 
 [![CI](https://github.com/glrodasz/haggler-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/glrodasz/haggler-agent/actions/workflows/ci.yml)
@@ -32,7 +32,7 @@ offers could I legitimately sign up for, and what would I be risking?*
 
 Haggler answers it with a set of agents that run unattended on Google Cloud:
 
-- **Every day** it collects official prices for 14 services in 35 countries, normalizes them to a
+- **Every day** it collects official prices for 14 services in 67 countries, normalizes them to a
   monthly price in any currency and publishes every change as a reviewable git diff.
 - **Every week** a research agent investigates each service's country rules, payment methods and
   bundle offers, and only keeps facts it can prove with a literal quote from a source it fetched

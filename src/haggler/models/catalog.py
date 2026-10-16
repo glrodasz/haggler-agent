@@ -105,6 +105,8 @@ class CountryDef(_Strict):
     currency: str = Field(pattern=r"^[A-Z]{3}$")
     # App Store storefront currency when it differs from the local one (e.g. AR bills in USD).
     appstore_currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    # Other currencies services bill in there (dollarized markets: Netflix in Bolivia bills USD).
+    billing_currencies: list[str] = Field(default_factory=list)
     locale: str
     eu_eea: bool
     vat_included: VatIncluded = VatIncluded()
@@ -116,7 +118,7 @@ class CountryDef(_Strict):
     def expected_currencies(self, channel: Channel) -> list[str]:
         if channel == "ios_iap" and self.appstore_currency:
             return [self.appstore_currency]
-        return [self.currency]
+        return [self.currency, *(c for c in self.billing_currencies if c != self.currency)]
 
 
 class Catalog(_Strict):
