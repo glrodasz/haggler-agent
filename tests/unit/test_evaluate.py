@@ -206,6 +206,19 @@ def test_template_asks_for_the_billing_address_another_record_requires():
     assert ("billing_address", "BR") in [(s.type, s.value) for s in b.steps]
 
 
+def test_template_resting_on_a_pending_card_is_pending():
+    # N26's card country is known only from an unreviewed finding.
+    key = subject_key("instrument", "n26")
+    n26 = subject(key, claim(key, "card_issuing_country", "DE"))
+    feas = load_feasibility()
+    unreviewed = ctx(n26, review=accept_all(), feasibility=feas)
+    assert assess("apple_tv", "DE", GENERIC, unreviewed).provenance == "none"
+    a = assess("apple_tv", "DE", GENERIC, unreviewed, include_pending=True)
+    assert (a.provenance, a.rank) == ("agent_pending", 2)
+    reviewed = assess("apple_tv", "DE", GENERIC, ctx(n26, feasibility=feas))
+    assert (reviewed.provenance, reviewed.rank) == ("template", 2)
+
+
 def test_curated_record_wins_over_research():
     feas = load_feasibility()
     svc = subject(SVC, claim(SVC, "foreign_offer_allowed", "true"))

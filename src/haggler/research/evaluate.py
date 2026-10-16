@@ -722,13 +722,12 @@ def _from_template(
     practical = "remote"
     false_declaration = False
     steps: list[FeasibilityStep] = []
+    w = Work()
     for st in record.steps:
-        if st.type == "payment_country":
-            w = Work()
-            if not (
-                held_card(target, profile, facts, w) or obtainable_card(target, profile, facts, w)
-            ):
-                return None
+        if st.type == "payment_country" and not (
+            held_card(target, profile, facts, w) or obtainable_card(target, profile, facts, w)
+        ):
+            return None
         if st.type == "presence":
             if profile.presence_in(target) is None:
                 return None
@@ -755,6 +754,7 @@ def _from_template(
     else:
         legality = "lawful"
         rank = max(LEGALITY_RANK[legality], TOS_RANK[record.tos], PRACTICAL_RANK[practical])
+    pending = bool(facts.pending(list(w.claims.values())))
     evidence = list(record.evidence)
     if record.tos_clause is not None:
         evidence.insert(
@@ -770,7 +770,8 @@ def _from_template(
         label=LABELS[rank],
         eu_badge=False,
         confidence="low",
-        provenance="template",
+        # A card known only from findings pending review makes the verdict pending too.
+        provenance="agent_pending" if pending else "template",
         steps=tuple(steps),
         evidence=tuple(evidence),
         researched_on=record.last_verified,

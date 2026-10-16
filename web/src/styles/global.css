@@ -1807,7 +1807,3 @@ fieldset.own > legend {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
-.advice-subtitle {
-  margin: var(--space-4) 0 var(--space-2);
-  font-size: 1rem;
-}

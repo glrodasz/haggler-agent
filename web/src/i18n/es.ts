@@ -553,7 +553,7 @@ export const es = {
     ownDoc: "Documento de identidad o permiso de residencia",
     tiesLabel: "3. ¿Tienes vínculos con otros países?",
     tiesHelp:
-      "Tu nacionalidad u otros países donde tienes documentos, tarjeta, teléfono o dirección, o adonde viajas. Puede ser cualquier país.",
+      "Tu nacionalidad u otros países donde tienes documentos, tarjeta, teléfono o dirección, o adonde viajas. Solo listamos países cuyos precios seguimos.",
     tiesNone: "Ninguno.",
     tieCountry: (n: number) => `País del vínculo ${n}`,
     tieAdd: "Añadir un país…",
@@ -567,8 +567,6 @@ export const es = {
     tiePhone: "Número de teléfono",
     tieAddress: "Dirección real",
     tiePresence: "Viajes",
-    tieUntracked: (country: string) =>
-      `Aún no seguimos precios en ${country}, así que este vínculo no abre ninguna oferta de allí.`,
     tieNoCard: (country: string) =>
       `Sin una tarjeta de ${country}, casi ningún servicio de allí se puede contratar.`,
     presence: { none: "No viajo allí", once: "De vez en cuando", periodic: "Con regularidad" },
@@ -576,8 +574,6 @@ export const es = {
     adviceLead:
       "Cuentas que puedes abrir por internet con tu residencia y tus documentos. Pueden darte una tarjeta de otro país, que algunos servicios aceptan; no cambian dónde vives ni las condiciones de ningún servicio. Las etiquetas de arriba ya cuentan con ellas.",
     adviceNone: "No tenemos registrada ninguna cuenta que se pueda abrir online con este perfil.",
-    adviceNeedsDocTitle: "Con otro documento",
-    adviceNeedsDoc: (countries: string) => `Requiere documento de ${countries}`,
     adviceIssuer: (country: string) => `Entidad de ${country}`,
     adviceCard: (country: string) => `tarjeta emitida en ${country}`,
     adviceCardUnknown: "país de la tarjeta sin confirmar",
