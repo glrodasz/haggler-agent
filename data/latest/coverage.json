@@ -901,7 +901,7 @@
     "country": "DE",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1021,7 +1021,7 @@
     "country": "PH",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1381,7 +1381,7 @@
     "country": "CH",
     "failing_since": null,
     "service_id": "hbo_max",
-    "status": "not_available"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1587,9 +1587,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SE",
-    "failing_since": "2026-10-15",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
