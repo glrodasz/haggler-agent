@@ -1,4 +1,4 @@
-// Renders the PNG icons and the social preview card from the bowl isotype. The outputs are
+// Renders the SVG favicon, the PNG icons and the social preview card from the bowl isotype. The outputs are
 // committed under public/, so this only runs when the logo or the tagline changes:
 //   node scripts/brand-assets.mjs
 // Uses sharp (installed with Astro) and the system Inter font for the card's text.
@@ -31,6 +31,19 @@ function iconSvg(size, inset, radius = 0) {
     <g transform="translate(${x} ${y}) scale(${scale})">${bowl(FG)}</g></svg>`;
 }
 
+/**
+ * The tab icon: the bowl on a solid tile, so it reads on any tab colour (light, dark, or a
+ * Chrome theme / tab group that ignores prefers-color-scheme). The tile flips with the scheme:
+ * black with a white bowl on light browsers, near-white with a black bowl on dark ones.
+ */
+function faviconSvg() {
+  const w = 32 * 0.86;
+  const scale = w / 56;
+  const x = (32 - w) / 2;
+  const y = (32 - 44 * scale) / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.t{fill:${INK}}.b{fill:${FG}}.r{stroke:${FG}}@media (prefers-color-scheme:dark){.t{fill:#f2f2f2}.b{fill:${INK}}.r{stroke:${INK}}}</style><defs><mask id="h"><rect width="56" height="44" fill="#fff"/><path d="M47.4 14.4 37.9 20.6M48.6 16.4 38.9 25.1M46.7 21.1 31 38" stroke="#000" stroke-width="2.2" stroke-linecap="round"/></mask></defs><rect class="t" width="32" height="32" rx="6"/><g transform="translate(${+x.toFixed(2)} ${+y.toFixed(2)}) scale(${+scale.toFixed(4)})"><path class="b" mask="url(#h)" d="M3 9C4 28 14 41.5 28 41.5S52 28 53 9A25 5.5 0 0 1 3 9Z"/><ellipse class="r" cx="28" cy="9" rx="25" ry="5.5" fill="none" stroke-width="3.4"/></g></svg>\n`;
+}
+
 const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 function ogSvg() {
@@ -58,6 +71,8 @@ async function png(svg, file) {
   console.log(file);
 }
 
+writeFileSync(join(publicDir, "favicon.svg"), faviconSvg());
+console.log("favicon.svg");
 await png(iconSvg(32, 0.86, 6), "favicon-32.png");
 await png(iconSvg(180, 0.66), "apple-touch-icon.png");
 // The PWA icons keep the bowl inside the maskable safe zone (the central 80%).
