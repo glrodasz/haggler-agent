@@ -217,6 +217,8 @@ def test_template_resting_on_a_pending_card_is_pending():
     assert (a.provenance, a.rank) == ("agent_pending", 2)
     reviewed = assess("apple_tv", "DE", GENERIC, ctx(n26, feasibility=feas))
     assert (reviewed.provenance, reviewed.rank) == ("template", 2)
+    # The card to open online is a step of its own, so the site can name it.
+    assert ("obtain_instrument", "n26") in [(s.type, s.value) for s in reviewed.steps]
 
 
 def test_curated_record_wins_over_research():

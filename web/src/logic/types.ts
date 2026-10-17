@@ -175,6 +175,8 @@ export interface RuleVerdict {
   rank: number;
   eu_badge: boolean;
   provenance: Provenance | "home" | null;
+  /** Id of the instrument (instruments[]) the route pays with, opened online for it. */
+  card_via?: string;
 }
 
 /**

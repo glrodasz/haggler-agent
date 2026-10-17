@@ -175,12 +175,15 @@ const profileRefs: Check = (value, path, problems) => {
   });
 };
 
-const ruleVerdict = shape({
-  label: str,
-  rank: num,
-  eu_badge: bool,
-  provenance: nullable(oneOf([...PROVENANCES, "home"])),
-});
+const ruleVerdict = shape(
+  {
+    label: str,
+    rank: num,
+    eu_badge: bool,
+    provenance: nullable(oneOf([...PROVENANCES, "home"])),
+  },
+  { card_via: str },
+);
 
 /** A rule tree node: a {verdict} leaf, or {ask, answers} with a subtree per answer. */
 const ruleTree: Check = (value, path, problems) => {

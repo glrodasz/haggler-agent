@@ -1114,6 +1114,9 @@ h1.service-title .monogram svg {
     transition: none;
   }
 }
+.result-rows-lead {
+  margin: var(--space-4) 0 0;
+}
 .result-rows {
   list-style: none;
   margin: 0 0 var(--space-5);
