@@ -19,6 +19,8 @@ import {
   type SummaryRow,
   savingsByRisk,
   savingsPctByRisk,
+  snapRisk,
+  visibleRiskLevels,
   summarize,
 } from "../logic/compare";
 import {
@@ -301,8 +303,11 @@ export default function Comparador(props: ComparadorProps) {
     () => ({ currency: state.currency, rates, feePct }),
     [state.currency, rates, feePct],
   );
-  const summary = useMemo(() => summarize(rows, state.risk, display), [rows, state.risk, display]);
   const byRisk = useMemo(() => savingsByRisk(rows, display), [rows, display]);
+  const levels = useMemo(() => visibleRiskLevels(byRisk), [byRisk]);
+  // A hidden level 1 saves nothing over level 0, so the result is the same at either.
+  const risk = snapRisk(state.risk, levels);
+  const summary = useMemo(() => summarize(rows, risk, display), [rows, risk, display]);
   const pctByRisk = useMemo(() => savingsPctByRisk(rows, display), [rows, display]);
   const riskNames = useMemo(
     () => Object.fromEntries(props.riskOptions.map((o) => [o.rank, o.name])),
@@ -313,7 +318,8 @@ export default function Comparador(props: ComparadorProps) {
   const eea = useMemo(() => new Set(props.eeaCountries), [props.eeaCountries]);
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const cur = state.currency;
-  const riskName = props.riskOptions.find((o) => o.rank === state.risk)?.name ?? `${state.risk}`;
+  const riskName = props.riskOptions.find((o) => o.rank === risk)?.name ?? `${risk}`;
+  const riskOptions = props.riskOptions.filter((o) => (levels as number[]).includes(o.rank));
 
   const toggleService = (id: string, on: boolean) =>
     setState((s) => {
@@ -600,18 +606,18 @@ export default function Comparador(props: ComparadorProps) {
               <legend>{t.riskLegend}</legend>
               <p class="fieldset-help">{t.riskHelp}</p>
               <ul class="radio-list">
-                {props.riskOptions.map((o) => (
+                {riskOptions.map((o) => (
                   <li key={o.id}>
                     <label class="radio">
                       <input
                         type="radio"
                         name="riesgo"
                         value={o.rank}
-                        checked={state.risk === o.rank}
+                        checked={risk === o.rank}
                         onChange={() => setRisk(o.rank as RiskLevel)}
                       />
                       <span class={`risk-dot-label ${riskClass(o.rank)}`}>
-                        {es.riskLevel(o.rank)}
+                        {t.riskStop(o.rank)}
                       </span>
                       <span class="radio-name">{o.name}</span>
                       <span class="radio-desc">{o.description}</span>
@@ -695,8 +701,8 @@ export default function Comparador(props: ComparadorProps) {
                   <h3 id="ahorro-por-riesgo">{t.savingsByRiskTitle}</h3>
                   <p class="visually-hidden">{t.savingsByRiskHelp}</p>
                   <RiskSlider
-                    levels={RISK_LEVELS}
-                    value={state.risk}
+                    levels={levels}
+                    value={risk}
                     onChange={setRisk}
                     pct={pctByRisk}
                     names={riskNames}
