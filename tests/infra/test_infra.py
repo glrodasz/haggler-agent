@@ -793,3 +793,106 @@ def test_research_workflow_runs_the_research_job_from_the_default_branch() -> No
     run = step(research, "research", "Execute the research job")["run"]
     assert '"${RESEARCH_JOB_NAME}"' in run and "--wait" in run
     assert "--update-env-vars" in run
+
+
+REVIEW_PR = "Research review PR"
+
+
+def _review_repo(tmp_path: Path) -> tuple[Path, Path, dict[str, str], Path]:
+    """A main with research_review.yaml, a fake uv that proposes one decision and a fake gh."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    gh_log = tmp_path / "gh.log"
+    (bin_dir / "gh").write_text(f'#!/bin/sh\necho "$@" >> {gh_log}\nexit 0\n')
+    (bin_dir / "uv").write_text(
+        "#!/bin/sh\n"
+        'body=""; while [ $# -gt 0 ]; do [ "$1" = --body ] && body="$2"; shift; done\n'
+        'echo "  - id: x" >> data/curated/research_review.yaml\n'
+        'echo "propuesta" > "$body"\n'
+    )
+    for f in bin_dir.iterdir():
+        f.chmod(0o755)
+    env = {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "HOME": str(tmp_path),
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remote), env=env)
+    _git(tmp_path, "init", "-q", "-b", "main", str(work), env=env)
+    (work / "data" / "curated").mkdir(parents=True)
+    (work / "data" / "curated" / "research_review.yaml").write_text("decisions:\n")
+    _git(work, "add", "-A", env=env)
+    _git(work, "commit", "-q", "-m", "init", env=env)
+    _git(work, "remote", "add", "origin", str(remote), env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    return work, remote, env, gh_log
+
+
+def _run_review_step(tmp_path: Path, work: Path, env: dict[str, str]):
+    script = step(load("publish.yml"), "sync", REVIEW_PR)["run"]
+    return subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=work,
+        env={
+            **env,
+            "GITHUB_REF_NAME": "main",
+            "GITHUB_STEP_SUMMARY": str(tmp_path / "summary.md"),
+            "RUNNER_TEMP": str(tmp_path),
+            "REVIEW_BRANCH": "research-review",
+            "REVIEW_FILE": "data/curated/research_review.yaml",
+        },
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def test_publish_review_step_never_blocks_the_site() -> None:
+    s = step(load("publish.yml"), "sync", REVIEW_PR)
+    assert s["continue-on-error"] is True
+    assert "IS_DEFAULT_BRANCH == 'true'" in s["if"]
+    # Last step: it checks out another branch, after everything that reads the synced data/.
+    assert steps(load("publish.yml"), "sync")[-1]["name"] == REVIEW_PR
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_review_step_opens_a_pr_with_the_proposal(tmp_path: Path) -> None:
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    result = _run_review_step(tmp_path, work, env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    shown = subprocess.run(
+        ["git", "show", "research-review:data/curated/research_review.yaml"],
+        cwd=remote, env=env, capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert "- id: x" in shown
+    assert "pr create --head research-review --base main" in gh_log.read_text()
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_review_step_leaves_a_review_in_progress_alone(tmp_path: Path) -> None:
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    _git(work, "checkout", "-q", "-b", "research-review", env=env)
+    (work / "data" / "curated" / "research_review.yaml").write_text("decisions:\n  - id: y\n")
+    _git(work, "commit", "-q", "-am", "flip one", env=env)  # by t@example.com, a person
+    _git(work, "push", "-q", "origin", "research-review", env=env)
+    _git(work, "checkout", "-q", "main", env=env)
+    result = _run_review_step(tmp_path, work, env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "::notice title=revisión en curso::" in result.stdout
+    shown = subprocess.run(
+        ["git", "show", "research-review:data/curated/research_review.yaml"],
+        cwd=remote, env=env, capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert "- id: y" in shown and "- id: x" not in shown
+    assert not gh_log.exists()
