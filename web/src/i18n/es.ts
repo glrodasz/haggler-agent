@@ -647,6 +647,8 @@ export const es = {
     riskStop: (rank: number) => (rank === 0 ? "Lo que pagas hoy" : `Nivel ${rank}`),
     /** The same stop in the narrow slider pill. */
     riskStopShort: (rank: number) => (rank === 0 ? "Hoy" : `Nivel ${rank}`),
+    /** Shown under "Hoy" instead of a saving, which is always 0 there. */
+    riskStopTag: "Normal",
     fxNote: (date: string) => `Conversión con los tipos de cambio del ${date}.`,
     shareNote: "La selección se guarda en la dirección de la página, así puedes compartirla.",
     servicePageLink: (name: string) => `Ver todos los precios de ${name}`,

@@ -1100,6 +1100,15 @@ h1.service-title .monogram svg {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.risk-slider-tag {
+  align-self: center;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
+}
 @media (prefers-reduced-motion: reduce) {
   .risk-slider-thumb {
     transition: none;

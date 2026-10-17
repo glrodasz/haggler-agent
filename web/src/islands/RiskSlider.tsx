@@ -76,7 +76,10 @@ export function RiskSlider<L extends number>(props: {
 
   const dragging = dragPos !== null;
   const thumbAt = dragging ? index + (dragPos - index) * STICKINESS : index;
-  const valueText = `${es.compare.riskStop(value)}${names[value] ? `, ${names[value]}` : ""}: ${es.compare.riskSliderSaving(formatPercent(pct[value] ?? 0, { digits: 0 }))}`;
+  const valueText =
+    value === 0
+      ? es.compare.riskStop(value)
+      : `${es.compare.riskStop(value)}${names[value] ? `, ${names[value]}` : ""}: ${es.compare.riskSliderSaving(formatPercent(pct[value] ?? 0, { digits: 0 }))}`;
 
   return (
     <div
@@ -111,7 +114,11 @@ export function RiskSlider<L extends number>(props: {
             aria-hidden="true"
           >
             <span class={`risk-dot-label risk-${k}`}>{es.compare.riskStopShort(k)}</span>
-            <span class="amount">{formatPercent(pct[k] ?? 0, { digits: 0 })}</span>
+            {k === 0 ? (
+              <span class="risk-slider-tag">{es.compare.riskStopTag}</span>
+            ) : (
+              <span class="amount">{formatPercent(pct[k] ?? 0, { digits: 0 })}</span>
+            )}
           </span>
         ))}
       </div>
