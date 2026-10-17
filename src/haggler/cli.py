@@ -3,7 +3,8 @@
   haggler daily [...]            daily job; arguments are parsed by haggler.jobs.daily.main
   haggler research run [...]     weekly feasibility research and bundle watcher
                                  (haggler.jobs.research.main; --watch-only: the watcher alone)
-  haggler research review|accept|reject [...]   review research findings (haggler.research.cli)
+  haggler research review|accept|reject|propose [...]
+                                 review research findings (haggler.research.cli)
   haggler probe --targets F --out D [--mode adapters|fx|full|research|bundles|watch]
   haggler sync (--from gs://BUCKET[/prefix] | --from-dir PATH) [--data-dir data]
   haggler site-data [--data-dir data] [--out web/src/data] [--residence SE] [--profile P]
@@ -124,7 +125,7 @@ def cmd_daily(argv: list[str]) -> int:
     return int(daily.main(argv) or 0)
 
 
-RESEARCH_USAGE = "uso: haggler research {run|review|accept|reject} [opciones]"
+RESEARCH_USAGE = "uso: haggler research {run|review|accept|reject|propose} [opciones]"
 
 
 def cmd_research(argv: list[str]) -> int:
@@ -139,7 +140,7 @@ def cmd_research(argv: list[str]) -> int:
             _err(f"el job de investigación no está disponible: {exc}")
             return 1
         return int(job.main(rest) or 0)
-    if action in ("review", "accept", "reject"):
+    if action in ("review", "accept", "reject", "propose"):
         review_cli = importlib.import_module("haggler.research.cli")
         return int(review_cli.main(argv) or 0)
     _err(f"acción desconocida {action!r}; {RESEARCH_USAGE}")

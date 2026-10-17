@@ -13,6 +13,10 @@
     haggler research reject SELECTOR... [--note TEXT] [--by NAME] [--date YYYY-MM-DD]
         append one decision per matching claim to data/curated/research_review.yaml (the file is
         appended to, never re-dumped, so comments and history stay)
+    haggler research propose [--body FILE] [--date YYYY-MM-DD]
+        append a proposed decision for every pending finding (accept when the source is
+        official, reject otherwise) and write FILE, a Markdown review of each one with its quote:
+        publish.yml puts both in a pull request, so merging it is the review
 
 SELECTOR: a claim id, a subject key ("pair:netflix:CO"), or a bare service/instrument/bundle id
 ("netflix" = the service's subject and every pair of that service; see research.kinds), or the
@@ -56,10 +60,10 @@ from haggler.models.bundles import WatchFile
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.models.research import ReviewDecision, ReviewFile, SubjectFacts, subject_key
 from haggler.research.evaluate import EvalContext, assess
-from haggler.research.fields import FIELD_SPECS
+from haggler.research.fields import FIELD_SPECS, value_label_es
 from haggler.research.io import load_data_dir, load_data_watch
 from haggler.research.kinds import KINDS, parse_key
-from haggler.research.review import ReviewIndex, claim_lines, select_claims
+from haggler.research.review import CLASS_ES, ReviewIndex, claim_lines, select_claims
 
 REVIEW_FILE = "research_review.yaml"
 
@@ -486,6 +490,81 @@ def cmd_decide(args: argparse.Namespace, choice: str) -> int:
     return 0
 
 
+PROPOSER = "propuesta automática"
+_MAX_BODY = 60_000  # GitHub caps a pull request body at 65 536 characters
+
+
+def _md_cell(text: str) -> str:
+    return " ".join(text.split()).replace("|", "\\|")
+
+
+def cmd_propose(args: argparse.Namespace) -> int:
+    """One decision per pending finding, so a pull request carries the whole review: an official
+    source is proposed for acceptance and anything else for rejection, and the reviewer flips
+    the ones the quote does not support. Bundle values are left out: they go in bundles.yaml."""
+    path = (args.curated_dir or repo_root() / "data" / "curated") / REVIEW_FILE
+    index = ReviewIndex(load_review(args.curated_dir))
+    subjects, _run, errors = load_data_dir(args.data_dir)
+    for e in errors:
+        _err(f"aviso: {e}")
+    on = args.date or datetime.now(UTC).date()
+    decisions: list[ReviewDecision] = []
+    rows: list[str] = []
+    for s in sorted(subjects, key=lambda s: s.key):
+        for c in s.claims:
+            if index.status(c) != "pending":
+                continue
+            if s.kind == "bundle" and _is_bundle_value(c.field):
+                continue
+            choice = "accept" if c.official else "reject"
+            source = CLASS_ES.get(c.check.source_class, c.check.source_class)
+            decisions.append(
+                ReviewDecision(
+                    id=c.id,
+                    hash=c.hash,
+                    decision=choice,  # type: ignore[arg-type]
+                    decided_on=on,
+                    by=PROPOSER,
+                    note=f"fuente {source}",
+                )
+            )
+            spec = FIELD_SPECS.get(c.field)
+            fact = f"{spec.label_es if spec else c.field}: {value_label_es(c.field, c.value)}"
+            rows.append(
+                f"| `{c.id}` | {_md_cell(fact)} | [{source}]({c.url}) | "
+                f"{_md_cell(c.quote)} | **{choice}** |"
+            )
+    if not decisions:
+        print("Sin hallazgos pendientes.")
+        return 0
+    append_decisions(path, decisions)
+    if args.body is not None:
+        accepted = sum(d.decision == "accept" for d in decisions)
+        head = [
+            f"{len(decisions)} hallazgos de la investigación esperan revisión. Este PR propone "
+            f"aceptar {accepted} (fuente oficial) y rechazar {len(decisions) - accepted} (prensa "
+            "o foro). **Fusionarlo aplica estas decisiones** en "
+            f"`data/curated/{REVIEW_FILE}`.",
+            "",
+            "Cómo revisarlo: lee cada cita y comprueba que diga lo que afirma el dato. Para "
+            "cambiar una propuesta, edita su `decision:` en el diff (`accept` ↔ `reject`) con "
+            "una sugerencia o un commit en esta rama; publish no reescribe la rama mientras "
+            "tenga commits de otra persona.",
+            "",
+            "| Hallazgo | Dato | Fuente | Cita | Propuesta |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+        body = "\n".join(head)
+        for i, row in enumerate(rows):
+            if len(body) + len(row) > _MAX_BODY:
+                body += f"\n\n… y {len(rows) - i} más: `uv run haggler research review`."
+                break
+            body += "\n" + row
+        args.body.write_text(body + "\n", encoding="utf-8")
+    print(f"{len(decisions)} propuesta(s) añadida(s) a {path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="haggler research", description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="action", required=True)
@@ -507,6 +586,9 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument(
         "--summary", action="store_true", help="con --bundles: una línea de recuentos"
     )
+    propose = sub.add_parser("propose", help="propone una decisión por hallazgo pendiente")
+    common(propose)
+    propose.add_argument("--body", type=Path, default=None, help="Markdown para el PR")
     for name in ("accept", "reject"):
         p = sub.add_parser(name, help=f"{name} hallazgos (añade a {REVIEW_FILE})")
         common(p)
@@ -521,6 +603,8 @@ def main(argv: list[str]) -> int:
     try:
         if args.action == "review":
             return cmd_review(args)
+        if args.action == "propose":
+            return cmd_propose(args)
         return cmd_decide(args, args.action)
     except (ValidationError, ValueError, OSError, yaml.YAMLError) as exc:
         _err(f"{type(exc).__name__}: {exc}")

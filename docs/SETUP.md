@@ -539,6 +539,14 @@ uv run haggler research reject pair:netflix:CO --note "la cita no dice eso"
 git add data/curated/research_review.yaml && git commit -m "Revisión de hallazgos" && git push
 ```
 
+**O revisar en un PR** (automático): cada vez que publish sincroniza hallazgos pendientes,
+`haggler research propose` añade una decisión propuesta por hallazgo (`accept` si la fuente es
+oficial, `reject` si es prensa o foro) y publish abre o actualiza el PR de la rama
+`research-review`. Su descripción lista cada hallazgo con su cita y su fuente. Cambia en el diff
+el `decision:` de los que la cita no respalde y fusiona: fusionar es la revisión. publish no
+reescribe la rama mientras tenga commits de otra persona. Requiere «Allow GitHub Actions to
+create and approve pull requests» (Settings → Actions → General), igual que el PR de `data/`.
+
 Una decisión vale para el id del hallazgo **y** su hash de evidencia: si el agente encuentra otra
 cita u otra URL para el mismo hecho, vuelve a quedar pendiente. Lo curado a mano en
 `data/curated/feasibility.yaml` siempre gana.

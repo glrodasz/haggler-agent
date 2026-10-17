@@ -80,6 +80,10 @@ def dirs(tmp_path: Path) -> tuple[Path, Path]:
         (data / "research" / name).write_bytes(blob)
     curated = tmp_path / "curated"
     shutil.copytree(repo_root() / "data" / "curated", curated)
+    # The live file's header without the live decisions: these tests decide synthetic findings.
+    review = curated / "research_review.yaml"
+    header = review.read_text(encoding="utf-8").split("decisions:")[0]
+    review.write_text(header + "decisions: []\n", encoding="utf-8")
     # The frozen bundles.yaml (tests/conftest.py), not the live one: Meli+ Total at 24900, so
     # the agent's 21900 and the watcher's 22900 below stay changes to review.
     shutil.copy(FROZEN_CURATED / "bundles.yaml", curated / "bundles.yaml")
@@ -421,3 +425,44 @@ def test_a_value_finding_the_yaml_holds_is_not_pending_anywhere(dirs, capsys):
     assert "Paquetes por revisar" not in out
     assert run("review", "--bundles", "--summary", dirs=dirs) == 0
     assert capsys.readouterr().out == "Paquetes: nada pendiente de revisión.\n"
+
+
+def test_propose_decides_every_pending_finding_once_and_writes_the_pr_body(dirs, capsys):
+    data, curated = dirs
+    press = claim("pair:disney_plus:CO", "payment_card_country", "must_match")
+    press = press.model_copy(
+        update={"check": press.check.model_copy(update={"source_class": "press"})}
+    )
+    facts = [
+        *subjects(),
+        SubjectFacts(
+            key="pair:disney_plus:CO",
+            kind="pair",
+            researched_on=TODAY,
+            run_id="r1",
+            status="researched",
+            claims=[press],
+        ),
+    ]
+    for name, blob in rio.subject_files(facts).items():
+        (data / "research" / name).write_bytes(blob)
+    spotify = subjects()[2].claims[0]
+    assert run("reject", spotify.id, dirs=dirs) == 0
+    body = data / "body.md"
+
+    assert run("propose", "--body", str(body), dirs=dirs) == 0
+    latest = load_review(curated).latest()
+    assert latest[(spotify.id, spotify.hash)].decision == "reject"  # decided before: untouched
+    assert latest[(press.id, press.hash)].decision == "reject"  # not an official source
+    for c in subjects()[0].claims + subjects()[1].claims:
+        assert latest[(c.id, c.hash)].decision == "accept"
+        assert latest[(c.id, c.hash)].by == "propuesta automática"
+    text = body.read_text(encoding="utf-8")
+    assert "3 hallazgos de la investigación esperan revisión" in text
+    assert "aceptar 2 (fuente oficial) y rechazar 1" in text
+    assert f"| `{press.id}` |" in text and "[prensa](" in text
+    assert spotify.id not in text
+    capsys.readouterr()
+
+    assert run("propose", "--body", str(body), dirs=dirs) == 0
+    assert "Sin hallazgos pendientes." in capsys.readouterr().out

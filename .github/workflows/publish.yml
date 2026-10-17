@@ -246,6 +246,60 @@ jobs:
             echo "::warning title=resumen de paquetes::haggler research review --bundles --summary no dio un resumen (código ${status}). El sitio se publica igual. Ver docs/SETUP.md §14."
           fi
 
+      # Pending research findings become one pull request (docs/SETUP.md §13): `research
+      # propose` appends a proposed decision per finding to research_review.yaml and writes the
+      # PR body with every quote, so reviewing and merging the PR is the review. The branch is
+      # rebuilt from main on each run, unless someone else has committed to it (a review in
+      # progress). Last step of the job: it checks out another branch, and nothing it does
+      # blocks the site.
+      - name: Research review PR
+        if: steps.sync.outcome == 'success' && env.IS_DEFAULT_BRANCH == 'true'
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_BRANCH: research-review
+          REVIEW_FILE: data/curated/research_review.yaml
+        run: |
+          body="$RUNNER_TEMP/research-review.md"
+          uv run --frozen --no-dev haggler research propose --data-dir data --body "$body"
+          if git diff --quiet -- "$REVIEW_FILE"; then
+            exit 0
+          fi
+          cp "$REVIEW_FILE" "$RUNNER_TEMP/research_review.yaml"
+          git checkout -q -- "$REVIEW_FILE"
+          git fetch -q origin "${GITHUB_REF_NAME}"
+          base="$(git rev-parse FETCH_HEAD)"
+          existing=""
+          if git fetch -q origin "${REVIEW_BRANCH}" 2>/dev/null; then
+            existing="$(git rev-parse FETCH_HEAD)"
+            others="$(git log --format=%ae "${base}..${existing}" | grep -v 'github-actions\[bot\]' || true)"
+            if [ -n "$others" ]; then
+              echo "::notice title=revisión en curso::La rama ${REVIEW_BRANCH} tiene commits de otra persona; no se reescribe."
+              exit 0
+            fi
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -B "${REVIEW_BRANCH}" "${base}"
+          cp "$RUNNER_TEMP/research_review.yaml" "$REVIEW_FILE"
+          git add "$REVIEW_FILE"
+          git commit -q -m "research: propuesta de revisión de hallazgos"
+          if [ -n "$existing" ] && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
+            echo "La propuesta de revisión no cambió." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git push -q -f origin "HEAD:refs/heads/${REVIEW_BRANCH}"
+          pr="$(gh pr list --head "${REVIEW_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --body-file "$body"
+          elif ! gh pr create --head "${REVIEW_BRANCH}" --base "${GITHUB_REF_NAME}" \
+              --title "research: revisar hallazgos" --body-file "$body"; then
+            echo "::warning title=PR de revisión falló::La rama ${REVIEW_BRANCH} tiene la propuesta, pero no se pudo abrir el PR (¿Settings → Actions → General → «Allow GitHub Actions to create and approve pull requests»?)."
+            exit 1
+          fi
+          echo "Hallazgos por revisar: PR de la rama \`${REVIEW_BRANCH}\`." >> "$GITHUB_STEP_SUMMARY"
+
   build:
     name: build site
     needs: sync
