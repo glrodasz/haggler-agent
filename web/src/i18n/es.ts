@@ -566,7 +566,9 @@ export const es = {
     tieCard: "Tarjeta emitida allí",
     tiePhone: "Número de teléfono",
     tieAddress: "Dirección real",
-    tiePresence: "Viajes",
+    tiePresence: (country: string) => `¿Viajas a ${country}?`,
+    tiePresenceHelp:
+      "Ir con regularidad desbloquea el nivel 2: muchas ofertas piden volver al país cada cierto tiempo.",
     tieNoCard: (country: string) =>
       `Sin una tarjeta de ${country}, casi ningún servicio de allí se puede contratar.`,
     presence: { none: "No viajo allí", once: "De vez en cuando", periodic: "Con regularidad" },
