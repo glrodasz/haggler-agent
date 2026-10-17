@@ -4,6 +4,7 @@ import {
   changeResidence,
   countryOptions,
   decodeProfile,
+  emptyTie,
   encodeProfile,
   fromCapabilities,
   toCapabilities,
@@ -21,6 +22,11 @@ const CO_IN_SE: ProfileCapabilities = {
 };
 
 describe("profile builder", () => {
+  it("assumes regular trips for a tie added in the form, but not in a link without the flag", () => {
+    expect(emptyTie("CO").presence).toBe("periodic");
+    expect(decodeProfile("SE.dp,CO.dc", ["SE"], new Set(["SE", "CO"]))?.ties[0]?.presence).toBe("none");
+  });
+
   it("loads a curated profile into the form and back unchanged", () => {
     const v = fromCapabilities(CO_IN_SE);
     expect(v).toEqual({

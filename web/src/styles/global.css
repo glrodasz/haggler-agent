@@ -1743,15 +1743,24 @@ fieldset.ties {
 .tie-note {
   margin: 0;
 }
+/* Trips unlock level 2, so the question sits in its own panel instead of a trailing row. */
 .tie-presence {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: var(--space-2);
-  font-size: var(--text-sm);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.tie-presence label {
+  font-weight: 600;
 }
 .tie-presence select {
-  flex: 1;
+  width: 100%;
   min-width: 0;
+}
+.tie-presence p {
+  margin: 0;
 }
 .link-button {
   font: inherit;

@@ -1116,9 +1116,10 @@ function TieRow(props: {
       </ul>
       {!tie.card && <p class="tie-note small muted">{t.tieNoCard(props.name)}</p>}
       <div class="tie-presence">
-        <label for={`${id}-viajes`}>{t.tiePresence}</label>
+        <label for={`${id}-viajes`}>{t.tiePresence(props.name)}</label>
         <select
           id={`${id}-viajes`}
+          aria-describedby={`${id}-viajes-ayuda`}
           value={tie.presence}
           onChange={(e) => props.onChange({ presence: e.currentTarget.value as Presence })}
         >
@@ -1128,6 +1129,9 @@ function TieRow(props: {
             </option>
           ))}
         </select>
+        <p id={`${id}-viajes-ayuda`} class="small muted">
+          {t.tiePresenceHelp}
+        </p>
       </div>
     </li>
   );

@@ -34,8 +34,12 @@ export interface VisitorProfile {
   ties: Tie[];
 }
 
+/**
+ * A tie added in the form. It assumes regular trips, which most level-2 offers need; the
+ * visitor lowers it if not. Shared links keep what they encode: no o/r flag means no trips.
+ */
 export function emptyTie(cc: string): Tie {
-  return { cc, doc: true, card: false, phone: false, address: false, presence: "none" };
+  return { cc, doc: true, card: false, phone: false, address: false, presence: "periodic" };
 }
 
 export function fromCapabilities(caps: ProfileCapabilities): VisitorProfile {
