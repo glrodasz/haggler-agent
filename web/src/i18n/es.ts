@@ -628,6 +628,10 @@ export const es = {
       `La más barata de otro país es ${country}, con más riesgo del aceptado: ${price} al mes (${diff})`,
     noRunnerUp: "No hay ofertas viables de otros países",
     localPrice: (price: string) => `Precio local: ${price}`,
+    cardViaShort: (name: string) => `con tarjeta ${name}`,
+    cardViaBefore: "Pagas con una tarjeta ",
+    cardViaAfter: (country: string) =>
+      `, emitida en ${country}, que abres en línea. Sin ella no hay ahorro.`,
     totalsTitle: "Totales",
     totalsCaption: "Totales de los servicios comparables",
     rowMonthly: "Mensual",

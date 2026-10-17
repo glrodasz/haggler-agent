@@ -817,12 +817,18 @@ def _public_profiles(profiles: ProfilesFile, default: Profile) -> list[Profile]:
 
 
 def _verdict_leaf(a: Assessment) -> dict[str, Any]:
-    return {
+    leaf: dict[str, Any] = {
         "label": a.label,
         "rank": a.rank,
         "eu_badge": a.eu_badge,
         "provenance": None if a.provenance == "none" else a.provenance,
     }
+    # The route pays with a card the profile has to open online first: the site names it, or a
+    # profile with no ties would see a saving abroad without knowing what it rests on.
+    via = next((st.value for st in a.steps if st.type == "obtain_instrument"), None)
+    if via is not None:
+        leaf["card_via"] = via
+    return leaf
 
 
 def _plain_tree(cc: str) -> dict[str, Any]:

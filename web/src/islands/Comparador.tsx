@@ -287,6 +287,15 @@ export default function Comparador(props: ComparadorProps) {
     [offers, source, state.custom, state.profile, state.pending],
   );
 
+  const instrumentById = useMemo(
+    () => new Map(props.instruments.map((i) => [i.id, i])),
+    [props.instruments],
+  );
+  const cardVia = (offer: { service_id: string; country: string }) => {
+    const id = verdict(offer.service_id, offer.country).card_via;
+    return id ? (instrumentById.get(id) ?? null) : null;
+  };
+
   const ctx: CompareContext = useMemo(
     () => ({ rates, residence, residenceCurrency, feePct }),
     [rates, residence, residenceCurrency, feePct],
@@ -722,6 +731,9 @@ export default function Comparador(props: ComparadorProps) {
                               </>
                             )}
                             {planLabel(r.service_id, r.plan_id)}
+                            {r.best && cardVia(r.best) && (
+                              <> · {t.cardViaShort(cardVia(r.best)!.name)}</>
+                            )}
                           </span>
                         </span>
                         <span class="result-row-num">
@@ -838,6 +850,7 @@ export default function Comparador(props: ComparadorProps) {
                             template={
                               verdict(r.best.service_id, r.best.country).provenance === "template"
                             }
+                            cardVia={cardVia(r.best)}
                           />
                         ) : (
                           <div class="offer-cell">
@@ -977,6 +990,8 @@ function OfferCell(props: {
   pending: boolean;
   /** The verdict reapplies the service's curated record to this country. */
   template: boolean;
+  /** The instrument the route pays with, opened online for it. */
+  cardVia: PaymentInstrumentView | null;
 }) {
   const { offer, label } = props;
   return (
@@ -1015,6 +1030,19 @@ function OfferCell(props: {
           `${formatPrice(offer.amount, offer.currency)}${periodSuffix(offer.billing_period)}`,
         )}
       </span>
+      {props.cardVia && (
+        <span class="small">
+          {t.cardViaBefore}
+          {props.cardVia.url ? (
+            <a href={props.cardVia.url} rel="noopener">
+              {props.cardVia.name}
+            </a>
+          ) : (
+            props.cardVia.name
+          )}
+          {t.cardViaAfter(props.countryName)}
+        </span>
+      )}
       {props.isHome && (
         <span class="small">{props.unevaluated ? t.homeIsBestEvaluated : t.homeIsBest}</span>
       )}

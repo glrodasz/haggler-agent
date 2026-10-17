@@ -205,3 +205,29 @@ def test_published_instruments_leave_out_personal_ones() -> None:
     assert items["bancolombia_exterior"]["required_id_countries"] == ["CO"]
     assert items["wise_eea"]["url"] == "https://wise.com/help/articles/2968915"
     assert items["bunq"]["url"] == "https://bunq.com/"
+
+
+def test_leaf_names_the_card_to_open_online() -> None:
+    from haggler.models.curated import FeasibilityStep
+    from haggler.publish import _verdict_leaf
+
+    base = dict(
+        service_id="spotify",
+        target_country="LT",
+        residence_country="SE",
+        profile="custom",
+        legality="lawful",
+        tos="breach_enforced",
+        practical="remote",
+        rank=3,
+        label="tos_breach_enforced",
+        eu_badge=False,
+        confidence="low",
+        provenance="template",
+    )
+    steps = (
+        FeasibilityStep(type="obtain_instrument", value="paysera"),
+        FeasibilityStep(type="payment_country", value="LT"),
+    )
+    assert _verdict_leaf(Assessment(**base, steps=steps))["card_via"] == "paysera"
+    assert "card_via" not in _verdict_leaf(Assessment(**base, steps=steps[1:]))
