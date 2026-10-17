@@ -11,8 +11,10 @@ import {
   roundTo,
   savingsByRisk,
   savingsPctByRisk,
+  snapRisk,
   summarize,
   toOfferRef,
+  visibleRiskLevels,
 } from "./compare";
 import type { PlanInfo } from "./types";
 import { RISK_LEVELS, UNKNOWN_RANK } from "./types";
@@ -373,5 +375,30 @@ describe("cheapestAll", () => {
   it("publishes refs in cents", () => {
     const home = cheapestAll(rows, ctx, services)[1]!.home!;
     expect(toOfferRef(home)).toMatchObject({ cost_eur: 15.36, cost_eur_with_fee: 15.36 });
+  });
+});
+
+describe("visibleRiskLevels", () => {
+  it("hides level 1 when it saves nothing over level 0", () => {
+    expect(visibleRiskLevels({ 0: 0, 1: 0, 2: 5, 3: 8 })).toEqual([0, 2, 3]);
+  });
+
+  it("shows level 1 when it has a saving of its own", () => {
+    expect(visibleRiskLevels({ 0: 0, 1: 2, 2: 5, 3: 8 })).toEqual([0, 1, 2, 3]);
+  });
+
+  it("keeps levels 0, 2 and 3 even with no saving at all", () => {
+    expect(visibleRiskLevels({ 0: 0, 1: 0, 2: 0, 3: 0 })).toEqual([0, 2, 3]);
+  });
+});
+
+describe("snapRisk", () => {
+  it("keeps a level that is shown", () => {
+    expect(snapRisk(2, [0, 2, 3])).toBe(2);
+    expect(snapRisk(1, [0, 1, 2, 3])).toBe(1);
+  });
+
+  it("falls back from a hidden level 1 to level 0, which gives the same result", () => {
+    expect(snapRisk(1, [0, 2, 3])).toBe(0);
   });
 });

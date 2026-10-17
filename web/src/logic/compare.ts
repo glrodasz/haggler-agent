@@ -384,6 +384,19 @@ export function savingsByRisk(
 }
 
 /**
+ * Levels the comparator offers for this selection: "lo que pagas hoy" (level 0), 2 and 3 always,
+ * and level 1 only when it saves more than level 0, since it rarely has an offer of its own.
+ */
+export function visibleRiskLevels(byRisk: Record<RiskLevel, number>): RiskLevel[] {
+  return RISK_LEVELS.filter((k) => k !== 1 || byRisk[1] - byRisk[0] > 0.005);
+}
+
+/** A level the comparator does not offer falls back to the closest lower one it does. */
+export function snapRisk(risk: RiskLevel, levels: readonly RiskLevel[]): RiskLevel {
+  return [...levels].reverse().find((k) => k <= risk) ?? levels[0] ?? 0;
+}
+
+/**
  * The same saving as a percentage of what the visitor pays at home for the services that have an
  * option at that threshold (7.5 = 7,5 %). A share keeps the level strip readable whatever the
  * currency; the amounts are in the result card and the summary.
