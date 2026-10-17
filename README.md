@@ -90,30 +90,95 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 
 ## Architecture
 
+Three pictures cover most of what a contributor needs: what runs where, how a price gets from a
+vendor page to the site, and how a research finding becomes a verdict in the visitor's browser.
+Dashed arrows are Gemini calls; everything else is plain code.
+
+### What runs where
+
 ```mermaid
-flowchart LR
+flowchart TB
+  WEB[Public web<br/>vendor pages, App Store,<br/>FX rates, bundle pages]
   subgraph GCP["Google Cloud"]
-    S1([Cloud Scheduler<br/>daily]) --> D[Cloud Run Job<br/>haggler-daily]
-    S2([Cloud Scheduler<br/>Mondays]) --> R[Cloud Run Job<br/>haggler-research]
-    D & R <--> V[(Gemini<br/>Vertex AI)]
-    D & R --> G[(GCS<br/>snapshots + latest)]
-    B([Budget alert]) --> W[Billing-cap<br/>Workflow]
+    direction LR
+    SCH([Cloud Scheduler]) -- OIDC --> D & R
+    D[haggler-daily<br/>Cloud Run job, daily]
+    R[haggler-research<br/>Cloud Run job, Mondays]
+    D & R -.-> GEM[(Gemini on Vertex AI<br/>+ Google Search)]
+    D & R --> GCS[(GCS bucket<br/>runs/ + latest/<br/>run.json written last)]
   end
-  G --> P[GitHub Actions<br/>publish.yml]
-  P --> RE[data/ in git]
-  P --> GP[GitHub Pages<br/>Astro + Preact]
+  subgraph GH["GitHub"]
+    direction LR
+    CI[ci<br/>ruff, pytest, vitest] -- green --> PUB[publish.yml]
+    PUB -- data-sync PR --> REPO[Repository<br/>catalog/, data/]
+    PUB --> PAGES[GitHub Pages<br/>Astro + Preact]
+  end
+  WEB -- HTTP fetch --> GCP
+  GCS -- read-only --> PUB
+  M((Maintainer)) -- PRs --> REPO
+  PAGES -- HTML + JSON --> V((Visitor<br/>verdicts run<br/>in the browser))
 ```
 
-Both jobs are [ADK](https://google.github.io/adk-docs/) workflows: linear chains of nodes where
-each node is a no-op when it receives no work, so a partial run degrades gracefully instead of failing.
+The bucket is the only handoff: the jobs never touch git and Actions never write to the bucket.
+Nothing runs server-side for a visitor; the site is static files and the comparator runs in the
+browser. A spent budget unlinks billing, which stops both jobs.
 
-```
-daily:     plan_tasks → fetch_and_parse (parallel, per-item retries) → llm_extract
-           → fx_normalize → validate → adjudicate (LLM second opinion) → persist
+### Daily: from vendor page to published price
 
-research:  plan_research → watch_bundles (no LLM) → research (agents + Google Search)
-           → verify_evidence (our own fetch) → persist
+```mermaid
+flowchart TB
+  subgraph JOB["haggler-daily · 04:17 Europe/Stockholm"]
+    direction LR
+    A[plan_tasks<br/>service × country × source] --> B[fetch_and_parse<br/>parallel, parsers only]
+    B --> C[llm_extract<br/>only if a parser fails]
+    C --> E[fx_normalize<br/>monthly, VAT flag]
+    E --> F[validate<br/>ranges, plan order,<br/>&gt;30 % quarantined]
+    F --> G[adjudicate<br/>second opinion]
+    G --> H[persist<br/>runs/ + latest/]
+  end
+  H --> L[(GCS latest/)]
+  subgraph PUBLISH["publish.yml · 05:15 UTC and after green ci on main"]
+    direction LR
+    S[haggler sync<br/>verify sha256,<br/>append changes/] --> T[site-data<br/>offers, feasibility rules]
+    T --> U[astro build] --> W[Pages deploy]
+    S --> X[data-sync PR]
+  end
+  L --> S
+  C -.-> Q[(Gemini)]
+  G -.-> Q
 ```
+
+Both jobs are [ADK](https://google.github.io/adk-docs/) workflows. Every node is a no-op when it
+receives no work, so a partial run degrades instead of failing, and a
+failed source carries its last known value forward. Gemini only returns quotes: the code checks the
+quoted price exists in the page text before keeping it. The site deploys from the synced files
+whether or not the data-sync PR is merged; merging it only versions them in `data/`.
+
+### Weekly research: from a hunch to a verdict
+
+```mermaid
+flowchart TB
+  subgraph JOB["haggler-research · Mondays, or Actions → research"]
+    direction LR
+    P[plan_research<br/>saves ≥ 1 €/mo and 15 %] --> WB[watch_bundles<br/>anchors on official pages,<br/>no LLM]
+    WB --> RA[research agents<br/>service, pair,<br/>instrument, bundle]
+    RA --> VE[verify_evidence<br/>our fetch must find<br/>the literal quote]
+    VE --> RL[(GCS research/latest/<br/>pending review)]
+  end
+  RA -.-> GEM[(Gemini +<br/>Google Search)]
+  RL --> SY[publish sync<br/>data/research/]
+  SY --> RV{{Maintainer review<br/>accept / reject}}
+  RV --> RR[data/curated/<br/>research_review.yaml]
+  SY & RR --> EV[evaluate<br/>pure, curated data wins]
+  EV --> PR[profile_rules.py<br/>decision tree per pair]
+  PR --> VT[verdicts.ts<br/>walks the tree with<br/>residence + ties]
+```
+
+The agents only discover. Fetched page text never goes back to the model, a fact without a verified
+quote is dropped, and any route that needs a false declaration is "not feasible" by rule. Findings
+count only once a maintainer accepts them (`haggler research review` / `accept`, or by merging the
+`research-review` PR that `publish` opens with proposed decisions); visitors can opt in to
+unreviewed findings on the site.
 
 The front end is a static Astro + Preact site. Python stays the single source of truth for
 verdicts: [`profile_rules.py`](src/haggler/profile_rules.py) explores the evaluator with a
