@@ -3,4 +3,298 @@
 # different quote or URL for the same fact, the hash changes and the finding is pending again.
 # The last entry for an (id, hash) wins.
 
-decisions: []
+decisions:
+  - id: bundle:meli_plus_co_esencial:bundle_payment_method:carrier_bill
+    hash: 566066dc9ba2
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita habla de reintentar con otro medio de pago, no de pagar en la factura de una línea
+  - id: instrument:n26:card_issuing_country:DE
+    hash: 1a7e70f342c1
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita dice IBAN alemán, no el país emisor de la tarjeta
+  - id: instrument:n26:eligible_residence:SE
+    hash: 23a5e80b2add
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: La página oficial nombra a Suecia entre las residencias admitidas
+  - id: instrument:n26:id_documents:any_passport
+    hash: bc945a717761
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: El blog oficial de N26 dice que basta el pasaporte y la prueba de residencia
+  - id: instrument:n26:onboarding_remote:true
+    hash: 5bcb9e308717
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: El blog oficial dice que todo el proceso es en línea
+  - id: instrument:paysera:card_issuing_country:LT
+    hash: c410d4d76fc0
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: La página de tarifas nombra al emisor, registrado en Lituania
+  - id: instrument:paysera:eligible_residence:EEA
+    hash: 239b14196bb8
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Habla de adónde se envía la tarjeta, no de quién puede abrir cuenta
+  - id: instrument:paysera:onboarding_remote:true
+    hash: 679d269d6bc8
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Habla de pedir la tarjeta digital, no de abrir la cuenta en línea
+  - id: instrument:paysera:requires_local_address:false
+    hash: bed79d7ee7a1
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Que la tarjeta se envíe al EEE no dice nada sobre exigir dirección en Lituania
+  - id: pair:apple_music:ID:billing_address:required
+    hash: 04af04c8cab2
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial de cambio de país: se pide dirección de facturación del país nuevo; coincide con icloud_plus_lt_from_se'
+  - id: pair:apple_music:ID:signup_location:checked
+    hash: 8cb80c36c1b5
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita es la cláusula de residencia de los términos, no una verificación de ubicación
+  - id: pair:apple_music:PH:billing_address:required
+    hash: 23e9cc37bd70
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Misma página oficial de cambio de país: dirección de facturación del país'
+  - id: pair:apple_music:VN:gift_cards:local_purchase_only
+    hash: 822b6ec92f92
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita dice para qué sirve la tarjeta, no que solo se venda en el país
+  - id: pair:apple_one:BR:billing_address:required
+    hash: 04af04c8cab2
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial de cambio de país: dirección de facturación del país'
+  - id: pair:apple_one:BR:signup_location:checked
+    hash: 9afd3eb274e3
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita trata el caso sin método de pago, no una verificación al contratar con tarjeta
+  - id: pair:apple_one:CL:signup_location:checked
+    hash: d24bad2bc18a
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Es la cláusula de residencia de los términos, no una verificación de ubicación
+  - id: pair:apple_one:ID:billing_address:required
+    hash: 4a271c14d0d0
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial de cambio de país: dirección de facturación del país'
+  - id: pair:apple_one:ID:signup_location:checked
+    hash: 9522f7e53b09
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita trata el caso sin método de pago, no una verificación al contratar con tarjeta
+  - id: pair:apple_one:PH:local_phone_required:true
+    hash: 6048f03c7834
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Pide confirmar un teléfono, no uno del país
+  - id: pair:apple_one:VN:billing_address:required
+    hash: aea1cdc87ea6
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial de cambio de país: dirección de facturación del país'
+  - id: pair:icloud_plus:AR:gift_cards:none
+    hash: 0e89a5cfa455
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Habla de tarjetas de Apple Store, no de las Apple Gift Card que sí sirven para servicios
+  - id: pair:icloud_plus:AR:payment_card_country:must_match
+    hash: a48f7dacdfd7
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita habla de la dirección de facturación, no del país de la tarjeta
+  - id: pair:icloud_plus:CA:gift_cards:none
+    hash: 396dd07a1d43
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Habla de tarjetas de Apple Store, no de las Apple Gift Card que sí sirven para servicios
+  - id: pair:icloud_plus:CA:signup_location:checked
+    hash: 9b431c59d694
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita habla de la dirección de facturación, no de verificar la ubicación
+  - id: pair:netflix:EG:available:true
+    hash: 066ca2ebed3c
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: Anuncio oficial de facturación en libras egipcias
+  - id: pair:netflix:ID:gift_cards:remote_purchase
+    hash: ff341c77dd0a
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Ayuda oficial: vale una tarjeta comprada en otro país si es de la misma moneda'
+  - id: pair:netflix:NG:local_phone_required:true
+    hash: aad03f44c440
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita dice correo o teléfono, sin exigir uno del país
+  - id: pair:netflix:NG:periodic_location_check:true
+    hash: ba8fd49f3403
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Es la verificación del hogar de Netflix, no del país de la cuenta
+  - id: pair:spotify:BR:gift_cards:local_purchase_only
+    hash: 9fccb330b743
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Términos oficiales: la cuenta debe ser del país donde se compró la tarjeta'
+  - id: pair:spotify:NG:available:true
+    hash: 9227939dd881
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: Spotify se vende en Nigeria (spotify.com/ng existe); la prensa lo confirma
+  - id: pair:spotify:NG:billing_address:required
+    hash: b76316d777a6
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Es un consejo de un blog, no un requisito de Spotify
+  - id: pair:spotify:NG:payment_card_country:must_match
+    hash: 43ac194e2913
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: Prensa que cita la regla de Spotify; coincide con su página oficial de Premium
+  - id: pair:spotify:NG:periodic_location_check:true
+    hash: 4e1a26f5dc3f
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Es la reverificación del plan Familiar, no del Individual
+  - id: pair:spotify:PK:gift_cards:none
+    hash: 51bd6dc0e825
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Se refiere solo al plan Familiar
+  - id: pair:spotify:PK:payment_card_country:must_match
+    hash: a7d7513786c9
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Blog sobre VPN, no una fuente de la regla
+  - id: pair:spotify:PK:periodic_location_check:true
+    hash: 964ccea8fef5
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Es la reverificación del plan Familiar, no del Individual
+  - id: pair:spotify:PK:signup_location:checked
+    hash: a3d9326bfdb0
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial: el método de pago sirve para confirmar el país'
+  - id: pair:spotify:RO:local_id_required:false
+    hash: 8c1cc0e5cb7f
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Habla de la verificación de estudiante, no del plan normal
+  - id: pair:spotify:RO:payment_card_country:must_match
+    hash: df5d72d0fd2d
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial: el método de pago sirve para confirmar el país'
+  - id: pair:spotify:RO:signup_location:checked
+    hash: 6ab4e5345f0e
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial: el método de pago sirve para confirmar el país'
+  - id: pair:youtube_premium:BR:gift_cards:none
+    hash: 4d3a7f496cf5
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Fuente de un revendedor, no oficial
+  - id: pair:youtube_premium:NG:gift_cards:local_purchase_only
+    hash: afac82ae2c4c
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial de Google Play: la tarjeta solo vale en el país de compra'
+  - id: pair:youtube_premium:PL:gift_cards:local_purchase_only
+    hash: 462431a814d1
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: Fuente de un revendedor, no oficial
+  - id: service:apple_music:account_country_basis:billing_address
+    hash: 0340327f063c
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial: cambiar de país exige pago y dirección de facturación del país nuevo'
+  - id: service:apple_music:account_country_basis:signup_location
+    hash: 245db74d0fca
+    decision: reject
+    decided_on: '2026-10-17'
+    by: claude
+    note: La cita dice que el país lo eliges al crear la cuenta, no que lo fije tu ubicación
+  - id: service:apple_music:region_change:self_service
+    hash: 5f86b8f9bf95
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Página oficial: el usuario cambia el país desde el dispositivo o la web'
+  - id: service:apple_music:residence_clause:account_country_must_match_residence
+    hash: 80639d90a306
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Términos oficiales: los servicios son para tu país de residencia'
+  - id: service:apple_music:travel_use:allowed
+    hash: 8f5946181277
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Términos oficiales: se puede usar al viajar, con contenido que puede variar'
+  - id: service:netflix:travel_use:allowed
+    hash: 5071d0c75d78
+    decision: accept
+    decided_on: '2026-10-17'
+    by: claude
+    note: 'Ayuda oficial: Netflix se usa igual de viaje'
