@@ -718,6 +718,7 @@ export default function Comparador(props: ComparadorProps) {
                     labelledBy="ahorro-por-riesgo"
                   />
 
+                  <p class="small muted result-rows-lead">{t.resultRowsLead(residenceName)}</p>
                   <ul class="result-rows">
                     {summary.rows.map((r) => (
                       <li key={r.service_id}>
