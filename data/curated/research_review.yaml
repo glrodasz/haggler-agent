@@ -298,3 +298,45 @@ decisions:
     decided_on: '2026-10-17'
     by: claude
     note: 'Ayuda oficial: Netflix se usa igual de viaje'
+  - id: bundle:apple_one_family_se:bundle_billing_address:required
+    hash: 25690a176c34
+    decision: reject
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente prensa
+  - id: service:apple_one:account_country_basis:signup_location
+    hash: 9e7082a4dd55
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
+  - id: service:apple_one:residence_clause:account_country_must_match_residence
+    hash: 80639d90a306
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
+  - id: service:icloud_plus:account_country_basis:payment_method_country
+    hash: 244fb07e225c
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
+  - id: service:icloud_plus:account_country_basis:self_declared
+    hash: 9ad3a25ccfa6
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
+  - id: service:icloud_plus:region_change:self_service
+    hash: 5f86b8f9bf95
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
+  - id: service:icloud_plus:residence_clause:account_country_must_match_residence
+    hash: 80639d90a306
+    decision: accept
+    decided_on: '2026-10-19'
+    by: propuesta automática
+    note: fuente oficial
