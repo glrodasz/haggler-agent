@@ -227,7 +227,7 @@ export const es = {
     agent_reviewed:
       "Calculada a partir de hallazgos del agente de investigación que una persona aceptó.",
     agent_pending:
-      "Calculada con hallazgos del agente que nadie ha revisado todavía. El comparador no la usa salvo que marques «Incluir hallazgos pendientes de revisión».",
+      "Calculada con hallazgos del agente que nadie ha revisado todavía. El comparador la usa, marcada como pendiente, hasta que una persona la revise.",
   } as Record<string, string>,
   /** Source class of a cited page (records[].evidence[].kind). */
   evidenceKinds: {
@@ -542,9 +542,6 @@ export const es = {
     profileHelp:
       "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: dónde vives, documentos, teléfono, dirección, medios de pago y viajes.",
     profileLabel: "Perfil de factibilidad",
-    profileCustomDesc:
-      "Las etiquetas salen de aplicar las mismas reglas a los hechos investigados. Las fichas curadas a mano solo valen para los perfiles de ejemplo.",
-    profileExamples: "Ejemplos:",
     residenceLabel: "1. ¿En qué país vives?",
     residenceHelp: (host: string) =>
       `Solo listamos países cuyos precios seguimos. «Usar mi IP» envía tu IP a ${host}; solo si lo pulsas.`,
@@ -592,11 +589,8 @@ export const es = {
       "Al vivir en la UE/EEE, tus suscripciones de vídeo, música y juegos siguen funcionando cuando viajas temporalmente a otro país de la UE (Reglamento (UE) 2017/1128 de portabilidad).",
     adviceHonest:
       "Datos curados a mano y sin verificar en tiempo real: comprueba los requisitos en la web de cada entidad. Nunca declares una residencia que no tienes.",
-    pendingLabel: "Incluir hallazgos pendientes de revisión",
-    pendingHelp:
-      "Hallazgos del agente de investigación que nadie ha revisado todavía. Sin marcar, solo cuentan las fichas curadas o revisadas.",
     pendingNote:
-      "El resultado incluye hallazgos pendientes de revisión: todavía nadie los ha comprobado.",
+      "Algunas ofertas usan hallazgos pendientes de revisión: todavía nadie los ha comprobado.",
     loading: "Cargando precios…",
     noscript:
       "El comparador necesita JavaScript. Sin él puedes consultar los precios por servicio o por país.",
@@ -723,7 +717,7 @@ export const es = {
       "No lo incluyen: dan un descuento o meses gratis si además lo contratas, y ese ahorro no cuenta en el ahorro del paquete.",
     feasibilityTitle: (residence: string) => `Factibilidad desde ${residence}`,
     feasibilityLead: (residence: string, profile?: string) =>
-      `Fichas para quien vive en ${residence}${profile ? ` (perfil «${profile}»)` : ""}. Las curadas a mano son semillas conservadoras, casi todas sin verificar; las del agente de investigación citan sus fuentes y, hasta que una persona las revisa, figuran como «Pendiente de revisión» y el comparador no las usa.`,
+      `Fichas para quien vive en ${residence}${profile ? ` (perfil «${profile}»)` : ""}. Las curadas a mano son semillas conservadoras, casi todas sin verificar; las del agente de investigación citan sus fuentes y, hasta que una persona las revisa, figuran como «Pendiente de revisión»; el comparador ya las tiene en cuenta.`,
     noFeasibility: (residence: string) =>
       `No hay fichas de factibilidad para este servicio: fuera de ${residence} sus ofertas figuran como «Sin evaluar».`,
     colTarget: "País objetivo",
@@ -872,7 +866,7 @@ export const es = {
       },
       {
         title: "Revisión humana",
-        text: "Los hallazgos nuevos figuran como «Pendiente de revisión» hasta que una persona los acepta. El comparador no los usa salvo que marques «Incluir hallazgos pendientes de revisión»; en las fichas se ven con su distintivo y sus citas.",
+        text: "Los hallazgos nuevos figuran como «Pendiente de revisión» hasta que una persona los acepta. Mientras tanto, el comparador ya los tiene en cuenta y marca las ofertas que dependen de ellos; en las fichas se ven con su distintivo y sus citas.",
       },
       {
         title: "Nunca datos falsos",
@@ -885,7 +879,7 @@ export const es = {
         : "Todavía no se ha publicado ninguna investigación: solo hay fichas escritas a mano.",
     profilesTitle: "Perfiles",
     profilesLead:
-      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. El comparador empieza por tu país, deducido de la zona horaria o el idioma de tu navegador sin enviar nada; si pulsas «Usar mi IP», tu navegador consulta a country.is, que recibe tu dirección IP. Luego describes tu perfil (país de residencia entre los que tienen precios, lo que tienes de él y vínculos con cualquier otro país) o eliges uno de estos de ejemplo. También muestra las cuentas que podrías abrir por internet con esa residencia y esos documentos, según nuestros datos curados. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
+      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. El comparador empieza por tu país, deducido de la zona horaria o el idioma de tu navegador sin enviar nada; si pulsas «Usar mi IP», tu navegador consulta a country.is, que recibe tu dirección IP. Luego describes tu perfil (país de residencia entre los que tienen precios, lo que tienes de él y vínculos con cualquier otro país). Abajo están los perfiles de ejemplo de las fichas. También muestra las cuentas que podrías abrir por internet con esa residencia y esos documentos, según nuestros datos curados. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
     defaultProfileTag: "Por defecto",
     researchNotLegal:
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",

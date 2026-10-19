@@ -745,38 +745,30 @@ describe("selection hash", () => {
     expect(decodeState(hash, services, ["SEK", "EUR", "USD"], fallback)).toEqual(state);
   });
 
-  it("adds the profile and pending findings only when they differ from the defaults", () => {
-    const options = { profiles: ["se_resident_eu_generic"], pending: true };
-    const state = {
+  it("adds the profile only when it differs from the default", () => {
+    const options = { profiles: ["se_resident_eu_generic"] };
+    const state = { ...fallback, services: ["netflix"], profile: "se_resident_eu_generic" };
+    const hash = `#${encodeState(state)}`;
+    expect(hash).toBe("#s=netflix.standard&r=0&c=SEK&p=se_resident_eu_generic");
+    expect(decodeState(hash, services, ["SEK"], fallback, options)).toEqual(state);
+    expect(encodeState({ ...state, profile: null })).toBe("s=netflix.standard&r=0&c=SEK");
+    expect(decodeState("#s=netflix.standard&r=0&c=SEK", services, ["SEK"], fallback, options))
+      .toMatchObject({ profile: null });
+  });
+
+  it("ignores unknown profiles, the default profile and the old u=1 toggle", () => {
+    const options = { profiles: ["se_resident_eu_generic"] };
+    const decode = (hash: string) => decodeState(hash, services, ["SEK"], fallback, options);
+    expect(decode("#s=netflix.standard&p=gone").profile).toBeNull();
+    expect(decode("#s=netflix.standard&p=se_resident_co_citizen").profile).toBeNull();
+    // Links from before pending findings always counted still load.
+    expect(decode("#s=netflix.standard&p=se_resident_eu_generic&u=1")).toEqual({
       ...fallback,
       services: ["netflix"],
       profile: "se_resident_eu_generic",
-      pending: true,
-    };
-    const hash = `#${encodeState(state)}`;
-    expect(hash).toBe("#s=netflix.standard&r=0&c=SEK&p=se_resident_eu_generic&u=1");
-    expect(decodeState(hash, services, ["SEK"], fallback, options)).toEqual(state);
-    expect(encodeState({ ...state, profile: null, pending: false })).toBe(
-      "s=netflix.standard&r=0&c=SEK",
-    );
-    // Old links (no p / u) keep the default profile without pending findings.
-    expect(decodeState("#s=netflix.standard&r=0&c=SEK", services, ["SEK"], fallback, options))
-      .toMatchObject({ profile: null, pending: false });
-  });
-
-  it("ignores unknown profiles, the default profile and u=1 without pending records", () => {
-    const options = { profiles: ["se_resident_eu_generic"], pending: true };
-    const decode = (hash: string, opts = options) =>
-      decodeState(hash, services, ["SEK"], fallback, opts);
-    expect(decode("#s=netflix.standard&p=gone").profile).toBeNull();
-    expect(decode("#s=netflix.standard&p=se_resident_co_citizen").profile).toBeNull();
-    expect(decode("#s=netflix.standard&u=yes").pending).toBe(false);
-    expect(decode("#s=netflix.standard&u=1", { profiles: [], pending: false })).toMatchObject({
-      profile: null,
-      pending: false,
     });
     expect(decodeState("#u=1&p=se_resident_eu_generic", services, ["SEK"], fallback)).toMatchObject(
-      { profile: null, pending: false },
+      { profile: null },
     );
   });
 
