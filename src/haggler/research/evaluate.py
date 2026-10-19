@@ -42,7 +42,8 @@ Pure (no I/O, no ADK). For a profile P living in R and a target country T:
    A curated record of the same service whose every step is about its own target
    (payment_country / store_region / presence in T, no other country) is reapplied to any T and
    any profile: same ToS axis, practicality from those steps (a card of T as in 4 for
-   payment_country, presence in T for presence; either missing -> unknown, never a guess). When
+   payment_country, with the obtain_instrument step when the card is one to open online; presence
+   in T for presence; either missing -> unknown, never a guess). When
    any curated record of the service asks for a billing address in its country, the template
    does too, and without a real address in T it is a false declaration. A step that needs a
    false declaration makes the route not feasible (as in 5). Provenance "template", confidence
@@ -724,10 +725,11 @@ def _from_template(
     steps: list[FeasibilityStep] = []
     w = Work()
     for st in record.steps:
-        if st.type == "payment_country" and not (
-            held_card(target, profile, facts, w) or obtainable_card(target, profile, facts, w)
-        ):
-            return None
+        if st.type == "payment_country" and held_card(target, profile, facts, w) is None:
+            inst = obtainable_card(target, profile, facts, w)
+            if inst is None:
+                return None
+            steps.append(FeasibilityStep(type="obtain_instrument", value=inst))
         if st.type == "presence":
             if profile.presence_in(target) is None:
                 return None

@@ -630,6 +630,10 @@ export const es = {
       `La más barata de otro país es ${country}, con más riesgo del aceptado: ${price} al mes (${diff})`,
     noRunnerUp: "No hay ofertas viables de otros países",
     localPrice: (price: string) => `Precio local: ${price}`,
+    cardViaShort: (name: string) => `con tarjeta ${name}`,
+    cardViaBefore: "Pagas con una tarjeta ",
+    cardViaAfter: (country: string) =>
+      `, emitida en ${country}, que abres en línea. Sin ella no hay ahorro.`,
     totalsTitle: "Totales",
     totalsCaption: "Totales de los servicios comparables",
     rowMonthly: "Mensual",
@@ -642,6 +646,8 @@ export const es = {
     excludedNote: (names: string) => `No se suman en los totales (sin precio local): ${names}.`,
     noOfferNote: (names: string) => `Sin oferta con este nivel de riesgo: ${names}.`,
     savingsByRiskTitle: "Ahorro según el riesgo aceptado",
+    resultRowsLead: (residence: string) =>
+      `Para cada servicio elegimos el país más barato que puedes contratar con este riesgo; si ninguno mejora el precio, queda ${residence}.`,
     savingsByRiskHelp:
       "Con la misma selección, qué parte de lo que pagas hoy ahorrarías en cada nivel. Pulsa o arrastra para cambiar el nivel.",
     riskSliderSaving: (pct: string) => `ahorro del ${pct}`,
