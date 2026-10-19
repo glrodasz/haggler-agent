@@ -4,6 +4,7 @@
  * figures come from the same offers and rules the comparator reads (its inline JSON) through
  * logic/teasers.ts. Each message is a link to the comparator state it was computed from: a
  * click puts it in location.hash, which the comparator follows, and scrolls to the form.
+ * No controls, on purpose: it pauses on hover and focus, and stays still with reduced motion.
  */
 
 import { useEffect, useRef, useState } from "preact/hooks";
@@ -56,13 +57,14 @@ export default function HeroSavings(props: HeroSavingsProps) {
   const [teasers, setTeasers] = useState<Teaser[] | null>(null);
   const [residence, setResidence] = useState(props.residence);
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  /** Hover or focus inside: rotation waits, without changing the visitor's pause choice. */
+  /** Reduced motion: the first message stays put. */
+  const [still, setStill] = useState(false);
+  /** Hover or focus: rotation waits while the visitor reads or is about to click. */
   const [holding, setHolding] = useState(false);
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (prefersReducedMotion()) setPaused(true);
+    if (prefersReducedMotion()) setStill(true);
     // After the first paint: the comparator hydrates first and the hero stays responsive.
     const run = () => {
       const guess = guessFromBrowser();
@@ -99,10 +101,10 @@ export default function HeroSavings(props: HeroSavingsProps) {
 
   const count = teasers?.length ?? 0;
   useEffect(() => {
-    if (paused || holding || count < 2) return;
+    if (still || holding || count < 2) return;
     const timer = window.setTimeout(() => setIndex((i) => (i + 1) % count), ROTATE_MS);
     return () => window.clearTimeout(timer);
-  }, [index, paused, holding, count]);
+  }, [index, still, holding, count]);
 
   // Reserves the line while computing so the hero does not jump; nothing to say, nothing shown.
   if (teasers === null) return <div class="hero-savings is-loading" aria-hidden="true" />;
@@ -141,47 +143,24 @@ export default function HeroSavings(props: HeroSavingsProps) {
         href={hash}
         title={t.linkTitle}
         onClick={open}
-        aria-live={paused || holding ? "polite" : "off"}
+        aria-live={still || holding ? "polite" : "off"}
         key={index}
       >
-        <span class="hero-savings-text">
+        <span class="hero-savings-head">
           <strong>
             {t.headline(
               formatPercent(current.pct, { digits: 0 }),
               COUNTRIES.format(current.countries.slice(0, 2).map(name)),
             )}
           </strong>
-          <span class="hero-savings-sub">
-            {current.tie === null ? t.alone : t.tie(name(current.tie))}
+          <span class="hero-savings-arrow" aria-hidden="true">
+            →
           </span>
         </span>
-        <span class="hero-savings-arrow" aria-hidden="true">
-          →
+        <span class="hero-savings-sub">
+          {current.tie === null ? t.alone : t.tie(name(current.tie))}
         </span>
       </a>
-      {count > 1 && (
-        <div class="hero-savings-controls">
-          <button
-            type="button"
-            class="hero-savings-pause"
-            aria-label={paused ? t.play : t.pause}
-            title={paused ? t.play : t.pause}
-            onClick={() => setPaused((p) => !p)}
-          >
-            <span aria-hidden="true">{paused ? "▶" : "❚❚"}</span>
-          </button>
-          {teasers.map((_, i) => (
-            <button
-              type="button"
-              key={i}
-              class="hero-savings-dot"
-              aria-label={t.goTo(i + 1, count)}
-              aria-current={i === index ? "true" : undefined}
-              onClick={() => setIndex(i)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

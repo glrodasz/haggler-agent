@@ -1423,42 +1423,40 @@ main.is-wide {
   text-decoration-thickness: 0.06em;
   text-underline-offset: 0.1em;
 }
-/* Rotating level-3 savings under the hero title (islands/HeroSavings.tsx). */
+/* Rotating level-3 savings under the hero title (islands/HeroSavings.tsx): a quiet line. */
 .hero-savings {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3) var(--space-4);
-  min-height: 3.5rem;
-  margin: 0 0 var(--space-5);
+  min-height: 2.75rem;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-5);
 }
 .hero-savings-link {
   display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
+  flex-direction: column;
   max-width: 100%;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-ink-border);
-  border-radius: var(--radius-pill);
   color: var(--color-ink-fg);
   text-decoration: none;
-  animation: hero-savings-in 0.35s ease-out;
-}
-.hero-savings-link:hover {
-  border-color: var(--color-ink-muted);
+  animation: hero-savings-in 0.5s ease-out;
 }
 .hero-savings-link:focus-visible {
   outline: 2px solid var(--color-ink-fg);
-  outline-offset: 2px;
+  outline-offset: 4px;
+  border-radius: 2px;
 }
-.hero-savings-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.hero-savings-head {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
 }
-.hero-savings-text strong {
-  font-size: clamp(1rem, 2.4vw, 1.15rem);
+.hero-savings-head strong {
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  text-decoration: underline;
+  text-decoration-color: var(--color-ink-border);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color 0.15s ease-out;
+}
+.hero-savings-link:hover strong {
+  text-decoration-color: currentColor;
 }
 .hero-savings-sub {
   color: var(--color-ink-muted);
@@ -1466,53 +1464,15 @@ main.is-wide {
 }
 .hero-savings-arrow {
   flex: none;
+  color: var(--color-ink-muted);
   transition: transform 0.15s ease-out;
 }
 .hero-savings-link:hover .hero-savings-arrow {
   transform: translateX(3px);
 }
-.hero-savings-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-.hero-savings-controls button {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-ink-muted);
-  font-size: 0.6rem;
-  cursor: pointer;
-}
-.hero-savings-controls button:hover {
-  color: var(--color-ink-fg);
-}
-.hero-savings-controls button:focus-visible {
-  outline: 2px solid var(--color-ink-fg);
-  outline-offset: 1px;
-  border-radius: var(--radius-pill);
-}
-.hero-savings-dot::before {
-  content: "";
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: var(--color-ink-border);
-}
-.hero-savings-dot:hover::before {
-  background: var(--color-ink-muted);
-}
-.hero-savings-dot[aria-current="true"]::before {
-  background: var(--color-ink-fg);
-}
 @keyframes hero-savings-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
