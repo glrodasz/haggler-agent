@@ -1809,7 +1809,7 @@ fieldset.ties {
   align-items: center;
   gap: var(--space-2);
 }
-.tie-head select {
+.tie-head .combobox {
   flex: 1;
   min-width: 0;
 }
