@@ -232,20 +232,7 @@ export default function Comparador(props: ComparadorProps) {
     };
     setOffers(read(props.dataId, unpackOffers));
     setRules(read(props.verdictsId, unpackRules));
-    const decoded = decodeState(
-      window.location.hash,
-      services,
-      [...new Set([...props.residences.map((r) => r.currency), ...props.currencies])].filter(
-        (c) => c === "EUR" || (rates[c] ?? 0) > 0,
-      ),
-      state,
-      {
-        profiles: props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile),
-        pending: props.hasPending,
-        residences: props.residences.map((r) => r.cc),
-        countries: new Set(props.tieCountries.map((c) => c.cc)),
-      },
-    );
+    const decoded = decodeHash(state);
     // A fresh visit (no comparison in the link) starts from the visitor's country (browser
     // hints only; nothing leaves the browser) with no ties. A shared link keeps its profile,
     // including the default one, which it encodes by leaving p and pf out.
@@ -265,6 +252,19 @@ export default function Comparador(props: ComparadorProps) {
     }
     setReady(true);
   }, []);
+
+  // A link inside the page (the hero's savings) can load another comparison by changing the
+  // hash. Our own replaceState calls do not fire hashchange, so this only sees outside changes.
+  useEffect(() => {
+    const follow = () => {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      if (["s", "p", "pf"].some((k) => params.has(k))) {
+        setState((s) => normalizeProfile(decodeHash(s)));
+      }
+    };
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, [source]);
 
   useEffect(() => {
     if (!ready) return;
@@ -336,6 +336,22 @@ export default function Comparador(props: ComparadorProps) {
     setState((s) =>
       followCurrency(s, { ...s, custom: null, profile: id === props.defaultProfile ? null : id }),
     );
+  function decodeHash(fallback: CompareState): CompareState {
+    return decodeState(
+      window.location.hash,
+      services,
+      [...new Set([...props.residences.map((r) => r.currency), ...props.currencies])].filter(
+        (c) => c === "EUR" || (rates[c] ?? 0) > 0,
+      ),
+      fallback,
+      {
+        profiles: props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile),
+        pending: props.hasPending,
+        residences: props.residences.map((r) => r.cc),
+        countries: new Set(props.tieCountries.map((c) => c.cc)),
+      },
+    );
+  }
   /** A described profile with a curated profile's capabilities is that profile. */
   function normalizeProfile(s: CompareState): CompareState {
     if (!s.custom) return s;

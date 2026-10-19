@@ -461,6 +461,17 @@ export const es = {
     eyebrow: "Precios oficiales, país por país",
     heroTitle: "Paga lo justo por tus suscripciones",
     heroAccent: "lo justo",
+    /** The rotating savings under the hero title (islands/HeroSavings.tsx), all at level 3. */
+    teasers: {
+      label: (residence: string) => `Ahorros posibles viviendo en ${residence}`,
+      headline: (pct: string, countries: string) => `Ahorra ${pct} en ${countries}`,
+      alone: "Sin vínculos con otros países · Nivel 3",
+      tie: (country: string) => `Con documento, tarjeta y viajes regulares a ${country} · Nivel 3`,
+      linkTitle: "Ver este cálculo en el comparador",
+      pause: "Pausar",
+      play: "Reanudar",
+      goTo: (n: number, total: number) => `Mensaje ${n} de ${total}`,
+    },
     lead: (residence: string) =>
       `El mismo servicio. Otro país. Un precio distinto. Compara lo que pagas por tus suscripciones en ${residence} con su precio oficial en otros países. Te decimos cuánto ahorrarías, con qué riesgo y cuánto se lleva la comisión de cambio.`,
     ctaStart: "Calcular mi ahorro",

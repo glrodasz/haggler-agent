@@ -6,6 +6,7 @@ import Comparador, {
   type ComparadorResidence,
   type ComparadorService,
 } from "../islands/Comparador";
+import HeroSavings from "../islands/HeroSavings";
 import { es } from "../i18n/es";
 import Icon from "../components/Icon.astro";
 import LogoMark from "../components/LogoMark.astro";
@@ -103,6 +104,22 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
         <h1 id="hero-titulo" class="hero-title dotted">
           {before}<span class="accent">{t.heroAccent}</span>{after}
         </h1>
+        <HeroSavings
+          client:load
+          services={services}
+          residences={residences}
+          tieCountries={tieCountries.map((c) => c.cc)}
+          countryNames={countryNames}
+          rates={site.fx.rates}
+          feePct={site.meta.fx_fee_pct}
+          residence={site.meta.residence}
+          profiles={profiles.map((p) => ({ id: p.id, capabilities: p.capabilities }))}
+          defaultProfile={site.feasibility.default_profile}
+          eeaCountries={site.feasibility.eea_countries}
+          dataId="comparador-ofertas"
+          verdictsId="comparador-veredictos"
+          targetId="comparar"
+        />
         <p class="lead">{t.lead(site.residenceName)}</p>
         <div class="hero-actions">
           <a class="button button-light" href="#comparar">
