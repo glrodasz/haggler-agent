@@ -302,15 +302,22 @@ services:
       - {id: essential, label_es: Essential (con anuncios), label_en: Essential (with ads), rank: 0, ads: true,
          plausible_monthly_eur: [0.5, 20],
          iap_patterns: ['essential|b[aá]sic|with ads|con anuncios|com an[uú]ncios|mit werbung|med reklam']}
-      # Market-wide single plan ("Paramount+", "Paramount+ Mensual") and explicit "Standard".
+      # Explicit "Standard", or a market's single plan named just "Paramount+" (+ a period word).
       - {id: standard, label_es: Estándar, label_en: Standard, rank: 1, plausible_monthly_eur: [0.5, 25],
-         iap_patterns: ['^(?!.*(essential|b[aá]sic|\bads\b|anunc|an[uú]nc|werbung|reklam|premium|showtime)).*']}
+         iap_patterns: ['^(?!.*(essential|b[aá]sic|\bads\b|anunc|an[uú]nc|werbung|reklam|premium|showtime)).*(standard|est[aá]ndar|padr[aã]o|^\W*paramount\W*(\b(plus|monthly|annual|yearly|mensual|mensal|anual)\b\W*)*$)']}
       - {id: premium, label_es: Premium, label_en: Premium, rank: 2, plausible_monthly_eur: [1, 30],
          iap_patterns: ['premium|showtime']}
     sources:
+      # The US app (530168168) is not sold elsewhere; every other storefront has the
+      # international app (1340650234).
       - adapter: appstore_iap
         channel: ios_iap
         params: {app_id: 530168168, exclude_patterns: ['bundle', 'combo', '\bdeal\b']}
+        countries: [US]
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 1340650234, exclude_patterns: ['bundle', 'combo', '\bdeal\b']}
+        exclude: [US]
 
   - id: crunchyroll
     name: Crunchyroll
@@ -322,8 +329,9 @@ services:
       - https://www.crunchyroll.com/tos
     default_plan: fan
     plans:
+      # Outside the US the Fan tier is sold as "Premium" ("Suscripción Premium Mensual").
       - {id: fan, label_es: Fan, label_en: Fan, rank: 1, plausible_monthly_eur: [0.5, 20],
-         iap_patterns: ['^(?!.*(mega|ultimate|ultimat|definitiv)).*\bfan\b']}
+         iap_patterns: ['^(?!.*(mega|ultimate|ultimat|definitiv)).*(\bfan\b|premium)']}
       - {id: mega_fan, label_es: Mega Fan, label_en: Mega Fan, rank: 2, plausible_monthly_eur: [0.8, 25],
          iap_patterns: ['\bmega\b']}
       - {id: ultimate_fan, label_es: Ultimate Fan, label_en: Ultimate Fan, rank: 3, plausible_monthly_eur: [1, 30],
@@ -331,7 +339,12 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 329913454, exclude_patterns: ['game vault', 'store', 'coins?\b']}
+        params:
+          app_id: 329913454
+          # Legacy and add-on SKUs: Premium+, the annual "Premium Membership", manga bundles,
+          # "Anime"/"All-Access" memberships and an item literally named "buy".
+          exclude_patterns: ['premium\s*\+', 'premium membership', 'manga', 'anime membership',
+                             'all.access', '^\W*buy\W*$', 'game vault', 'coins?\b']
 
   - id: chatgpt
     name: ChatGPT
