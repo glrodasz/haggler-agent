@@ -9,7 +9,8 @@
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { ServiceMark } from "../components/ServiceMark";
-import { es } from "../i18n/es";
+import { getMessages } from "../i18n";
+import type { Locale } from "../i18n/locale";
 import { instrumentAdvice } from "../logic/advice";
 import {
   cheapestFor,
@@ -23,17 +24,7 @@ import {
   visibleRiskLevels,
   summarize,
 } from "../logic/compare";
-import {
-  currencyOption,
-  flagEmoji,
-  formatDate,
-  formatMoney,
-  formatNumber,
-  formatPercent,
-  formatPrice,
-  formatSignedMoney,
-  periodSuffix,
-} from "../logic/format";
+import { flagEmoji, formatFor } from "../logic/format";
 import { GEO_IP_HOST, guessFromBrowser, type Located, lookupIp } from "../logic/locate";
 import {
   changeResidence,
@@ -62,12 +53,14 @@ import {
 } from "../logic/verdicts";
 import { CountryCombobox } from "./CountryCombobox";
 import { RiskSlider } from "./RiskSlider";
+import { LocaleContext, useLocaleKit } from "./localeContext";
 
 export interface ComparadorService {
   id: string;
   name: string;
   default_plan: string;
-  plans: { id: string; label_es: string }[];
+  /** Plan names in the page's locale. */
+  plans: { id: string; label: string }[];
   href: string;
 }
 
@@ -95,6 +88,7 @@ export interface ComparadorResidence extends ComparadorCountry {
 }
 
 export interface ComparadorProps {
+  locale: Locale;
   services: ComparadorService[];
   /** Every label by id, for badges. */
   labels: Record<string, ComparadorLabel>;
@@ -151,8 +145,6 @@ function neutralProfile(cc: string): VisitorProfile {
   };
 }
 
-const t = es.compare;
-
 function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
 }
@@ -163,6 +155,19 @@ function unpackRules(value: unknown): FeasibilityRule[] {
 }
 
 export default function Comparador(props: ComparadorProps) {
+  const msg = getMessages(props.locale);
+  const fmt = formatFor(props.locale);
+  const t = msg.compare;
+  const {
+    currencyOption,
+    formatDate,
+    formatMoney,
+    formatNumber,
+    formatPercent,
+    formatPrice,
+    formatSignedMoney,
+    periodSuffix,
+  } = fmt;
   const { services, rates, feePct } = props;
   const [state, setState] = useState<CompareState>(() =>
     defaultState(services, props.defaultCurrency),
@@ -400,7 +405,7 @@ export default function Comparador(props: ComparadorProps) {
   };
 
   const planLabel = (serviceId: string, planId: string) =>
-    serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label_es ?? planId;
+    serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label ?? planId;
   const names = (ids: string[]) => ids.map((id) => serviceById.get(id)?.name ?? id).join(", ");
   const unevaluatedNote = (r: SummaryRow): UnevaluatedInfo | null => {
     if (!r.unevaluated) return null;
@@ -438,7 +443,7 @@ export default function Comparador(props: ComparadorProps) {
         )
       : "";
 
-  return (
+  const view = (
     <div class="comparador">
       <div class="comparador-main">
         <form class="controls" onSubmit={(e) => e.preventDefault()}>
@@ -471,7 +476,7 @@ export default function Comparador(props: ComparadorProps) {
                     >
                       {s.plans.map((p) => (
                         <option value={p.id} key={p.id}>
-                          {p.label_es}
+                          {p.label}
                         </option>
                       ))}
                     </select>
@@ -887,6 +892,8 @@ export default function Comparador(props: ComparadorProps) {
       )}
     </div>
   );
+  // Nested parts (risk slider, tie rows, offer cells) read the locale from here.
+  return <LocaleContext.Provider value={props.locale}>{view}</LocaleContext.Provider>;
 }
 
 /**
@@ -901,6 +908,8 @@ function ResidenceAdvice(props: {
   eea: ReadonlySet<string>;
   countryName: (cc: string) => string;
 }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { caps, countryName } = props;
   const advice = instrumentAdvice(props.instruments, caps, props.eea);
   const inEea = props.eea.has(caps.residence_country);
@@ -966,6 +975,9 @@ function OfferCell(props: {
   /** The instrument the route pays with, opened online for it. */
   cardVia: PaymentInstrumentView | null;
 }) {
+  const { msg, fmt } = useLocaleKit();
+  const t = msg.compare;
+  const { formatPrice, periodSuffix } = fmt;
   const { offer, label } = props;
   return (
     <div class="offer-cell">
@@ -976,25 +988,25 @@ function OfferCell(props: {
         {props.countryName}
       </span>
       <span class="badges">
-        <span class={`badge channel-${offer.channel}`} title={es.channelTitles[offer.channel]}>
-          {es.channels[offer.channel] ?? offer.channel}
+        <span class={`badge channel-${offer.channel}`} title={msg.channelTitles[offer.channel]}>
+          {msg.channels[offer.channel] ?? offer.channel}
         </span>
         <span class={`badge ${riskClass(offer.rank)}`} title={label?.description}>
           {label?.name ?? offer.label}
         </span>
         {offer.eu_badge && (
-          <span class="badge badge-eu" title={es.euBadgeTitle(props.residenceName)}>
-            {es.euBadge}
+          <span class="badge badge-eu" title={msg.euBadgeTitle(props.residenceName)}>
+            {msg.euBadge}
           </span>
         )}
         {props.pending && (
-          <span class="badge provenance-agent_pending" title={es.provenanceTitles.agent_pending}>
-            {es.provenance.agent_pending}
+          <span class="badge provenance-agent_pending" title={msg.provenanceTitles.agent_pending}>
+            {msg.provenance.agent_pending}
           </span>
         )}
         {props.template && (
-          <span class="badge provenance-template" title={es.provenanceTitles.template}>
-            {es.provenance.template}
+          <span class="badge provenance-template" title={msg.provenanceTitles.template}>
+            {msg.provenance.template}
           </span>
         )}
       </span>
@@ -1048,6 +1060,8 @@ interface UnevaluatedInfo {
 }
 
 function UnevaluatedNote(props: { note: UnevaluatedInfo | null }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { note } = props;
   if (!note) return null;
   return (
@@ -1066,6 +1080,8 @@ function TieRow(props: {
   onChange: (patch: Partial<Tie>) => void;
   onRemove: () => void;
 }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { tie, index } = props;
   const id = `vinculo-${index}`;
   const flags = [

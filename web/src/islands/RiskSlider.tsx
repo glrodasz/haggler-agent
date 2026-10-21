@@ -6,8 +6,7 @@
 
 import type { TargetedKeyboardEvent, TargetedPointerEvent } from "preact";
 import { useRef, useState } from "preact/hooks";
-import { es } from "../i18n/es";
-import { formatPercent } from "../logic/format";
+import { useLocaleKit } from "./localeContext";
 
 /** How far the thumb follows the pointer inside a section before it jumps (0 = rigid). */
 const STICKINESS = 0.3;
@@ -21,6 +20,8 @@ export function RiskSlider<L extends number>(props: {
   names: Record<number, string | undefined>;
   labelledBy: string;
 }) {
+  const { msg, fmt } = useLocaleKit();
+  const { formatPercent } = fmt;
   const { levels, value, onChange, pct, names } = props;
   const track = useRef<HTMLDivElement>(null);
   const [dragPos, setDragPos] = useState<number | null>(null);
@@ -78,8 +79,8 @@ export function RiskSlider<L extends number>(props: {
   const thumbAt = dragging ? index + (dragPos - index) * STICKINESS : index;
   const valueText =
     value === 0
-      ? es.compare.riskStop(value)
-      : `${es.compare.riskStop(value)}${names[value] ? `, ${names[value]}` : ""}: ${es.compare.riskSliderSaving(formatPercent(pct[value] ?? 0, { digits: 0 }))}`;
+      ? msg.compare.riskStop(value)
+      : `${msg.compare.riskStop(value)}${names[value] ? `, ${names[value]}` : ""}: ${msg.compare.riskSliderSaving(formatPercent(pct[value] ?? 0, { digits: 0 }))}`;
 
   return (
     <div
@@ -110,12 +111,12 @@ export function RiskSlider<L extends number>(props: {
             key={k}
             class="risk-slider-stop"
             data-active={k === value ? "" : undefined}
-            title={k === 0 ? es.compare.riskStop(k) : names[k]}
+            title={k === 0 ? msg.compare.riskStop(k) : names[k]}
             aria-hidden="true"
           >
-            <span class={`risk-dot-label risk-${k}`}>{es.compare.riskStopShort(k)}</span>
+            <span class={`risk-dot-label risk-${k}`}>{msg.compare.riskStopShort(k)}</span>
             {k === 0 ? (
-              <span class="risk-slider-tag">{es.compare.riskStopTag}</span>
+              <span class="risk-slider-tag">{msg.compare.riskStopTag}</span>
             ) : (
               <span class="amount">{formatPercent(pct[k] ?? 0, { digits: 0 })}</span>
             )}

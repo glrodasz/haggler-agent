@@ -8,11 +8,9 @@
 
 import type { TargetedKeyboardEvent } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { es } from "../i18n/es";
 import { type SearchableCountry, searchCountries } from "../logic/countrySearch";
 import { flagEmoji } from "../logic/format";
-
-const t = es.compare;
+import { useLocaleKit } from "./localeContext";
 
 export function CountryCombobox(props: {
   id: string;
@@ -23,6 +21,8 @@ export function CountryCombobox(props: {
   placeholder?: string;
   describedBy?: string;
 }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { id, countries, value, onSelect } = props;
   const listId = `${id}-lista`;
   const statusId = `${id}-estado`;
