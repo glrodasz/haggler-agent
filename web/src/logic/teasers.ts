@@ -59,7 +59,7 @@ function teaserFor(
   offers: readonly CompareOfferFields[],
 ) {
   const { base, rates, feePct } = input;
-  const relabelled = relabelOffers(offers, input.source, toCapabilities(profile), false);
+  const relabelled = relabelOffers(offers, input.source, toCapabilities(profile), true);
   const ctx: CompareContext = {
     rates,
     residence: input.residence,
@@ -102,7 +102,6 @@ export function savingsTeasers(input: TeaserInput, max = TEASER_MAX): Teaser[] {
     risk: TEASER_RISK,
     profile: null,
     custom,
-    pending: false,
   });
   const out: Teaser[] = [];
   const own = teaserFor(input, alone, offers);

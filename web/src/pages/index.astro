@@ -17,7 +17,6 @@ import { formatDate } from "../logic/format";
 import { routes } from "../logic/paths";
 import { countryOptions } from "../logic/profile";
 import { inlineJson, packOffers } from "../logic/transport";
-import { isPending } from "../logic/verdicts";
 
 const site = getSite();
 const t = es.home;
@@ -89,9 +88,6 @@ const residences: ComparadorResidence[] = countryOptions(covered, countryNames).
 }));
 const tieCountries: ComparadorCountry[] = countryOptions(covered, countryNames);
 const verdictsJson = inlineJson({ rules: site.feasibility.rules });
-const hasPending =
-  site.feasibility.rules.some((r) => r.pending !== null) ||
-  site.feasibility.records.some(isPending);
 
 const [before, after] = t.heroTitle.split(t.heroAccent);
 ---
@@ -216,7 +212,6 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
         residences={residences}
         tieCountries={tieCountries}
         eeaCountries={site.feasibility.eea_countries}
-        hasPending={hasPending}
         verdictsId="comparador-veredictos"
         instruments={site.feasibility.instruments}
       />

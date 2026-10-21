@@ -1184,10 +1184,6 @@ h1.service-title .monogram svg {
   display: grid;
   gap: var(--space-1);
 }
-.profile-desc {
-  margin: var(--space-2) 0 var(--space-3);
-  font-size: var(--text-sm);
-}
 .loading {
   padding: var(--space-4);
   border: 1px dashed var(--color-border);
@@ -1809,7 +1805,7 @@ fieldset.ties {
   align-items: center;
   gap: var(--space-2);
 }
-.tie-head select {
+.tie-head .combobox {
   flex: 1;
   min-width: 0;
 }
@@ -1868,28 +1864,6 @@ fieldset.own > legend {
 }
 .locate-note .link-button {
   padding: 0;
-}
-.profile-examples {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-4);
-}
-.chip {
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--color-fg);
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: var(--space-1) var(--space-3);
-  cursor: pointer;
-  text-align: left;
-}
-.chip[aria-pressed="true"] {
-  border-color: var(--color-fg);
-  font-weight: 600;
 }
 .advice-list {
   list-style: none;
