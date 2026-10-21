@@ -2,10 +2,10 @@
 import preact from "@astrojs/preact";
 import { defineConfig } from "astro/config";
 
-// GitHub Pages serves the project under /haggler-agent/; both values can be overridden so the
-// same build works for a custom domain or a local preview at "/".
-const site = process.env.SITE_URL || "https://glrodasz.github.io";
-const rawBase = process.env.BASE_PATH ?? "/haggler-agent";
+// GitHub Pages serves the site at the root of its custom domain; both values can be overridden
+// (publish.yml passes what actions/configure-pages reports) so the same build works elsewhere.
+const site = process.env.SITE_URL || "https://haggler.guillermorodas.com";
+const rawBase = process.env.BASE_PATH ?? "/";
 const base = rawBase === "" ? "/" : rawBase;
 
 export default defineConfig({

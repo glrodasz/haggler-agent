@@ -143,9 +143,14 @@ defecto.
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 2. Eso crea el entorno `github-pages`, que por defecto solo acepta despliegues desde la rama por
    defecto. No hace falta tocarlo.
-3. El sitio queda en `https://glrodasz.github.io/haggler-agent/`. Con dominio propio
-   (Settings → Pages → Custom domain) el workflow detecta solo la nueva URL base
-   (`actions/configure-pages`), no hay que cambiar nada en `web/astro.config.mjs`.
+3. Dominio propio: en el proveedor DNS, un registro `CNAME` `haggler` → `glrodasz.github.io`;
+   luego **Settings → Pages → Custom domain** `haggler.guillermorodas.com` → *Save*, y cuando el
+   certificado esté listo marcar **Enforce HTTPS**. Con *Source: GitHub Actions* no hace falta
+   un archivo `CNAME` en el repositorio.
+4. El sitio queda en `https://haggler.guillermorodas.com/`; `https://glrodasz.github.io/haggler-agent/…`
+   redirige allí (GitHub Pages lo hace solo). El workflow detecta la URL base con
+   `actions/configure-pages`: sin dominio propio construye bajo `/haggler-agent/`, sin tocar
+   `web/astro.config.mjs`.
 
 ## 5. Mergear a `main`
 
@@ -455,7 +460,7 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 | `publish`: "Aún no hay data/latest/prices.json" | no hay datos versionados en `data/` y no hubo sync: faltan variables (paso 3), se lanzó desde otra rama, o el sync falló (ver el *warning* del job de sync) |
 | `publish`: *warning* "push de data/ falló: No se pudo hacer push de data/" | `main` está protegida (*pull request* obligatorio, *status checks* requeridos…) y la identidad que hace el push no tiene *bypass* (ver §12). El sitio se publica igual con los datos sincronizados (artefacto del job de sync); solo `data/` del repositorio, y con él el historial de `data/changes/`, queda desactualizado hasta que el push vuelva a funcionar |
 | `publish`: *notice* "data/ en PR" | `main` está protegida: publish deja `data/` en la rama `data-sync` (reescrita en cada corrida) y mantiene un PR abierto hacia `main`. Fusiónalo cuando quieras versionar los datos (p. ej. antes de `haggler research review`); el sitio ya se publicó con ellos. Si el aviso es "PR de data/ falló", activa *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*. Los PR y pushes hechos con `GITHUB_TOKEN` no lanzan `ci` por sí solos (su corrida `pull_request` queda en *Approve and run*), así que publish lanza `ci` con `workflow_dispatch` en `data-sync` y `research-review`: sus checks aparecen en el PR sin aprobar nada. Si faltan, el run de publish muestra el *warning* "ci not dispatched" |
-| `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con la ruta base `/haggler-agent` y no detecta un dominio propio |
+| `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con los valores por defecto de `web/astro.config.mjs` (dominio propio en la raíz) |
 | `publish`: el deploy a Pages falla | Pages no está habilitado con *Source: GitHub Actions* (paso 4), o se lanzó desde una rama que no es `main` |
 | Los workflows programados dejaron de correr | GitHub desactiva los `schedule` de repos públicos tras 60 días sin actividad; reactivarlos en *Actions* |
 | `publish`: *warning* "resumen de paquetes" | `haggler research review --bundles --summary` falló (el log del paso muestra el error); solo falta la línea del resumen, el sitio se publica igual. Reproducirlo en local con `data/` al día (§14) |

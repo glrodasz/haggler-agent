@@ -13,7 +13,7 @@ cheaper offers you can actually get, and at what risk.**
 ![Google ADK](https://img.shields.io/badge/built%20with-Google%20ADK-4285F4.svg)
 ![Gemini on Vertex AI](https://img.shields.io/badge/LLM-Gemini%20on%20Vertex%20AI-8E75B2.svg)
 
-[**Live site**](https://glrodasz.github.io/haggler-agent/) ·
+[**Live site**](https://haggler.guillermorodas.com/) ·
 [How it works](#how-it-works) ·
 [Architecture](#architecture) ·
 [Quickstart](#quickstart) ·

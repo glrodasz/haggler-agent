@@ -59,7 +59,7 @@ function ogSvg() {
       <tspan x="80" y="330">${escape(lines[0])}</tspan>
       <tspan x="80" y="420">${escape(lines[1])}<tspan fill="${DOT}">.</tspan></tspan>
     </text>
-    <text x="80" y="550" font-family="Inter" font-weight="500" font-size="30" fill="${MUTED}">glrodasz.github.io/haggler-agent</text>
+    <text x="80" y="550" font-family="Inter" font-weight="500" font-size="30" fill="${MUTED}">haggler.guillermorodas.com</text>
     <text x="1120" y="550" text-anchor="end" font-family="Inter" font-weight="500" font-size="30" fill="${MUTED}">Sin analítica ni cookies</text>
   </svg>`;
 }

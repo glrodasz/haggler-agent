@@ -1,6 +1,7 @@
 /**
- * Internal links. The site is served under a base path on GitHub Pages ("/haggler-agent/"),
- * so every internal href goes through withBase(); hard-coded "/..." links would 404 there.
+ * Internal links. The site can be served under a base path (GitHub Pages without a custom
+ * domain: "/haggler-agent/"), so every internal href goes through withBase(); hard-coded "/..."
+ * links would 404 there.
  * English lives at the root and every other locale under its prefix ("/es/services/"), so
  * links are built per locale with routesFor(); i18n/locale.ts decides the prefix.
  */

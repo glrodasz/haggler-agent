@@ -1,7 +1,7 @@
 # Sitio web de haggler
 
 Sitio estático (Astro 7 + Preact, TypeScript) que publica los precios recogidos por el agente en
-GitHub Pages: <https://glrodasz.github.io/haggler-agent/>. Interfaz en inglés (idioma principal,
+GitHub Pages: <https://haggler.guillermorodas.com/>. Interfaz en inglés (idioma principal,
 sin prefijo), español (`/es/`) y portugués (`/pt/`); ver [Idiomas](#idiomas).
 
 ## Páginas
@@ -59,15 +59,16 @@ npm run sample-data            # no pisa datos reales; usa "-- --force" para ree
 ```bash
 npm ci
 npm run sample-data
-npm run dev       # http://localhost:4321/haggler-agent/
+npm run dev       # http://localhost:4321/
 npm run check     # astro check (tipos)
 npm test          # vitest: lógica del comparador, formato, datos de ejemplo
 npm run build     # genera dist/
 npm run preview
 ```
 
-Variables de entorno para el build: `SITE_URL` (por defecto `https://glrodasz.github.io`) y
-`BASE_PATH` (por defecto `/haggler-agent`; usa `/` para un dominio propio). En CI conviene
+Variables de entorno para el build: `SITE_URL` (por defecto `https://haggler.guillermorodas.com`) y
+`BASE_PATH` (por defecto `/`; usa `/haggler-agent` para servirlo sin dominio propio en
+`glrodasz.github.io`). `publish.yml` las toma de `actions/configure-pages`. En CI conviene
 `ASTRO_TELEMETRY_DISABLED=1`.
 
 ## Lógica
