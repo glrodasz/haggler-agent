@@ -31,10 +31,10 @@ Pure: no I/O.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
-from haggler.models.curated import FeasibilityFile, FeasibilityRecord
+from haggler.models.curated import BundleVerdictRecord, FeasibilityFile, FeasibilityRecord
 
 Question = tuple[str, ...]
 Tree = dict[str, Any]
@@ -119,6 +119,12 @@ class SymbolicProfile:
                 and record.target_country == target
                 and self._yes("preset", record.profile)
             ):
+                return record
+        return None
+
+    def bundle_record(self, records: Iterable[BundleVerdictRecord]) -> BundleVerdictRecord | None:
+        for record in records:
+            if self._yes("preset", record.profile):
                 return record
         return None
 

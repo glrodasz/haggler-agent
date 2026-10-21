@@ -1095,6 +1095,43 @@ def _bundle_verdicts(
     return out
 
 
+def _bundle_rule(
+    b: Bundle,
+    ctx: EvalContext,
+    counted: tuple[BundleComponent, ...],
+    state: BundleState,
+) -> dict[str, Any] | None:
+    """The bundle's verdict as a decision tree over the profile (haggler.profile_rules), like
+    feasibility.json `rules`, so the site can judge it for a profile the visitor describes.
+    `pending` (findings still pending review included) is null when it equals `reviewed`; the
+    whole rule is null for an expired bundle."""
+
+    def tree(include_pending: bool) -> Any:
+        def run(profile: Any) -> BundleAssessment | None:
+            return assess_bundle(
+                b, profile, ctx, include_pending=include_pending, counted=counted, state=state
+            )
+
+        return explore(run, _bundle_leaf)
+
+    reviewed = tree(False)
+    if reviewed == {"verdict": None}:
+        return None
+    pending = tree(True)
+    return {"reviewed": reviewed, "pending": None if pending == reviewed else pending}
+
+
+def _bundle_leaf(a: BundleAssessment | None) -> dict[str, Any] | None:
+    if a is None:
+        return None
+    return {
+        "label": a.label,
+        "rank": a.rank,
+        "eu_badge": a.eu_badge,
+        "provenance": None if a.provenance == "none" else a.provenance,
+    }
+
+
 def _anchor_evidence_json(
     anchor: Anchor, check: AnchorCheck | None, watch: BundleWatchState | None, today: date
 ) -> dict[str, Any]:
@@ -1281,6 +1318,7 @@ def _bundle_json(
             _bundle_verdict_json(a)
             for a in _bundle_verdicts(b, profiles, ctx, pricing.counted, state)
         ],
+        "rule": _bundle_rule(b, ctx, pricing.counted, state),
         # Official, value-checked proposals of the watcher and the agent (bundles.proposals).
         "pending_changes": [_pending_change_json(p) for p in changes],
         "notes_es": b.notes_es.strip(),

@@ -180,7 +180,7 @@ const ruleVerdict = shape(
     label: str,
     rank: num,
     eu_badge: bool,
-    provenance: nullable(oneOf([...PROVENANCES, "home"])),
+    provenance: nullable(oneOf([...new Set([...PROVENANCES, ...BUNDLE_PROVENANCES, "home"])])),
   },
   { card_via: str },
 );
@@ -304,6 +304,7 @@ const bundle = shape({
       status: nullable(str),
     }),
   ),
+  rule: nullable(shape({ reviewed: ruleTree, pending: nullable(ruleTree) })),
   verdicts: list(
     shape({
       profile: str,

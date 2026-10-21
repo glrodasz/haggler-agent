@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 if TYPE_CHECKING:
-    from haggler.models.curated import FeasibilityFile, FeasibilityRecord
+    from haggler.models.curated import BundleVerdictRecord, FeasibilityFile, FeasibilityRecord
 
 PresenceKind = Literal["once", "periodic"]
 _CC = r"^[A-Z]{2}$"
@@ -117,6 +117,10 @@ class Profile(BaseModel):
             residence_country=self.residence_country,
             profile=self.id,
         )
+
+    def bundle_record(self, records: Iterable[BundleVerdictRecord]) -> BundleVerdictRecord | None:
+        """This profile's curated verdict among a bundle's `verdicts`."""
+        return next((v for v in records if v.profile == self.id), None)
 
     def capabilities(self, held_card_countries: Iterable[str] = ()) -> dict[str, object]:
         """What the evaluator can tell about this profile, as the site describes a visitor's

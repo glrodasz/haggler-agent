@@ -96,6 +96,33 @@
       "residency": "unknown",
       "signup_presence": "unknown"
     },
+    "rule": {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "unknown",
+              "provenance": "composed",
+              "rank": 99
+            }
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "SE"
+        ]
+      }
+    },
     "saving_basis": "full",
     "saving_pct": 15.21,
     "standalone_missing": [
@@ -222,6 +249,33 @@
       "residency": "unknown",
       "signup_presence": "unknown"
     },
+    "rule": {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "unknown",
+              "provenance": "composed",
+              "rank": 99
+            }
+          },
+          "true": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "official_home",
+              "provenance": "home",
+              "rank": 0
+            }
+          }
+        },
+        "ask": [
+          "lives",
+          "SE"
+        ]
+      }
+    },
     "saving_basis": "full",
     "saving_pct": null,
     "standalone_missing": [
@@ -346,6 +400,97 @@
       "residency": "unknown",
       "signup_presence": "unknown"
     },
+    "rule": {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "answers": {
+              "false": {
+                "answers": {
+                  "false": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "not_feasible",
+                      "provenance": "composed",
+                      "rank": 4
+                    }
+                  },
+                  "true": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "unknown",
+                      "provenance": "composed",
+                      "rank": 99
+                    }
+                  }
+                },
+                "ask": [
+                  "doc",
+                  "CO"
+                ]
+              },
+              "true": {
+                "answers": {
+                  "false": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "not_feasible",
+                      "provenance": "curated",
+                      "rank": 4
+                    }
+                  },
+                  "true": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "tos_breach_low_enforcement",
+                      "provenance": "curated",
+                      "rank": 2
+                    }
+                  }
+                },
+                "ask": [
+                  "doc",
+                  "CO"
+                ]
+              }
+            },
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ]
+          },
+          "true": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "not_feasible",
+                  "provenance": "home",
+                  "rank": 4
+                }
+              },
+              "true": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "official_home",
+                  "provenance": "home",
+                  "rank": 0
+                }
+              }
+            },
+            "ask": [
+              "doc",
+              "CO"
+            ]
+          }
+        },
+        "ask": [
+          "lives",
+          "CO"
+        ]
+      }
+    },
     "saving_basis": "full",
     "saving_pct": -47.07,
     "standalone_missing": [],
@@ -463,6 +608,65 @@
       "residency": "unknown",
       "signup_presence": "unknown"
     },
+    "rule": {
+      "pending": null,
+      "reviewed": {
+        "answers": {
+          "false": {
+            "verdict": {
+              "eu_badge": false,
+              "label": "not_feasible",
+              "provenance": "composed",
+              "rank": 4
+            }
+          },
+          "true": {
+            "answers": {
+              "false": {
+                "verdict": {
+                  "eu_badge": false,
+                  "label": "not_feasible",
+                  "provenance": "home",
+                  "rank": 4
+                }
+              },
+              "true": {
+                "answers": {
+                  "false": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "not_feasible",
+                      "provenance": "home",
+                      "rank": 4
+                    }
+                  },
+                  "true": {
+                    "verdict": {
+                      "eu_badge": false,
+                      "label": "official_home",
+                      "provenance": "home",
+                      "rank": 0
+                    }
+                  }
+                },
+                "ask": [
+                  "phone",
+                  "SE"
+                ]
+              }
+            },
+            "ask": [
+              "doc",
+              "SE"
+            ]
+          }
+        },
+        "ask": [
+          "lives",
+          "SE"
+        ]
+      }
+    },
     "saving_basis": "marginal",
     "saving_pct": 54.87,
     "standalone_missing": [],
@@ -576,6 +780,7 @@
       "residency": "unknown",
       "signup_presence": "unknown"
     },
+    "rule": null,
     "saving_basis": "full",
     "saving_pct": -43.06,
     "standalone_missing": [],

@@ -219,6 +219,65 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "composed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [
       {
         "id": "bundle:meli_plus_co_total:bundle_price:21900 COP/month",
@@ -371,6 +430,65 @@
         "components": []
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "lives",
+          "CO"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "tos_breach_low_enforcement",
+                  "rank": 2,
+                  "eu_badge": false,
+                  "provenance": "curated"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "composed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "Envíos gratis; sin streaming incluido.",
     "last_verified": "2026-10-08"
@@ -615,6 +733,65 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "lives",
+          "MX"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "not_feasible",
+                  "rank": 4,
+                  "eu_badge": false,
+                  "provenance": "composed"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "composed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "",
     "last_verified": "2026-10-08"
@@ -859,6 +1036,65 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "lives",
+          "BR"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "not_feasible",
+                  "rank": 4,
+                  "eu_badge": false,
+                  "provenance": "composed"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "not_feasible",
+                      "rank": 4,
+                      "eu_badge": false,
+                      "provenance": "composed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "",
     "last_verified": "2026-10-08"
@@ -1077,6 +1313,49 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "preset",
+          "se_resident_co_citizen"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_eu_generic"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "official_home",
+                  "rank": 0,
+                  "eu_badge": false,
+                  "provenance": "home"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres servicios es +130 kr. Fecha de vigencia de la lista de precios sin confirmar.",
     "last_verified": "2026-10-08"
@@ -1235,6 +1514,65 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "lives",
+          "LT"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_co_citizen"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": "composed"
+                }
+              },
+              "false": {
+                "ask": [
+                  "preset",
+                  "se_resident_eu_generic"
+                ],
+                "answers": {
+                  "true": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": "composed"
+                    }
+                  },
+                  "false": {
+                    "verdict": {
+                      "label": "unknown",
+                      "rank": 99,
+                      "eu_badge": false,
+                      "provenance": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.",
     "last_verified": "2026-10-08"
@@ -1443,6 +1781,49 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "preset",
+          "se_resident_co_citizen"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_eu_generic"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "official_home",
+                  "rank": 0,
+                  "eu_badge": false,
+                  "provenance": "home"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "",
     "last_verified": "2026-10-08"
@@ -1651,6 +2032,49 @@
         ]
       }
     ],
+    "rule": {
+      "reviewed": {
+        "ask": [
+          "preset",
+          "se_resident_co_citizen"
+        ],
+        "answers": {
+          "true": {
+            "verdict": {
+              "label": "official_home",
+              "rank": 0,
+              "eu_badge": false,
+              "provenance": "home"
+            }
+          },
+          "false": {
+            "ask": [
+              "preset",
+              "se_resident_eu_generic"
+            ],
+            "answers": {
+              "true": {
+                "verdict": {
+                  "label": "official_home",
+                  "rank": 0,
+                  "eu_badge": false,
+                  "provenance": "home"
+                }
+              },
+              "false": {
+                "verdict": {
+                  "label": "unknown",
+                  "rank": 99,
+                  "eu_badge": false,
+                  "provenance": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "pending": null
+    },
     "pending_changes": [],
     "notes_es": "",
     "last_verified": "2026-10-08"
@@ -1763,6 +2187,7 @@
     "watch_mode": "off",
     "evidence": [],
     "verdicts": [],
+    "rule": null,
     "pending_changes": [],
     "notes_es": "Fila ilustrativa: solo existe en los datos de ejemplo, para mostrar la sección de ofertas vencidas.",
     "last_verified": "2026-09-01"

@@ -8,7 +8,14 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from haggler.catalog import load_catalog, load_feasibility, load_payment_instruments, load_profiles
+from haggler.bundles.evaluate import BundleAssessment, assess_bundle
+from haggler.catalog import (
+    load_bundles,
+    load_catalog,
+    load_feasibility,
+    load_payment_instruments,
+    load_profiles,
+)
 from haggler.models.curated import FeasibilityFile
 from haggler.models.profiles import Profile
 from haggler.models.research import (
@@ -231,3 +238,33 @@ def test_leaf_names_the_card_to_open_online() -> None:
     )
     assert _verdict_leaf(Assessment(**base, steps=steps))["card_via"] == "paysera"
     assert "card_via" not in _verdict_leaf(Assessment(**base, steps=steps[1:]))
+
+
+@pytest.mark.parametrize("include_pending", [False, True])
+def test_bundle_tree_matches_assess_bundle_for_every_profile(include_pending: bool) -> None:
+    feasibility = load_feasibility()
+    ctx = context(feasibility)
+    presets = {p.id: profile_capabilities(p, ctx) for p in load_profiles().profiles}
+    candidates = [*load_profiles().profiles, *profiles()]
+
+    def bundle_leaf(a: BundleAssessment | None) -> tuple[str, int, bool, str] | None:
+        return None if a is None else (a.label, a.rank, a.eu_badge, a.provenance)
+
+    checked = 0
+    for bundle in load_bundles().bundles:
+        tree = explore(
+            lambda p, b=bundle: assess_bundle(b, p, ctx, include_pending=include_pending),
+            bundle_leaf,
+        )
+        for profile in candidates:
+            caps = profile_capabilities(profile, ctx)
+            same = next((pid for pid, pc in presets.items() if matches(caps, pc)), None)
+            if same is not None:
+                profile = profile.model_copy(update={"id": same})
+            expected = bundle_leaf(
+                assess_bundle(bundle, profile, ctx, include_pending=include_pending)
+            )
+            got = evaluate_tree(tree, caps, eea=EEA, presets=presets)
+            assert (None if got is None else tuple(got)) == expected, (bundle.bundle_id, caps)
+            checked += 1
+    assert checked > 100

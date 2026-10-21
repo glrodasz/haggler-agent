@@ -387,7 +387,7 @@ describe("site data contract (runtime)", () => {
     }
     // The v2 contract's key counts (the sample bundle carries every key).
     expect(counts).toEqual({
-      "": 35,
+      "": 36,
       ".price": 13,
       ".requirements": 8,
       ".components[0]": 9,
