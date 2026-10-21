@@ -1,46 +1,46 @@
 {
-  "as_of": "2026-10-17",
+  "as_of": "2026-10-21",
   "files": {
-    "coverage.json": "dc88bf4fd97880f3cad41d3bef344010f88c903885e9ce104273aa426147b766",
-    "fx.json": "cb3cae726d1923be87dc071148047a8cef58f4098cd6d9b8f12c491f8b94fbd1",
-    "prices.json": "ce78acecd4672f02c36eccb1f1adf5550e09b6ae58a9d3619ab0dc17aa7c5105",
-    "review_queue.json": "62ab71245c813f1566b430624b5572ecae5fcdf91ed6125bac1feace9cceb00a"
+    "coverage.json": "dacf9a323c67733e1111ce07a815bfbe06c8e63a1e96d0157b54a6a7687520c8",
+    "fx.json": "b71e10125441efb8b9a8fa7f083b4b5f53a0a3de6710f0a0955fe2518c9721f5",
+    "prices.json": "cb95d10e4a3b36983ee5745759c281bc57674844a3a041dc68844243814349cf",
+    "review_queue.json": "a19d615104922214857f732ad9fbd271f2166ae267a22b0727b9f834db71f3ff"
   },
-  "finished_at": "2026-10-17T02:44:52.152968+00:00",
+  "finished_at": "2026-10-21T02:43:25.335538+00:00",
   "report": {
-    "anomalies": 40,
+    "anomalies": 43,
     "dry_run": false,
     "errors": [],
-    "finished_at": "2026-10-17T02:44:52.152968Z",
+    "finished_at": "2026-10-21T02:43:25.335538Z",
     "llm": {
-      "accepted_items": 17,
-      "calls": 61,
+      "accepted_items": 15,
+      "calls": 63,
       "errors": 0,
-      "jobs": 92,
-      "rejected_items": 49,
-      "reused": 17,
-      "skipped_budget": 31
+      "jobs": 81,
+      "rejected_items": 36,
+      "reused": 26,
+      "skipped_budget": 18
     },
     "obs_by_status": {
-      "accepted": 2131,
-      "carried_forward": 13,
-      "quarantined": 7,
+      "accepted": 2143,
+      "carried_forward": 29,
+      "quarantined": 4,
       "rejected": 20
     },
-    "run_date": "2026-10-17",
-    "run_id": "2026-10-17-54e79f",
-    "started_at": "2026-10-17T02:17:14.034895Z",
-    "success_ratio": 0.9574,
+    "run_date": "2026-10-21",
+    "run_id": "2026-10-21-eea9dd",
+    "started_at": "2026-10-21T02:17:13.644867Z",
+    "success_ratio": 0.9608,
     "tasks_by_status": {
-      "failed": 12,
+      "failed": 10,
       "not_available": 31,
       "not_configured": 78,
-      "ok": 523,
+      "ok": 525,
       "partial": 8,
       "wrong_country": 13
     },
     "tasks_total": 665
   },
-  "run_id": "2026-10-17-54e79f",
+  "run_id": "2026-10-21-eea9dd",
   "schema_version": 1
 }
