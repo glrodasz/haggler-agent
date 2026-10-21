@@ -382,8 +382,8 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      # Base path/origin of the Pages site ("/haggler-agent", or "" with a custom domain). If Pages
-      # is not enabled yet this fails softly; the deploy step then reports the real problem.
+      # Base path/origin of the Pages site ("" on the custom domain, "/haggler-agent" without one).
+      # If Pages is not enabled yet this fails softly; the deploy step then reports the real problem.
       - name: Pages configuration
         id: pages
         if: steps.data.outputs.has_data == 'true'
@@ -399,14 +399,11 @@ jobs:
           PAGES_ORIGIN: ${{ steps.pages.outputs.origin }}
           OWNER: ${{ github.repository_owner }}
         run: |
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"
           if [ "$PAGES_OK" = "true" ]; then
             export BASE_PATH="$PAGES_BASE_PATH"
             export SITE_URL="${PAGES_ORIGIN:-https://${OWNER}.github.io}"
           else
-            export BASE_PATH="/${REPO_NAME}"
-            export SITE_URL="https://${OWNER}.github.io"
-            echo "::warning title=Pages::actions/configure-pages failed; using the default base path ${BASE_PATH} (a custom domain is not detected). Is Pages enabled with Source: GitHub Actions?"
+            echo "::warning title=Pages::actions/configure-pages failed; using the defaults in web/astro.config.mjs (the custom domain at the root). Is Pages enabled with Source: GitHub Actions?"
           fi
           echo "BASE_PATH='${BASE_PATH}' SITE_URL='${SITE_URL}'"
           npm ci
