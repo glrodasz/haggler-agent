@@ -2,8 +2,8 @@
  * Comparator state <-> URL hash ("#s=netflix.standard,spotify.family&r=2&c=EUR&p=x&u=1"), so a
  * selection can be bookmarked or shared without any server or storage. p (curated feasibility
  * profile) is left out for the default profile, pf (a profile the visitor described, see
- * profile.ts) replaces it, and u (include findings pending review) is left out when off, so the
- * common links stay short and old links keep working.
+ * profile.ts) replaces it, so the common links stay short. Old links may still carry u=1 (from the
+ * removed "include pending findings" toggle); it is ignored, since pending findings always count.
  */
 
 import { decodeProfile, encodeProfile, type VisitorProfile } from "./profile";
@@ -21,15 +21,11 @@ export interface CompareState {
   profile: string | null;
   /** A profile the visitor described; when set it replaces `profile`. */
   custom: VisitorProfile | null;
-  /** Count research findings still pending review. */
-  pending: boolean;
 }
 
 export interface DecodeOptions {
   /** Profile ids accepted for p= (the public profiles other than the default one). */
   profiles?: readonly string[];
-  /** Whether u=1 is accepted (false when no record is pending review). */
-  pending?: boolean;
   /** Residence countries accepted in pf= (none: pf= is ignored). */
   residences?: readonly string[];
   /** Tie countries accepted in pf=. */
@@ -59,7 +55,6 @@ export function defaultState(
     currency,
     profile: null,
     custom: null,
-    pending: false,
   };
 }
 
@@ -72,8 +67,7 @@ export function encodeState(state: CompareState): string {
     : state.profile === null
       ? ""
       : `&p=${encodeURIComponent(state.profile)}`;
-  const u = state.pending ? "&u=1" : "";
-  return `s=${s}&r=${state.risk}&c=${encodeURIComponent(state.currency)}${p}${u}`;
+  return `s=${s}&r=${state.risk}&c=${encodeURIComponent(state.currency)}${p}`;
 }
 
 function isRisk(value: number): value is RiskLevel {
@@ -124,6 +118,5 @@ export function decodeState(
     // A link to a profile that is gone (or the default one) shows the default profile.
     profile: !custom && (options.profiles ?? []).includes(profile) ? profile : null,
     custom,
-    pending: options.pending === true && params.get("u") === "1",
   };
 }

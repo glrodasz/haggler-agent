@@ -3,8 +3,8 @@
  * read from an inline <script type="application/json"> after hydration because passing ~1-2k
  * offers as island props would bloat the HTML with Astro's prop encoding. The feasibility
  * rules travel the same way: the offers carry the default profile's labels and are relabelled
- * (logic/verdicts.ts) when the visitor picks or describes another profile (logic/profile.ts) or
- * includes pending findings.
+ * (logic/verdicts.ts) with findings still pending review counted, for the profile the visitor
+ * describes (logic/profile.ts).
  */
 
 import { useEffect, useMemo, useState } from "preact/hooks";
@@ -120,8 +120,6 @@ export interface ComparadorProps {
   /** Countries a visitor can have ties with: the ones with prices, sorted by name. */
   tieCountries: ComparadorCountry[];
   eeaCountries: string[];
-  /** Whether any verdict depends on findings pending review (the checkbox only renders then). */
-  hasPending: boolean;
   /** id of the inline JSON element holding the feasibility rules. */
   verdictsId: string;
   /** Payment instruments that can be opened online, for the residence advice. */
@@ -188,7 +186,6 @@ export default function Comparador(props: ComparadorProps) {
   );
   const choice = state.custom ? toCapabilities(state.custom) : state.profile;
   const caps = capabilitiesOf(source, choice);
-  const preset = props.profiles.find((p) => p.id === (state.profile ?? props.defaultProfile));
   const visitor: VisitorProfile | null = state.custom ?? (caps ? fromCapabilities(caps) : null);
 
   const residenceById = useMemo(
@@ -275,16 +272,13 @@ export default function Comparador(props: ComparadorProps) {
   }, [state, ready]);
 
   const verdict = useMemo(
-    () => verdictLookup(source, choice, state.pending),
-    [source, state.custom, state.profile, state.pending],
+    () => verdictLookup(source, choice, true),
+    [source, state.custom, state.profile],
   );
-  // offers.json already carries the default profile's verdicts without pending findings.
+  // offers.json carries the default profile's verdicts without pending findings, so always relabel.
   const relabelled = useMemo(
-    () =>
-      offers && (state.custom || state.profile !== null || state.pending)
-        ? relabelOffers(offers, source, choice, state.pending)
-        : offers,
-    [offers, source, state.custom, state.profile, state.pending],
+    () => (offers ? relabelOffers(offers, source, choice, true) : offers),
+    [offers, source, state.custom, state.profile],
   );
 
   const instrumentById = useMemo(
@@ -341,10 +335,6 @@ export default function Comparador(props: ComparadorProps) {
     setState((s) => ({ ...s, plans: { ...s.plans, [id]: plan } }));
   const setRisk = (risk: RiskLevel) => setState((s) => ({ ...s, risk }));
   const setCurrency = (currency: string) => setState((s) => ({ ...s, currency }));
-  const setProfile = (id: string) =>
-    setState((s) =>
-      followCurrency(s, { ...s, custom: null, profile: id === props.defaultProfile ? null : id }),
-    );
   function decodeHash(fallback: CompareState): CompareState {
     return decodeState(
       window.location.hash,
@@ -355,7 +345,6 @@ export default function Comparador(props: ComparadorProps) {
       fallback,
       {
         profiles: props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile),
-        pending: props.hasPending,
         residences: props.residences.map((r) => r.cc),
         countries: new Set(props.tieCountries.map((c) => c.cc)),
       },
@@ -398,7 +387,6 @@ export default function Comparador(props: ComparadorProps) {
     cc && editProfile((v) => ({ ...v, ties: [...v.ties, emptyTie(cc)] }));
   const removeTie = (i: number) =>
     editProfile((v) => ({ ...v, ties: v.ties.filter((_, j) => j !== i) }));
-  const setPending = (pending: boolean) => setState((s) => ({ ...s, pending }));
   const detectByIp = async () => {
     setIpState("loading");
     const found = await lookupIp();
@@ -430,6 +418,9 @@ export default function Comparador(props: ComparadorProps) {
 
   const { totals } = summary;
   const hasSaving = totals.saving > 0.005;
+  const usesPending = summary.rows.some(
+    (r) => r.best && verdict(r.best.service_id, r.best.country).provenance === "agent_pending",
+  );
   const share = async () => {
     try {
       await navigator.clipboard.writeText(location.href);
@@ -589,40 +580,6 @@ export default function Comparador(props: ComparadorProps) {
                       onSelect={addTie}
                     />
                   </fieldset>
-                </>
-              )}
-              <p id="perfil-descripcion" class="profile-desc">
-                {state.custom ? t.profileCustomDesc : preset?.description}
-              </p>
-              <p class="profile-examples">
-                <span class="small muted">{t.profileExamples}</span>
-                {props.profiles.map((p) => (
-                  <button
-                    type="button"
-                    class="chip"
-                    key={p.id}
-                    aria-pressed={!state.custom && preset?.id === p.id}
-                    onClick={() => setProfile(p.id)}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </p>
-              {props.hasPending && (
-                <>
-                  <label class="check" for="pendientes">
-                    <input
-                      type="checkbox"
-                      id="pendientes"
-                      checked={state.pending}
-                      aria-describedby="pendientes-ayuda"
-                      onChange={(e) => setPending(e.currentTarget.checked)}
-                    />
-                    {t.pendingLabel}
-                  </label>
-                  <p id="pendientes-ayuda" class="fieldset-help">
-                    {t.pendingHelp}
-                  </p>
                 </>
               )}
             </fieldset>
@@ -860,9 +817,8 @@ export default function Comparador(props: ComparadorProps) {
                             }
                             unevaluated={unevaluatedNote(r)}
                             pending={
-                              state.pending &&
                               verdict(r.best.service_id, r.best.country).provenance ===
-                                "agent_pending"
+                              "agent_pending"
                             }
                             template={
                               verdict(r.best.service_id, r.best.country).provenance === "template"
@@ -917,7 +873,7 @@ export default function Comparador(props: ComparadorProps) {
           {totals.withoutOffers.length > 0 && (
             <p class="note">{t.noOfferNote(names(totals.withoutOffers))}</p>
           )}
-          {state.pending && <p class="note">{t.pendingNote}</p>}
+          {usesPending && <p class="note">{t.pendingNote}</p>}
         </div>
       )}
       {caps && (
