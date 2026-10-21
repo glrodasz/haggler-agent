@@ -1,5 +1,6 @@
 ---
 import { getSite } from "../logic/data";
+import { localeOfUrl } from "../logic/paths";
 import { riskClass } from "../logic/site";
 
 interface Props {
@@ -8,7 +9,7 @@ interface Props {
 }
 
 const { label, rank } = Astro.props;
-const info = getSite().label(label, rank);
+const info = getSite(localeOfUrl(Astro.url)).label(label, rank);
 ---
 
 <span class={`badge ${riskClass(info.rank)}`} title={info.description}>{info.name}</span>

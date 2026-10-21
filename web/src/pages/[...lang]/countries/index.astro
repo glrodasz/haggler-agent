@@ -1,0 +1,61 @@
+---
+import CountryLabel from "../../../components/CountryLabel.astro";
+import TableWrap from "../../../components/TableWrap.astro";
+import { getMessages, lookupFor } from "../../../i18n";
+import { localeParams } from "../../../logic/paths";
+import Base from "../../../layouts/Base.astro";
+import { getSite } from "../../../logic/data";
+
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const t = msg.countriesIndex;
+const countries = [...site.countries].sort((a, b) =>
+  site.fmt.compareNames(site.countryName(a.cc), site.countryName(b.cc)),
+);
+---
+
+<Base title={t.title} current="countries">
+  <h1>{t.heading}</h1>
+  <p class="lead">{t.lead}</p>
+  <TableWrap captionId="paises-caption">
+    <table>
+      <caption id="paises-caption">{t.caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{t.colCountry}</th>
+          <th scope="col">{t.colCurrency}</th>
+          <th scope="col">{t.colRegion}</th>
+          <th scope="col">{t.colEu}</th>
+          <th scope="col" class="num">{t.colOffers}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          countries.map((c) => (
+            <tr class={c.cc === site.meta.residence ? "is-home" : undefined}>
+              <th scope="row">
+                <CountryLabel cc={c.cc} />
+                {c.cc === site.meta.residence && (
+                  <>
+                    {" "}
+                    <span class="badge risk-0">{msg.common.residenceTag}</span>
+                  </>
+                )}
+              </th>
+              <td>{c.currency}</td>
+              <td>{lookup(msg.regions, c.region)}</td>
+              <td>{c.eu_eea ? msg.common.yes : msg.common.no}</td>
+              <td class="num">{site.offersForCountry(c.cc).length}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </TableWrap>
+</Base>

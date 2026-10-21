@@ -1,5 +1,6 @@
 ---
-import { es, lookup } from "../i18n/es";
+import { getMessages, lookupFor } from "../i18n";
+import { localeOfUrl } from "../logic/paths";
 import { getSite } from "../logic/data";
 import type { BundleVerdict } from "../logic/types";
 import EuBadge from "./EuBadge.astro";
@@ -12,11 +13,14 @@ interface Props {
 }
 
 const { verdict: v, title } = Astro.props;
-const site = getSite();
-const t = es.bundle;
-const f = es.feasibility;
-// "unknown" (facts missing) is one of each axis' values in es.axes: "Sin datos".
-const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}, value);
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const t = msg.bundle;
+const f = msg.feasibility;
+// "unknown" (facts missing) is one of each axis' values in msg.axes: "Sin datos".
+const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {}, value);
 const pending = v.provenance === "agent_pending";
 ---
 
@@ -25,30 +29,30 @@ const pending = v.provenance === "agent_pending";
   <p class="badges">
     <RiskBadge label={v.label} rank={v.rank} />
     {v.eu_badge && <EuBadge />}
-    <span class={`badge provenance-${v.provenance}`} title={es.provenanceTitles[v.provenance]}>
-      {lookup(es.provenance, v.provenance)}
+    <span class={`badge provenance-${v.provenance}`} title={msg.provenanceTitles[v.provenance]}>
+      {lookup(msg.provenance, v.provenance)}
     </span>
   </p>
   <dl>
-    <dt>{es.axes.legality?.name}</dt>
+    <dt>{msg.axes.legality?.name}</dt>
     <dd>{axis("legality", v.legality)}</dd>
-    <dt>{es.axes.tos?.name}</dt>
+    <dt>{msg.axes.tos?.name}</dt>
     <dd>{axis("tos", v.tos)}</dd>
-    <dt>{es.axes.practical?.name}</dt>
+    <dt>{msg.axes.practical?.name}</dt>
     <dd>{axis("practical", v.practical)}</dd>
     <dt>{t.verdictConfidence}</dt>
-    <dd>{lookup(es.confidence, v.confidence)}</dd>
+    <dd>{lookup(msg.confidence, v.confidence)}</dd>
     <dt>{t.verdictStatus}</dt>
-    <dd>{lookup(es.curatedStatus, v.status)}</dd>
+    <dd>{lookup(msg.curatedStatus, v.status)}</dd>
   </dl>
-  {v.notes_es && <p class="small">{v.notes_es}</p>}
+  {v.notes_es && <p class="small" lang="es">{v.notes_es}</p>}
   {
     v.reasons_es.length > 0 && (
       <>
         <p class="small evidence-heading">{f.reasonsTitle}</p>
         <ul class="small">
           {v.reasons_es.map((r) => (
-            <li>{r}</li>
+            <li lang="es">{r}</li>
           ))}
         </ul>
       </>
@@ -60,7 +64,7 @@ const pending = v.provenance === "agent_pending";
         <p class="small evidence-heading">{f.assumptionsTitle}</p>
         <ul class="small">
           {v.assumptions_es.map((a) => (
-            <li>{a}</li>
+            <li lang="es">{a}</li>
           ))}
         </ul>
       </>
@@ -74,7 +78,7 @@ const pending = v.provenance === "agent_pending";
           {v.components.map((c) => (
             <li>
               {site.serviceName(c.service_id)}: <RiskBadge label={c.label} rank={c.rank} />
-              {c.provenance && <span class="muted"> · {lookup(es.provenance, c.provenance)}</span>}
+              {c.provenance && <span class="muted"> · {lookup(msg.provenance, c.provenance)}</span>}
             </li>
           ))}
         </ul>

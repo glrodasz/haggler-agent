@@ -1,5 +1,9 @@
 ---
-import { es } from "../i18n/es";
+import { getMessages } from "../i18n";
+import { localeOfUrl } from "../logic/paths";
+
+const locale = localeOfUrl(Astro.url);
+const msg = getMessages(locale);
 
 interface Props {
   channel: string;
@@ -8,6 +12,6 @@ interface Props {
 const { channel } = Astro.props;
 ---
 
-<span class={`badge channel-${channel}`} title={es.channelTitles[channel]}>
-  {es.channels[channel] ?? channel}
+<span class={`badge channel-${channel}`} title={msg.channelTitles[channel]}>
+  {msg.channels[channel] ?? channel}
 </span>
