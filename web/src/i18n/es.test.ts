@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Bundle } from "../logic/types";
 import { BUNDLE_DISPLAY_STATUSES, WATCH_MODES } from "../logic/types";
-import { es, profileDescription } from "./es";
+import { es } from "./es";
+import { profileDescription } from "./index";
 
 /** Every literal string in the copy (functions are templates and are checked separately). */
 function literals(value: unknown, path = "es"): [string, string][] {
@@ -42,10 +43,10 @@ describe("residence-neutral copy", () => {
   });
 
   it("describes the feasibility profile from meta.profile", () => {
-    expect(profileDescription("se_resident_co_citizen", "Suecia")).toMatch(
+    expect(profileDescription(es, "se_resident_co_citizen", "Suecia")).toMatch(
       /residente en Suecia.*colombian/,
     );
-    expect(profileDescription("otro_perfil", "España")).toContain("otro_perfil");
+    expect(profileDescription(es, "otro_perfil", "España")).toContain("otro_perfil");
     expect(es.methodology.disclaimer("residente en España")[1]).toContain("residente en España");
   });
 });

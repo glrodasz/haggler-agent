@@ -1,6 +1,8 @@
 ---
-import { es } from "../i18n/es";
 import { getSite } from "../logic/data";
+import { localeOfUrl } from "../logic/paths";
+
+const site = getSite(localeOfUrl(Astro.url));
 ---
 
-<span class="badge badge-eu" title={es.euBadgeTitle(getSite().residenceName)}>{es.euBadge}</span>
+<span class="badge badge-eu" title={site.msg.euBadgeTitle(site.residenceName)}>{site.msg.euBadge}</span>
