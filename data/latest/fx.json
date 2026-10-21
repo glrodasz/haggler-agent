@@ -1,89 +1,89 @@
 {
-  "as_of": "2026-10-17",
+  "as_of": "2026-10-21",
   "base": "EUR",
   "rates": {
     "AED": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-21",
       "currency": "AED",
-      "per_eur": "4.1227",
+      "per_eur": "4.1229",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "AFN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AFN",
-      "per_eur": "72.84",
+      "per_eur": "72.901",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ALL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ALL",
-      "per_eur": "91.18",
+      "per_eur": "90.84",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "AMD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AMD",
-      "per_eur": "405.31",
+      "per_eur": "405.56",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ANG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ANG",
-      "per_eur": "2.0094",
+      "per_eur": "2.0095",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "AOA": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AOA",
-      "per_eur": "1029.47",
+      "per_eur": "1031.14",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ARS": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-19",
       "currency": "ARS",
-      "per_eur": "1697.4347",
+      "per_eur": "1710.03165",
       "provider": "BCRA",
       "source": "frankfurter",
       "stale": false
     },
     "AUD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AUD",
-      "per_eur": "1.6171",
+      "per_eur": "1.6056",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "AWG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AWG",
-      "per_eur": "2.0062",
+      "per_eur": "2.0091",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "AZN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "AZN",
-      "per_eur": "1.9071",
+      "per_eur": "1.9079",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BAM": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "BAM",
       "per_eur": "1.9558",
       "provider": null,
@@ -91,39 +91,39 @@
       "stale": false
     },
     "BBD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BBD",
-      "per_eur": "2.2508",
+      "per_eur": "2.2565",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BDT": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BDT",
-      "per_eur": "138.3",
+      "per_eur": "138.77",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BHD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BHD",
-      "per_eur": "0.42209",
+      "per_eur": "0.42211",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BIF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BIF",
-      "per_eur": "3365.2",
+      "per_eur": "3374.59",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BMD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BMD",
       "per_eur": "1.1226",
       "provider": null,
@@ -131,103 +131,103 @@
       "stale": false
     },
     "BND": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BND",
-      "per_eur": "1.4379",
+      "per_eur": "1.4355",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BOB": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BOB",
-      "per_eur": "13.1045",
+      "per_eur": "13.1205",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BRL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BRL",
-      "per_eur": "5.7197",
+      "per_eur": "5.6339",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "BSD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BSD",
-      "per_eur": "1.1308",
+      "per_eur": "1.1337",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BTN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BTN",
-      "per_eur": "106.6",
+      "per_eur": "106.47",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BWP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BWP",
-      "per_eur": "15.0885",
+      "per_eur": "15.1108",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BYN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BYN",
-      "per_eur": "3.3862",
+      "per_eur": "3.3638",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "BZD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "BZD",
-      "per_eur": "2.2721",
+      "per_eur": "2.279",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CAD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CAD",
-      "per_eur": "1.5935",
+      "per_eur": "1.5758",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "CDF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CDF",
-      "per_eur": "2571.69",
+      "per_eur": "2570.88",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CHF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CHF",
-      "per_eur": "0.9272",
+      "per_eur": "0.9237",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "CLP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CLP",
-      "per_eur": "1103.49",
+      "per_eur": "1100.86",
       "provider": "BCCH",
       "source": "frankfurter",
       "stale": false
     },
     "CMD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CMD",
       "per_eur": "1.1226",
       "provider": null,
@@ -235,287 +235,287 @@
       "stale": false
     },
     "CNH": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CNH",
-      "per_eur": "7.5046",
+      "per_eur": "7.4945",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CNY": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CNY",
-      "per_eur": "7.5240",
+      "per_eur": "7.4894",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "COP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "COP",
-      "per_eur": "3567.718638",
+      "per_eur": "3548.156840",
       "provider": "BANREP",
       "source": "frankfurter",
       "stale": false
     },
     "CRC": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CRC",
-      "per_eur": "508.38",
+      "per_eur": "508.51",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CUP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CUP",
-      "per_eur": "26.942",
+      "per_eur": "26.943",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CVE": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CVE",
-      "per_eur": "110.28",
+      "per_eur": "110.27",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "CZK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "CZK",
-      "per_eur": "24.323",
+      "per_eur": "24.329",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "DJF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "DJF",
-      "per_eur": "199.14",
+      "per_eur": "199.22",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "DKK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "DKK",
-      "per_eur": "7.4748",
+      "per_eur": "7.4746",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "DOP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "DOP",
-      "per_eur": "69.348",
+      "per_eur": "69.616",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "DZD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "DZD",
-      "per_eur": "151.02",
+      "per_eur": "151.22",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "EGP": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-20",
       "currency": "EGP",
-      "per_eur": "59.9543",
+      "per_eur": "61.1046",
       "provider": "CBE",
       "source": "frankfurter",
       "stale": false
     },
     "ERN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ERN",
-      "per_eur": "17.0101",
+      "per_eur": "17.076",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ETB": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ETB",
-      "per_eur": "181.08",
+      "per_eur": "181.1",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "FJD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-21",
       "currency": "FJD",
-      "per_eur": "2.5275",
+      "per_eur": "2.5243",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "FKP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "FKP",
-      "per_eur": "0.84489",
+      "per_eur": "0.84201",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GBP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GBP",
-      "per_eur": "0.84385",
+      "per_eur": "0.84028",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "GEL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GEL",
-      "per_eur": "2.91",
+      "per_eur": "2.9126",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GGP": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "GGP",
-      "per_eur": "0.84481",
+      "per_eur": "0.84186",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GHS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GHS",
-      "per_eur": "13.046",
+      "per_eur": "13.0856",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GIP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GIP",
-      "per_eur": "0.85209",
+      "per_eur": "0.85197",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GMD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GMD",
-      "per_eur": "82.38",
+      "per_eur": "82.13",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GNF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GNF",
-      "per_eur": "9862",
+      "per_eur": "9881",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GTQ": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GTQ",
-      "per_eur": "8.5628",
+      "per_eur": "8.5783",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "GYD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "GYD",
-      "per_eur": "236.49",
+      "per_eur": "237.78",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "HKD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "HKD",
-      "per_eur": "8.8316",
+      "per_eur": "8.8023",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "HNL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "HNL",
-      "per_eur": "30.103",
+      "per_eur": "30.151",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "HTG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "HTG",
-      "per_eur": "146.59",
+      "per_eur": "146.86",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "HUF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "HUF",
-      "per_eur": "363.08",
+      "per_eur": "364.68",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "IDR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "IDR",
-      "per_eur": "20290.28",
+      "per_eur": "20170.57",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "ILS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ILS",
-      "per_eur": "3.4822",
+      "per_eur": "3.4853",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "IMP": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "IMP",
-      "per_eur": "0.84481",
+      "per_eur": "0.84186",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "INR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "INR",
-      "per_eur": "106.8640",
+      "per_eur": "106.4590",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "IQD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "IQD",
-      "per_eur": "1700.12",
+      "per_eur": "1701.15",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "IRR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "IRR",
-      "per_eur": "1978034",
+      "per_eur": "1983506",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ISK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ISK",
       "per_eur": "136.20",
       "provider": "ECB",
@@ -523,71 +523,71 @@
       "stale": false
     },
     "JEP": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "JEP",
-      "per_eur": "0.84481",
+      "per_eur": "0.84186",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "JMD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "JMD",
-      "per_eur": "177.55",
+      "per_eur": "177.38",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "JOD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "JOD",
-      "per_eur": "0.79591",
+      "per_eur": "0.79595",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "JPY": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "JPY",
-      "per_eur": "177.82",
+      "per_eur": "177.34",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "KES": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KES",
-      "per_eur": "145.52",
+      "per_eur": "145.62",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KGS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KGS",
-      "per_eur": "98.16",
+      "per_eur": "98.2",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KHR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KHR",
-      "per_eur": "4560.04",
+      "per_eur": "4566.57",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KMF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KMF",
-      "per_eur": "493.25",
+      "per_eur": "492.71",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KPW": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-20",
       "currency": "KPW",
       "per_eur": "145.96",
       "provider": null,
@@ -595,201 +595,201 @@
       "stale": false
     },
     "KRW": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KRW",
-      "per_eur": "1499.01",
+      "per_eur": "1489.17",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "KWD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KWD",
-      "per_eur": "0.34722",
+      "per_eur": "0.34694",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KYD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KYD",
-      "per_eur": "0.9398",
+      "per_eur": "0.93984",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "KZT": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "KZT",
-      "per_eur": "508.14",
+      "per_eur": "507.41",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LAK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LAK",
-      "per_eur": "25103",
+      "per_eur": "25007",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LBP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LBP",
-      "per_eur": "100713",
+      "per_eur": "100939",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LKR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LKR",
-      "per_eur": "371.18",
+      "per_eur": "371.73",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LRD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LRD",
-      "per_eur": "191.27",
+      "per_eur": "191.47",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LSL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LSL",
-      "per_eur": "18.4742",
+      "per_eur": "18.4344",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "LYD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "LYD",
-      "per_eur": "7.207",
+      "per_eur": "7.2134",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MAD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MAD",
-      "per_eur": "10.9792",
+      "per_eur": "10.9924",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MDL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MDL",
-      "per_eur": "20.109",
+      "per_eur": "20.064",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MGA": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MGA",
-      "per_eur": "5093",
+      "per_eur": "5113",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MKD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MKD",
-      "per_eur": "61.658",
+      "per_eur": "61.754",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MMK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MMK",
-      "per_eur": "2353.18",
+      "per_eur": "2353.78",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MNT": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MNT",
-      "per_eur": "4032.11",
+      "per_eur": "4035.18",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MOP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-21",
       "currency": "MOP",
-      "per_eur": "9.0813",
+      "per_eur": "9.082",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MRU": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MRU",
-      "per_eur": "45.01",
+      "per_eur": "44.988",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MUR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MUR",
-      "per_eur": "53.165",
+      "per_eur": "53.078",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MVR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MVR",
-      "per_eur": "17.3115",
+      "per_eur": "17.3267",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MWK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MWK",
-      "per_eur": "1944.21",
+      "per_eur": "1945.63",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "MXN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MXN",
-      "per_eur": "20.6871",
+      "per_eur": "20.7719",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "MYR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MYR",
-      "per_eur": "4.5929",
+      "per_eur": "4.5788",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "MZN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "MZN",
-      "per_eur": "71.418",
+      "per_eur": "71.448",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "NAD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "NAD",
-      "per_eur": "18.4875",
+      "per_eur": "18.4401",
       "provider": null,
       "source": "frankfurter",
       "stale": false
@@ -803,423 +803,423 @@
       "stale": false
     },
     "NIO": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "NIO",
-      "per_eur": "41.114",
+      "per_eur": "41.116",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "NOK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "NOK",
-      "per_eur": "10.6240",
+      "per_eur": "10.5245",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "NPR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "NPR",
-      "per_eur": "170.59",
+      "per_eur": "170.5",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "NZD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "NZD",
-      "per_eur": "1.9868",
+      "per_eur": "1.9748",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "OMR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "OMR",
-      "per_eur": "0.43163",
+      "per_eur": "0.43165",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "PAB": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PAB",
-      "per_eur": "1.1205",
+      "per_eur": "1.1224",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "PEN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PEN",
-      "per_eur": "3.8472",
+      "per_eur": "3.8585",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "PGK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PGK",
-      "per_eur": "5.0648",
+      "per_eur": "5.0378",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "PHP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PHP",
-      "per_eur": "70.858",
+      "per_eur": "70.804",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "PKR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PKR",
-      "per_eur": "311.28",
+      "per_eur": "311.19",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "PLN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PLN",
-      "per_eur": "4.3700",
+      "per_eur": "4.3768",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "PYG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "PYG",
-      "per_eur": "6421",
+      "per_eur": "6435",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "QAR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "QAR",
-      "per_eur": "4.0862",
+      "per_eur": "4.0864",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "RON": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "RON",
-      "per_eur": "5.3310",
+      "per_eur": "5.3308",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "RSD": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "RSD",
-      "per_eur": "117.44",
+      "per_eur": "117.46",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "RUB": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "RUB",
-      "per_eur": "94.0",
+      "per_eur": "93.0",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "RWF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "RWF",
-      "per_eur": "1655.21",
+      "per_eur": "1657.9",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SAR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-21",
       "currency": "SAR",
-      "per_eur": "4.2097",
+      "per_eur": "4.2099",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SBD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SBD",
-      "per_eur": "9.018",
+      "per_eur": "9.0079",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SCR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SCR",
-      "per_eur": "16.1193",
+      "per_eur": "16.4804",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SDG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SDG",
-      "per_eur": "672.62",
+      "per_eur": "673.66",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SEK": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SEK",
-      "per_eur": "11.1450",
+      "per_eur": "11.1230",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "SGD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SGD",
-      "per_eur": "1.4395",
+      "per_eur": "1.4338",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "SHP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SHP",
-      "per_eur": "0.84489",
+      "per_eur": "0.84201",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SLE": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SLE",
-      "per_eur": "26.662",
+      "per_eur": "26.367",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SOS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SOS",
-      "per_eur": "640.53",
+      "per_eur": "641.43",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SRD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SRD",
-      "per_eur": "42.275",
+      "per_eur": "42.309",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SSP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SSP",
-      "per_eur": "6443",
+      "per_eur": "6458",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "STN": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "STN",
-      "per_eur": "24.376",
+      "per_eur": "24.317",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SVC": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SVC",
-      "per_eur": "9.8093",
+      "per_eur": "9.8244",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SYP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SYP",
-      "per_eur": "136.83",
+      "per_eur": "136.97",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "SZL": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "SZL",
-      "per_eur": "18.4733",
+      "per_eur": "18.4532",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "THB": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "THB",
-      "per_eur": "37.602",
+      "per_eur": "37.738",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "TJS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TJS",
-      "per_eur": "10.347",
+      "per_eur": "10.3577",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TMT": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TMT",
-      "per_eur": "3.929",
+      "per_eur": "3.9292",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TND": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TND",
-      "per_eur": "3.3666",
+      "per_eur": "3.3646",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TOP": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TOP",
-      "per_eur": "2.6791",
+      "per_eur": "2.6782",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TRY": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TRY",
-      "per_eur": "55.7328",
+      "per_eur": "55.6009",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "TTD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TTD",
-      "per_eur": "7.5814",
+      "per_eur": "7.5769",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TWD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TWD",
-      "per_eur": "36.276",
+      "per_eur": "36.51",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "TZS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "TZS",
-      "per_eur": "2955.79",
+      "per_eur": "2961.46",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "UAH": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "UAH",
-      "per_eur": "50.383",
+      "per_eur": "50.559",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "UGX": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "UGX",
-      "per_eur": "4564.56",
+      "per_eur": "4656.81",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "USD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "USD",
-      "per_eur": "1.1253",
+      "per_eur": "1.1215",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "UYU": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "UYU",
-      "per_eur": "45.06",
+      "per_eur": "45.026",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "UZS": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "UZS",
-      "per_eur": "13438",
+      "per_eur": "13498",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "VES": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "VES",
-      "per_eur": "982.87",
+      "per_eur": "987.44",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "VND": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "VND",
-      "per_eur": "28993",
+      "per_eur": "28999",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "VUV": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "VUV",
-      "per_eur": "132.62",
+      "per_eur": "132.79",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "WST": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "WST",
-      "per_eur": "3.0869",
+      "per_eur": "3.0824",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XAF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XAF",
-      "per_eur": "656.02",
+      "per_eur": "655.98",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XAG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XAG",
-      "per_eur": "0.01959",
+      "per_eur": "0.01952",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XAU": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XAU",
       "per_eur": "0.00027",
       "provider": null,
@@ -1227,89 +1227,89 @@
       "stale": false
     },
     "XCD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XCD",
-      "per_eur": "3.0553",
+      "per_eur": "3.0841",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XCG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XCG",
-      "per_eur": "2.0172",
+      "per_eur": "2.0133",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XDR": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-21",
       "currency": "XDR",
-      "per_eur": "0.82865",
+      "per_eur": "0.82813",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XOF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XOF",
-      "per_eur": "656.02",
+      "per_eur": "655.98",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XPD": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XPD",
-      "per_eur": "0.00099",
+      "per_eur": "0.001",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XPF": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XPF",
-      "per_eur": "118.97",
+      "per_eur": "119.44",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "XPT": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "XPT",
-      "per_eur": "0.00069",
+      "per_eur": "0.00068",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "YER": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "YER",
-      "per_eur": "264.74",
+      "per_eur": "265.09",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ZAR": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ZAR",
-      "per_eur": "18.4930",
+      "per_eur": "18.4769",
       "provider": "ECB",
       "source": "ecb",
       "stale": false
     },
     "ZMW": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ZMW",
-      "per_eur": "22.429",
+      "per_eur": "22.522",
       "provider": null,
       "source": "frankfurter",
       "stale": false
     },
     "ZWG": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-20",
       "currency": "ZWG",
-      "per_eur": "29.79",
+      "per_eur": "29.867",
       "provider": null,
       "source": "frankfurter",
       "stale": false

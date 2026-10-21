@@ -2,120 +2,12 @@
   {
     "current": {
       "adapter_id": "appstore_iap",
-      "amount": "1.99",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "0d69801a204667fa",
-      "country": "FR",
-      "currency": "EUR",
-      "evidence_snippet": "100 Go – Forfait mensuel — 1,99 €",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "1.99",
-      "monthly_eur": "1.9900",
-      "obs_key": "google_one:100gb:FR:ios_iap:month",
-      "observed_at": "2026-10-17T02:44:49.311694Z",
-      "plan_id": "100gb",
-      "plan_label_raw": "100 Go – Forfait mensuel",
-      "reused": false,
-      "service_id": "google_one",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/fr/app/google-one/id1451784328",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "google_one:100gb:FR:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "19.99",
-      "billing_period": "year",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "0d69801a204667fa",
-      "country": "FR",
-      "currency": "EUR",
-      "evidence_snippet": "100 Go – Forfait annuel — 19,99 €",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "1.67",
-      "monthly_eur": "1.6700",
-      "obs_key": "google_one:100gb:FR:ios_iap:year",
-      "observed_at": "2026-10-17T02:44:49.311733Z",
-      "plan_id": "100gb",
-      "plan_label_raw": "100 Go – Forfait annuel",
-      "reused": false,
-      "service_id": "google_one",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/fr/app/google-one/id1451784328",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "google_one:100gb:FR:ios_iap:year",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "2.99",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "0d69801a204667fa",
-      "country": "FR",
-      "currency": "EUR",
-      "evidence_snippet": "200 Go – Forfait mensuel — 2,99 €",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "2.99",
-      "monthly_eur": "2.9900",
-      "obs_key": "google_one:200gb:FR:ios_iap:month",
-      "observed_at": "2026-10-17T02:44:49.311710Z",
-      "plan_id": "200gb",
-      "plan_label_raw": "200 Go – Forfait mensuel",
-      "reused": false,
-      "service_id": "google_one",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/fr/app/google-one/id1451784328",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "google_one:200gb:FR:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
       "amount": "49.99",
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.7,
-      "content_hash": "5be6a1308f84b794",
-      "country": "HN",
+      "content_hash": "2530bf1125391327",
+      "country": "UY",
       "currency": "USD",
       "evidence_snippet": "Google AI Pro (10 TB) — USD 49.99",
       "extraction": "llm",
@@ -124,19 +16,19 @@
         "llm_new_key"
       ],
       "monthly_equiv": "49.99",
-      "monthly_eur": "44.4237",
-      "obs_key": "google_one:ai_pro:HN:ios_iap:month",
-      "observed_at": "2026-10-17T02:44:49.311792Z",
+      "monthly_eur": "44.5742",
+      "obs_key": "google_one:ai_pro:UY:ios_iap:month",
+      "observed_at": "2026-10-21T02:43:21.068970Z",
       "plan_id": "ai_pro",
       "plan_label_raw": "Google AI Pro (10 TB)",
       "reused": false,
       "service_id": "google_one",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/hn/app/google-one/id1451784328",
+      "source_url": "https://apps.apple.com/uy/app/google-one/id1451784328",
       "status": "quarantined",
       "vat_included": true
     },
-    "obs_key": "google_one:ai_pro:HN:ios_iap:month",
+    "obs_key": "google_one:ai_pro:UY:ios_iap:month",
     "previous": null,
     "rule": "llm_new_key",
     "rules": [
@@ -146,69 +38,33 @@
   {
     "current": {
       "adapter_id": "appstore_iap",
-      "amount": "5.99",
+      "amount": "289",
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.7,
-      "content_hash": "56fe3da1d7aa1c8b",
-      "country": "AT",
-      "currency": "EUR",
-      "evidence_snippet": "Basis mit Werbung — 5,99 €",
+      "content_hash": "91b8870f142e5133",
+      "country": "IN",
+      "currency": "INR",
+      "evidence_snippet": "YouTube Premium Two-person — ₹ 289",
       "extraction": "llm",
       "flags": [
         "iap_maybe_marked_up",
         "llm_new_key"
       ],
-      "monthly_equiv": "5.99",
-      "monthly_eur": "5.9900",
-      "obs_key": "hbo_max:basic_with_ads:AT:ios_iap:month",
-      "observed_at": "2026-10-17T02:44:49.311942Z",
-      "plan_id": "basic_with_ads",
-      "plan_label_raw": "Basis mit Werbung",
+      "monthly_equiv": "289.00",
+      "monthly_eur": "2.7147",
+      "obs_key": "youtube_premium:duo:IN:ios_iap:month",
+      "observed_at": "2026-10-21T02:43:21.070015Z",
+      "plan_id": "duo",
+      "plan_label_raw": "YouTube Premium Two-person",
       "reused": false,
-      "service_id": "hbo_max",
+      "service_id": "youtube_premium",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/at/app/hbo-max-filme-und-serien/id1666653815",
+      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
       "status": "quarantined",
       "vat_included": true
     },
-    "obs_key": "hbo_max:basic_with_ads:AT:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "6.99",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "1cf0e1dcc4f9f45a",
-      "country": "IT",
-      "currency": "EUR",
-      "evidence_snippet": "Base con pubblicità — 6,99 €",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "6.99",
-      "monthly_eur": "6.9900",
-      "obs_key": "hbo_max:basic_with_ads:IT:ios_iap:month",
-      "observed_at": "2026-10-17T02:44:49.312153Z",
-      "plan_id": "basic_with_ads",
-      "plan_label_raw": "Base con pubblicità",
-      "reused": false,
-      "service_id": "hbo_max",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/it/app/hbo-max-guarda-film-e-serie/id1666653815",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "hbo_max:basic_with_ads:IT:ios_iap:month",
+    "obs_key": "youtube_premium:duo:IN:ios_iap:month",
     "previous": null,
     "rule": "llm_new_key",
     "rules": [
@@ -222,10 +78,10 @@
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.9,
-      "content_hash": "cc6fa5e124453575",
-      "country": "FI",
+      "content_hash": "a83f8ac640e676fe",
+      "country": "IE",
       "currency": "EUR",
-      "evidence_snippet": "YouTube Premium 10,49 €",
+      "evidence_snippet": "YouTube Premium €10.49",
       "extraction": "parser",
       "flags": [
         "iap_maybe_marked_up",
@@ -234,25 +90,25 @@
       ],
       "monthly_equiv": "10.49",
       "monthly_eur": "10.4900",
-      "obs_key": "youtube_premium:individual:FI:ios_iap:month",
-      "observed_at": "2026-10-17T02:17:45.748656Z",
+      "obs_key": "youtube_premium:individual:IE:ios_iap:month",
+      "observed_at": "2026-10-21T02:18:30.945972Z",
       "plan_id": "individual",
       "plan_label_raw": "YouTube Premium",
       "reused": false,
       "service_id": "youtube_premium",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/fi/app/youtube/id544007664",
+      "source_url": "https://apps.apple.com/ie/app/youtube/id544007664",
       "status": "quarantined",
       "vat_included": true
     },
-    "obs_key": "youtube_premium:individual:FI:ios_iap:month",
+    "obs_key": "youtube_premium:individual:IE:ios_iap:month",
     "previous": {
       "adapter_id": "appstore_iap",
-      "amount": "21.99",
+      "amount": "20.99",
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.9,
-      "country": "FI",
+      "country": "IE",
       "currency": "EUR",
       "extraction": "parser",
       "first_seen": "2026-10-15",
@@ -260,19 +116,55 @@
         "iap_maybe_marked_up"
       ],
       "last_changed": "2026-10-15",
-      "monthly_equiv": "21.99",
-      "obs_key": "youtube_premium:individual:FI:ios_iap:month",
+      "monthly_equiv": "20.99",
+      "obs_key": "youtube_premium:individual:IE:ios_iap:month",
       "plan_id": "individual",
       "plan_label_raw": "YouTube Premium",
       "service_id": "youtube_premium",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/fi/app/youtube/id544007664",
+      "source_url": "https://apps.apple.com/ie/app/youtube/id544007664",
       "status": "accepted",
       "vat_included": true
     },
     "rule": "big_change",
     "rules": [
       "big_change"
+    ]
+  },
+  {
+    "current": {
+      "adapter_id": "appstore_iap",
+      "amount": "195",
+      "billing_period": "month",
+      "channel": "ios_iap",
+      "confidence": 0.7,
+      "content_hash": "91b8870f142e5133",
+      "country": "IN",
+      "currency": "INR",
+      "evidence_snippet": "YouTube Premium — ₹ 195",
+      "extraction": "llm",
+      "flags": [
+        "iap_maybe_marked_up",
+        "llm_new_key"
+      ],
+      "monthly_equiv": "195.00",
+      "monthly_eur": "1.8317",
+      "obs_key": "youtube_premium:individual:IN:ios_iap:month",
+      "observed_at": "2026-10-21T02:43:21.069982Z",
+      "plan_id": "individual",
+      "plan_label_raw": "YouTube Premium",
+      "reused": false,
+      "service_id": "youtube_premium",
+      "source_kind": "official",
+      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
+      "status": "quarantined",
+      "vat_included": true
+    },
+    "obs_key": "youtube_premium:individual:IN:ios_iap:month",
+    "previous": null,
+    "rule": "llm_new_key",
+    "rules": [
+      "llm_new_key"
     ]
   }
 ]

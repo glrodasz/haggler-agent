@@ -1613,7 +1613,7 @@
     "country": "AL",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1893,7 +1893,7 @@
     "country": "LV",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2915,9 +2915,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "LU",
-    "failing_since": "2026-10-17",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -3083,9 +3083,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SI",
-    "failing_since": "2026-10-17",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5565,7 +5565,7 @@
     "country": "IN",
     "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5621,7 +5621,7 @@
     "country": "ME",
     "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
