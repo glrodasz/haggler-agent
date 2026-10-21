@@ -339,6 +339,17 @@ def test_gcp_workflows_skip_other_branches() -> None:
     assert 'if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]' in deploy_cfg
 
 
+def test_daily_workflow_runs_the_scheduled_job_from_the_default_branch() -> None:
+    daily = load("daily.yml")
+    assert daily["env"]["JOB_NAME"] == "${{ vars.GCP_JOB_NAME || 'haggler-daily' }}"
+    assert daily["permissions"]["actions"] == "write"
+    cfg = step(daily, "daily", "Check repository variables")["run"]
+    assert 'if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]' in cfg
+    run = step(daily, "daily", "Execute the daily prices job")["run"]
+    assert 'gcloud run jobs execute "${JOB_NAME}"' in run and "--wait" in run
+    assert "publish.yml" in step(daily, "daily", "Publish the site")["run"]
+
+
 def test_deploy_job_targets_the_scheduled_job() -> None:
     deploy = load("deploy-job.yml")
     assert deploy["env"]["JOB_NAME"] == "${{ vars.GCP_JOB_NAME || 'haggler-daily' }}"
