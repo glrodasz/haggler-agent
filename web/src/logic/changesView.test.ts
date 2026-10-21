@@ -23,17 +23,17 @@ describe("kindGroup", () => {
 });
 
 describe("query string", () => {
-  it("round-trips filters and page with Spanish keys", () => {
+  it("round-trips filters and page", () => {
     const state = { service: "netflix", country: "SE", kind: "up", channel: "web", page: 3 };
     const query = toChangesQuery(state);
-    expect(query).toBe("?servicio=netflix&pais=se&tipo=up&canal=web&pagina=3");
+    expect(query).toBe("?service=netflix&country=se&type=up&channel=web&page=3");
     expect(parseChangesQuery(query)).toEqual(state);
   });
 
   it("omits defaults and ignores invalid pages", () => {
     expect(toChangesQuery({ ...empty, page: 1 })).toBe("");
-    expect(parseChangesQuery("?pagina=abc").page).toBe(1);
-    expect(parseChangesQuery("?pagina=-4").page).toBe(1);
+    expect(parseChangesQuery("?page=abc").page).toBe(1);
+    expect(parseChangesQuery("?page=-4").page).toBe(1);
     expect(parseChangesQuery("").country).toBe("");
   });
 });

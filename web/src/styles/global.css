@@ -1184,10 +1184,6 @@ h1.service-title .monogram svg {
   display: grid;
   gap: var(--space-1);
 }
-.profile-desc {
-  margin: var(--space-2) 0 var(--space-3);
-  font-size: var(--text-sm);
-}
 .loading {
   padding: var(--space-4);
   border: 1px dashed var(--color-border);
@@ -1809,7 +1805,7 @@ fieldset.ties {
   align-items: center;
   gap: var(--space-2);
 }
-.tie-head select {
+.tie-head .combobox {
   flex: 1;
   min-width: 0;
 }
@@ -1869,28 +1865,6 @@ fieldset.own > legend {
 .locate-note .link-button {
   padding: 0;
 }
-.profile-examples {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-4);
-}
-.chip {
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--color-fg);
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: var(--space-1) var(--space-3);
-  cursor: pointer;
-  text-align: left;
-}
-.chip[aria-pressed="true"] {
-  border-color: var(--color-fg);
-  font-weight: 600;
-}
 .advice-list {
   list-style: none;
   margin: 0 0 var(--space-3);
@@ -1908,7 +1882,7 @@ fieldset.own > legend {
   border-radius: var(--radius);
 }
 
-/* /cambios: filters above the table and a pager below it (both need JavaScript). */
+/* /changes: filters above the table and a pager below it (both need JavaScript). */
 .changes [hidden] {
   display: none !important;
 }
@@ -1998,4 +1972,80 @@ a.pager-link:hover {
   min-width: auto;
   padding: 0;
   color: var(--color-muted);
+}
+
+/* Language: the boot script hides the page while it redirects to the visitor's language. */
+html[data-locale-pending] body {
+  opacity: 0;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+}
+.footer-bottom > div {
+  min-width: 0;
+}
+/* Always at the right edge, wrapped or not, so the menu opens towards the page. */
+.footer-bottom .language-menu {
+  margin-left: auto;
+}
+
+.language-menu {
+  position: relative;
+}
+.language-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-fg);
+  cursor: pointer;
+  list-style: none;
+}
+.language-menu summary::-webkit-details-marker {
+  display: none;
+}
+.language-menu summary:hover,
+.language-menu[open] summary {
+  border-color: var(--color-ink-muted);
+}
+.language-menu ul {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 10;
+  min-width: 11rem;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  background: var(--color-ink);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius);
+}
+.language-menu li + li {
+  margin-top: 0.15rem;
+}
+.language-menu a {
+  display: block;
+  padding: 0.55rem var(--space-3);
+  border-radius: calc(var(--radius) - 0.25rem);
+  color: var(--color-ink-fg);
+  text-decoration: none;
+}
+.language-menu a:hover {
+  background: var(--color-ink-border);
+}
+.language-menu a[aria-current="true"] {
+  font-weight: 600;
+}
+.language-menu a[aria-current="true"]::after {
+  content: " ✓";
+  color: var(--color-ink-muted);
 }

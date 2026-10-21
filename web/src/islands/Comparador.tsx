@@ -3,13 +3,14 @@
  * read from an inline <script type="application/json"> after hydration because passing ~1-2k
  * offers as island props would bloat the HTML with Astro's prop encoding. The feasibility
  * rules travel the same way: the offers carry the default profile's labels and are relabelled
- * (logic/verdicts.ts) when the visitor picks or describes another profile (logic/profile.ts) or
- * includes pending findings.
+ * (logic/verdicts.ts) with findings still pending review counted, for the profile the visitor
+ * describes (logic/profile.ts).
  */
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { ServiceMark } from "../components/ServiceMark";
-import { es } from "../i18n/es";
+import { getMessages } from "../i18n";
+import type { Locale } from "../i18n/locale";
 import { instrumentAdvice } from "../logic/advice";
 import {
   cheapestFor,
@@ -23,17 +24,7 @@ import {
   visibleRiskLevels,
   summarize,
 } from "../logic/compare";
-import {
-  currencyOption,
-  flagEmoji,
-  formatDate,
-  formatMoney,
-  formatNumber,
-  formatPercent,
-  formatPrice,
-  formatSignedMoney,
-  periodSuffix,
-} from "../logic/format";
+import { flagEmoji, formatFor } from "../logic/format";
 import { GEO_IP_HOST, guessFromBrowser, type Located, lookupIp } from "../logic/locate";
 import {
   changeResidence,
@@ -62,12 +53,14 @@ import {
 } from "../logic/verdicts";
 import { CountryCombobox } from "./CountryCombobox";
 import { RiskSlider } from "./RiskSlider";
+import { LocaleContext, useLocaleKit } from "./localeContext";
 
 export interface ComparadorService {
   id: string;
   name: string;
   default_plan: string;
-  plans: { id: string; label_es: string }[];
+  /** Plan names in the page's locale. */
+  plans: { id: string; label: string }[];
   href: string;
 }
 
@@ -95,6 +88,7 @@ export interface ComparadorResidence extends ComparadorCountry {
 }
 
 export interface ComparadorProps {
+  locale: Locale;
   services: ComparadorService[];
   /** Every label by id, for badges. */
   labels: Record<string, ComparadorLabel>;
@@ -120,8 +114,6 @@ export interface ComparadorProps {
   /** Countries a visitor can have ties with: the ones with prices, sorted by name. */
   tieCountries: ComparadorCountry[];
   eeaCountries: string[];
-  /** Whether any verdict depends on findings pending review (the checkbox only renders then). */
-  hasPending: boolean;
   /** id of the inline JSON element holding the feasibility rules. */
   verdictsId: string;
   /** Payment instruments that can be opened online, for the residence advice. */
@@ -153,8 +145,6 @@ function neutralProfile(cc: string): VisitorProfile {
   };
 }
 
-const t = es.compare;
-
 function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
 }
@@ -165,6 +155,19 @@ function unpackRules(value: unknown): FeasibilityRule[] {
 }
 
 export default function Comparador(props: ComparadorProps) {
+  const msg = getMessages(props.locale);
+  const fmt = formatFor(props.locale);
+  const t = msg.compare;
+  const {
+    currencyOption,
+    formatDate,
+    formatMoney,
+    formatNumber,
+    formatPercent,
+    formatPrice,
+    formatSignedMoney,
+    periodSuffix,
+  } = fmt;
   const { services, rates, feePct } = props;
   const [state, setState] = useState<CompareState>(() =>
     defaultState(services, props.defaultCurrency),
@@ -188,7 +191,6 @@ export default function Comparador(props: ComparadorProps) {
   );
   const choice = state.custom ? toCapabilities(state.custom) : state.profile;
   const caps = capabilitiesOf(source, choice);
-  const preset = props.profiles.find((p) => p.id === (state.profile ?? props.defaultProfile));
   const visitor: VisitorProfile | null = state.custom ?? (caps ? fromCapabilities(caps) : null);
 
   const residenceById = useMemo(
@@ -275,16 +277,13 @@ export default function Comparador(props: ComparadorProps) {
   }, [state, ready]);
 
   const verdict = useMemo(
-    () => verdictLookup(source, choice, state.pending),
-    [source, state.custom, state.profile, state.pending],
+    () => verdictLookup(source, choice, true),
+    [source, state.custom, state.profile],
   );
-  // offers.json already carries the default profile's verdicts without pending findings.
+  // offers.json carries the default profile's verdicts without pending findings, so always relabel.
   const relabelled = useMemo(
-    () =>
-      offers && (state.custom || state.profile !== null || state.pending)
-        ? relabelOffers(offers, source, choice, state.pending)
-        : offers,
-    [offers, source, state.custom, state.profile, state.pending],
+    () => (offers ? relabelOffers(offers, source, choice, true) : offers),
+    [offers, source, state.custom, state.profile],
   );
 
   const instrumentById = useMemo(
@@ -341,10 +340,6 @@ export default function Comparador(props: ComparadorProps) {
     setState((s) => ({ ...s, plans: { ...s.plans, [id]: plan } }));
   const setRisk = (risk: RiskLevel) => setState((s) => ({ ...s, risk }));
   const setCurrency = (currency: string) => setState((s) => ({ ...s, currency }));
-  const setProfile = (id: string) =>
-    setState((s) =>
-      followCurrency(s, { ...s, custom: null, profile: id === props.defaultProfile ? null : id }),
-    );
   function decodeHash(fallback: CompareState): CompareState {
     return decodeState(
       window.location.hash,
@@ -355,7 +350,6 @@ export default function Comparador(props: ComparadorProps) {
       fallback,
       {
         profiles: props.profiles.map((p) => p.id).filter((id) => id !== props.defaultProfile),
-        pending: props.hasPending,
         residences: props.residences.map((r) => r.cc),
         countries: new Set(props.tieCountries.map((c) => c.cc)),
       },
@@ -398,7 +392,6 @@ export default function Comparador(props: ComparadorProps) {
     cc && editProfile((v) => ({ ...v, ties: [...v.ties, emptyTie(cc)] }));
   const removeTie = (i: number) =>
     editProfile((v) => ({ ...v, ties: v.ties.filter((_, j) => j !== i) }));
-  const setPending = (pending: boolean) => setState((s) => ({ ...s, pending }));
   const detectByIp = async () => {
     setIpState("loading");
     const found = await lookupIp();
@@ -412,7 +405,7 @@ export default function Comparador(props: ComparadorProps) {
   };
 
   const planLabel = (serviceId: string, planId: string) =>
-    serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label_es ?? planId;
+    serviceById.get(serviceId)?.plans.find((p) => p.id === planId)?.label ?? planId;
   const names = (ids: string[]) => ids.map((id) => serviceById.get(id)?.name ?? id).join(", ");
   const unevaluatedNote = (r: SummaryRow): UnevaluatedInfo | null => {
     if (!r.unevaluated) return null;
@@ -430,6 +423,9 @@ export default function Comparador(props: ComparadorProps) {
 
   const { totals } = summary;
   const hasSaving = totals.saving > 0.005;
+  const usesPending = summary.rows.some(
+    (r) => r.best && verdict(r.best.service_id, r.best.country).provenance === "agent_pending",
+  );
   const share = async () => {
     try {
       await navigator.clipboard.writeText(location.href);
@@ -447,7 +443,7 @@ export default function Comparador(props: ComparadorProps) {
         )
       : "";
 
-  return (
+  const view = (
     <div class="comparador">
       <div class="comparador-main">
         <form class="controls" onSubmit={(e) => e.preventDefault()}>
@@ -480,7 +476,7 @@ export default function Comparador(props: ComparadorProps) {
                     >
                       {s.plans.map((p) => (
                         <option value={p.id} key={p.id}>
-                          {p.label_es}
+                          {p.label}
                         </option>
                       ))}
                     </select>
@@ -559,7 +555,7 @@ export default function Comparador(props: ComparadorProps) {
                     <ul class="tie-list">
                       {visitor.ties.map((tie, i) => (
                         <TieRow
-                          key={tie.cc}
+                          key={i}
                           index={i}
                           tie={tie}
                           name={countryName(tie.cc)}
@@ -589,40 +585,6 @@ export default function Comparador(props: ComparadorProps) {
                       onSelect={addTie}
                     />
                   </fieldset>
-                </>
-              )}
-              <p id="perfil-descripcion" class="profile-desc">
-                {state.custom ? t.profileCustomDesc : preset?.description}
-              </p>
-              <p class="profile-examples">
-                <span class="small muted">{t.profileExamples}</span>
-                {props.profiles.map((p) => (
-                  <button
-                    type="button"
-                    class="chip"
-                    key={p.id}
-                    aria-pressed={!state.custom && preset?.id === p.id}
-                    onClick={() => setProfile(p.id)}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </p>
-              {props.hasPending && (
-                <>
-                  <label class="check" for="pendientes">
-                    <input
-                      type="checkbox"
-                      id="pendientes"
-                      checked={state.pending}
-                      aria-describedby="pendientes-ayuda"
-                      onChange={(e) => setPending(e.currentTarget.checked)}
-                    />
-                    {t.pendingLabel}
-                  </label>
-                  <p id="pendientes-ayuda" class="fieldset-help">
-                    {t.pendingHelp}
-                  </p>
                 </>
               )}
             </fieldset>
@@ -860,9 +822,8 @@ export default function Comparador(props: ComparadorProps) {
                             }
                             unevaluated={unevaluatedNote(r)}
                             pending={
-                              state.pending &&
                               verdict(r.best.service_id, r.best.country).provenance ===
-                                "agent_pending"
+                              "agent_pending"
                             }
                             template={
                               verdict(r.best.service_id, r.best.country).provenance === "template"
@@ -917,7 +878,7 @@ export default function Comparador(props: ComparadorProps) {
           {totals.withoutOffers.length > 0 && (
             <p class="note">{t.noOfferNote(names(totals.withoutOffers))}</p>
           )}
-          {state.pending && <p class="note">{t.pendingNote}</p>}
+          {usesPending && <p class="note">{t.pendingNote}</p>}
         </div>
       )}
       {caps && (
@@ -931,6 +892,8 @@ export default function Comparador(props: ComparadorProps) {
       )}
     </div>
   );
+  // Nested parts (risk slider, tie rows, offer cells) read the locale from here.
+  return <LocaleContext.Provider value={props.locale}>{view}</LocaleContext.Provider>;
 }
 
 /**
@@ -945,6 +908,8 @@ function ResidenceAdvice(props: {
   eea: ReadonlySet<string>;
   countryName: (cc: string) => string;
 }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { caps, countryName } = props;
   const advice = instrumentAdvice(props.instruments, caps, props.eea);
   const inEea = props.eea.has(caps.residence_country);
@@ -1010,6 +975,9 @@ function OfferCell(props: {
   /** The instrument the route pays with, opened online for it. */
   cardVia: PaymentInstrumentView | null;
 }) {
+  const { msg, fmt } = useLocaleKit();
+  const t = msg.compare;
+  const { formatPrice, periodSuffix } = fmt;
   const { offer, label } = props;
   return (
     <div class="offer-cell">
@@ -1020,25 +988,25 @@ function OfferCell(props: {
         {props.countryName}
       </span>
       <span class="badges">
-        <span class={`badge channel-${offer.channel}`} title={es.channelTitles[offer.channel]}>
-          {es.channels[offer.channel] ?? offer.channel}
+        <span class={`badge channel-${offer.channel}`} title={msg.channelTitles[offer.channel]}>
+          {msg.channels[offer.channel] ?? offer.channel}
         </span>
         <span class={`badge ${riskClass(offer.rank)}`} title={label?.description}>
           {label?.name ?? offer.label}
         </span>
         {offer.eu_badge && (
-          <span class="badge badge-eu" title={es.euBadgeTitle(props.residenceName)}>
-            {es.euBadge}
+          <span class="badge badge-eu" title={msg.euBadgeTitle(props.residenceName)}>
+            {msg.euBadge}
           </span>
         )}
         {props.pending && (
-          <span class="badge provenance-agent_pending" title={es.provenanceTitles.agent_pending}>
-            {es.provenance.agent_pending}
+          <span class="badge provenance-agent_pending" title={msg.provenanceTitles.agent_pending}>
+            {msg.provenance.agent_pending}
           </span>
         )}
         {props.template && (
-          <span class="badge provenance-template" title={es.provenanceTitles.template}>
-            {es.provenance.template}
+          <span class="badge provenance-template" title={msg.provenanceTitles.template}>
+            {msg.provenance.template}
           </span>
         )}
       </span>
@@ -1092,6 +1060,8 @@ interface UnevaluatedInfo {
 }
 
 function UnevaluatedNote(props: { note: UnevaluatedInfo | null }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { note } = props;
   if (!note) return null;
   return (
@@ -1110,6 +1080,8 @@ function TieRow(props: {
   onChange: (patch: Partial<Tie>) => void;
   onRemove: () => void;
 }) {
+  const { msg } = useLocaleKit();
+  const t = msg.compare;
   const { tie, index } = props;
   const id = `vinculo-${index}`;
   const flags = [
@@ -1124,17 +1096,12 @@ function TieRow(props: {
         <label class="visually-hidden" for={`${id}-pais`}>
           {t.tieCountry(index + 1)}
         </label>
-        <select
+        <CountryCombobox
           id={`${id}-pais`}
+          countries={props.options}
           value={tie.cc}
-          onChange={(e) => props.onChange({ cc: e.currentTarget.value })}
-        >
-          {props.options.map((c) => (
-            <option value={c.cc} key={c.cc}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onSelect={(cc) => props.onChange({ cc })}
+        />
         <button
           type="button"
           class="link-button"

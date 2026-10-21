@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
+import { DASH, documentName, flagEmoji, formatFor, hostOf, isPdfUrl } from "./format";
+
+const {
   currencyOption,
-  DASH,
-  documentName,
-  flagEmoji,
   formatDate,
   formatDateLong,
   formatDateTime,
@@ -12,10 +11,8 @@ import {
   formatPercent,
   formatPrice,
   formatSignedMoney,
-  hostOf,
-  isPdfUrl,
   periodSuffix,
-} from "./format";
+} = formatFor("es");
 
 // Intl separates number and symbol with (narrow) no-break spaces; compare with plain spaces.
 const plain = (s: string) => s.replace(/[  ]/g, " ");

@@ -1,5 +1,5 @@
 /**
- * /cambios filters and pagination. The page renders every row; the browser script narrows them
+ * /changes filters and pagination. The page renders every row; the browser script narrows them
  * with these pure helpers and keeps the state in the query string so a filtered page can be shared.
  */
 
@@ -41,13 +41,13 @@ export interface ChangesState extends ChangesFilters {
   page: number;
 }
 
-/** Query-string keys, in Spanish like the rest of the site's URLs. */
+/** Query-string keys, in English like the site's paths, so a link works in every language. */
 export const QUERY_KEYS: Record<keyof ChangesState, string> = {
-  service: "servicio",
-  country: "pais",
-  kind: "tipo",
-  channel: "canal",
-  page: "pagina",
+  service: "service",
+  country: "country",
+  kind: "type",
+  channel: "channel",
+  page: "page",
 };
 
 const FILTER_FIELDS = ["service", "country", "kind", "channel"] as const;
@@ -64,7 +64,7 @@ export function parseChangesQuery(search: string): ChangesState {
   };
 }
 
-/** "?servicio=netflix&pagina=2", or "" for the unfiltered first page. Empty values are dropped. */
+/** "?service=netflix&page=2", or "" for the unfiltered first page. Empty values are dropped. */
 export function toChangesQuery(state: ChangesState): string {
   const params = new URLSearchParams();
   for (const field of FILTER_FIELDS) {

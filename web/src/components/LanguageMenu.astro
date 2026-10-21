@@ -1,0 +1,73 @@
+---
+/**
+ * The language menu: a disclosure listing every locale as a link to this page's counterpart.
+ * Each label is the language's own name, read in that language; a click remembers the choice
+ * (i18n/persistLocale.ts) so the next unprefixed visit lands there too.
+ */
+import { getMessages } from "../i18n";
+import { LANGUAGE_NAMES, LOCALES, switchLocalePath } from "../i18n/locale";
+import { localeOfUrl, stripBase, withBase } from "../logic/paths";
+import Icon from "./Icon.astro";
+
+const locale = localeOfUrl(Astro.url);
+const bare = stripBase(Astro.url.pathname);
+const msg = getMessages(locale);
+const links = LOCALES.map((target) => ({
+  locale: target,
+  href: withBase(switchLocalePath(bare, target)),
+  name: LANGUAGE_NAMES[target],
+  label: getMessages(target).language.switchTo,
+}));
+---
+
+<details class="language-menu">
+  <summary aria-label={`${msg.language.menuLabel}: ${LANGUAGE_NAMES[locale]}`}>
+    <Icon name="globe" size={16} />
+    <span>{LANGUAGE_NAMES[locale]}</span>
+  </summary>
+  <ul>
+    {
+      links.map((l) => (
+        <li>
+          <a
+            href={l.href}
+            hreflang={l.locale}
+            lang={l.locale}
+            data-switch-locale={l.locale}
+            aria-label={l.label}
+            aria-current={l.locale === locale ? "true" : undefined}
+          >
+            {l.name}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<script>
+  import { isLocale } from "../i18n/locale";
+  import { persistLocale } from "../i18n/persistLocale";
+
+  document.addEventListener("click", (event) => {
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+      "a[data-switch-locale]",
+    );
+    const target = link?.dataset.switchLocale;
+    if (!link || !isLocale(target)) return;
+    persistLocale(target);
+    // The comparator keeps its selection in the hash and /changes its filters in the query:
+    // carry both over to the other language.
+    if (location.search) link.search = location.search;
+    if (location.hash) link.hash = location.hash;
+  });
+
+  // Escape closes an open menu and gives focus back to its button.
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    for (const menu of document.querySelectorAll<HTMLDetailsElement>(".language-menu[open]")) {
+      menu.open = false;
+      menu.querySelector("summary")?.focus();
+    }
+  });
+</script>
