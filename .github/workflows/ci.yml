@@ -4,6 +4,9 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  # publish dispatches ci on its bot branches (data-sync, research-review): their pushes and PRs
+  # are made with GITHUB_TOKEN and start no workflow by themselves.
+  workflow_dispatch:
 
 permissions:
   contents: read

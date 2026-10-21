@@ -60,10 +60,10 @@ from haggler.models.bundles import WatchFile
 from haggler.models.curated import Bundle, BundlesFile
 from haggler.models.research import ReviewDecision, ReviewFile, SubjectFacts, subject_key
 from haggler.research.evaluate import EvalContext, assess
-from haggler.research.fields import FIELD_SPECS, value_label_es
+from haggler.research.fields import FIELD_SPECS
 from haggler.research.io import load_data_dir, load_data_watch
 from haggler.research.kinds import KINDS, parse_key
-from haggler.research.review import CLASS_ES, ReviewIndex, claim_lines, select_claims
+from haggler.research.review import ReviewIndex, claim_lines, select_claims
 
 REVIEW_FILE = "research_review.yaml"
 
@@ -490,7 +490,7 @@ def cmd_decide(args: argparse.Namespace, choice: str) -> int:
     return 0
 
 
-PROPOSER = "propuesta automática"
+PROPOSER = "automatic proposal"
 _MAX_BODY = 60_000  # GitHub caps a pull request body at 65 536 characters
 
 
@@ -517,7 +517,6 @@ def cmd_propose(args: argparse.Namespace) -> int:
             if s.kind == "bundle" and _is_bundle_value(c.field):
                 continue
             choice = "accept" if c.official else "reject"
-            source = CLASS_ES.get(c.check.source_class, c.check.source_class)
             decisions.append(
                 ReviewDecision(
                     id=c.id,
@@ -525,13 +524,12 @@ def cmd_propose(args: argparse.Namespace) -> int:
                     decision=choice,  # type: ignore[arg-type]
                     decided_on=on,
                     by=PROPOSER,
-                    note=f"fuente {source}",
+                    note=f"{c.check.source_class} source",
                 )
             )
-            spec = FIELD_SPECS.get(c.field)
-            fact = f"{spec.label_es if spec else c.field}: {value_label_es(c.field, c.value)}"
+            fact = f"{c.field.replace('_', ' ')}: {c.value.replace('_', ' ')}"
             rows.append(
-                f"| `{c.id}` | {_md_cell(fact)} | [{source}]({c.url}) | "
+                f"| `{c.id}` | {_md_cell(fact)} | [{c.check.source_class}]({c.url}) | "
                 f"{_md_cell(c.quote)} | **{choice}** |"
             )
     if not decisions:
@@ -541,23 +539,23 @@ def cmd_propose(args: argparse.Namespace) -> int:
     if args.body is not None:
         accepted = sum(d.decision == "accept" for d in decisions)
         head = [
-            f"{len(decisions)} hallazgos de la investigación esperan revisión. Este PR propone "
-            f"aceptar {accepted} (fuente oficial) y rechazar {len(decisions) - accepted} (prensa "
-            "o foro). **Fusionarlo aplica estas decisiones** en "
+            f"{len(decisions)} research findings are waiting for review. This PR proposes "
+            f"accepting {accepted} (official source) and rejecting {len(decisions) - accepted} "
+            "(press or forum). **Merging it applies these decisions** in "
             f"`data/curated/{REVIEW_FILE}`.",
             "",
-            "Cómo revisarlo: lee cada cita y comprueba que diga lo que afirma el dato. Para "
-            "cambiar una propuesta, edita su `decision:` en el diff (`accept` ↔ `reject`) con "
-            "una sugerencia o un commit en esta rama; publish no reescribe la rama mientras "
-            "tenga commits de otra persona.",
+            "How to review: read each quote and check that it says what the fact claims. To "
+            "change a proposal, edit its `decision:` in the diff (`accept` ↔ `reject`) with a "
+            "suggestion or a commit on this branch; publish does not rewrite the branch while "
+            "it has commits from someone else.",
             "",
-            "| Hallazgo | Dato | Fuente | Cita | Propuesta |",
+            "| Finding | Fact | Source | Quote | Proposal |",
             "| --- | --- | --- | --- | --- |",
         ]
         body = "\n".join(head)
         for i, row in enumerate(rows):
             if len(body) + len(row) > _MAX_BODY:
-                body += f"\n\n… y {len(rows) - i} más: `uv run haggler research review`."
+                body += f"\n\n… and {len(rows) - i} more: `uv run haggler research review`."
                 break
             body += "\n" + row
         args.body.write_text(body + "\n", encoding="utf-8")
