@@ -1907,3 +1907,95 @@ fieldset.own > legend {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
+
+/* /cambios: filters above the table and a pager below it (both need JavaScript). */
+.changes [hidden] {
+  display: none !important;
+}
+.changes-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  align-items: end;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+.changes-filter {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.changes-clear {
+  justify-self: start;
+  min-height: 2.75rem;
+}
+.changes-count {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.changes-count:focus {
+  outline: none;
+}
+.changes-empty {
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-muted);
+}
+.pager ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pager-link,
+.pager-gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.pager-link {
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  text-decoration: none;
+}
+a.pager-link:hover {
+  border-color: var(--color-fg);
+  text-decoration: none;
+}
+.pager-link[aria-current="page"] {
+  background: var(--color-fg);
+  border-color: var(--color-fg);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+.pager-link.is-disabled {
+  color: var(--color-muted);
+  opacity: 0.5;
+}
+.pager-link .pager-word {
+  margin: 0 var(--space-1);
+}
+@media (max-width: 40rem) {
+  .pager ul {
+    gap: var(--space-1);
+  }
+  .pager-link .pager-word {
+    display: none;
+  }
+}
+.pager-gap {
+  min-width: auto;
+  padding: 0;
+  color: var(--color-muted);
+}
