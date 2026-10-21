@@ -312,7 +312,8 @@ services:
       # international app (1340650234).
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 530168168, exclude_patterns: ['bundle', 'combo', '\bdeal\b']}
+        # "Limited Commercials" is a US-only middle tier with ads; Essential stays the ad tier.
+        params: {app_id: 530168168, exclude_patterns: ['bundle', 'combo', '\bdeal\b', 'limited commercials']}
         countries: [US]
       - adapter: appstore_iap
         channel: ios_iap
