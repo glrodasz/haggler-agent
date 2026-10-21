@@ -559,7 +559,7 @@ export default function Comparador(props: ComparadorProps) {
                     <ul class="tie-list">
                       {visitor.ties.map((tie, i) => (
                         <TieRow
-                          key={tie.cc}
+                          key={i}
                           index={i}
                           tie={tie}
                           name={countryName(tie.cc)}
@@ -1124,17 +1124,12 @@ function TieRow(props: {
         <label class="visually-hidden" for={`${id}-pais`}>
           {t.tieCountry(index + 1)}
         </label>
-        <select
+        <CountryCombobox
           id={`${id}-pais`}
+          countries={props.options}
           value={tie.cc}
-          onChange={(e) => props.onChange({ cc: e.currentTarget.value })}
-        >
-          {props.options.map((c) => (
-            <option value={c.cc} key={c.cc}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onSelect={(cc) => props.onChange({ cc })}
+        />
         <button
           type="button"
           class="link-button"
