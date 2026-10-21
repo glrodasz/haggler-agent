@@ -1,13 +1,8 @@
 /**
- * Every piece of visible copy lives here (Spanish UI). Pages and components never hard-code
- * text, so wording can be reviewed in one place and a second locale stays possible.
+ * Spanish copy. Same shape as en.ts (the default locale), which the type below enforces.
  */
 
-/** "A", "A y B", "A, B y C". */
-function listEs(items: readonly string[]): string {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
-}
+import type { Messages } from "./en";
 
 export const es = {
   site: {
@@ -50,6 +45,12 @@ export const es = {
     sampleData: "Datos de ejemplo",
     dataAsOfShort: (date: string) => `Datos al ${date}`,
     backToCompare: "Volver al comparador",
+  },
+
+  language: {
+    menuLabel: "Idioma",
+    switchTo: "Cambiar a español",
+    spanishOnly: "En español",
   },
 
   common: {
@@ -677,9 +678,9 @@ export const es = {
 
   visitorProfile: {
     /** Lead of the note on pages that follow the visitor's profile. */
-    forYou: (residence: string, ties: string[]) =>
+    forYou: (residence: string, ties: string | null) =>
       `Precios y riesgos para tu perfil: vives en ${residence}${
-        ties.length === 0 ? ", sin vínculos con otros países" : `, con vínculos con ${listEs(ties)}`
+        ties === null ? ", sin vínculos con otros países" : `, con vínculos con ${ties}`
       }.`,
     forDefault: (profile: string) => `Precios y riesgos del perfil «${profile}».`,
     change: "Cámbialo en el comparador",
@@ -1033,6 +1034,10 @@ export const es = {
       `residente en ${residence} con ciudadanía y tarjeta colombianas`,
   } as Record<string, (residence: string) => string>,
   unknownProfile: (id: string, residence: string) => `perfil «${id}», residente en ${residence}`,
+  /** Spanish names come from the data (feasibility.json profiles[].name_es). */
+  profileNames: {} as Record<string, (residence: string) => string>,
+  /** Spanish plan names come from the data (services.json plans[].label_es). */
+  planNames: {} as Record<string, string>,
 
   notFound: {
     title: "Página no encontrada",
@@ -1049,19 +1054,4 @@ export const es = {
         ...problems.map((p) => `  - ${p}`),
       ].join("\n"),
   },
-};
-
-export type Strings = typeof es;
-
-export function profileDescription(id: string, residence: string): string {
-  return es.profiles[id]?.(residence) ?? es.unknownProfile(id, residence);
-}
-
-export function riskLabelName(id: string): string {
-  return es.riskLabels[id]?.name ?? id;
-}
-
-export function lookup(table: Record<string, string>, key: string | null | undefined): string {
-  if (key === null || key === undefined) return es.common.unknown;
-  return table[key] ?? key;
-}
+} satisfies Messages;

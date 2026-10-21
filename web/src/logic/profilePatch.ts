@@ -17,10 +17,10 @@
  *   [data-cell=home-head|saving-head|second-head]   headers naming the residence/currency
  */
 
-import { es } from "../i18n/es";
+import { getMessages } from "../i18n";
 import type { PricedOffer } from "./compare";
-import { flagEmoji, formatMoney, formatSignedMoney } from "./format";
-import { routes } from "./paths";
+import { flagEmoji, formatFor } from "./format";
+import { routesFor } from "./paths";
 import { encodeProfile } from "./profile";
 import type { ProfileState } from "./profileClient";
 import { RISK_LEVELS, type RiskLevel } from "./types";
@@ -42,6 +42,11 @@ function fill(node: Element, ...children: Child[]): void {
   node.replaceChildren(...children);
 }
 
+/** The copy, formats and links of the kit's locale (the page's). */
+function kitOf({ kit }: ProfileState) {
+  return { msg: getMessages(kit.locale), fmt: formatFor(kit.locale), routes: routesFor(kit.locale) };
+}
+
 export function riskBadge(
   { kit }: ProfileState,
   label: string,
@@ -52,11 +57,18 @@ export function riskBadge(
   return el("span", { class: `badge ${riskClass(info?.rank ?? rank)}`, title: info?.description ?? "" }, name);
 }
 
-export function euBadge({ view }: ProfileState): HTMLElement {
-  return el("span", { class: "badge badge-eu", title: es.euBadgeTitle(view.residenceName) }, es.euBadge);
+export function euBadge(state: ProfileState): HTMLElement {
+  const { msg } = kitOf(state);
+  return el(
+    "span",
+    { class: "badge badge-eu", title: msg.euBadgeTitle(state.view.residenceName) },
+    msg.euBadge,
+  );
 }
 
-export function countryLabel({ kit }: ProfileState, cc: string, link = true): HTMLElement {
+export function countryLabel(state: ProfileState, cc: string, link = true): HTMLElement {
+  const { kit } = state;
+  const { routes } = kitOf(state);
   const name = kit.country_names[cc] ?? cc;
   return el(
     "span",
@@ -67,28 +79,32 @@ export function countryLabel({ kit }: ProfileState, cc: string, link = true): HT
   );
 }
 
-function channelBadge(channel: string): HTMLElement {
+function channelBadge(state: ProfileState, channel: string): HTMLElement {
+  const { msg } = kitOf(state);
   return el(
     "span",
-    { class: `badge channel-${channel}`, title: es.channelTitles[channel] ?? "" },
-    es.channels[channel] ?? channel,
+    { class: `badge channel-${channel}`, title: msg.channelTitles[channel] ?? "" },
+    msg.channels[channel] ?? channel,
   );
 }
 
 /** The link that opens the comparator with this profile. */
-export function comparatorHref({ view }: ProfileState): string {
+export function comparatorHref(state: ProfileState): string {
+  const { view } = state;
+  const { routes } = kitOf(state);
   return `${routes.home()}#pf=${encodeURIComponent(encodeProfile(view.profile))}`;
 }
 
 function patchNotes(state: ProfileState): void {
   const { view, kit } = state;
+  const { msg, fmt } = kitOf(state);
   const ties = view.profile.ties.map((t) => kit.country_names[t.cc] ?? t.cc);
   for (const node of document.querySelectorAll("[data-profile-note]")) {
     fill(
       node,
-      es.visitorProfile.forYou(view.residenceName, ties),
+      msg.visitorProfile.forYou(view.residenceName, ties.length > 0 ? fmt.formatList(ties) : null),
       " ",
-      el("a", { href: comparatorHref(state) }, es.visitorProfile.change),
+      el("a", { href: comparatorHref(state) }, msg.visitorProfile.change),
     );
   }
   for (const node of document.querySelectorAll("[data-profile-residence]")) {
@@ -101,14 +117,15 @@ function patchNotes(state: ProfileState): void {
 
 function patchServices(state: ProfileState): void {
   const { view } = state;
+  const { msg, fmt } = kitOf(state);
   for (const table of document.querySelectorAll("table[data-profile-services]")) {
     const head = table.querySelector('[data-cell="home-head"]');
-    if (head) head.textContent = es.servicesIndex.colHome(view.residenceName);
+    if (head) head.textContent = msg.servicesIndex.colHome(view.residenceName);
     for (const row of table.querySelectorAll<HTMLElement>("tr[data-service]")) {
       const { service = "", plan = "" } = row.dataset;
       const result = view.cheapest(service, plan);
       const home = row.querySelector('[data-cell="home"]');
-      if (home) home.textContent = formatMoney(result.home?.cost_eur_with_fee, "EUR");
+      if (home) home.textContent = fmt.formatMoney(result.home?.cost_eur_with_fee, "EUR");
       for (const cell of row.querySelectorAll<HTMLElement>('[data-cell="risk"]')) {
         const k = Number(cell.dataset.level) as RiskLevel;
         const best = result.bestByRisk[k];
@@ -117,7 +134,7 @@ function patchServices(state: ProfileState): void {
             cell,
             countryLabel(state, best.country, false),
             " ",
-            el("span", { class: "num" }, formatMoney(best.cost_eur_with_fee, "EUR")),
+            el("span", { class: "num" }, fmt.formatMoney(best.cost_eur_with_fee, "EUR")),
           );
         } else {
           fill(cell, "—");
@@ -132,7 +149,7 @@ function offerBadges(state: ProfileState, best: PricedOffer): HTMLElement {
     "span",
     { class: "badges" },
     countryLabel(state, best.country),
-    channelBadge(best.channel),
+    channelBadge(state, best.channel),
     riskBadge(state, best.label, best.rank),
     ...(best.eu_badge ? [euBadge(state)] : []),
   );
@@ -140,9 +157,10 @@ function offerBadges(state: ProfileState, best: PricedOffer): HTMLElement {
 
 function patchSummaries(state: ProfileState): void {
   const { view } = state;
+  const { msg, fmt } = kitOf(state);
   for (const table of document.querySelectorAll<HTMLElement>("table[data-profile-summary]")) {
     const head = table.querySelector('[data-cell="saving-head"]');
-    if (head) head.textContent = es.service.colSaving(view.residenceName);
+    if (head) head.textContent = msg.service.colSaving(view.residenceName);
     const result = view.cheapest(table.dataset.service ?? "", table.dataset.plan ?? "");
     for (const row of table.querySelectorAll<HTMLElement>("tr[data-level]")) {
       const k = Number(row.dataset.level) as RiskLevel;
@@ -152,18 +170,19 @@ function patchSummaries(state: ProfileState): void {
       const cost = row.querySelector('[data-cell="cost"]');
       const saving = row.querySelector('[data-cell="saving"]');
       if (offer) fill(offer, best ? offerBadges(state, best) : "—");
-      if (cost) cost.textContent = formatMoney(best?.cost_eur_with_fee, "EUR");
-      if (saving) saving.textContent = formatSignedMoney(result.savingsMonthEur[k], "EUR");
+      if (cost) cost.textContent = fmt.formatMoney(best?.cost_eur_with_fee, "EUR");
+      if (saving) saving.textContent = fmt.formatSignedMoney(result.savingsMonthEur[k], "EUR");
     }
   }
 }
 
 function patchOffers(state: ProfileState): void {
   const { view, kit } = state;
+  const { msg, fmt } = kitOf(state);
   const second = view.residenceCurrency !== "EUR" ? view.residenceCurrency : null;
   for (const head of document.querySelectorAll<HTMLElement>('[data-cell="second-head"]')) {
     head.hidden = second === null;
-    if (second) head.textContent = es.service.colMonthlyIn(second);
+    if (second) head.textContent = msg.service.colMonthlyIn(second);
   }
   for (const row of document.querySelectorAll<HTMLElement>("tr[data-offer-svc]")) {
     const { offerSvc = "", offerCc = "", offerCurrency = "" } = row.dataset;
@@ -197,7 +216,7 @@ function patchOffers(state: ProfileState): void {
             : Number.isFinite(eur) && rate
               ? eur * rate
               : null;
-        cell.textContent = formatMoney(value, second);
+        cell.textContent = fmt.formatMoney(value, second);
       }
     }
   }

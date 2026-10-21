@@ -1,17 +1,17 @@
 /**
  * Browser side of the visitor's profile on the pages other than the comparator: loads the kit
- * (/datos/perfil.json, once per page), resolves the visitor (logic/visitor.ts) and hands every
+ * (/datos/<locale>/perfil.json, once per page, in the page's locale), resolves the visitor (logic/visitor.ts) and hands every
  * subscriber the ProfileView, again whenever the comparator saves another profile.
  */
 
-import { routes } from "./paths";
+import { localeOfUrl, profileKitUrl } from "./paths";
 import { type ProfileKit, type ProfileView, profileView } from "./profileKit";
 import { onProfileChange, type ResolvedVisitor, resolveVisitor } from "./visitor";
 
 let kit: Promise<ProfileKit | null> | null = null;
 
 export function loadKit(): Promise<ProfileKit | null> {
-  kit ??= fetch(routes.profileKit())
+  kit ??= fetch(profileKitUrl(localeOfUrl(new URL(window.location.href))))
     .then((res) => (res.ok ? (res.json() as Promise<ProfileKit>) : null))
     .catch(() => null);
   return kit;

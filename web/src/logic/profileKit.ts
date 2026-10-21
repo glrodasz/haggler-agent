@@ -1,13 +1,14 @@
 /**
  * What the pages other than the comparator need to show prices and verdicts for the visitor's
  * profile (logic/visitor.ts) instead of the site's default one. Built once at build time into
- * /datos/perfil.json (pages/datos/perfil.json.ts), which each page fetches after it renders the
+ * /datos/<locale>/perfil.json (pages/datos/[locale]/perfil.json.ts), which each page fetches after it renders the
  * default profile's view (the no-JS fallback); the browser caches it across pages.
  *
  * Pure: buildProfileKit takes the site index, the rest only the kit.
  */
 
-import { es } from "../i18n/es";
+import { getMessages } from "../i18n";
+import type { Locale } from "../i18n/locale";
 import {
   type Cheapest,
   type CompareContext,
@@ -30,6 +31,8 @@ export interface KitResidence {
 }
 
 export interface ProfileKit {
+  /** The locale of every name and label below (the page fetching it reads its copy in it). */
+  locale: Locale;
   default_profile: string;
   /** The default profile's residence: the fallback when the visitor cannot be located. */
   default_residence: string;
@@ -40,7 +43,7 @@ export interface ProfileKit {
   residences: KitResidence[];
   /** Countries a visitor can have ties with (the same ones). */
   tie_countries: string[];
-  /** Spanish names of every catalog country. */
+  /** Names of every catalog country. */
   country_names: Record<string, string>;
   rates: Record<string, number>;
   fee_pct: number;
@@ -60,14 +63,15 @@ export function buildProfileKit(site: SiteIndex): ProfileKit {
   const covered = site.countries
     .map((c) => c.cc)
     .filter((cc) => priced.size === 0 || priced.has(cc));
-  const names = Object.fromEntries(site.countries.map((c) => [c.cc, c.name_es]));
+  const names = Object.fromEntries(site.countries.map((c) => [c.cc, site.countryName(c.cc)]));
   return {
+    locale: site.locale,
     default_profile: site.feasibility.default_profile,
     default_residence: site.meta.residence,
     profiles: site.feasibility.profiles.map((p) => ({ id: p.id, capabilities: p.capabilities })),
     eea_countries: site.feasibility.eea_countries,
     rules: site.feasibility.rules,
-    residences: countryOptions(covered, names).map((o) => ({
+    residences: countryOptions(covered, names, site.fmt.intlLocale).map((o) => ({
       ...o,
       currency: site.country(o.cc)?.currency ?? "EUR",
     })),
@@ -79,7 +83,7 @@ export function buildProfileKit(site: SiteIndex): ProfileKit {
     labels: Object.fromEntries(
       [
         ...new Set([
-          ...Object.keys(es.riskLabels),
+          ...Object.keys(getMessages(site.locale).riskLabels),
           ...site.feasibility.labels.map((l) => l.id),
           ...site.offers.map((o) => o.label),
         ]),

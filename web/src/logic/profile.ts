@@ -165,16 +165,17 @@ export const ALL_COUNTRY_CODES = (
 ).split(" ");
 
 /**
- * Spanish names for `codes`, sorted by name: `known` (the catalog's own names) first, else the
- * runtime's region names, else the code.
+ * Names for `codes` in `intlLocale`, sorted by name: `known` (the site's own names) first, else
+ * the runtime's region names, else the code.
  */
 export function countryOptions(
   codes: readonly string[],
   known: Readonly<Record<string, string>>,
+  intlLocale = "es",
 ): { cc: string; name: string }[] {
   let names: Intl.DisplayNames | undefined;
   try {
-    names = new Intl.DisplayNames(["es"], { type: "region" });
+    names = new Intl.DisplayNames([intlLocale], { type: "region" });
   } catch {
     names = undefined;
   }
@@ -188,5 +189,5 @@ export function countryOptions(
   };
   return codes
     .map((cc) => ({ cc, name: name(cc) }))
-    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    .sort((a, b) => a.name.localeCompare(b.name, intlLocale));
 }

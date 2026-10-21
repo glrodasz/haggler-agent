@@ -4,20 +4,29 @@
  * clear message listing every missing file.
  */
 
+import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { assertSiteData, buildIndex, type SiteIndex } from "./site";
+import type { SiteData } from "./types";
 
 const modules = import.meta.glob<unknown>("../data/*.json", { eager: true, import: "default" });
 
-let cached: SiteIndex | undefined;
+let data: SiteData | undefined;
+const cached = new Map<Locale, SiteIndex>();
 
-export function getSite(): SiteIndex {
-  if (!cached) {
-    const raw: Record<string, unknown> = {};
-    for (const [path, value] of Object.entries(modules)) {
-      const name = path.replace(/^.*\//, "").replace(/\.json$/, "");
-      raw[name] = value;
+/** The site data with names, labels and formatting in `locale`. */
+export function getSite(locale: Locale = DEFAULT_LOCALE): SiteIndex {
+  let site = cached.get(locale);
+  if (!site) {
+    if (!data) {
+      const raw: Record<string, unknown> = {};
+      for (const [path, value] of Object.entries(modules)) {
+        const name = path.replace(/^.*\//, "").replace(/\.json$/, "");
+        raw[name] = value;
+      }
+      data = assertSiteData(raw);
     }
-    cached = buildIndex(assertSiteData(raw));
+    site = buildIndex(data, locale);
+    cached.set(locale, site);
   }
-  return cached;
+  return site;
 }

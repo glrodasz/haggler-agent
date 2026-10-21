@@ -10,8 +10,9 @@
  */
 
 import { useEffect, useState } from "preact/hooks";
-import { es } from "../i18n/es";
-import { flagEmoji, formatPercent } from "../logic/format";
+import { getMessages } from "../i18n";
+import type { Locale } from "../i18n/locale";
+import { flagEmoji, formatFor } from "../logic/format";
 import { defaultState, encodeState } from "../logic/selection";
 import { savingsTeasers, type Teaser } from "../logic/teasers";
 import { unpackOffers } from "../logic/transport";
@@ -20,6 +21,7 @@ import { onProfileChange, resolveVisitor } from "../logic/visitor";
 import type { ComparadorResidence, ComparadorService } from "./Comparador";
 
 export interface HeroSavingsProps {
+  locale: Locale;
   services: ComparadorService[];
   residences: ComparadorResidence[];
   /** Countries a tie can be with (the ones with prices). */
@@ -39,8 +41,6 @@ export interface HeroSavingsProps {
   targetId: string;
 }
 
-const t = es.home.teasers;
-const COUNTRIES = new Intl.ListFormat("es", { type: "conjunction" });
 /** More options than fit on screen, so the marquee has something to show. */
 const MAX_TAGS = 12;
 /** Marquee speed: seconds per tag for one full loop. */
@@ -59,6 +59,8 @@ function prefersReducedMotion(): boolean {
 }
 
 export default function HeroSavings(props: HeroSavingsProps) {
+  const t = getMessages(props.locale).home.teasers;
+  const { formatList, formatPercent } = formatFor(props.locale);
   const [teasers, setTeasers] = useState<Teaser[] | null>(null);
   const [residence, setResidence] = useState(props.residence);
 
@@ -132,7 +134,7 @@ export default function HeroSavings(props: HeroSavingsProps) {
           href={hash}
           tabIndex={copy ? -1 : undefined}
           title={`${condition}. ${t.linkTitle}`}
-          aria-label={`${t.headline(pct, COUNTRIES.format(teaser.countries.slice(0, 2).map(name)))}. ${condition}. ${t.linkTitle}`}
+          aria-label={`${t.headline(pct, formatList(teaser.countries.slice(0, 2).map(name)))}. ${condition}. ${t.linkTitle}`}
           onClick={(e) => open(e, hash)}
         >
           <span aria-hidden="true">{flagEmoji(where)}</span>

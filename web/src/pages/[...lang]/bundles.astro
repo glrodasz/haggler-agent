@@ -1,0 +1,108 @@
+---
+import CountryLabel from "../../components/CountryLabel.astro";
+import ProfileNote from "../../components/ProfileNote.astro";
+import { getMessages } from "../../i18n";
+import BundleGroups, { type BundleRow } from "../../islands/BundleGroups";
+import Base from "../../layouts/Base.astro";
+import { getSite } from "../../logic/data";
+import { localeParams, routesFor } from "../../logic/paths";
+import { bundleSavingNotes, otherProfileVerdicts } from "../../logic/site";
+
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const routes = routesFor(locale);
+const { formatDate, formatPercent } = site.fmt;
+const t = msg.bundlesIndex;
+const b = msg.bundle;
+const defaultProfile = site.feasibility.default_profile;
+const groups = site.bundleGroups();
+const expired = site.expiredBundles();
+const fee = formatPercent(site.meta.fx_fee_pct, { digits: 1 });
+const labels = Object.fromEntries(
+  [
+    ...new Set([
+      ...Object.keys(msg.riskLabels),
+      ...site.feasibility.labels.map((l) => l.id),
+      ...site.bundles.flatMap((x) => x.verdicts.map((v) => v.label)),
+    ]),
+  ].map((id) => [id, site.label(id)]),
+);
+// Every active bundle with what its row shows; the island regroups them for the visitor.
+const rows: BundleRow[] = groups.flatMap((g) =>
+  g.bundles.map((x) => {
+    const verdicts = site.bundleVerdicts(x);
+    const mark = (v: { label: string; rank: number } | undefined) =>
+      v ? { label: v.label, rank: v.rank } : null;
+    return {
+      bundle_id: x.bundle_id,
+      name: x.name,
+      href: routes.bundle(x.country, x.bundle_id),
+      linkLabel: t.cardLink(x.name, site.countryName(x.country)),
+      country: x.country,
+      countryName: site.countryName(x.country),
+      countryHref: routes.country(x.country),
+      display_status: x.display_status,
+      currency: x.price.currency,
+      monthly_eur: x.monthly_eur,
+      full_monthly_eur: x.full_monthly_eur,
+      monthly_eur_with_fee: x.monthly_eur_with_fee,
+      saving_basis: x.saving_basis,
+      saving_pct: x.saving_pct,
+      notes: bundleSavingNotes(x, msg),
+      main: mark(verdicts.main),
+      pending: mark(verdicts.pending),
+      others: otherProfileVerdicts(x, defaultProfile).map((v) => ({
+        label: v.label,
+        rank: v.rank,
+        profileName: site.profileName(v.profile),
+      })),
+    };
+  }),
+);
+---
+
+<Base title={t.title} current="bundles" description={t.lead}>
+  <h1>{t.heading}</h1>
+  <p class="lead">{t.lead}</p>
+  <ProfileNote />
+  <BundleGroups client:load locale={locale} bundles={rows} labels={labels} fee={fee} />
+
+  {
+    groups.length > 0 && (
+      <p class="note">
+        {t.savingNote} <a href={`${routes.methodology()}#paquetes`}>{t.methodologyLink}</a>
+      </p>
+    )
+  }
+
+  {
+    expired.length > 0 && (
+      <details class="expired-bundles">
+        <summary>{b.expiredTitle(expired.length)}</summary>
+        <p class="note">{b.expiredLead}</p>
+        <ul>
+          {expired.map((x) => {
+            const ended = site.bundleEndedOn(x);
+            return (
+              <li>
+                <a
+                  href={routes.bundle(x.country, x.bundle_id)}
+                  aria-label={t.cardLink(x.name, site.countryName(x.country))}
+                >
+                  {x.name}
+                </a>{" "}
+                · <CountryLabel cc={x.country} />
+                {ended && <span class="muted"> · {b.expiredOn(formatDate(ended))}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      </details>
+    )
+  }
+</Base>

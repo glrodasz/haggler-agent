@@ -12,7 +12,7 @@ export default defineConfig({
   site,
   base,
   output: "static",
-  // Directory output ("/servicios/netflix/index.html") + trailing slashes matches GitHub Pages.
+  // Directory output ("/services/netflix/index.html") + trailing slashes matches GitHub Pages.
   trailingSlash: "always",
   build: { format: "directory" },
   integrations: [preact()],

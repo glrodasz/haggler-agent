@@ -5,8 +5,9 @@
  * walked for it and the fee follows its residence currency.
  */
 
-import { es, lookup } from "../i18n/es";
-import { flagEmoji, formatMoney, formatPercent } from "../logic/format";
+import { getMessages, lookupFor } from "../i18n";
+import type { Locale } from "../i18n/locale";
+import { flagEmoji, formatFor } from "../logic/format";
 import { groupBundles, savingClass } from "../logic/site";
 import type { Bundle } from "../logic/types";
 import { useProfile } from "./useProfile";
@@ -40,14 +41,12 @@ export interface BundleRow {
 }
 
 export interface BundleGroupsProps {
+  locale: Locale;
   bundles: BundleRow[];
   labels: Record<string, { name: string; description: string; rank: number }>;
   /** e.g. "2 %". */
   fee: string;
 }
-
-const t = es.bundlesIndex;
-const b = es.bundle;
 
 function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
@@ -57,6 +56,11 @@ const groupId = (label: string) => `grupo-${label.replace(/[^a-z0-9_-]/gi, "-")}
 
 export default function BundleGroups(props: BundleGroupsProps) {
   const state = useProfile();
+  const es = getMessages(props.locale);
+  const lookup = lookupFor(es);
+  const t = es.bundlesIndex;
+  const b = es.bundle;
+  const { formatMoney, formatPercent } = formatFor(props.locale);
   const view = state?.view ?? null;
   const verdictOf = (x: BundleRow): (Mark & { pendingReview?: boolean }) | undefined => {
     if (!view) return x.main ?? undefined;

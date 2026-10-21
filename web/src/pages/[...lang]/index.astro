@@ -5,21 +5,28 @@ import Comparador, {
   type ComparadorProfile,
   type ComparadorResidence,
   type ComparadorService,
-} from "../islands/Comparador";
-import HeroSavings from "../islands/HeroSavings";
-import { es } from "../i18n/es";
-import Icon from "../components/Icon.astro";
-import LogoMark from "../components/LogoMark.astro";
-import Base from "../layouts/Base.astro";
-import { type CompareOfferFields, isCandidate } from "../logic/compare";
-import { getSite } from "../logic/data";
-import { formatDate } from "../logic/format";
-import { routes } from "../logic/paths";
-import { countryOptions } from "../logic/profile";
-import { inlineJson, packOffers } from "../logic/transport";
+} from "../../islands/Comparador";
+import HeroSavings from "../../islands/HeroSavings";
+import { getMessages } from "../../i18n";
+import Icon from "../../components/Icon.astro";
+import LogoMark from "../../components/LogoMark.astro";
+import Base from "../../layouts/Base.astro";
+import { type CompareOfferFields, isCandidate } from "../../logic/compare";
+import { getSite } from "../../logic/data";
+import { localeParams, routesFor } from "../../logic/paths";
+import { countryOptions } from "../../logic/profile";
+import { inlineJson, packOffers } from "../../logic/transport";
 
-const site = getSite();
-const t = es.home;
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const routes = routesFor(locale);
+const { formatDate } = site.fmt;
+const t = msg.home;
 
 // Only candidates travel to the browser, and only the fields the comparison needs.
 const offers: CompareOfferFields[] = site.offers.filter(isCandidate).map((o) => ({
@@ -47,12 +54,12 @@ const services: ComparadorService[] = site.pricedServices().map((s) => ({
   plans: [...s.plans]
     .filter((p) => p.id === s.default_plan || plansWithOffers.has(`${s.id}:${p.id}`))
     .sort((a, b) => a.rank - b.rank)
-    .map((p) => ({ id: p.id, label_es: p.label_es })),
+    .map((p) => ({ id: p.id, label: site.planLabel(s.id, p.id) })),
   href: routes.service(s.id),
 }));
 
 const labelIds = new Set([
-  ...Object.keys(es.riskLabels),
+  ...Object.keys(msg.riskLabels),
   ...site.feasibility.labels.map((l) => l.id),
   ...site.offers.map((o) => o.label),
   ...site.feasibility.records.map((r) => r.label),
@@ -61,7 +68,7 @@ const labels: Record<string, ComparadorLabel> = Object.fromEntries(
   [...labelIds].map((id) => [id, site.label(id)]),
 );
 const riskOptions: ComparadorLabel[] = site.acceptableLabels();
-const countryNames = Object.fromEntries(site.countries.map((c) => [c.cc, c.name_es]));
+const countryNames = Object.fromEntries(site.countries.map((c) => [c.cc, site.countryName(c.cc)]));
 const currencies = site.meta.display_currencies?.length ? site.meta.display_currencies : ["EUR"];
 const defaultCurrency = currencies.includes(site.residenceCurrency)
   ? site.residenceCurrency
@@ -72,7 +79,7 @@ const offersJson = inlineJson(packOffers(offers));
 // curated profile or one the visitor describes.
 const profiles: ComparadorProfile[] = site.feasibility.profiles.map((p) => ({
   id: p.id,
-  name: p.name_es,
+  name: site.profileName(p.id),
   description: p.description_es,
   capabilities: p.capabilities,
 }));
@@ -82,11 +89,15 @@ const priced = new Set(offers.map((o) => o.country));
 const covered = site.countries
   .map((c) => c.cc)
   .filter((cc) => priced.size === 0 || priced.has(cc));
-const residences: ComparadorResidence[] = countryOptions(covered, countryNames).map((o) => ({
+const residences: ComparadorResidence[] = countryOptions(covered, countryNames, site.fmt.intlLocale).map((o) => ({
   ...o,
   currency: site.country(o.cc)?.currency ?? "EUR",
 }));
-const tieCountries: ComparadorCountry[] = countryOptions(covered, countryNames);
+const tieCountries: ComparadorCountry[] = countryOptions(
+  covered,
+  countryNames,
+  site.fmt.intlLocale,
+);
 const verdictsJson = inlineJson({ rules: site.feasibility.rules });
 
 const [before, after] = t.heroTitle.split(t.heroAccent);
@@ -104,6 +115,7 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
         </h1>
         <HeroSavings
           client:load
+          locale={locale}
           services={services}
           residences={residences}
           tieCountries={tieCountries.map((c) => c.cc)}
@@ -190,14 +202,15 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 
       <noscript>
         <p class="callout warning">
-          {es.compare.noscript}{" "}
-          <a href={routes.services()}>{es.site.nav.services}</a> ·
-          <a href={routes.countries()}>{es.site.nav.countries}</a>
+          {msg.compare.noscript}{" "}
+          <a href={routes.services()}>{msg.site.nav.services}</a> ·
+          <a href={routes.countries()}>{msg.site.nav.countries}</a>
         </p>
       </noscript>
 
       <Comparador
         client:load
+        locale={locale}
         services={services}
         labels={labels}
         riskOptions={riskOptions}

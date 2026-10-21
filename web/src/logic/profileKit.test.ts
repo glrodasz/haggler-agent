@@ -12,7 +12,7 @@ const raw: Record<string, unknown> = {};
 for (const name of DATA_FILES) {
   raw[name] = JSON.parse(readFileSync(join(sampleDir, `${name}.json`), "utf8"));
 }
-const site = buildIndex(assertSiteData(raw));
+const site = buildIndex(assertSiteData(raw), "es");
 const kit = buildProfileKit(site);
 const defaultCaps = site.defaultProfile?.capabilities;
 
@@ -21,6 +21,13 @@ describe("profile kit", () => {
     const es = kit.residences.find((r) => r.cc === "ES");
     expect(es).toEqual({ cc: "ES", name: "España", currency: "EUR" });
     expect(kit.default_residence).toBe(site.meta.residence);
+  });
+
+  it("names countries and labels in the site's locale", () => {
+    const en = buildProfileKit(buildIndex(assertSiteData(raw), "en"));
+    expect(en.locale).toBe("en");
+    expect(kit.locale).toBe("es");
+    expect(en.residences.find((r) => r.cc === "ES")?.name).toBe("Spain");
   });
 
   it("gives the default profile the cheapest offers cheapest.json publishes", () => {

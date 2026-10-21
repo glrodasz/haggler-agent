@@ -1,0 +1,140 @@
+---
+import BundleCard from "../../../components/BundleCard.astro";
+import FeasibilityTable from "../../../components/FeasibilityTable.astro";
+import OfferTable from "../../../components/OfferTable.astro";
+import ProfileNote from "../../../components/ProfileNote.astro";
+import { getMessages, lookupFor } from "../../../i18n";
+import ProfileFeasibility from "../../../islands/ProfileFeasibility";
+import Base from "../../../layouts/Base.astro";
+import { getSite } from "../../../logic/data";
+import { flagEmoji } from "../../../logic/format";
+import { countrySlug, localeParams, routesFor } from "../../../logic/paths";
+import type { Locale } from "../../../i18n/locale";
+import type { CountryInfo } from "../../../logic/types";
+
+export function getStaticPaths() {
+  return localeParams().flatMap(({ params, props }) =>
+    getSite(props.locale).countries.map((country) => ({
+      params: { ...params, cc: countrySlug(country.cc) },
+      props: { ...props, country },
+    })),
+  );
+}
+
+interface Props {
+  locale: Locale;
+  country: CountryInfo;
+}
+
+const { locale, country } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatDate } = site.fmt;
+const t = msg.country;
+const countryName = site.countryName(country.cc);
+const offers = site.offersForCountry(country.cc);
+const bundles = site.bundlesForCountry(country.cc);
+const expired = site.expiredBundlesForCountry(country.cc);
+const records = site.feasibilityForCountry(country.cc);
+---
+
+<Base
+  title={msg.site.seo.countryTitle(countryName)}
+  description={msg.site.seo.countryDescription(countryName, country.currency)}
+  current="countries"
+>
+  <p class="small"><a href={routes.countries()}>← {t.backToCountries}</a></p>
+  <h1><span aria-hidden="true">{flagEmoji(country.cc)}</span> {countryName}</h1>
+  <ul class="facts">
+    <li>{t.currency}: <strong>{country.currency}</strong></li>
+    <li>{t.region}: <strong>{lookup(msg.regions, country.region)}</strong></li>
+    <li>{t.eu}: <strong>{country.eu_eea ? msg.common.yes : msg.common.no}</strong></li>
+    <li data-home-country={country.cc} hidden={country.cc !== site.meta.residence}>
+      <span class="badge risk-0">{msg.common.residenceTag}</span>
+    </li>
+  </ul>
+  <ProfileNote />
+
+  <section aria-labelledby="ofertas">
+    <h2 id="ofertas">{t.offersTitle}</h2>
+    {
+      offers.length === 0 ? (
+        <p>{t.noOffers}</p>
+      ) : (
+        <>
+          <OfferTable
+            offers={offers}
+            mode="country"
+            caption={t.offersCaption(countryName)}
+            captionId="ofertas-caption"
+          />
+          <p class="note">
+            {msg.service.convNote(formatDate(site.fx.as_of))}{" "}
+            {msg.service.updatedNote(formatDate(site.meta.as_of))}
+          </p>
+        </>
+      )
+    }
+  </section>
+
+  <section aria-labelledby="factibilidad">
+    <ProfileFeasibility
+      client:load
+      locale={locale}
+      mode="country"
+      subject={country.cc}
+      defaultResidenceName={site.residenceName}
+      defaultProfile={site.feasibility.default_profile}
+      names={Object.fromEntries(site.services.map((x) => [x.id, x.name]))}
+    >
+      <h2 id="factibilidad">{t.feasibilityTitle(site.residenceName)}</h2>
+      {
+        records.length === 0 ? (
+          <p>{t.noFeasibility}</p>
+        ) : (
+          <>
+            <p class="note">
+              {msg.service.feasibilityLead(site.residenceName, site.defaultProfile && site.profileName(site.defaultProfile.id))}
+            </p>
+            <FeasibilityTable
+              records={records}
+              mode="country"
+              caption={`${t.feasibilityTitle(site.residenceName)}: ${countryName}`}
+              captionId="factibilidad-caption"
+            />
+          </>
+        )
+      }
+    </ProfileFeasibility>
+  </section>
+
+  <section aria-labelledby="paquetes">
+    <h2 id="paquetes">{t.bundlesTitle}</h2>
+    {
+      bundles.length === 0 ? (
+        <p>{t.noBundles}</p>
+      ) : (
+        <ul class="cards">
+          {bundles.map((b) => (
+            <BundleCard bundle={b} />
+          ))}
+        </ul>
+      )
+    }
+    {
+      expired.length > 0 && (
+        <details class="expired-bundles">
+          <summary>{msg.bundle.expiredTitle(expired.length)}</summary>
+          <p class="note">{msg.bundle.expiredLead}</p>
+          <ul class="cards">
+            {expired.map((b) => (
+              <BundleCard bundle={b} />
+            ))}
+          </ul>
+        </details>
+      )
+    }
+  </section>
+</Base>

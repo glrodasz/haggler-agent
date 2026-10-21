@@ -1882,6 +1882,82 @@ fieldset.own > legend {
   border-radius: var(--radius);
 }
 
+/* Language: the boot script hides the page while it redirects to the visitor's language. */
+html[data-locale-pending] body {
+  opacity: 0;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+}
+.footer-bottom > div {
+  min-width: 0;
+}
+/* Always at the right edge, wrapped or not, so the menu opens towards the page. */
+.footer-bottom .language-menu {
+  margin-left: auto;
+}
+
+.language-menu {
+  position: relative;
+}
+.language-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-fg);
+  cursor: pointer;
+  list-style: none;
+}
+.language-menu summary::-webkit-details-marker {
+  display: none;
+}
+.language-menu summary:hover,
+.language-menu[open] summary {
+  border-color: var(--color-ink-muted);
+}
+.language-menu ul {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 10;
+  min-width: 11rem;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  background: var(--color-ink);
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius);
+}
+.language-menu li + li {
+  margin-top: 0.15rem;
+}
+.language-menu a {
+  display: block;
+  padding: 0.55rem var(--space-3);
+  border-radius: calc(var(--radius) - 0.25rem);
+  color: var(--color-ink-fg);
+  text-decoration: none;
+}
+.language-menu a:hover {
+  background: var(--color-ink-border);
+}
+.language-menu a[aria-current="true"] {
+  font-weight: 600;
+}
+.language-menu a[aria-current="true"]::after {
+  content: " ✓";
+  color: var(--color-ink-muted);
+}
+
 /* Parts logic/profilePatch.ts hides for the visitor's profile (badges and cells set display). */
 th[hidden],
 td[hidden],

@@ -1,15 +1,8 @@
 ---
-import { es, lookup } from "../i18n/es";
+import { getMessages, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
-import {
-  formatDate,
-  formatMoney,
-  formatPercent,
-  formatPrice,
-  hostOf,
-  periodSuffix,
-} from "../logic/format";
-import { bundleAnchor, routes } from "../logic/paths";
+import { hostOf } from "../logic/format";
+import { bundleAnchor, localeOfUrl, routesFor } from "../logic/paths";
 import { bundleSavingNotes, pendingValueText, savingClass } from "../logic/site";
 import type {
   Bundle,
@@ -25,9 +18,14 @@ interface Props {
 }
 
 const { bundle: b } = Astro.props;
-const site = getSite();
-const t = es.bundle;
-const f = es.feasibility;
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatDate, formatMoney, formatPercent, formatPrice, periodSuffix } = site.fmt;
+const t = msg.bundle;
+const f = msg.feasibility;
 const price = b.price;
 const per = periodSuffix(price.period);
 const money = (value: number | null) => formatPrice(value, price.currency);
@@ -84,7 +82,7 @@ const standaloneNote =
       : t.partialSum(names(b.standalone_missing));
 
 const saving = b.saving_pct;
-const savingNotes = bundleSavingNotes(b);
+const savingNotes = bundleSavingNotes(b, msg);
 
 // "Incluye" lists what the subscriber gets; discounts and free months are optional savings.
 const included = b.components.filter(
@@ -120,8 +118,8 @@ const requirements = requirementOrder
 const reqValue = (v: unknown): string =>
   typeof v === "boolean"
     ? v
-      ? es.common.yes
-      : es.common.no
+      ? msg.common.yes
+      : msg.common.no
     : lookup(t.requirementValues, String(v));
 
 const verdicts = site.bundleVerdicts(b);
@@ -148,7 +146,7 @@ const pendingText = (c: BundlePendingChange): string =>
 const evidenceMeta = (e: BundleEvidence): string[] =>
   [
     e.fact ? lookup(t.evidenceFacts, e.fact) : null,
-    f.sourceKind(lookup(es.evidenceKinds, e.kind)),
+    f.sourceKind(lookup(msg.evidenceKinds, e.kind)),
     e.retrieved_at ? f.retrievedOn(formatDate(e.retrieved_at)) : null,
     e.via ? lookup(t.evidenceVia, e.via) : null,
     e.edition ? t.evidenceEdition(e.edition) : null,
@@ -169,7 +167,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     b.status_reasons_es.length > 0 && (
       <ul class="small muted status-reasons" aria-label={t.statusReasons}>
         {b.status_reasons_es.map((r) => (
-          <li>{r}</li>
+          <li lang="es">{r}</li>
         ))}
       </ul>
     )
@@ -328,7 +326,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
   }
 
   <h4>{t.forProfile}</h4>
-  {defaultProfile && <p class="small muted">{defaultProfile.name_es}</p>}
+  {defaultProfile && <p class="small muted">{site.profileName(defaultProfile.id)}</p>}
   {
     verdicts.main ? (
       <BundleVerdict verdict={verdicts.main} />
@@ -360,7 +358,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
                 <a
                   href={e.url}
                   rel="nofollow noopener noreferrer external"
-                  aria-label={f.evidenceLinkLabel(hostOf(e.url), lookup(es.evidenceKinds, e.kind))}
+                  aria-label={f.evidenceLinkLabel(hostOf(e.url), lookup(msg.evidenceKinds, e.kind))}
                 >
                   {hostOf(e.url)}
                 </a>
@@ -411,7 +409,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
                   rel="nofollow noopener noreferrer external"
                   aria-label={f.evidenceLinkLabel(
                     hostOf(c.url),
-                    lookup(es.evidenceKinds, "official"),
+                    lookup(msg.evidenceKinds, "official"),
                   )}
                 >
                   {hostOf(c.url)}
@@ -429,7 +427,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     )
   }
 
-  {b.notes_es && <p class="note">{b.notes_es}</p>}
+  {b.notes_es && <p class="note" lang="es">{b.notes_es}</p>}
   <p class="small">
     <a href={b.official_url} rel="nofollow noopener noreferrer external">{t.officialPage}</a>
     {

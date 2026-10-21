@@ -1,0 +1,88 @@
+---
+import CountryLabel from "../../../components/CountryLabel.astro";
+import ProfileNote from "../../../components/ProfileNote.astro";
+import { ServiceMark } from "../../../components/ServiceMark";
+import TableWrap from "../../../components/TableWrap.astro";
+import { getMessages, lookupFor } from "../../../i18n";
+import Base from "../../../layouts/Base.astro";
+import { getSite } from "../../../logic/data";
+import { localeParams, routesFor } from "../../../logic/paths";
+import { RISK_LEVELS, type RiskKey } from "../../../logic/types";
+
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatMoney } = site.fmt;
+const t = msg.servicesIndex;
+const services = [...site.services].sort((a, b) => site.fmt.compareNames(a.name, b.name));
+const rowFor = (id: string, plan: string) =>
+  site.cheapest.find((r) => r.service_id === id && r.plan_id === plan);
+const countriesWith = (id: string) => new Set(site.offersForService(id).map((o) => o.country)).size;
+---
+
+<Base title={t.title} current="services">
+  <h1>{t.heading}</h1>
+  <p class="lead">{t.lead}</p>
+  <ProfileNote />
+  <TableWrap captionId="servicios-caption">
+    <table data-profile-services>
+      <caption id="servicios-caption">{t.caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{t.colService}</th>
+          <th scope="col">{t.colCategory}</th>
+          <th scope="col" class="num">{t.colCountries}</th>
+          <th scope="col">{t.colDefaultPlan}</th>
+          <th scope="col" class="num" data-cell="home-head">
+            {t.colHome(site.residenceName)}
+          </th>
+          {RISK_LEVELS.slice(1).map((k) => <th scope="col">{t.colRisk(k)}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {
+          services.map((s) => {
+            const row = rowFor(s.id, s.default_plan);
+            return (
+              <tr data-service={s.id} data-plan={s.default_plan}>
+                <th scope="row">
+                  <span class="service-title">
+                    <ServiceMark id={s.id} name={s.name} />
+                    <a href={routes.service(s.id)}>{s.name}</a>
+                  </span>
+                </th>
+                <td>{lookup(msg.categories, s.category)}</td>
+                <td class="num">{countriesWith(s.id)}</td>
+                <td>{site.planLabel(s.id, s.default_plan)}</td>
+                <td class="num" data-cell="home">
+                  {formatMoney(row?.home?.cost_eur_with_fee, "EUR")}
+                </td>
+                {RISK_LEVELS.slice(1).map((k) => {
+                  const best = row?.best_by_risk[`${k}` as RiskKey] ?? null;
+                  return (
+                    <td class="nowrap" data-cell="risk" data-level={k}>
+                      {best ? (
+                        <>
+                          <CountryLabel cc={best.country} link={false} />{" "}
+                          <span class="num">{formatMoney(best.cost_eur_with_fee, "EUR")}</span>
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })
+        }
+      </tbody>
+    </table>
+  </TableWrap>
+</Base>

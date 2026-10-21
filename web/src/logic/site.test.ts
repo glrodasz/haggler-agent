@@ -33,7 +33,7 @@ import type {
   SiteData,
 } from "./types";
 import { DATA_FILES, UNKNOWN_RANK } from "./types";
-import { bundleAnchor, routes, withBase } from "./paths";
+import { bundleAnchor, routesFor, stripBase, withBase } from "./paths";
 
 const sampleDir = join(import.meta.dirname, "..", "data-sample");
 
@@ -46,7 +46,7 @@ function loadSample(): SiteData {
 }
 
 const data = loadSample();
-const site = buildIndex(data);
+const site = buildIndex(data, "es");
 
 describe("sample data integrity", () => {
   it("ships exactly the contract files", () => {
@@ -178,7 +178,7 @@ describe("SiteIndex", () => {
 
   it("keeps changes newest first within 90 days of as_of", () => {
     const extra: ChangeRow = { ...data.changes[0]!, date: "2026-06-01" };
-    const idx = buildIndex({ ...data, changes: [extra, ...data.changes] });
+    const idx = buildIndex({ ...data, changes: [extra, ...data.changes] }, "es");
     const dates = idx.recentChanges(90).map((c) => c.date);
     expect(dates).not.toContain("2026-06-01");
     expect(dates).toEqual([...dates].sort().reverse());
@@ -337,7 +337,7 @@ describe("SiteIndex", () => {
     const late = buildIndex({
       ...data,
       meta: { ...data.meta, as_of: "2026-10-01", generated_at: "2026-10-10T05:00:00Z" },
-    });
+    }, "es");
     expect(late.daysBeforeGeneration("2026-10-05")).toBe(5);
   });
 
@@ -560,7 +560,7 @@ describe("bundles page (/paquetes) and the watched table", () => {
       saving_pct: number | null,
       saving_basis: Bundle["saving_basis"],
       display_status: Bundle["display_status"],
-    ) => bundleSavingNotes({ saving_pct, saving_basis, display_status });
+    ) => bundleSavingNotes({ saving_pct, saving_basis, display_status }, es);
     expect(notes(62.5, "marginal", "unverified")).toEqual([
       es.bundle.marginalSaving,
       es.bundle.unverifiedSaving,
@@ -571,7 +571,7 @@ describe("bundles page (/paquetes) and the watched table", () => {
     expect(notes(null, "marginal", "unverified")).toEqual([]);
     // Every unverified saving of the sample carries the qualifier.
     for (const b of data.bundles.filter((x) => x.saving_pct !== null)) {
-      expect(bundleSavingNotes(b).includes(es.bundle.unverifiedSaving), b.bundle_id).toBe(
+      expect(bundleSavingNotes(b, es).includes(es.bundle.unverifiedSaving), b.bundle_id).toBe(
         b.display_status !== "verified",
       );
     }
@@ -674,7 +674,7 @@ describe("empty data contract", () => {
   };
 
   it("builds the index without a run", () => {
-    const idx = buildIndex(assertSiteData({ ...empty }));
+    const idx = buildIndex(assertSiteData({ ...empty }), "es");
     expect(idx.isSample).toBe(false);
     expect(idx.pricedServices()).toEqual([]);
     expect(idx.residenceName).toBe("Suecia");
@@ -682,7 +682,7 @@ describe("empty data contract", () => {
 
   it("keeps the changelog when as_of is unknown", () => {
     expect(
-      buildIndex(empty)
+      buildIndex(empty, "es")
         .recentChanges(90)
         .map((c) => c.date),
     ).toEqual(["2026-01-15"]);
@@ -819,15 +819,54 @@ describe("selection hash", () => {
 
 describe("paths", () => {
   it("prefixes every internal link with the base", () => {
-    expect(withBase("servicios/", "/haggler-agent/")).toBe("/haggler-agent/servicios/");
-    expect(withBase("/servicios/", "/haggler-agent")).toBe("/haggler-agent/servicios/");
+    expect(withBase("services/", "/haggler-agent/")).toBe("/haggler-agent/services/");
+    expect(withBase("/services/", "/haggler-agent")).toBe("/haggler-agent/services/");
     expect(withBase("", "/")).toBe("/");
-    expect(routes.service("netflix", "/haggler-agent/")).toBe("/haggler-agent/servicios/netflix/");
-    expect(routes.country("CO", "/x/")).toBe("/x/paises/co/");
-    expect(routes.bundles("/x/")).toBe("/x/paquetes/");
+    const routes = routesFor("en");
+    expect(routes.home("/haggler-agent/")).toBe("/haggler-agent/");
+    expect(routes.service("netflix", "/haggler-agent/")).toBe("/haggler-agent/services/netflix/");
+    expect(routes.country("CO", "/x/")).toBe("/x/countries/co/");
+    expect(routes.bundles("/x/")).toBe("/x/bundles/");
     expect(routes.bundle("CO", "meli_plus_co_total", "/x/")).toBe(
-      "/x/paises/co/#paquete-meli_plus_co_total",
+      "/x/countries/co/#paquete-meli_plus_co_total",
     );
     expect(bundleAnchor("meli_plus_co_total")).toBe("paquete-meli_plus_co_total");
+  });
+
+  it("puts every other locale under its prefix", () => {
+    expect(routesFor("es").home("/haggler-agent/")).toBe("/haggler-agent/es/");
+    expect(routesFor("pt").service("netflix", "/x/")).toBe("/x/pt/services/netflix/");
+    expect(routesFor("es").methodology("/")).toBe("/es/methodology/");
+  });
+
+  it("strips the base before reading the locale", () => {
+    expect(stripBase("/haggler-agent/es/services/", "/haggler-agent/")).toBe("/es/services/");
+    expect(stripBase("/haggler-agent/", "/haggler-agent/")).toBe("/");
+    expect(stripBase("/es/", "/")).toBe("/es/");
+  });
+});
+
+describe("buildIndex in other locales", () => {
+  const en = buildIndex(data, "en");
+  const pt = buildIndex(data, "pt");
+
+  it("names countries, labels, plans and profiles in the page's language", () => {
+    expect(en.countryName("SE")).toBe("Sweden");
+    expect(pt.countryName("SE")).toBe("Suécia");
+    expect(site.countryName("SE")).toBe("Suecia");
+    expect(en.residenceName).toBe("Sweden");
+    expect(en.label("official_home").name).toBe("Official");
+    expect(pt.label("tos_breach_enforced").name).toBe("Viola os termos, com controle ativo");
+    expect(en.planLabel("netflix", "standard_with_ads")).toBe("Standard with ads");
+    expect(pt.planLabel("spotify", "family")).toBe("Família");
+    expect(en.planLabel("icloud_plus", "2tb")).toBe("2 TB");
+    expect(en.profileName("se_resident_co_citizen")).toBe(
+      "Resident in Sweden with Colombian citizenship",
+    );
+  });
+
+  it("formats numbers per locale", () => {
+    expect(en.fmt.formatPrice(3834, "SEK").replace(/\s/g, " ")).toBe("SEK 3,834");
+    expect(pt.fmt.formatPercent(7.5)).toMatch(/^7,5\s?%$/);
   });
 });

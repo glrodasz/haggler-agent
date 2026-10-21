@@ -3,8 +3,9 @@
  * vitest can exercise it against web/src/data-sample.
  */
 
-import { es } from "../i18n/es";
-import { documentName, formatDate, formatPercent, formatPrice, periodSuffix } from "./format";
+import { getMessages, type Messages } from "../i18n";
+import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
+import { documentName, type Format, formatFor } from "./format";
 import type {
   Bundle,
   BundleVerdict,
@@ -31,6 +32,10 @@ export interface LabelInfo {
 }
 
 export interface SiteIndex extends SiteData {
+  /** The locale every name, label and formatted value of this index is in. */
+  locale: Locale;
+  msg: Messages;
+  fmt: Format;
   residenceCountry: CountryInfo | undefined;
   residenceName: string;
   residenceCurrency: string;
@@ -314,11 +319,12 @@ export function bundleAnchors(bundle: Pick<Bundle, "evidence">): {
  */
 export function bundleSavingNotes(
   bundle: Pick<Bundle, "saving_pct" | "saving_basis" | "display_status">,
+  msg: Messages,
 ): string[] {
   if (bundle.saving_pct === null) return [];
   return [
-    ...(bundle.saving_basis === "marginal" ? [es.bundle.marginalSaving] : []),
-    ...(bundle.display_status !== "verified" ? [es.bundle.unverifiedSaving] : []),
+    ...(bundle.saving_basis === "marginal" ? [msg.bundle.marginalSaving] : []),
+    ...(bundle.display_status !== "verified" ? [msg.bundle.unverifiedSaving] : []),
   ];
 }
 
@@ -333,8 +339,10 @@ const MONEY_CODE = /^(\d+(?:\.\d+)?) ([A-Z]{3})(?:\/([a-z]+))?$/;
 export function pendingValueText(
   valueType: PendingValueType,
   value: string | null,
-  names: Pick<SiteIndex, "serviceName" | "planLabel">,
+  names: Pick<SiteIndex, "serviceName" | "planLabel" | "msg" | "fmt">,
 ): string {
+  const { msg: es, fmt } = names;
+  const { formatDate, formatPercent, formatPrice, periodSuffix } = fmt;
   if (value === null) return es.bundle.pendingNone;
   switch (valueType) {
     case "money": {
@@ -377,6 +385,8 @@ export function savingClass(pct: number | null): string {
  * file must exist and match the contract in types.ts (field names, JSON types, nullability).
  */
 export function assertSiteData(raw: Partial<Record<string, unknown>>): SiteData {
+  // Build errors stay in Spanish, like the problems validate.ts lists.
+  const es = getMessages("es");
   const missing = DATA_FILES.filter((name) => raw[name] === undefined);
   if (missing.length > 0) {
     throw new Error(missing.map((name) => es.errors.missingData(name)).join("\n"));
@@ -401,7 +411,35 @@ function daysBetween(fromIso: string, toIso: string): number {
   return ms / 86_400_000;
 }
 
-export function buildIndex(data: SiteData): SiteIndex {
+/**
+ * A country's name in `locale`: the catalog's Spanish name for Spanish, the runtime's region
+ * names otherwise (the catalog's name, then the code, when Intl has none).
+ */
+export function localizedCountryName(
+  cc: string,
+  nameEs: string | undefined,
+  locale: Locale,
+): string {
+  if (locale !== "es") {
+    try {
+      const name = new Intl.DisplayNames([formatFor(locale).intlLocale], { type: "region" }).of(cc);
+      if (name && name !== cc) return name;
+    } catch {
+      // Not a region code Intl knows: fall back to the catalog.
+    }
+  }
+  return nameEs ?? cc;
+}
+
+/** A plan's name: catalog labels are Spanish; the other locales translate the common words. */
+export function planName(labelEs: string, msg: Messages): string {
+  return msg.planNames[labelEs] ?? labelEs;
+}
+
+export function buildIndex(data: SiteData, locale: Locale = DEFAULT_LOCALE): SiteIndex {
+  const msg = getMessages(locale);
+  const fmt = formatFor(locale);
+  const { compareNames, formatPrice } = fmt;
   const services = new Map(data.services.map((s) => [s.id, s]));
   const countries = new Map(data.countries.map((c) => [c.cc, c]));
   const labels = new Map<string, RiskLabel>(data.feasibility.labels.map((l) => [l.id, l]));
@@ -425,25 +463,30 @@ export function buildIndex(data: SiteData): SiteIndex {
     );
 
   const serviceName = (id: string) => services.get(id)?.name ?? id;
-  const countryName = (cc: string) => countries.get(cc)?.name_es ?? cc;
+  const countryName = (cc: string) => localizedCountryName(cc, countries.get(cc)?.name_es, locale);
   const planOf = (serviceId: string, planId: string) =>
     services.get(serviceId)?.plans.find((p) => p.id === planId);
 
   const label = (id: string, rank?: number): LabelInfo => {
     const fromData = labels.get(id);
-    const fallback = es.riskLabels[id];
+    const fallback = msg.riskLabels[id];
+    // The data's names are Spanish: the other locales prefer their own copy of a label.
+    const own = locale === "es" ? undefined : fallback;
     return {
       id,
       rank: fromData?.rank ?? rank ?? UNKNOWN_RANK,
-      name: fromData?.name_es ?? fallback?.name ?? id,
-      description: fromData?.description_es ?? fallback?.description ?? "",
+      name: own?.name ?? fromData?.name_es ?? fallback?.name ?? id,
+      description: own?.description ?? fromData?.description_es ?? fallback?.description ?? "",
     };
   };
 
   const index: SiteIndex = {
     ...data,
+    locale,
+    msg,
+    fmt,
     residenceCountry,
-    residenceName: residenceCountry?.name_es ?? data.meta.residence,
+    residenceName: countryName(data.meta.residence),
     residenceCurrency: residenceCountry?.currency ?? "EUR",
     defaultProfile,
     isSample: (data.meta.run_id ?? "").startsWith("sample"),
@@ -452,7 +495,7 @@ export function buildIndex(data: SiteData): SiteIndex {
     serviceName,
     countryName,
     planLabel: (serviceId, planId) =>
-      planId ? (planOf(serviceId, planId)?.label_es ?? planId) : es.common.unknown,
+      planId ? planName(planOf(serviceId, planId)?.label_es ?? planId, msg) : msg.common.unknown,
     planRank: (serviceId, planId) => planOf(serviceId, planId)?.rank ?? 0,
     label,
     acceptableLabels: () => {
@@ -473,14 +516,19 @@ export function buildIndex(data: SiteData): SiteIndex {
         .filter((o) => o.country === cc)
         .sort((a, b) => {
           if (a.service_id !== b.service_id) {
-            return serviceName(a.service_id).localeCompare(serviceName(b.service_id), "es");
+            return compareNames(serviceName(a.service_id), serviceName(b.service_id));
           }
           const ra = planOf(a.service_id, a.plan_id)?.rank ?? 0;
           const rb = planOf(b.service_id, b.plan_id)?.rank ?? 0;
           if (ra !== rb) return ra - rb;
           return a.obs_key < b.obs_key ? -1 : 1;
         }),
-    profileName: (id) => data.feasibility.profiles.find((p) => p.id === id)?.name_es ?? id,
+    profileName: (id) => {
+      const profile = data.feasibility.profiles.find((p) => p.id === id);
+      const residence = profile?.capabilities.residence_country;
+      const name = residence ? msg.profileNames[id]?.(countryName(residence)) : undefined;
+      return name ?? profile?.name_es ?? id;
+    },
     bundlesForService: (serviceId) =>
       data.bundles.filter((b) => isActiveBundle(b) && bundleCoversService(b, serviceId)),
     discountBundlesForService: (serviceId) =>
@@ -497,8 +545,8 @@ export function buildIndex(data: SiteData): SiteIndex {
     watchedBundles: () =>
       [...data.bundles].sort(
         (a, b) =>
-          countryName(a.country).localeCompare(countryName(b.country), "es") ||
-          a.name.localeCompare(b.name, "es") ||
+          compareNames(countryName(a.country), countryName(b.country)) ||
+          compareNames(a.name, b.name) ||
           byId(a, b),
       ),
     bundleVerdicts: (bundle) =>
@@ -512,7 +560,7 @@ export function buildIndex(data: SiteData): SiteIndex {
     feasibilityForCountry: (cc) =>
       defaultRecords(
         (r) => r.target_country === cc,
-        (a, b) => serviceName(a.service_id).localeCompare(serviceName(b.service_id), "es"),
+        (a, b) => compareNames(serviceName(a.service_id), serviceName(b.service_id)),
       ),
     monthlyIn: (offer, currency) => {
       if (offer.currency === currency) return offer.monthly_equiv;
@@ -526,7 +574,7 @@ export function buildIndex(data: SiteData): SiteIndex {
       const withOffers = new Set(data.offers.map((o) => o.service_id));
       return data.services
         .filter((s) => withOffers.has(s.id))
-        .sort((a, b) => a.name.localeCompare(b.name, "es"));
+        .sort((a, b) => compareNames(a.name, b.name));
     },
     recentChanges: (days = 90) =>
       [...data.changes]

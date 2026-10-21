@@ -1,7 +1,7 @@
 ---
 import { getSite } from "../logic/data";
 import { flagEmoji } from "../logic/format";
-import { routes } from "../logic/paths";
+import { localeOfUrl, routesFor } from "../logic/paths";
 
 interface Props {
   cc: string;
@@ -9,7 +9,9 @@ interface Props {
 }
 
 const { cc, link = true } = Astro.props;
-const site = getSite();
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const routes = routesFor(locale);
 const name = site.countryName(cc);
 const known = site.country(cc) !== undefined;
 ---

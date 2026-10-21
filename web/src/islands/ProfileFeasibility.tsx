@@ -6,13 +6,15 @@
  */
 
 import type { ComponentChildren } from "preact";
-import { es } from "../i18n/es";
-import { flagEmoji } from "../logic/format";
-import { routes } from "../logic/paths";
+import { getMessages } from "../i18n";
+import type { Locale } from "../i18n/locale";
+import { flagEmoji, formatFor } from "../logic/format";
+import { routesFor } from "../logic/paths";
 import { isEvaluated } from "../logic/profileKit";
 import { useProfile } from "./useProfile";
 
 export interface ProfileFeasibilityProps {
+  locale: Locale;
   /** "service": one row per target country; "country": one row per service in that country. */
   mode: "service" | "country";
   /** The service id or the country code of the page. */
@@ -24,8 +26,6 @@ export interface ProfileFeasibilityProps {
   children?: ComponentChildren;
 }
 
-const t = es.visitorProfile;
-
 function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
 }
@@ -34,6 +34,10 @@ export default function ProfileFeasibility(props: ProfileFeasibilityProps) {
   const state = useProfile();
   if (!state || state.view.preset === props.defaultProfile) return <>{props.children}</>;
   const { view, kit } = state;
+  const es = getMessages(props.locale);
+  const t = es.visitorProfile;
+  const routes = routesFor(props.locale);
+  const { compareNames } = formatFor(props.locale);
   const title = (props.mode === "service" ? es.service : es.country).feasibilityTitle(
     view.residenceName,
   );
@@ -68,7 +72,7 @@ export default function ProfileFeasibility(props: ProfileFeasibilityProps) {
       ? (kit.country_names[r.country] ?? r.country)
       : (props.names[r.service] ?? r.service);
   rows.sort(
-    (a, b) => a.verdict.rank - b.verdict.rank || nameOf(a).localeCompare(nameOf(b), "es"),
+    (a, b) => a.verdict.rank - b.verdict.rank || compareNames(nameOf(a), nameOf(b)),
   );
   const missing = pairs.length - rows.length;
   return (
