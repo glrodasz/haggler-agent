@@ -135,6 +135,7 @@ REF_KEYS = {
 }
 RISK_KEYS = {"0", "1", "2", "3"}
 BUNDLE_KEYS = {
+    "rule",
     "bundle_id",
     "provider_id",
     "provider_type",
@@ -305,6 +306,8 @@ def check_ref(ref: dict | None) -> None:
 def check_bundle(b: dict[str, Any], *, label_ids: set[str], profile_ids: list[str]) -> None:
     """One bundles.json v2 object: every key present, null only where the contract allows it."""
     assert set(b) == BUNDLE_KEYS
+    rule = b["rule"]
+    assert rule is None or (set(rule) == {"reviewed", "pending"} and rule["reviewed"])
     price = b["price"]
     assert set(price) == BUNDLE_PRICE_KEYS
     for key in ("amount", "base_plan_amount", "marginal_amount", "intro_amount"):

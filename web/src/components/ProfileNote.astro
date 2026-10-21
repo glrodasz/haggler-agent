@@ -1,0 +1,17 @@
+---
+/**
+ * Whose prices and verdicts the page shows: the default profile as built, the visitor's own
+ * once logic/profilePatch.ts knows it ([data-profile-note]).
+ */
+import { getMessages } from "../i18n";
+import { getSite } from "../logic/data";
+import { localeOfUrl } from "../logic/paths";
+
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const id = site.defaultProfile?.id;
+---
+
+<p class="note" data-profile-note>
+  {id ? getMessages(locale).visitorProfile.forDefault(site.profileName(id)) : ""}
+</p>

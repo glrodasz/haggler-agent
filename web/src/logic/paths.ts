@@ -65,3 +65,8 @@ export function routesFor(locale: Locale) {
 }
 
 export type Routes = ReturnType<typeof routesFor>;
+
+/** The visitor-profile kit in `locale` (pages/datos/[locale]/perfil.json.ts). */
+export function profileKitUrl(locale: Locale, base?: string): string {
+  return withBase(`datos/${locale}/perfil.json`, base);
+}

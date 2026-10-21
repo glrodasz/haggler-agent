@@ -1,13 +1,12 @@
 ---
 import CountryLabel from "../../components/CountryLabel.astro";
-import RiskBadge from "../../components/RiskBadge.astro";
-import TableWrap from "../../components/TableWrap.astro";
-import { getMessages, lookupFor } from "../../i18n";
+import ProfileNote from "../../components/ProfileNote.astro";
+import { getMessages } from "../../i18n";
+import BundleGroups, { type BundleRow } from "../../islands/BundleGroups";
 import Base from "../../layouts/Base.astro";
 import { getSite } from "../../logic/data";
 import { localeParams, routesFor } from "../../logic/paths";
-import { bundleSavingNotes, otherProfileVerdicts, savingClass } from "../../logic/site";
-import type { Bundle } from "../../logic/types";
+import { bundleSavingNotes, otherProfileVerdicts } from "../../logic/site";
 
 export function getStaticPaths() {
   return localeParams();
@@ -16,132 +15,62 @@ export function getStaticPaths() {
 const { locale } = Astro.props;
 const site = getSite(locale);
 const msg = getMessages(locale);
-const lookup = lookupFor(msg);
 const routes = routesFor(locale);
-const { formatDate, formatMoney, formatPercent } = site.fmt;
+const { formatDate, formatPercent } = site.fmt;
 const t = msg.bundlesIndex;
 const b = msg.bundle;
 const defaultProfile = site.feasibility.default_profile;
 const groups = site.bundleGroups();
 const expired = site.expiredBundles();
 const fee = formatPercent(site.meta.fx_fee_pct, { digits: 1 });
-const feeDiffers = (x: Bundle) =>
-  x.monthly_eur_with_fee !== null && x.monthly_eur_with_fee !== x.monthly_eur;
-const marginal = (x: Bundle) => x.saving_basis === "marginal" && x.monthly_eur !== null;
-const groupId = (label: string) => `grupo-${label.replace(/[^a-z0-9_-]/gi, "-")}`;
+const labels = Object.fromEntries(
+  [
+    ...new Set([
+      ...Object.keys(msg.riskLabels),
+      ...site.feasibility.labels.map((l) => l.id),
+      ...site.bundles.flatMap((x) => x.verdicts.map((v) => v.label)),
+    ]),
+  ].map((id) => [id, site.label(id)]),
+);
+// Every active bundle with what its row shows; the island regroups them for the visitor.
+const rows: BundleRow[] = groups.flatMap((g) =>
+  g.bundles.map((x) => {
+    const verdicts = site.bundleVerdicts(x);
+    const mark = (v: { label: string; rank: number } | undefined) =>
+      v ? { label: v.label, rank: v.rank } : null;
+    return {
+      bundle_id: x.bundle_id,
+      name: x.name,
+      href: routes.bundle(x.country, x.bundle_id),
+      linkLabel: t.cardLink(x.name, site.countryName(x.country)),
+      country: x.country,
+      countryName: site.countryName(x.country),
+      countryHref: routes.country(x.country),
+      display_status: x.display_status,
+      currency: x.price.currency,
+      monthly_eur: x.monthly_eur,
+      full_monthly_eur: x.full_monthly_eur,
+      monthly_eur_with_fee: x.monthly_eur_with_fee,
+      saving_basis: x.saving_basis,
+      saving_pct: x.saving_pct,
+      notes: bundleSavingNotes(x, msg),
+      main: mark(verdicts.main),
+      pending: mark(verdicts.pending),
+      others: otherProfileVerdicts(x, defaultProfile).map((v) => ({
+        label: v.label,
+        rank: v.rank,
+        profileName: site.profileName(v.profile),
+      })),
+    };
+  }),
+);
 ---
 
 <Base title={t.title} current="bundles" description={t.lead}>
   <h1>{t.heading}</h1>
   <p class="lead">{t.lead}</p>
-  {site.defaultProfile && <p class="note">{t.profileNote(site.profileName(site.defaultProfile.id))}</p>}
-
-  {groups.length === 0 && <p>{t.empty}</p>}
-  {
-    groups.map((g) => {
-      const info = site.label(g.label, g.rank);
-      const id = groupId(g.label);
-      return (
-        <section aria-labelledby={id}>
-          <h2 id={id}>
-            <RiskBadge label={g.label} rank={g.rank} />{" "}
-            <span class="muted small">{t.groupCount(g.bundles.length)}</span>
-          </h2>
-          {info.description && <p class="small muted">{info.description}</p>}
-          <TableWrap captionId={`${id}-caption`}>
-            <table>
-              <caption id={`${id}-caption`} class="visually-hidden">
-                {t.caption(info.name)}
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t.colBundle}</th>
-                  <th scope="col">{t.colCountry}</th>
-                  <th scope="col">{t.colStatus}</th>
-                  <th scope="col" class="num">
-                    {t.colMonthly}
-                  </th>
-                  <th scope="col" class="num">
-                    {t.colSaving}
-                  </th>
-                  <th scope="col">{t.colOthers}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {g.bundles.map((x) => {
-                  const pending = site.bundleVerdicts(x).pending;
-                  const others = otherProfileVerdicts(x, defaultProfile);
-                  const notes = bundleSavingNotes(x, msg);
-                  return (
-                    <tr>
-                      <th scope="row">
-                        <a
-                          href={routes.bundle(x.country, x.bundle_id)}
-                          aria-label={t.cardLink(x.name, site.countryName(x.country))}
-                        >
-                          {x.name}
-                        </a>
-                        {pending && (
-                          <div class="small muted">
-                            {t.pendingVerdict}{" "}
-                            <RiskBadge label={pending.label} rank={pending.rank} />
-                          </div>
-                        )}
-                      </th>
-                      <td>
-                        <CountryLabel cc={x.country} />
-                      </td>
-                      <td>
-                        <span
-                          class={`badge status-${x.display_status}`}
-                          title={b.displayStatusTitles[x.display_status]}
-                        >
-                          {lookup(b.displayStatus, x.display_status)}
-                        </span>
-                      </td>
-                      <td class="num">
-                        {formatMoney(x.monthly_eur, "EUR")}
-                        {marginal(x) && (
-                          <div class="small muted">
-                            {t.marginal(formatMoney(x.full_monthly_eur, "EUR"))}
-                          </div>
-                        )}
-                        {feeDiffers(x) && (
-                          <div class="small muted">
-                            {b.withFee(formatMoney(x.monthly_eur_with_fee, "EUR"), fee)}
-                          </div>
-                        )}
-                      </td>
-                      <td class="num">
-                        <span class={savingClass(x.saving_pct)}>
-                          {formatPercent(x.saving_pct, { signed: true })}
-                        </span>
-                        {notes.length > 0 && <div class="small muted">{notes.join(", ")}</div>}
-                      </td>
-                      <td>
-                        {others.length === 0 ? (
-                          <span class="muted">{t.noOthers}</span>
-                        ) : (
-                          <ul class="profile-verdicts small">
-                            {others.map((v) => (
-                              <li>
-                                <span class="muted">{site.profileName(v.profile)}:</span>{" "}
-                                <RiskBadge label={v.label} rank={v.rank} />
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </TableWrap>
-        </section>
-      );
-    })
-  }
+  <ProfileNote />
+  <BundleGroups client:load locale={locale} bundles={rows} labels={labels} fee={fee} />
 
   {
     groups.length > 0 && (

@@ -551,8 +551,10 @@ export const es = {
       "Las etiquetas de riesgo dependen de lo que puedes demostrar honestamente: dónde vives, documentos, teléfono, dirección, medios de pago y viajes.",
     profileLabel: "Perfil de factibilidad",
     residenceLabel: "1. ¿En qué país vives?",
-    residenceHelp: (host: string) =>
-      `Solo listamos países cuyos precios seguimos. «Usar mi IP» envía tu IP a ${host}; solo si lo pulsas.`,
+    residenceHelp: (host: string, byIp: boolean) =>
+      byIp
+        ? `Solo listamos países cuyos precios seguimos. Para empezar por tu país, tu navegador pregunta a ${host} el país de tu IP; no guardamos nada.`
+        : `Solo listamos países cuyos precios seguimos. «Usar mi IP» envía tu IP a ${host}; solo si lo pulsas.`,
     locateFound: {
       timezone: "Lo dedujimos de la zona horaria de tu navegador.",
       language: "Lo dedujimos del idioma de tu navegador.",
@@ -675,6 +677,29 @@ export const es = {
       `Ahorro neto estimado: ${saving} al mes, ${yearly} al año.`,
   },
 
+  visitorProfile: {
+    /** Lead of the note on pages that follow the visitor's profile. */
+    forYou: (residence: string, ties: string | null) =>
+      `Precios y riesgos para tu perfil: vives en ${residence}${
+        ties === null ? ", sin vínculos con otros países" : `, con vínculos con ${ties}`
+      }.`,
+    forDefault: (profile: string) => `Precios y riesgos del perfil «${profile}».`,
+    change: "Cámbialo en el comparador",
+    feasibilityLead:
+      "Etiquetas para tu perfil, con las mismas reglas que el comparador. Solo aparecen los países que tenemos evaluados; las fichas con pruebas y notas solo existen para los perfiles revisados a mano.",
+    countryFeasibilityLead:
+      "Etiquetas para tu perfil, con las mismas reglas que el comparador. Solo aparecen los servicios que tenemos evaluados en este país.",
+    unevaluated: (count: number) =>
+      count === 1 ? "1 país más sin evaluar para tu perfil." : `${count} países más sin evaluar para tu perfil.`,
+    unevaluatedServices: (count: number) =>
+      count === 1
+        ? "1 servicio más sin evaluar para tu perfil."
+        : `${count} servicios más sin evaluar para tu perfil.`,
+    noneEvaluated: "Ninguna oferta de otro país está evaluada todavía para tu perfil.",
+    ownCountry: "Es tu país de residencia: sus ofertas son la oferta oficial de tu país.",
+    bundleCaption: (label: string) => `Paquetes con el veredicto «${label}» para tu perfil`,
+  },
+
   servicesIndex: {
     title: "Servicios",
     heading: "Tus servicios, sin fronteras",
@@ -741,7 +766,7 @@ export const es = {
   bundlesIndex: {
     title: "Paquetes",
     heading: "Paquetes, pieza a pieza",
-    lead: "Paquetes promocionales que reúnen varias suscripciones por un solo precio, agrupados por su veredicto para el perfil por defecto y, dentro de cada grupo, del mayor al menor ahorro.",
+    lead: "Paquetes promocionales que reúnen varias suscripciones por un solo precio, agrupados por su veredicto para tu perfil y, dentro de cada grupo, del mayor al menor ahorro.",
     profileNote: (profile: string) =>
       `Veredicto del perfil por defecto: ${profile}. Al lado, el de los demás perfiles.`,
     empty: "Todavía no hay paquetes vigentes registrados.",
@@ -902,8 +927,12 @@ export const es = {
         ? `Última investigación publicada: ${date} (ejecución ${run}).`
         : "Todavía no se ha publicado ninguna investigación: solo hay fichas escritas a mano.",
     profilesTitle: "Perfiles",
-    profilesLead:
-      "Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Las fichas de servicios y países muestran el perfil por defecto. El comparador empieza por tu país, deducido de la zona horaria o el idioma de tu navegador sin enviar nada; si pulsas «Usar mi IP», tu navegador consulta a country.is, que recibe tu dirección IP. Luego describes tu perfil (país de residencia entre los que tienen precios, lo que tienes de él y vínculos con cualquier otro país). Abajo están los perfiles de ejemplo de las fichas. También muestra las cuentas que podrías abrir por internet con esa residencia y esos documentos, según nuestros datos curados. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.",
+    profilesLead: (byIp: boolean) =>
+      `Cada perfil describe lo que una persona puede demostrar honestamente: residencia, documentos, teléfono, dirección, medios de pago y viajes. Todas las páginas (comparador, servicios, países, paquetes) muestran precios y riesgos para tu perfil. Al llegar empezamos por tu país, sin vínculos: ${
+        byIp
+          ? "tu navegador pregunta a country.is el país de tu dirección IP (country.is recibe la IP; no guardamos nada); si no responde, lo deducimos de la zona horaria o el idioma de tu navegador"
+          : "lo deducimos de la zona horaria o el idioma de tu navegador sin enviar nada; si pulsas «Usar mi IP», tu navegador consulta a country.is, que recibe tu dirección IP"
+      }. Luego describes tu perfil en el comparador (país de residencia entre los que tienen precios, lo que tienes de él y vínculos con cualquier otro país); lo guardamos solo en tu navegador (almacenamiento local, nunca se envía ni es una cookie) para que las demás páginas lo usen. Sin JavaScript, las páginas muestran el perfil de ejemplo de abajo. El comparador también muestra las cuentas que podrías abrir por internet con esa residencia y esos documentos, según nuestros datos curados. Para un perfil propio, las etiquetas salen de aplicar las mismas reglas a los hechos investigados; las fichas curadas a mano solo valen para el perfil para el que se escribieron.`,
     defaultProfileTag: "Por defecto",
     researchNotLegal:
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",

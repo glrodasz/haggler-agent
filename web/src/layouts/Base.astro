@@ -170,5 +170,15 @@ const nav: { key: NavKey; href: string }[] = [
         </div>
       </div>
     </footer>
+    <script>
+      import { watchProfile } from "../logic/profileClient";
+      import { patchPage } from "../logic/profilePatch";
+
+      // Pages built for the default profile redraw their marked parts for the visitor's own.
+      const marked =
+        "[data-profile-note],[data-profile-residence],[data-home-country],table[data-profile-services]," +
+        "table[data-profile-summary],tr[data-offer-svc]";
+      if (document.querySelector(marked)) watchProfile(patchPage);
+    </script>
   </body>
 </html>

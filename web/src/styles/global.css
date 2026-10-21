@@ -2049,3 +2049,11 @@ html[data-locale-pending] body {
   content: " ✓";
   color: var(--color-ink-muted);
 }
+
+/* Parts logic/profilePatch.ts hides for the visitor's profile (badges and cells set display). */
+th[hidden],
+td[hidden],
+li[hidden],
+.badge[hidden] {
+  display: none;
+}

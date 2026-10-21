@@ -324,7 +324,7 @@ def _researched(
     if "store_region" in basis:
         w.step("store_region", t)
     if implied("phone_number"):
-        if t in profile.phones():
+        if profile.has_phone(t):
             w.step("local_phone", t)
         else:
             _impossible(w, f"Exige un número de teléfono de {t}; el perfil no tiene uno.")
@@ -354,7 +354,7 @@ def _gates(
 
     local_id = r.local_id.strip()
     if local_id.lower() not in _NO_ID:
-        if t in profile.documents():
+        if profile.has_document(t):
             w.step("local_id", t)
         else:
             name = _ID_NAMES.get(local_id.lower(), local_id)
@@ -366,11 +366,11 @@ def _gates(
         w.assumptions.append(f"se asume que no se pide un documento de identidad de {t}")
 
     if r.local_line in ("mobile", "both"):
-        if t in profile.phones():
+        if profile.has_phone(t):
             w.step("local_phone", t)
         else:
             _impossible(w, f"Exige una línea móvil de {t}; el perfil no tiene un teléfono de {t}.")
-    if r.local_line in ("fixed", "both") and t not in profile.addresses():
+    if r.local_line in ("fixed", "both") and not profile.has_address(t):
         _impossible(
             w,
             f"Exige una línea fija de {t}, instalada en un domicilio en {t}; "
@@ -400,7 +400,7 @@ def _gates(
                 w, f"Exige una cuenta bancaria de {t}; el perfil no tiene ni puede abrir una."
             )
     elif pay == "carrier_bill":
-        if t in profile.phones():
+        if profile.has_phone(t):
             w.step("local_phone", t)
         else:
             _impossible(
@@ -417,7 +417,7 @@ def _gates(
             )
 
     if r.signup_presence == "checked":
-        if t in profile.presence:
+        if profile.presence_in(t) is not None:
             w.practical.append("presence_once")
             w.step("presence", t, requires_presence=True)
         else:
@@ -434,7 +434,7 @@ def _gates(
         w.assumptions.append("se asume que no hay una consulta de crédito")
 
     if r.billing_address == "required":
-        if t in profile.addresses():
+        if profile.has_address(t):
             w.step("billing_address", t)
         else:
             w.false_declaration = True
@@ -622,12 +622,11 @@ def assess_bundle(
     computed from the YAML for ctx.today."""
     if is_expired(bundle, ctx.today):
         return None
-    t, r = bundle.country, profile.residence_country
+    t = bundle.country
     facts = Facts(ctx, include_pending=include_pending)
-    record = next((v for v in bundle.verdicts if v.profile == profile.id), None)
-    if t == r:
+    if profile.lives_in(t):
         route = _home(bundle, profile, facts, state or bundle_state(bundle, today=ctx.today))
-    elif record is not None:
+    elif (record := profile.bundle_record(bundle.verdicts)) is not None:
         route = _curated(bundle, record, profile, facts)
     elif bundle.price.source == "observed":
         route = _observed(bundle, profile, ctx, facts, include_pending)

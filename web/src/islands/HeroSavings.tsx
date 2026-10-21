@@ -1,6 +1,7 @@
 /**
- * HeroSavings: a marquee of level-3 savings tags under the hero title for the country the browser
- * suggests (logic/locate.ts guessFromBrowser; no IP lookup, nothing leaves the browser). The
+ * HeroSavings: a marquee of level-3 savings tags under the hero title for the visitor's residence
+ * (logic/visitor.ts: the profile set in the comparator, else where the visitor is), redrawn when
+ * the comparator saves another residence. The
  * figures come from the same offers and rules the comparator reads (its inline JSON) through
  * logic/teasers.ts. Each tag is a link to the comparator state it was computed from: a click
  * puts it in location.hash, which the comparator follows, and scrolls to the form.
@@ -12,11 +13,11 @@ import { useEffect, useState } from "preact/hooks";
 import { getMessages } from "../i18n";
 import type { Locale } from "../i18n/locale";
 import { flagEmoji, formatFor } from "../logic/format";
-import { guessFromBrowser } from "../logic/locate";
 import { defaultState, encodeState } from "../logic/selection";
 import { savingsTeasers, type Teaser } from "../logic/teasers";
 import { unpackOffers } from "../logic/transport";
 import type { FeasibilityRule, ProfileCapabilities } from "../logic/types";
+import { onProfileChange, resolveVisitor } from "../logic/visitor";
 import type { ComparadorResidence, ComparadorService } from "./Comparador";
 
 export interface HeroSavingsProps {
@@ -65,10 +66,17 @@ export default function HeroSavings(props: HeroSavingsProps) {
 
   useEffect(() => {
     // After the first paint: the comparator hydrates first and the hero stays responsive.
-    const run = () => {
-      const guess = guessFromBrowser();
+    let run = 0;
+    const update = async () => {
+      const mine = ++run;
+      const visitor = await resolveVisitor(
+        props.residences.map((r) => r.cc),
+        new Set(props.tieCountries),
+        props.residence,
+      );
+      if (mine !== run) return;
       const home =
-        props.residences.find((r) => r.cc === guess?.cc) ??
+        props.residences.find((r) => r.cc === visitor.profile.residence) ??
         props.residences.find((r) => r.cc === props.residence);
       if (!home) {
         setTeasers([]);
@@ -95,7 +103,8 @@ export default function HeroSavings(props: HeroSavingsProps) {
       );
     };
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
-    idle(run);
+    idle(() => void update());
+    return onProfileChange(() => void update());
   }, []);
 
   // Reserves the row while computing so the hero does not jump; nothing to say, nothing shown.

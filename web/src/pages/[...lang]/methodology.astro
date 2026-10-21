@@ -9,6 +9,7 @@ import { AXIS_RANKS, COVERAGE_ORDER } from "../../logic/feasibility";
 import { DASH, hostOf, isPdfUrl } from "../../logic/format";
 import { localeParams, routesFor } from "../../logic/paths";
 import { bundleAnchors, riskClass } from "../../logic/site";
+import { LOCATE_BY_IP } from "../../logic/visitor";
 
 export function getStaticPaths() {
   return localeParams();
@@ -178,7 +179,7 @@ const toc = [
     <p class="note">{research}</p>
 
     <h3>{t.profilesTitle}</h3>
-    <p>{t.profilesLead}</p>
+    <p>{t.profilesLead(LOCATE_BY_IP)}</p>
     <ul>
       {
         site.feasibility.profiles.map((p) => (

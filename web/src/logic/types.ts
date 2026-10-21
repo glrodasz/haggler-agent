@@ -174,7 +174,7 @@ export interface RuleVerdict {
   label: LabelId;
   rank: number;
   eu_badge: boolean;
-  provenance: Provenance | "home" | null;
+  provenance: Provenance | BundleProvenance | "home" | null;
   /** Id of the instrument (instruments[]) the route pays with, opened online for it. */
   card_via?: string;
 }
@@ -586,6 +586,11 @@ export interface Bundle {
    * follows its reviewed one only when it differs. Empty when the bundle expired.
    */
   verdicts: BundleVerdict[];
+  /**
+   * The verdict as a decision tree over the profile, like feasibility.json `rules`, so the site
+   * can judge the bundle for a profile the visitor describes. Null when the bundle expired.
+   */
+  rule: { reviewed: RuleTree; pending: RuleTree | null } | null;
   /** Official, value-checked changes awaiting review (the card lists them). */
   pending_changes: BundlePendingChange[];
   notes_es: string;

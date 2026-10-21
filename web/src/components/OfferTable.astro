@@ -39,7 +39,9 @@ const hasStale = offers.some(stale);
         <th scope="col">{t.colPlan}</th>
         <th scope="col" class="num">{t.colLocal}</th>
         <th scope="col" class="num">{t.colMonthlyIn("EUR")}</th>
-        {second && <th scope="col" class="num">{t.colMonthlyIn(second)}</th>}
+        <th scope="col" class="num" data-cell="second-head" hidden={second === null}>
+          {second && t.colMonthlyIn(second)}
+        </th>
         <th scope="col">{t.colChannel}</th>
         <th scope="col">{t.colVat}</th>
         <th scope="col">{t.colSource}</th>
@@ -55,17 +57,22 @@ const hasStale = offers.some(stale);
           const rowClass = [isHome ? "is-home" : "", inactive ? "is-inactive" : ""].join(" ").trim();
           const mark = stale(o) ? "*" : "";
           return (
-            <tr class={rowClass || undefined}>
+            <tr
+              class={rowClass || undefined}
+              data-offer-svc={o.service_id}
+              data-offer-cc={o.country}
+              data-offer-currency={o.currency}
+              data-offer-monthly={o.monthly_equiv}
+              data-offer-eur={o.monthly_eur ?? ""}
+            >
               <th scope="row">
                 {mode === "service" ? (
                   <>
                     <CountryLabel cc={o.country} />
-                    {isHome && (
-                      <>
-                        {" "}
-                        <span class="badge risk-0">{msg.common.residenceTag}</span>
-                      </>
-                    )}
+                    {" "}
+                    <span class="badge risk-0" data-home-tag hidden={!isHome}>
+                      {msg.common.residenceTag}
+                    </span>
                   </>
                 ) : (
                   <a href={routes.service(o.service_id)}>{site.serviceName(o.service_id)}</a>
@@ -94,12 +101,10 @@ const hasStale = offers.some(stale);
                 {formatMoney(o.monthly_eur, "EUR")}
                 {mark}
               </td>
-              {second && (
-                <td class="num">
-                  {formatMoney(site.monthlyIn(o, second), second)}
-                  {o.currency !== second ? mark : ""}
-                </td>
-              )}
+              <td class="num" data-cell="second" hidden={second === null}>
+                {second && formatMoney(site.monthlyIn(o, second), second)}
+                {second && o.currency !== second ? mark : ""}
+              </td>
               <td>
                 <ChannelBadge channel={o.channel} />
               </td>
@@ -122,7 +127,7 @@ const hasStale = offers.some(stale);
                   </>
                 )}
               </td>
-              <td>
+              <td data-cell="risk">
                 <span class="badges">
                   <RiskBadge label={o.label} rank={o.rank} />
                   {o.eu_badge && <EuBadge />}

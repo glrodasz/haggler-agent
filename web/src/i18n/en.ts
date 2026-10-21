@@ -553,8 +553,10 @@ export const en = {
       "Risk labels depend on what you can honestly prove: where you live, documents, phone, address, payment methods and travel.",
     profileLabel: "Feasibility profile",
     residenceLabel: "1. Which country do you live in?",
-    residenceHelp: (host: string) =>
-      `We only list countries whose prices we track. “Use my IP” sends your IP to ${host}, only if you press it.`,
+    residenceHelp: (host: string, byIp: boolean) =>
+      byIp
+        ? `We only list countries whose prices we track. To start from your country, your browser asks ${host} for your IP's country; we store nothing.`
+        : `We only list countries whose prices we track. “Use my IP” sends your IP to ${host}, only if you press it.`,
     locateFound: {
       timezone: "We worked it out from your browser's time zone.",
       language: "We worked it out from your browser's language.",
@@ -676,6 +678,31 @@ export const en = {
       `Estimated net saving: ${saving} a month, ${yearly} a year.`,
   },
 
+  visitorProfile: {
+    /** Lead of the note on pages that follow the visitor's profile. */
+    forYou: (residence: string, ties: string | null) =>
+      `Prices and risks for your profile: you live in ${residence}${
+        ties === null ? ", with no ties to other countries" : `, with ties to ${ties}`
+      }.`,
+    forDefault: (profile: string) => `Prices and risks for the profile “${profile}”.`,
+    change: "Change it in the comparison",
+    feasibilityLead:
+      "Labels for your profile, with the same rules as the comparison. Only the countries we have evaluated appear; records with evidence and notes only exist for hand-reviewed profiles.",
+    countryFeasibilityLead:
+      "Labels for your profile, with the same rules as the comparison. Only the services we have evaluated in this country appear.",
+    unevaluated: (count: number) =>
+      count === 1
+        ? "1 more country not evaluated for your profile."
+        : `${count} more countries not evaluated for your profile.`,
+    unevaluatedServices: (count: number) =>
+      count === 1
+        ? "1 more service not evaluated for your profile."
+        : `${count} more services not evaluated for your profile.`,
+    noneEvaluated: "No offer from another country is evaluated for your profile yet.",
+    ownCountry: "This is your country of residence: its offers are your country's official offer.",
+    bundleCaption: (label: string) => `Bundles with the verdict “${label}” for your profile`,
+  },
+
   servicesIndex: {
     title: "Services",
     heading: "Your services, without borders",
@@ -741,7 +768,7 @@ export const en = {
   bundlesIndex: {
     title: "Bundles",
     heading: "Bundles, piece by piece",
-    lead: "Promotional bundles that bring several subscriptions together for one price, grouped by their verdict for the default profile and, within each group, from the largest to the smallest saving.",
+    lead: "Promotional bundles that bring several subscriptions together for one price, grouped by their verdict for your profile and, within each group, from the largest to the smallest saving.",
     profileNote: (profile: string) =>
       `Verdict of the default profile: ${profile}. Next to it, the other profiles' verdicts.`,
     empty: "No current bundles on record yet.",
@@ -901,8 +928,12 @@ export const en = {
         ? `Latest published research: ${date} (run ${run}).`
         : "No research has been published yet: there are only hand-written records.",
     profilesTitle: "Profiles",
-    profilesLead:
-      "Each profile describes what a person can honestly prove: residence, documents, phone, address, payment methods and travel. Service and country pages show the default profile. The comparison starts from your country, worked out from your browser's time zone or language without sending anything; if you press “Use my IP”, your browser asks country.is, which receives your IP address. Then you describe your profile (country of residence among those with prices, what you have from it, and ties with any other country). Below are the sample profiles of the records. It also shows the accounts you could open online with that residence and those documents, according to our curated data. For your own profile, the labels come from applying the same rules to the researched facts; hand-curated records only apply to the profile they were written for.",
+    profilesLead: (byIp: boolean) =>
+      `Each profile describes what a person can honestly prove: residence, documents, phone, address, payment methods and travel. Every page (comparison, services, countries, bundles) shows prices and risks for your profile. On arrival we start from your country, with no ties: ${
+        byIp
+          ? "your browser asks country.is for your IP address's country (country.is receives the IP; we store nothing); if it doesn't answer, we work it out from your browser's time zone or language"
+          : "we work it out from your browser's time zone or language without sending anything; if you press “Use my IP”, your browser asks country.is, which receives your IP address"
+      }. Then you describe your profile in the comparison (country of residence among those with prices, what you have from it, and ties with any other country); we keep it only in your browser (local storage, never sent and not a cookie) so the other pages can use it. Without JavaScript, pages show the sample profile below. The comparison also shows the accounts you could open online with that residence and those documents, according to our curated data. For your own profile, the labels come from applying the same rules to the researched facts; hand-curated records only apply to the profile they were written for.`,
     defaultProfileTag: "Default",
     researchNotLegal:
       "Not legal advice: it describes what we found in public sources, not what you should do.",
