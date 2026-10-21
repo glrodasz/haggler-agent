@@ -16,7 +16,9 @@ EuGeoClass = Literal[
     "eservice_art4_1b",
     "software_unclear",
 ]
-Category = Literal["video", "music", "cloud", "bundle", "productivity", "gaming", "ai", "other"]
+Category = Literal[
+    "video", "music", "cloud", "bundle", "productivity", "gaming", "ai", "education", "other"
+]
 Region = Literal[
     "nordics", "eu", "europe_other", "latam", "north_america", "asia", "africa", "mena"
 ]

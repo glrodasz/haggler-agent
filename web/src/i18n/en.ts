@@ -120,6 +120,7 @@ export const en = {
     productivity: "Productivity",
     gaming: "Gaming",
     ai: "Artificial intelligence",
+    education: "Education",
     other: "Other",
   } as Record<string, string>,
 
@@ -815,11 +816,11 @@ export const en = {
     collect: [
       {
         title: "Official sources first",
-        text: "Every day an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog. It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.",
+        text: "Every day an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog (Microsoft 365 and Xbox Game Pass). It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.",
       },
       {
         title: "App Store as a fallback",
-        text: "When the official website shows the price based on the visitor's IP or only after signing in (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
+        text: "When the official website shows the price based on the visitor's IP or only after signing in (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, Prime Video, Duolingo, TIDAL, Deezer, Canva, Adobe Express, ChatGPT, Claude) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
       },
       {
         title: "Deterministic reading; the LLM only as a fallback",
