@@ -116,6 +116,7 @@ export const es = {
     bundle: "Paquete",
     productivity: "Productividad",
     gaming: "Juegos",
+    ai: "Inteligencia artificial",
     other: "Otros",
   } as Record<string, string>,
 
@@ -819,7 +820,7 @@ export const es = {
       },
       {
         title: "App Store como respaldo",
-        text: "Cuando la web oficial muestra el precio según la IP del visitante (YouTube Premium, Google One, HBO Max) o su robots.txt no permite el acceso a agentes como este (Disney+), se usa la lista pública de compras dentro de la app del App Store de cada país. Esas filas llevan el canal «App Store» y la marca «puede tener recargo»: suelen ser más caras que la web.",
+        text: "Cuando la web oficial muestra el precio según la IP del visitante o solo tras iniciar sesión (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) o su robots.txt no permite el acceso a agentes como este (Disney+), se usa la lista pública de compras dentro de la app del App Store de cada país. Esas filas llevan el canal «App Store» y la marca «puede tener recargo»: suelen ser más caras que la web.",
       },
       {
         title: "Lectura determinista; el LLM solo como respaldo",
