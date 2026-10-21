@@ -804,6 +804,22 @@ export const en = {
     colNew: "After",
     colPct: "Change",
     empty: "No changes in the last 90 days.",
+    filtersLabel: "Filter changes",
+    filterAll: "All",
+    clearFilters: "Clear filters",
+    kindGroups: {
+      new: "New",
+      up: "Increase",
+      down: "Decrease",
+      removed: "Removed",
+      other: "Other change",
+    } as Record<string, string>,
+    showing: (from: string, to: string, total: string) => `Showing ${from}–${to} of ${total} changes`,
+    noMatches: "No changes match these filters.",
+    pagerLabel: "Change pages",
+    previous: "Previous",
+    next: "Next",
+    pageLabel: (n: number) => `Page ${n}`,
   },
 
   methodology: {

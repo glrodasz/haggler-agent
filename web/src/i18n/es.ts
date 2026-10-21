@@ -805,6 +805,22 @@ export const es = {
     colNew: "Después",
     colPct: "Variación",
     empty: "No hay cambios en los últimos 90 días.",
+    filtersLabel: "Filtrar cambios",
+    filterAll: "Todos",
+    clearFilters: "Quitar filtros",
+    kindGroups: {
+      new: "Nuevo",
+      up: "Subida",
+      down: "Bajada",
+      removed: "Retirado",
+      other: "Otro cambio",
+    } as Record<string, string>,
+    showing: (from: string, to: string, total: string) => `Mostrando ${from}–${to} de ${total} cambios`,
+    noMatches: "Ningún cambio coincide con estos filtros.",
+    pagerLabel: "Páginas de cambios",
+    previous: "Anterior",
+    next: "Siguiente",
+    pageLabel: (n: number) => `Página ${n}`,
   },
 
   methodology: {
