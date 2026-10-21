@@ -456,11 +456,11 @@ def test_propose_decides_every_pending_finding_once_and_writes_the_pr_body(dirs,
     assert latest[(press.id, press.hash)].decision == "reject"  # not an official source
     for c in subjects()[0].claims + subjects()[1].claims:
         assert latest[(c.id, c.hash)].decision == "accept"
-        assert latest[(c.id, c.hash)].by == "propuesta automática"
+        assert latest[(c.id, c.hash)].by == "automatic proposal"
     text = body.read_text(encoding="utf-8")
-    assert "3 hallazgos de la investigación esperan revisión" in text
-    assert "aceptar 2 (fuente oficial) y rechazar 1" in text
-    assert f"| `{press.id}` |" in text and "[prensa](" in text
+    assert "3 research findings are waiting for review" in text
+    assert "accepting 2 (official source) and rejecting 1" in text
+    assert f"| `{press.id}` |" in text and "[press](" in text
     assert spotify.id not in text
     capsys.readouterr()
 
