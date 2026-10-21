@@ -119,6 +119,7 @@ export const en = {
     bundle: "Bundle",
     productivity: "Productivity",
     gaming: "Gaming",
+    ai: "Artificial intelligence",
     other: "Other",
   } as Record<string, string>,
 
@@ -830,6 +831,22 @@ export const en = {
     colNew: "After",
     colPct: "Change",
     empty: "No changes in the last 90 days.",
+    filtersLabel: "Filter changes",
+    filterAll: "All",
+    clearFilters: "Clear filters",
+    kindGroups: {
+      new: "New",
+      up: "Increase",
+      down: "Decrease",
+      removed: "Removed",
+      other: "Other change",
+    } as Record<string, string>,
+    showing: (from: string, to: string, total: string) => `Showing ${from}–${to} of ${total} changes`,
+    noMatches: "No changes match these filters.",
+    pagerLabel: "Change pages",
+    previous: "Previous",
+    next: "Next",
+    pageLabel: (n: number) => `Page ${n}`,
   },
 
   methodology: {
@@ -845,7 +862,7 @@ export const en = {
       },
       {
         title: "App Store as a fallback",
-        text: "When the official website shows the price based on the visitor's IP (YouTube Premium, Google One, HBO Max) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
+        text: "When the official website shows the price based on the visitor's IP or only after signing in (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
       },
       {
         title: "Deterministic reading; the LLM only as a fallback",

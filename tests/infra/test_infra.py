@@ -244,10 +244,10 @@ def test_publish_push_rejected_by_branch_protection_is_a_warning(tmp_path: Path)
     )
     # The step fails (continue-on-error keeps the job green) with a warning, not an error.
     assert result.returncode != 0
-    assert "::warning title=push de data/ falló::" in result.stdout
+    assert "::warning title=data/ push failed::" in result.stdout
     assert "::error" not in result.stdout
     assert "docs/SETUP.md" in result.stdout
-    assert "se publica con los datos sincronizados" in summary.read_text()
+    assert "the site is published with the synced data" in summary.read_text()
 
 
 @pytest.mark.skipif(
@@ -307,14 +307,22 @@ def test_publish_protected_main_gets_data_on_a_branch_and_a_pr(tmp_path: Path) -
         timeout=120,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "::notice title=data/ en PR::" in result.stdout
+    assert "::notice title=data/ in a PR::" in result.stdout
     branches = subprocess.run(
         ["git", "branch", "--list"], cwd=remote, env=env, capture_output=True, text=True
     ).stdout
     assert "data-sync" in branches
     calls = gh_log.read_text()
     assert "pr list --head data-sync" in calls
-    assert "pr create --head data-sync --base main" in calls
+    assert "pr create --head data-sync --base main --title data: prices and research" in calls
+    # A GITHUB_TOKEN push starts no workflow: publish dispatches ci so the PR gets its checks.
+    assert "workflow run ci.yml --ref data-sync" in calls
+    assert "--body **CI: not required to merge.**" in calls
+
+
+def test_publish_can_dispatch_ci_on_its_bot_branches() -> None:
+    assert "workflow_dispatch" in load("ci.yml")[True]
+    assert load("publish.yml")["jobs"]["sync"]["permissions"]["actions"] == "write"
 
 
 def test_publish_build_can_read_the_pages_site() -> None:
@@ -459,7 +467,7 @@ def test_publish_bundle_summary_writes_the_counts_line(tmp_path: Path) -> None:
     assert (tmp_path / "uv-call.txt").read_text() == (
         f"{UV_HAGGLER} research review --bundles --summary --data-dir data\n"
     )
-    assert f"### Paquetes\n\n{line}\n" in summary
+    assert f"### Bundles\n\n{line}\n" in summary
     assert "haggler research review --bundles" in summary
     assert "aviso: x" in result.stderr  # the command's own warnings stay in the log
     assert "::warning" not in result.stdout
@@ -477,10 +485,10 @@ def test_publish_bundle_summary_writes_the_counts_line(tmp_path: Path) -> None:
 def test_publish_bundle_summary_never_fails_the_job(tmp_path: Path, uv_body: str) -> None:
     result, summary = _run_bundle_summary(tmp_path, uv_body)
     assert result.returncode == 0, result.stderr
-    assert "::warning title=resumen de paquetes::" in result.stdout
+    assert "::warning title=bundle summary::" in result.stdout
     assert "docs/SETUP.md §14" in result.stdout
     assert "::error" not in result.stdout
-    assert "### Paquetes" not in summary
+    assert "### Bundles" not in summary
     if "boom" in uv_body:
         assert "boom" in result.stderr
 
@@ -498,7 +506,7 @@ def test_publish_bundle_summary_runs_with_the_real_cli_on_a_first_deploy(tmp_pat
     result, summary = _run_bundle_summary(tmp_path, uv_body)
     assert result.returncode == 0, result.stderr
     assert "::warning" not in result.stdout, result.stderr
-    assert "### Paquetes\n\nPaquetes: nada pendiente de revisión.\n" in summary
+    assert "### Bundles\n\nPaquetes: nada pendiente de revisión.\n" in summary
 
 
 def _run_research_deploy(tmp_path: Path, **variables: str) -> tuple[list[str], str, str]:
@@ -874,7 +882,43 @@ def test_publish_review_step_opens_a_pr_with_the_proposal(tmp_path: Path) -> Non
         cwd=remote, env=env, capture_output=True, text=True, check=True,
     ).stdout  # fmt: skip
     assert "- id: x" in shown
-    assert "pr create --head research-review --base main" in gh_log.read_text()
+    calls = gh_log.read_text()
+    assert "pr create --head research-review --base main --title research: review findings" in calls
+    assert "workflow run ci.yml --ref research-review" in calls
+    body = (tmp_path / "research-review.md").read_text()
+    assert body.startswith("**CI: wait for it before merging.**") and "propuesta" in body
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_review_step_rebuilds_an_unchanged_proposal_only_on_a_newer_main(
+    tmp_path: Path,
+) -> None:
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    bot = "41898282+github-actions[bot]@users.noreply.github.com"
+    bot_env = {**env, "GIT_AUTHOR_EMAIL": bot, "GIT_COMMITTER_EMAIL": bot}
+    assert _run_review_step(tmp_path, work, bot_env).returncode == 0
+    gh_log.unlink()
+    # Same proposal, same main: nothing is pushed or dispatched.
+    _git(work, "checkout", "-q", "main", env=env)
+    result = _run_review_step(tmp_path, work, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "workflow run" not in gh_log.read_text()
+    # main moved on: the branch is rebuilt on it and ci runs again.
+    _git(work, "checkout", "-q", "main", env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "newer main", env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    result = _run_review_step(tmp_path, work, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "workflow run ci.yml --ref research-review" in gh_log.read_text()
+    shown = subprocess.run(
+        ["git", "show", "research-review:README"],
+        cwd=remote, env=env, capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert shown == "x\n"
 
 
 @pytest.mark.skipif(
@@ -889,7 +933,7 @@ def test_publish_review_step_leaves_a_review_in_progress_alone(tmp_path: Path) -
     _git(work, "checkout", "-q", "main", env=env)
     result = _run_review_step(tmp_path, work, env)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "::notice title=revisión en curso::" in result.stdout
+    assert "::notice title=review in progress::" in result.stdout
     shown = subprocess.run(
         ["git", "show", "research-review:data/curated/research_review.yaml"],
         cwd=remote, env=env, capture_output=True, text=True, check=True,

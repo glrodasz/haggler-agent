@@ -7,6 +7,9 @@
 # leaves a warning and the site is rebuilt from the committed data/. When main rejects the push
 # (branch protection), data/ goes to the data-sync branch with one open PR; if even that fails,
 # a warning. Either way the site is still built from the synced data.
+# Pull requests opened by GITHUB_TOKEN start no workflows of their own (their pull_request run of
+# ci waits for a maintainer's "Approve and run"), so publish dispatches ci on the bot branches
+# itself: ci's checks then land on the PR's head commit without anyone running them.
 # After a sync, the run's summary also counts the bundles' pending proposals and findings
 # (haggler research review --bundles --summary); that step never fails the job.
 # It also runs after every green ci run of a push to main (a merged pull request) whose commit
@@ -62,7 +65,7 @@ jobs:
           fi
           if [ "$CONCLUSION" != "success" ] || [ "$RUN_EVENT" != "push" ] \
             || [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
-            echo "ci: ${CONCLUSION} (${RUN_EVENT} desde ${HEAD_REPO}); no se publica." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "ci: ${CONCLUSION} (${RUN_EVENT} from ${HEAD_REPO}); not publishing." | tee -a "$GITHUB_STEP_SUMMARY"
             echo "go=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -70,7 +73,7 @@ jobs:
           changed="$(git diff --name-only HEAD^1 HEAD -- web src catalog data pyproject.toml uv.lock \
             .github/workflows/publish.yml || echo "?")"
           if [ -z "$changed" ]; then
-            echo "El commit no toca el sitio ni sus datos; no se publica." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "The commit touches neither the site nor its data; not publishing." | tee -a "$GITHUB_STEP_SUMMARY"
             echo "go=false" >> "$GITHUB_OUTPUT"
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
@@ -85,6 +88,7 @@ jobs:
     permissions:
       contents: write # commit data/
       pull-requests: write # data PR when main is protected
+      actions: write # dispatch ci on the bot branches
       id-token: write # Workload Identity Federation
     outputs:
       synced: ${{ steps.sync.outcome == 'success' }}
@@ -103,7 +107,7 @@ jobs:
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
         run: |
           if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
-            echo "::notice title=sync omitido::${GITHUB_REF_NAME} no es la rama por defecto y Workload Identity Federation solo la acepta a ella. Se construye el sitio con los datos ya versionados en data/."
+            echo "::notice title=sync skipped::${GITHUB_REF_NAME} is not the default branch and Workload Identity Federation only accepts that one. The site is built from the data already committed in data/."
             echo "ok=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -112,7 +116,7 @@ jobs:
             [ -n "${!name}" ] || missing="$missing $name"
           done
           if [ -n "$missing" ]; then
-            echo "::notice title=sync omitido::Faltan variables de repositorio:${missing}. Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md."
+            echo "::notice title=sync skipped::Missing repository variables:${missing}. The site is published from the data already committed in data/. See docs/SETUP.md."
             echo "ok=false" >> "$GITHUB_OUTPUT"
           else
             echo "ok=true" >> "$GITHUB_OUTPUT"
@@ -154,7 +158,7 @@ jobs:
           if [ "$status" -ne 0 ]; then
             msg="$(grep -v '^[[:space:]]*$' "$RUNNER_TEMP/sync.err" | tail -n 1 || true)"
             msg="${msg//'%'/'%25'}"
-            echo "::warning title=sync falló::${msg} Se publica el sitio con los datos ya versionados en data/. Ver docs/SETUP.md §11."
+            echo "::warning title=sync failed::${msg} The site is published from the data already committed in data/. See docs/SETUP.md §11."
             exit "$status"
           fi
 
@@ -181,42 +185,51 @@ jobs:
         run: |
           git add -A data/
           if git diff --cached --quiet; then
-            echo "Sin cambios en data/." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "No changes in data/." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           git diff --cached --stat | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$IS_DEFAULT_BRANCH" != "true" ]; then
-            echo "::notice title=publish::Rama ${GITHUB_REF_NAME} no es la rama por defecto: no se hace commit."
+            echo "::notice title=publish::${GITHUB_REF_NAME} is not the default branch: nothing is committed."
             exit 0
           fi
           as_of="$(python3 -c 'import json; print(json.load(open("data/latest/run.json")).get("as_of") or "")' 2>/dev/null || true)"
           as_of="${as_of:-$(date -u +%Y-%m-%d)}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -q -m "data: precios ${as_of}"
+          git commit -q -m "data: prices ${as_of}"
           # Someone may have pushed meanwhile; data/ is only written by this bot, so a rebase is safe.
           for attempt in 1 2 3; do
             if git push origin "HEAD:${GITHUB_REF_NAME}"; then
               exit 0
             fi
-            echo "push rechazado (intento ${attempt}); rebase y reintento"
+            echo "push rejected (attempt ${attempt}); rebasing and retrying"
             git pull --rebase origin "${GITHUB_REF_NAME}" || break
           done
           # A protected main only takes pull requests: carry the commit on DATA_BRANCH (rewritten
-          # every run from main, only this bot writes it) and keep one open PR for it.
+          # every run from main, only this bot writes it) and keep one open PR for it. The title and
+          # body are rewritten on an open PR too, so a change to them reaches it on the next run.
           if git push -f origin "HEAD:refs/heads/${DATA_BRANCH}"; then
-            if [ -n "$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[].number' 2>/dev/null)" ] \
-              || gh pr create --head "${DATA_BRANCH}" --base "${GITHUB_REF_NAME}" \
-                --title "data: precios e investigación" \
-                --body "Datos sincronizados desde GCS por publish (main está protegida). El sitio ya se publicó con ellos; fusionar este PR solo los versiona en data/. Se actualiza en cada corrida."; then
-              echo "::notice title=data/ en PR::main está protegida: data/ va en la rama ${DATA_BRANCH} y su PR abierto. Ver docs/SETUP.md §11."
-              echo "data/ va en la rama \`${DATA_BRANCH}\` y su PR (main está protegida)." >> "$GITHUB_STEP_SUMMARY"
+            # A push made with GITHUB_TOKEN starts no workflow; a dispatch does, and its checks
+            # land on the PR's head commit.
+            gh workflow run ci.yml --ref "${DATA_BRANCH}" \
+              || echo "::warning title=ci not dispatched::Could not start ci on ${DATA_BRANCH}; run it from the Actions tab before merging."
+            title="data: prices and research"
+            body="$(printf '%s\n\n%s' \
+              "**CI: not required to merge.** publish already built and deployed the site from this data, so a broken file would have failed that run; ci is dispatched anyway in case main requires its checks." \
+              "Data synced from GCS by publish (main is protected). Merging this PR only commits it to data/. Updated on every run.")"
+            pr="$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+            if { [ -n "$pr" ] && gh pr edit "$pr" --title "$title" --body "$body"; } \
+              || { [ -z "$pr" ] && gh pr create --head "${DATA_BRANCH}" --base "${GITHUB_REF_NAME}" \
+                --title "$title" --body "$body"; }; then
+              echo "::notice title=data/ in a PR::main is protected: data/ goes on the ${DATA_BRANCH} branch and its open PR. See docs/SETUP.md §11."
+              echo "data/ goes on the \`${DATA_BRANCH}\` branch and its PR (main is protected)." >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
-            echo "::warning title=PR de data/ falló::La rama ${DATA_BRANCH} tiene los datos, pero no se pudo abrir el PR (¿Settings → Actions → General → «Allow GitHub Actions to create and approve pull requests»?). Ver docs/SETUP.md §11."
+            echo "::warning title=data/ PR failed::The ${DATA_BRANCH} branch has the data, but the PR could not be opened or updated (Settings → Actions → General → \"Allow GitHub Actions to create and approve pull requests\"?). See docs/SETUP.md §11."
           fi
-          echo "::warning title=push de data/ falló::No se pudo hacer push de data/ a ${GITHUB_REF_NAME} (¿rama protegida sin bypass para github-actions[bot]?). El sitio se publica igualmente con los datos sincronizados; data/ del repositorio queda desactualizado. Ver docs/SETUP.md §11."
-          echo "⚠ No se pudo hacer push de data/; el sitio se publica con los datos sincronizados." >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=data/ push failed::Could not push data/ to ${GITHUB_REF_NAME} (protected branch without a bypass for github-actions[bot]?). The site is still published with the synced data; the repository's data/ falls behind. See docs/SETUP.md §11."
+          echo "⚠ Could not push data/; the site is published with the synced data." >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
       # The bundles' pending proposals and findings, counted on the synced data/ for the run's
@@ -236,14 +249,14 @@ jobs:
           if [ "$status" -eq 0 ] && [ -n "$line" ]; then
             {
               echo ""
-              echo "### Paquetes"
+              echo "### Bundles"
               echo ""
               echo "${line}"
               echo ""
-              echo "Detalle y snippets: \`haggler research review --bundles\` (docs/SETUP.md §14)."
+              echo "Details and snippets: \`haggler research review --bundles\` (docs/SETUP.md §14)."
             } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "::warning title=resumen de paquetes::haggler research review --bundles --summary no dio un resumen (código ${status}). El sitio se publica igual. Ver docs/SETUP.md §14."
+            echo "::warning title=bundle summary::haggler research review --bundles --summary gave no summary (exit code ${status}). The site is published anyway. See docs/SETUP.md §14."
           fi
 
       # Pending research findings become one pull request (docs/SETUP.md §13): `research
@@ -263,6 +276,10 @@ jobs:
         run: |
           body="$RUNNER_TEMP/research-review.md"
           uv run --frozen --no-dev haggler research propose --data-dir data --body "$body"
+          if [ -f "$body" ]; then
+            { printf '%s\n\n' "**CI: wait for it before merging.** Merging changes data/curated/, which feeds the verdicts and redeploys the Cloud Run jobs; publish dispatches ci on every update of this PR."
+              cat "$body"; } > "$body.tmp" && mv "$body.tmp" "$body"
+          fi
           if git diff --quiet -- "$REVIEW_FILE"; then
             exit 0
           fi
@@ -275,7 +292,7 @@ jobs:
             existing="$(git rev-parse FETCH_HEAD)"
             others="$(git log --format=%ae "${base}..${existing}" | grep -v 'github-actions\[bot\]' || true)"
             if [ -n "$others" ]; then
-              echo "::notice title=revisión en curso::La rama ${REVIEW_BRANCH} tiene commits de otra persona; no se reescribe."
+              echo "::notice title=review in progress::${REVIEW_BRANCH} has commits from someone else; it is not rewritten."
               exit 0
             fi
           fi
@@ -284,21 +301,30 @@ jobs:
           git checkout -q -B "${REVIEW_BRANCH}" "${base}"
           cp "$RUNNER_TEMP/research_review.yaml" "$REVIEW_FILE"
           git add "$REVIEW_FILE"
-          git commit -q -m "research: propuesta de revisión de hallazgos"
-          if [ -n "$existing" ] && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
-            echo "La propuesta de revisión no cambió." >> "$GITHUB_STEP_SUMMARY"
+          git commit -q -m "research: proposed review of findings"
+          title="research: review findings"
+          pr="$(gh pr list --head "${REVIEW_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+          # Same proposal on a branch already built on the current main: the branch stays, the
+          # title and body are refreshed. A branch on an older main is rebuilt, so ci runs with
+          # main's workflows (an old ci.yml may not take a dispatch).
+          if [ -n "$existing" ] && git merge-base --is-ancestor "$base" "$existing" \
+            && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
+            [ -z "$pr" ] || gh pr edit "$pr" --title "$title" --body-file "$body" || true
+            echo "The review proposal did not change." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           git push -q -f origin "HEAD:refs/heads/${REVIEW_BRANCH}"
-          pr="$(gh pr list --head "${REVIEW_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+          # See the data/ step: a GITHUB_TOKEN push starts no workflow, a dispatch does.
+          gh workflow run ci.yml --ref "${REVIEW_BRANCH}" \
+            || echo "::warning title=ci not dispatched::Could not start ci on ${REVIEW_BRANCH}; run it from the Actions tab before merging."
           if [ -n "$pr" ]; then
-            gh pr edit "$pr" --body-file "$body"
+            gh pr edit "$pr" --title "$title" --body-file "$body"
           elif ! gh pr create --head "${REVIEW_BRANCH}" --base "${GITHUB_REF_NAME}" \
-              --title "research: revisar hallazgos" --body-file "$body"; then
-            echo "::warning title=PR de revisión falló::La rama ${REVIEW_BRANCH} tiene la propuesta, pero no se pudo abrir el PR (¿Settings → Actions → General → «Allow GitHub Actions to create and approve pull requests»?)."
+              --title "$title" --body-file "$body"; then
+            echo "::warning title=review PR failed::${REVIEW_BRANCH} has the proposal, but the PR could not be opened (Settings → Actions → General → \"Allow GitHub Actions to create and approve pull requests\"?)."
             exit 1
           fi
-          echo "Hallazgos por revisar: PR de la rama \`${REVIEW_BRANCH}\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "Findings to review: PR from the \`${REVIEW_BRANCH}\` branch." >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: build site
@@ -334,7 +360,7 @@ jobs:
           if [ -s data/latest/prices.json ]; then
             echo "has_data=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice title=publish::Aún no hay data/latest/prices.json; no se construye ni publica el sitio."
+            echo "::notice title=publish::No data/latest/prices.json yet; the site is not built or published."
             echo "has_data=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -380,7 +406,7 @@ jobs:
           else
             export BASE_PATH="/${REPO_NAME}"
             export SITE_URL="https://${OWNER}.github.io"
-            echo "::warning title=Pages::actions/configure-pages falló; se usa la ruta base por defecto ${BASE_PATH} (un dominio propio no se detecta). ¿Pages habilitado con Source: GitHub Actions?"
+            echo "::warning title=Pages::actions/configure-pages failed; using the default base path ${BASE_PATH} (a custom domain is not detected). Is Pages enabled with Source: GitHub Actions?"
           fi
           echo "BASE_PATH='${BASE_PATH}' SITE_URL='${SITE_URL}'"
           npm ci

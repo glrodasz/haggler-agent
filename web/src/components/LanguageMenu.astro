@@ -56,7 +56,9 @@ const links = LOCALES.map((target) => ({
     const target = link?.dataset.switchLocale;
     if (!link || !isLocale(target)) return;
     persistLocale(target);
-    // The comparator keeps its selection in the hash: carry it over to the other language.
+    // The comparator keeps its selection in the hash and /changes its filters in the query:
+    // carry both over to the other language.
+    if (location.search) link.search = location.search;
     if (location.hash) link.hash = location.hash;
   });
 

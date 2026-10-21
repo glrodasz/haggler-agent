@@ -117,6 +117,7 @@ export const pt = {
     bundle: "Pacote",
     productivity: "Produtividade",
     gaming: "Jogos",
+    ai: "Inteligência artificial",
     other: "Outros",
   } as Record<string, string>,
 
@@ -837,6 +838,22 @@ export const pt = {
     colNew: "Depois",
     colPct: "Variação",
     empty: "Não há mudanças nos últimos 90 dias.",
+    filtersLabel: "Filtrar mudanças",
+    filterAll: "Todos",
+    clearFilters: "Limpar filtros",
+    kindGroups: {
+      new: "Novo",
+      up: "Aumento",
+      down: "Redução",
+      removed: "Removido",
+      other: "Outra mudança",
+    } as Record<string, string>,
+    showing: (from: string, to: string, total: string) => `Mostrando ${from}–${to} de ${total} mudanças`,
+    noMatches: "Nenhuma mudança corresponde a estes filtros.",
+    pagerLabel: "Páginas de mudanças",
+    previous: "Anterior",
+    next: "Próxima",
+    pageLabel: (n: number) => `Página ${n}`,
   },
 
   methodology: {
@@ -852,7 +869,7 @@ export const pt = {
       },
       {
         title: "App Store como alternativa",
-        text: "Quando o site oficial mostra o preço conforme o IP do visitante (YouTube Premium, Google One, HBO Max) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
+        text: "Quando o site oficial mostra o preço conforme o IP do visitante ou só depois de entrar na conta (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
       },
       {
         title: "Leitura determinística; o LLM só como alternativa",
