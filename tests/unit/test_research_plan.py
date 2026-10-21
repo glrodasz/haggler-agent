@@ -68,7 +68,7 @@ def test_services_without_pairs_follow_catalog_order_and_caps():
 def test_unpriced_services_and_held_instruments_are_not_planned():
     s = sel(limits=Limits(max_services=50, max_instruments=50))
     keys = {x.key for x in s.subjects}
-    assert "service:paramount_plus" not in keys  # no price sources
+    assert "service:vix" not in keys  # no price sources
     assert "instrument:user_co_card" not in keys  # no official domains, held by the user
     assert "instrument:revolut_eea" in keys
 

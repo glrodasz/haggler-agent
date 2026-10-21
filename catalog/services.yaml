@@ -287,7 +287,6 @@ services:
           big_ids: {personal: CFQ7TTC0K5BF, family: CFQ7TTC0K5DM}
           url: "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={big_ids}&market={cc}&languages=en-US"
 
-  # ---- Curated-only services (referenced by bundles; no price source yet) ----
   - id: paramount_plus
     name: Paramount+
     category: video
@@ -295,9 +294,94 @@ services:
     homepage: https://www.paramountplus.com
     official_domains: [paramountplus.com, paramount.com]
     default_plan: standard
+    notes_es: >-
+      Los precios salen del listado de compras in-app del App Store. En EE. UU. el plan sin
+      anuncios se llama Premium y el más barato Essential (con anuncios); en otros países suele
+      haber un único plan, que aquí cuenta como Estándar.
     plans:
-      - {id: standard, label_es: Estándar, label_en: Standard, rank: 1, plausible_monthly_eur: [1, 25]}
+      - {id: essential, label_es: Essential (con anuncios), label_en: Essential (with ads), rank: 0, ads: true,
+         plausible_monthly_eur: [0.5, 20],
+         iap_patterns: ['essential|b[aá]sic|with ads|con anuncios|com an[uú]ncios|mit werbung|med reklam']}
+      # Market-wide single plan ("Paramount+", "Paramount+ Mensual") and explicit "Standard".
+      - {id: standard, label_es: Estándar, label_en: Standard, rank: 1, plausible_monthly_eur: [0.5, 25],
+         iap_patterns: ['^(?!.*(essential|b[aá]sic|\bads\b|anunc|an[uú]nc|werbung|reklam|premium|showtime)).*']}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 2, plausible_monthly_eur: [1, 30],
+         iap_patterns: ['premium|showtime']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 530168168, exclude_patterns: ['bundle', 'combo', '\bdeal\b']}
 
+  - id: crunchyroll
+    name: Crunchyroll
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.crunchyroll.com
+    official_domains: [crunchyroll.com]
+    research_urls:
+      - https://www.crunchyroll.com/tos
+    default_plan: fan
+    plans:
+      - {id: fan, label_es: Fan, label_en: Fan, rank: 1, plausible_monthly_eur: [0.5, 20],
+         iap_patterns: ['^(?!.*(mega|ultimate|ultimat|definitiv)).*\bfan\b']}
+      - {id: mega_fan, label_es: Mega Fan, label_en: Mega Fan, rank: 2, plausible_monthly_eur: [0.8, 25],
+         iap_patterns: ['\bmega\b']}
+      - {id: ultimate_fan, label_es: Ultimate Fan, label_en: Ultimate Fan, rank: 3, plausible_monthly_eur: [1, 30],
+         iap_patterns: ['ultimate|ultimat|definitiv']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 329913454, exclude_patterns: ['game vault', 'store', 'coins?\b']}
+
+  - id: chatgpt
+    name: ChatGPT
+    category: ai
+    eu_geo_class: eservice_art4_1b
+    homepage: https://chatgpt.com
+    official_domains: [openai.com, chatgpt.com]
+    research_urls:
+      - https://openai.com/policies/row-terms-of-use/
+    default_plan: plus
+    notes_es: >-
+      Precios del listado de compras in-app del App Store; la web (chatgpt.com) cobra lo mismo o
+      menos según el país.
+    plans:
+      - {id: go, label_es: Go, label_en: Go, rank: 0, plausible_monthly_eur: [0.5, 15],
+         iap_patterns: ['\bgo\b']}
+      - {id: plus, label_es: Plus, label_en: Plus, rank: 1, plausible_monthly_eur: [5, 45],
+         iap_patterns: ['\bplus\b']}
+      - {id: pro, label_es: Pro, label_en: Pro, rank: 2, plausible_monthly_eur: [50, 400],
+         iap_patterns: ['\bpro\b']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 6448311069, exclude_patterns: ['team', 'business', 'enterprise', 'credit']}
+
+  - id: claude
+    name: Claude
+    category: ai
+    eu_geo_class: eservice_art4_1b
+    homepage: https://claude.ai
+    official_domains: [anthropic.com, claude.ai, claude.com]
+    research_urls:
+      - https://www.anthropic.com/legal/consumer-terms
+    default_plan: pro
+    notes_es: >-
+      Precios del listado de compras in-app del App Store, que en algunos países supera el
+      precio web de claude.ai.
+    plans:
+      - {id: pro, label_es: Pro, label_en: Pro, rank: 1, plausible_monthly_eur: [5, 45],
+         iap_patterns: ['\bpro\b']}
+      - {id: max_5x, label_es: Max 5x, label_en: Max 5x, rank: 2, plausible_monthly_eur: [40, 250],
+         iap_patterns: ['\b5\s*x\b|\bx\s*5\b']}
+      - {id: max_20x, label_es: Max 20x, label_en: Max 20x, rank: 3, plausible_monthly_eur: [80, 450],
+         iap_patterns: ['\b20\s*x\b|\bx\s*20\b']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 6473753684, exclude_patterns: ['team', 'enterprise', 'credit']}
+
+  # ---- Curated-only services (referenced by bundles; no price source yet) ----
   - id: vix
     name: ViX Premium
     category: video

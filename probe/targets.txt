@@ -27,3 +27,7 @@ youtube_premium SE CO LT US TR AR
 google_one SE CO US
 hbo_max SE CO US
 microsoft_365 SE CO US DE TR
+paramount_plus SE CO US GB DE MX
+crunchyroll SE CO US BR DE
+chatgpt SE CO US IN TR
+claude SE CO US BR TR
