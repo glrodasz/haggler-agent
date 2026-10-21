@@ -215,7 +215,9 @@ jobs:
             gh workflow run ci.yml --ref "${DATA_BRANCH}" \
               || echo "::warning title=ci not dispatched::Could not start ci on ${DATA_BRANCH}; run it from the Actions tab before merging."
             title="data: prices and research"
-            body="Data synced from GCS by publish (main is protected). The site is already published with it; merging this PR only commits it to data/. Updated on every run."
+            body="$(printf '%s\n\n%s' \
+              "**CI: not required to merge.** publish already built and deployed the site from this data, so a broken file would have failed that run; ci is dispatched anyway in case main requires its checks." \
+              "Data synced from GCS by publish (main is protected). Merging this PR only commits it to data/. Updated on every run.")"
             pr="$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
             if { [ -n "$pr" ] && gh pr edit "$pr" --title "$title" --body "$body"; } \
               || { [ -z "$pr" ] && gh pr create --head "${DATA_BRANCH}" --base "${GITHUB_REF_NAME}" \
@@ -274,6 +276,10 @@ jobs:
         run: |
           body="$RUNNER_TEMP/research-review.md"
           uv run --frozen --no-dev haggler research propose --data-dir data --body "$body"
+          if [ -f "$body" ]; then
+            { printf '%s\n\n' "**CI: wait for it before merging.** Merging changes data/curated/, which feeds the verdicts and redeploys the Cloud Run jobs; publish dispatches ci on every update of this PR."
+              cat "$body"; } > "$body.tmp" && mv "$body.tmp" "$body"
+          fi
           if git diff --quiet -- "$REVIEW_FILE"; then
             exit 0
           fi

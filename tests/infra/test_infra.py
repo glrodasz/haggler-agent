@@ -317,6 +317,7 @@ def test_publish_protected_main_gets_data_on_a_branch_and_a_pr(tmp_path: Path) -
     assert "pr create --head data-sync --base main --title data: prices and research" in calls
     # A GITHUB_TOKEN push starts no workflow: publish dispatches ci so the PR gets its checks.
     assert "workflow run ci.yml --ref data-sync" in calls
+    assert "--body **CI: not required to merge.**" in calls
 
 
 def test_publish_can_dispatch_ci_on_its_bot_branches() -> None:
@@ -884,6 +885,8 @@ def test_publish_review_step_opens_a_pr_with_the_proposal(tmp_path: Path) -> Non
     calls = gh_log.read_text()
     assert "pr create --head research-review --base main --title research: review findings" in calls
     assert "workflow run ci.yml --ref research-review" in calls
+    body = (tmp_path / "research-review.md").read_text()
+    assert body.startswith("**CI: wait for it before merging.**") and "propuesta" in body
 
 
 @pytest.mark.skipif(
