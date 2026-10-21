@@ -149,6 +149,14 @@ function emptyCaps(residence: string): ProfileCapabilities {
 
 const t = es.compare;
 
+/** Whether this page load is a reload (or back/forward) rather than a followed link. */
+function isReload(): boolean {
+  const nav = performance.getEntriesByType?.("navigation")[0] as
+    | PerformanceNavigationTiming
+    | undefined;
+  return nav !== undefined && nav.type !== "navigate";
+}
+
 function riskClass(rank: number): string {
   return rank >= 0 && rank <= 4 ? `risk-${rank}` : "risk-unknown";
 }
@@ -170,7 +178,10 @@ export default function Comparador(props: ComparadorProps) {
   /** Where the visitor seems to be (browser hints, or their IP when they ask for it). */
   const [located, setLocated] = useState<Located | null>(null);
   const [ipState, setIpState] = useState<"idle" | "loading" | "failed">("idle");
-  /** The visitor edited the profile here: it is saved for the other pages (logic/visitor.ts). */
+  /**
+   * The visitor chose this profile (edited it, or followed a link to it): it is saved for the
+   * other pages (logic/visitor.ts). A located starting profile is not.
+   */
   const edited = useRef(false);
 
   const source: VerdictSource = useMemo(
@@ -239,6 +250,9 @@ export default function Comparador(props: ComparadorProps) {
         followCurrency(s, normalizeProfile({ ...s, profile: null, custom })),
       );
     if (["s", "p", "pf"].some((k) => params.has(k))) {
+      // A link the visitor followed sets the profile the other pages show; a reload of the
+      // page's own URL (which carries the located profile too) does not.
+      edited.current = !isReload();
       setState(normalizeProfile(decoded));
     } else {
       setState(decoded);
@@ -268,6 +282,7 @@ export default function Comparador(props: ComparadorProps) {
     const follow = () => {
       const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       if (["s", "p", "pf"].some((k) => params.has(k))) {
+        edited.current = true;
         setState((s) => normalizeProfile(decodeHash(s)));
       }
     };
