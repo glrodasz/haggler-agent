@@ -1881,3 +1881,11 @@ fieldset.own > legend {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
+
+/* Parts logic/profilePatch.ts hides for the visitor's profile (badges and cells set display). */
+th[hidden],
+td[hidden],
+li[hidden],
+.badge[hidden] {
+  display: none;
+}

@@ -112,12 +112,12 @@ export interface BundleVerdicts {
 }
 
 /** A /paquetes group: the active bundles whose default-profile verdict carries `label`. */
-export interface BundleGroup {
+export interface BundleGroup<B = Bundle> {
   label: string;
   /** 0..4, or UNKNOWN_RANK (unknown and out-of-range ranks): the groups are sorted on it. */
   rank: number;
   /** Highest saving first (see compareBundlesBySaving). */
-  bundles: Bundle[];
+  bundles: B[];
 }
 
 const UNKNOWN_LABEL = "unknown";
@@ -249,10 +249,20 @@ export function groupBundlesByVerdict(
   bundles: readonly Bundle[],
   defaultProfile: string,
 ): BundleGroup[] {
-  const groups = new Map<string, BundleGroup>();
+  return groupBundles(bundles, (b) => splitBundleVerdicts(b.verdicts, defaultProfile).main);
+}
+
+/** groupBundlesByVerdict with any verdict per bundle (e.g. the visitor's, from its rule). */
+export function groupBundles<
+  B extends Pick<Bundle, "display_status" | "saving_pct" | "name" | "bundle_id">,
+>(
+  bundles: readonly B[],
+  verdictOf: (bundle: B) => Pick<BundleVerdict, "label" | "rank"> | undefined,
+): BundleGroup<B>[] {
+  const groups = new Map<string, BundleGroup<B>>();
   for (const bundle of bundles) {
     if (!isActiveBundle(bundle)) continue;
-    const main = splitBundleVerdicts(bundle.verdicts, defaultProfile).main;
+    const main = verdictOf(bundle);
     const label = main?.label ?? UNKNOWN_LABEL;
     const rank = main ? groupRank(main.rank) : UNKNOWN_RANK;
     const group = groups.get(label);

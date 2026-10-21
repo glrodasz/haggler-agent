@@ -1,0 +1,13 @@
+---
+/**
+ * Whose prices and verdicts the page shows: the default profile as built, the visitor's own
+ * once logic/profilePatch.ts knows it ([data-profile-note]).
+ */
+import { es } from "../i18n/es";
+import { getSite } from "../logic/data";
+
+const site = getSite();
+const name = site.defaultProfile?.name_es;
+---
+
+<p class="note" data-profile-note>{name ? es.visitorProfile.forDefault(name) : ""}</p>

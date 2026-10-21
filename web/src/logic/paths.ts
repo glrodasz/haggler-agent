@@ -29,4 +29,6 @@ export const routes = {
     `${routes.country(cc, base)}#${encodeURIComponent(bundleAnchor(bundleId))}`,
   changes: (base?: string) => withBase("cambios/", base),
   methodology: (base?: string) => withBase("metodologia/", base),
+  /** The visitor-profile kit (pages/datos/perfil.json.ts). */
+  profileKit: (base?: string) => withBase("datos/perfil.json", base),
 };

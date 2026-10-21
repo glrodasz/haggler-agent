@@ -5,6 +5,8 @@ import CountryLabel from "../../components/CountryLabel.astro";
 import EuBadge from "../../components/EuBadge.astro";
 import FeasibilityTable from "../../components/FeasibilityTable.astro";
 import OfferTable from "../../components/OfferTable.astro";
+import ProfileNote from "../../components/ProfileNote.astro";
+import ProfileFeasibility from "../../islands/ProfileFeasibility";
 import RiskBadge from "../../components/RiskBadge.astro";
 import { ServiceMark } from "../../components/ServiceMark";
 import TableWrap from "../../components/TableWrap.astro";
@@ -55,6 +57,7 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
     <li>{t.geoClass}: <strong>{lookup(es.euGeoClass, service.eu_geo_class)}</strong></li>
     <li><a href={service.homepage} rel="nofollow noopener noreferrer external">{t.homepage}</a></li>
   </ul>
+  <ProfileNote />
   {
     service.notes_es && (
       <aside class="callout" aria-label={t.notesTitle}>
@@ -68,14 +71,20 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
       <section aria-labelledby="resumen">
         <h2 id="resumen">{t.summaryTitle}</h2>
         <TableWrap captionId="resumen-caption">
-          <table>
+          <table
+            data-profile-summary
+            data-service={service.id}
+            data-plan={service.default_plan}
+          >
             <caption id="resumen-caption">{t.summaryCaption(defaultPlan)}</caption>
             <thead>
               <tr>
                 <th scope="col">{t.colRisk}</th>
                 <th scope="col">{t.colOffer}</th>
                 <th scope="col" class="num">{t.colCost}</th>
-                <th scope="col" class="num">{t.colSaving(site.residenceName)}</th>
+                <th scope="col" class="num" data-cell="saving-head">
+                  {t.colSaving(site.residenceName)}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -84,11 +93,11 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
                 const best = summary.best_by_risk[key];
                 const info = site.label(site.acceptableLabels()[k]?.id ?? "", k);
                 return (
-                  <tr>
+                  <tr data-level={k}>
                     <th scope="row">
                       {es.riskLevel(k)} · {info.name}
                     </th>
-                    <td>
+                    <td data-cell="offer">
                       {best ? (
                         <span class="badges">
                           <CountryLabel cc={best.country} />
@@ -100,8 +109,12 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
                         "—"
                       )}
                     </td>
-                    <td class="num">{formatMoney(best?.cost_eur_with_fee, "EUR")}</td>
-                    <td class="num">{formatSignedMoney(summary.savings_month_eur[key], "EUR")}</td>
+                    <td class="num" data-cell="cost">
+                      {formatMoney(best?.cost_eur_with_fee, "EUR")}
+                    </td>
+                    <td class="num" data-cell="saving">
+                      {formatSignedMoney(summary.savings_month_eur[key], "EUR")}
+                    </td>
                   </tr>
                 );
               })}
@@ -134,24 +147,33 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
   </section>
 
   <section aria-labelledby="factibilidad">
-    <h2 id="factibilidad">{t.feasibilityTitle(site.residenceName)}</h2>
-    {
-      records.length === 0 ? (
-        <p>{t.noFeasibility(site.residenceName)}</p>
-      ) : (
-        <>
-          <p class="note">
-            {t.feasibilityLead(site.residenceName, site.defaultProfile?.name_es)}
-          </p>
-          <FeasibilityTable
-            records={records}
-            mode="service"
-            caption={`${t.feasibilityTitle(site.residenceName)}: ${service.name}`}
-            captionId="factibilidad-caption"
-          />
-        </>
-      )
-    }
+    <ProfileFeasibility
+      client:load
+      mode="service"
+      subject={service.id}
+      defaultResidenceName={site.residenceName}
+      defaultProfile={site.feasibility.default_profile}
+      names={Object.fromEntries(site.services.map((x) => [x.id, x.name]))}
+    >
+      <h2 id="factibilidad">{t.feasibilityTitle(site.residenceName)}</h2>
+      {
+        records.length === 0 ? (
+          <p>{t.noFeasibility(site.residenceName)}</p>
+        ) : (
+          <>
+            <p class="note">
+              {t.feasibilityLead(site.residenceName, site.defaultProfile?.name_es)}
+            </p>
+            <FeasibilityTable
+              records={records}
+              mode="service"
+              caption={`${t.feasibilityTitle(site.residenceName)}: ${service.name}`}
+              captionId="factibilidad-caption"
+            />
+          </>
+        )
+      }
+    </ProfileFeasibility>
   </section>
 
   <section aria-labelledby="paquetes">

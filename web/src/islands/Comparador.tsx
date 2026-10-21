@@ -7,7 +7,7 @@
  * describes (logic/profile.ts).
  */
 
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { ServiceMark } from "../components/ServiceMark";
 import { es } from "../i18n/es";
 import { instrumentAdvice } from "../logic/advice";
@@ -60,6 +60,13 @@ import {
   type VerdictSource,
   verdictLookup,
 } from "../logic/verdicts";
+import {
+  LOCATE_BY_IP,
+  locateVisitor,
+  neutralProfile,
+  readSavedProfile,
+  saveProfile,
+} from "../logic/visitor";
 import { CountryCombobox } from "./CountryCombobox";
 import { RiskSlider } from "./RiskSlider";
 
@@ -140,17 +147,6 @@ function emptyCaps(residence: string): ProfileCapabilities {
   };
 }
 
-/** Someone who only lives in `cc`: its ID document and phone, no ties (the starting point). */
-function neutralProfile(cc: string): VisitorProfile {
-  return {
-    residence: cc,
-    residenceDoc: true,
-    residencePhone: true,
-    residenceCard: false,
-    ties: [],
-  };
-}
-
 const t = es.compare;
 
 function riskClass(rank: number): string {
@@ -174,6 +170,8 @@ export default function Comparador(props: ComparadorProps) {
   /** Where the visitor seems to be (browser hints, or their IP when they ask for it). */
   const [located, setLocated] = useState<Located | null>(null);
   const [ipState, setIpState] = useState<"idle" | "loading" | "failed">("idle");
+  /** The visitor edited the profile here: it is saved for the other pages (logic/visitor.ts). */
+  const edited = useRef(false);
 
   const source: VerdictSource = useMemo(
     () => ({
@@ -230,22 +228,36 @@ export default function Comparador(props: ComparadorProps) {
     setOffers(read(props.dataId, unpackOffers));
     setRules(read(props.verdictsId, unpackRules));
     const decoded = decodeHash(state);
-    // A fresh visit (no comparison in the link) starts from the visitor's country (browser
-    // hints only; nothing leaves the browser) with no ties. A shared link keeps its profile,
-    // including the default one, which it encodes by leaving p and pf out.
+    // A fresh visit (no comparison in the link) starts from the profile the visitor set here
+    // before, else from their country with no ties: the browser's guess at once, then the one
+    // logic/visitor.ts locates (by IP), unless the visitor has edited the profile meanwhile. A
+    // shared link keeps its profile, including the default one, which it encodes by leaving p
+    // and pf out.
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const start = (custom: VisitorProfile) =>
+      setState((s) =>
+        followCurrency(s, normalizeProfile({ ...s, profile: null, custom })),
+      );
     if (["s", "p", "pf"].some((k) => params.has(k))) {
       setState(normalizeProfile(decoded));
     } else {
-      const guess = guessFromBrowser();
-      setLocated(guess);
-      const cc = guess && residenceById.has(guess.cc) ? guess.cc : props.residence;
-      setState(
-        followCurrency(
-          decoded,
-          normalizeProfile({ ...decoded, profile: null, custom: neutralProfile(cc) }),
-        ),
+      setState(decoded);
+      const saved = readSavedProfile(
+        props.residences.map((r) => r.cc),
+        new Set(props.tieCountries.map((c) => c.cc)),
       );
+      if (saved) {
+        start(saved);
+      } else {
+        const guess = guessFromBrowser();
+        setLocated(guess);
+        start(neutralProfile(guess && residenceById.has(guess.cc) ? guess.cc : props.residence));
+        void locateVisitor().then((found) => {
+          if (!found || edited.current) return;
+          setLocated(found);
+          if (residenceById.has(found.cc)) start(neutralProfile(found.cc));
+        });
+      }
     }
     setReady(true);
   }, []);
@@ -262,6 +274,10 @@ export default function Comparador(props: ComparadorProps) {
     window.addEventListener("hashchange", follow);
     return () => window.removeEventListener("hashchange", follow);
   }, [source]);
+
+  useEffect(() => {
+    if (edited.current && visitor) saveProfile(visitor);
+  }, [state.custom, state.profile]);
 
   useEffect(() => {
     if (!ready) return;
@@ -371,13 +387,15 @@ export default function Comparador(props: ComparadorProps) {
       ? { ...next, currency: after }
       : next;
   };
-  const editProfile = (edit: (v: VisitorProfile) => VisitorProfile) =>
+  const editProfile = (edit: (v: VisitorProfile) => VisitorProfile) => {
+    edited.current = true;
     setState((s) => {
       const current =
         s.custom ??
         fromCapabilities(capabilitiesOf(source, s.profile) ?? emptyCaps(props.residence));
       return followCurrency(s, normalizeProfile({ ...s, custom: edit(current) }));
     });
+  };
   const setTie = (i: number, patch: Partial<Tie>) =>
     editProfile((v) => ({
       ...v,
@@ -513,7 +531,7 @@ export default function Comparador(props: ComparadorProps) {
                       )}
                     </p>
                     <p id="residencia-ayuda" class="fieldset-help">
-                      {t.residenceHelp(GEO_IP_HOST)}
+                      {t.residenceHelp(GEO_IP_HOST, LOCATE_BY_IP)}
                     </p>
                   </div>
                   <fieldset class="own">

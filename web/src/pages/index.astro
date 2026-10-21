@@ -90,6 +90,8 @@ const tieCountries: ComparadorCountry[] = countryOptions(covered, countryNames);
 const verdictsJson = inlineJson({ rules: site.feasibility.rules });
 
 const [before, after] = t.heroTitle.split(t.heroAccent);
+// The residence in the lead follows the visitor's profile (logic/profilePatch.ts).
+const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 ---
 
 <Base current="home" wide>
@@ -116,7 +118,9 @@ const [before, after] = t.heroTitle.split(t.heroAccent);
           verdictsId="comparador-veredictos"
           targetId="comparar"
         />
-        <p class="lead">{t.lead(site.residenceName)}</p>
+        <p class="lead">
+          {leadBefore}<span data-profile-residence>{site.residenceName}</span>{leadAfter}
+        </p>
         <div class="hero-actions">
           <a class="button button-light" href="#comparar">
             {t.ctaStart} <span aria-hidden="true">↓</span>
