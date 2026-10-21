@@ -889,6 +889,38 @@ def test_publish_review_step_opens_a_pr_with_the_proposal(tmp_path: Path) -> Non
 @pytest.mark.skipif(
     shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
 )
+def test_publish_review_step_rebuilds_an_unchanged_proposal_only_on_a_newer_main(
+    tmp_path: Path,
+) -> None:
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    bot = "41898282+github-actions[bot]@users.noreply.github.com"
+    bot_env = {**env, "GIT_AUTHOR_EMAIL": bot, "GIT_COMMITTER_EMAIL": bot}
+    assert _run_review_step(tmp_path, work, bot_env).returncode == 0
+    gh_log.unlink()
+    # Same proposal, same main: nothing is pushed or dispatched.
+    _git(work, "checkout", "-q", "main", env=env)
+    result = _run_review_step(tmp_path, work, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "workflow run" not in gh_log.read_text()
+    # main moved on: the branch is rebuilt on it and ci runs again.
+    _git(work, "checkout", "-q", "main", env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "newer main", env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    result = _run_review_step(tmp_path, work, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "workflow run ci.yml --ref research-review" in gh_log.read_text()
+    shown = subprocess.run(
+        ["git", "show", "research-review:README"],
+        cwd=remote, env=env, capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert shown == "x\n"
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
 def test_publish_review_step_leaves_a_review_in_progress_alone(tmp_path: Path) -> None:
     work, remote, env, gh_log = _review_repo(tmp_path)
     _git(work, "checkout", "-q", "-b", "research-review", env=env)

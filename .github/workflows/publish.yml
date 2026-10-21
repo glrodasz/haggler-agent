@@ -298,8 +298,11 @@ jobs:
           git commit -q -m "research: proposed review of findings"
           title="research: review findings"
           pr="$(gh pr list --head "${REVIEW_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
-          if [ -n "$existing" ] && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
-            # Same proposal: the branch stays, the title and body are refreshed.
+          # Same proposal on a branch already built on the current main: the branch stays, the
+          # title and body are refreshed. A branch on an older main is rebuilt, so ci runs with
+          # main's workflows (an old ci.yml may not take a dispatch).
+          if [ -n "$existing" ] && git merge-base --is-ancestor "$base" "$existing" \
+            && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
             [ -z "$pr" ] || gh pr edit "$pr" --title "$title" --body-file "$body" || true
             echo "The review proposal did not change." >> "$GITHUB_STEP_SUMMARY"
             exit 0
