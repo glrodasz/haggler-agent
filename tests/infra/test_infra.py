@@ -15,7 +15,14 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
-OWN_WORKFLOWS = ("ci.yml", "probe.yml", "deploy-job.yml", "publish.yml", "research.yml")
+OWN_WORKFLOWS = (
+    "ci.yml",
+    "probe.yml",
+    "deploy-job.yml",
+    "publish.yml",
+    "research.yml",
+    "daily.yml",
+)
 
 # Majors checked to declare `runs.using: node24` (node20 is deprecated on the runners). Upload and
 # download artifact, and upload-pages-artifact/deploy-pages, are bumped together.
