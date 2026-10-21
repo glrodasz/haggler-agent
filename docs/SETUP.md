@@ -23,6 +23,7 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
 | `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación, `mode=bundles` mide la legibilidad de las páginas de los paquetes y `mode=watch` corre el vigilante de paquetes sin escribir nada (no usa GCP) |
 | `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
+| `daily.yml` | manual desde `main` | ejecuta `haggler-daily` (los precios de hoy) con `gcloud run jobs execute --wait` y después lanza `publish.yml`; útil tras añadir servicios o países al catálogo |
 | `publish.yml` | todos los días 05:15 UTC; tras cada `ci` verde de un push a `main` que toque `web/`, `src/`, `catalog/`, `data/` o dependencias; o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages; el resumen del run cuenta lo que hay por revisar en los paquetes (§14) |
 
 ## 1. Requisitos

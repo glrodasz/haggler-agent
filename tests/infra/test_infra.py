@@ -15,7 +15,14 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
-OWN_WORKFLOWS = ("ci.yml", "probe.yml", "deploy-job.yml", "publish.yml", "research.yml")
+OWN_WORKFLOWS = (
+    "ci.yml",
+    "probe.yml",
+    "deploy-job.yml",
+    "publish.yml",
+    "research.yml",
+    "daily.yml",
+)
 
 # Majors checked to declare `runs.using: node24` (node20 is deprecated on the runners). Upload and
 # download artifact, and upload-pages-artifact/deploy-pages, are bumped together.
@@ -337,6 +344,17 @@ def test_gcp_workflows_skip_other_branches() -> None:
     assert 'if [ "$IS_DEFAULT_BRANCH" != "true" ]' in publish_cfg
     deploy_cfg = step(load("deploy-job.yml"), "deploy", "cfg")["run"]
     assert 'if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]' in deploy_cfg
+
+
+def test_daily_workflow_runs_the_scheduled_job_from_the_default_branch() -> None:
+    daily = load("daily.yml")
+    assert daily["env"]["JOB_NAME"] == "${{ vars.GCP_JOB_NAME || 'haggler-daily' }}"
+    assert daily["permissions"]["actions"] == "write"
+    cfg = step(daily, "daily", "Check repository variables")["run"]
+    assert 'if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]' in cfg
+    run = step(daily, "daily", "Execute the daily prices job")["run"]
+    assert 'gcloud run jobs execute "${JOB_NAME}"' in run and "--wait" in run
+    assert "publish.yml" in step(daily, "daily", "Publish the site")["run"]
 
 
 def test_deploy_job_targets_the_scheduled_job() -> None:
