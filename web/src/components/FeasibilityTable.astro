@@ -1,8 +1,8 @@
 ---
-import { es, lookup } from "../i18n/es";
+import { getMessages, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
-import { formatDate, hostOf } from "../logic/format";
-import { routes } from "../logic/paths";
+import { hostOf } from "../logic/format";
+import { localeOfUrl, routesFor } from "../logic/paths";
 import type { FeasibilityView } from "../logic/types";
 import { isPending } from "../logic/verdicts";
 import CountryLabel from "./CountryLabel.astro";
@@ -19,11 +19,16 @@ interface Props {
 }
 
 const { records, mode, caption, captionId } = Astro.props;
-const site = getSite();
-const t = es.service;
-const f = es.feasibility;
-// "unknown" (facts missing) is one of each axis' values in es.axes: "Sin datos".
-const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}, value);
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatDate } = site.fmt;
+const t = msg.service;
+const f = msg.feasibility;
+// "unknown" (facts missing) is one of each axis' values in msg.axes: "Sin datos".
+const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {}, value);
 ---
 
 <TableWrap captionId={captionId}>
@@ -31,11 +36,11 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
     <caption id={captionId}>{caption}</caption>
     <thead>
       <tr>
-        <th scope="col">{mode === "service" ? t.colTarget : es.country.colService}</th>
+        <th scope="col">{mode === "service" ? t.colTarget : msg.country.colService}</th>
         <th scope="col">{t.colLabel}</th>
-        <th scope="col">{es.axes.legality?.name}</th>
-        <th scope="col">{es.axes.tos?.name}</th>
-        <th scope="col">{es.axes.practical?.name}</th>
+        <th scope="col">{msg.axes.legality?.name}</th>
+        <th scope="col">{msg.axes.tos?.name}</th>
+        <th scope="col">{msg.axes.practical?.name}</th>
         <th scope="col">{t.colConfidence}</th>
         <th scope="col">{t.colStatus}</th>
         <th scope="col">{f.colSource}</th>
@@ -64,14 +69,14 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
               <td>{axis("legality", r.legality)}</td>
               <td>{axis("tos", r.tos)}</td>
               <td>{axis("practical", r.practical)}</td>
-              <td>{lookup(es.confidence, r.confidence)}</td>
-              <td>{lookup(es.curatedStatus, r.status)}</td>
+              <td>{lookup(msg.confidence, r.confidence)}</td>
+              <td>{lookup(msg.curatedStatus, r.status)}</td>
               <td>
                 <span
                   class={`badge provenance-${r.provenance}`}
-                  title={es.provenanceTitles[r.provenance]}
+                  title={msg.provenanceTitles[r.provenance]}
                 >
-                  {lookup(es.provenance, r.provenance)}
+                  {lookup(msg.provenance, r.provenance)}
                 </span>
                 {r.researched_on && (
                   <div class="small muted nowrap">
@@ -80,7 +85,7 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
                 )}
               </td>
               <td class="notes">
-                {r.notes_es}
+                {r.notes_es && <span lang="es">{r.notes_es}</span>}
                 {r.tos_clause_url && (
                   <div class="small">
                     <a href={r.tos_clause_url} rel="nofollow noopener noreferrer external">
@@ -96,7 +101,7 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
                     ) : (
                       <ul class="evidence-list">
                         {r.evidence.map((e) => {
-                          const kind = lookup(es.evidenceKinds, e.kind);
+                          const kind = lookup(msg.evidenceKinds, e.kind);
                           return (
                             <li>
                               {e.quote && <blockquote cite={e.url}>{e.quote}</blockquote>}
@@ -130,7 +135,7 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
                         <p class="small evidence-heading">{f.assumptionsTitle}</p>
                         <ul class="small">
                           {r.assumptions_es.map((a) => (
-                            <li>{a}</li>
+                            <li lang="es">{a}</li>
                           ))}
                         </ul>
                       </>
@@ -140,7 +145,7 @@ const axis = (name: string, value: string) => lookup(es.axes[name]?.values ?? {}
                         <p class="small evidence-heading">{f.reasonsTitle}</p>
                         <ul class="small">
                           {r.reasons_es.map((a) => (
-                            <li>{a}</li>
+                            <li lang="es">{a}</li>
                           ))}
                         </ul>
                       </>

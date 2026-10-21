@@ -1,0 +1,78 @@
+---
+import ChannelBadge from "../../components/ChannelBadge.astro";
+import CountryLabel from "../../components/CountryLabel.astro";
+import TableWrap from "../../components/TableWrap.astro";
+import { getMessages, lookupFor } from "../../i18n";
+import Base from "../../layouts/Base.astro";
+import { getSite } from "../../logic/data";
+import { localeParams, routesFor } from "../../logic/paths";
+
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props;
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatDate, formatPercent } = site.fmt;
+const t = msg.changes;
+const changes = site.recentChanges(90);
+---
+
+<Base title={t.title} current="changes">
+  <h1>{t.heading}</h1>
+  <p class="lead">{t.lead}</p>
+  {
+    changes.length === 0 ? (
+      <p>{t.empty}</p>
+    ) : (
+      <TableWrap captionId="cambios-caption">
+        <table>
+          <caption id="cambios-caption">{t.caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t.colDate}</th>
+              <th scope="col">{t.colService}</th>
+              <th scope="col">{t.colPlan}</th>
+              <th scope="col">{t.colCountry}</th>
+              <th scope="col">{t.colChannel}</th>
+              <th scope="col">{t.colKind}</th>
+              <th scope="col" class="num">{t.colOld}</th>
+              <th scope="col" class="num">{t.colNew}</th>
+              <th scope="col" class="num">{t.colPct}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {changes.map((c) => (
+              <tr>
+                <th scope="row" class="nowrap">
+                  <time datetime={c.date}>{formatDate(c.date)}</time>
+                </th>
+                <td>
+                  <a href={routes.service(c.service_id)}>{site.serviceName(c.service_id)}</a>
+                </td>
+                <td>{site.planLabel(c.service_id, c.plan_id)}</td>
+                <td>
+                  <CountryLabel cc={c.country} />
+                </td>
+                <td>
+                  <ChannelBadge channel={c.channel} />
+                </td>
+                <td>{lookup(msg.changeKinds, c.kind)}</td>
+                <td class="num">{site.formatChangeValue(c, c.old)}</td>
+                <td class="num">{site.formatChangeValue(c, c.new)}</td>
+                <td
+                  class={`num ${c.pct !== null && c.pct > 0 ? "negative" : c.pct !== null && c.pct < 0 ? "positive" : ""}`}
+                >
+                  {formatPercent(c.pct, { signed: true })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableWrap>
+    )
+  }
+</Base>

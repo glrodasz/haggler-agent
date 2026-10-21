@@ -1,8 +1,7 @@
 ---
-import { es, lookup } from "../i18n/es";
+import { getMessages, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
-import { formatDate, formatMoney, formatPrice, periodSuffix } from "../logic/format";
-import { routes } from "../logic/paths";
+import { localeOfUrl, routesFor } from "../logic/paths";
 import type { Offer } from "../logic/types";
 import ChannelBadge from "./ChannelBadge.astro";
 import CountryLabel from "./CountryLabel.astro";
@@ -19,8 +18,13 @@ interface Props {
 }
 
 const { offers, mode, caption, captionId } = Astro.props;
-const site = getSite();
-const t = es.service;
+const locale = localeOfUrl(Astro.url);
+const site = getSite(locale);
+const msg = getMessages(locale);
+const lookup = lookupFor(msg);
+const routes = routesFor(locale);
+const { formatDate, formatMoney, formatPrice, periodSuffix } = site.fmt;
+const t = msg.service;
 const second = site.residenceCurrency !== "EUR" ? site.residenceCurrency : null;
 const stale = (o: Offer) => site.isStale(o.currency);
 const hasStale = offers.some(stale);
@@ -31,7 +35,7 @@ const hasStale = offers.some(stale);
     <caption id={captionId}>{caption}</caption>
     <thead>
       <tr>
-        <th scope="col">{mode === "service" ? t.colCountry : es.country.colService}</th>
+        <th scope="col">{mode === "service" ? t.colCountry : msg.country.colService}</th>
         <th scope="col">{t.colPlan}</th>
         <th scope="col" class="num">{t.colLocal}</th>
         <th scope="col" class="num">{t.colMonthlyIn("EUR")}</th>
@@ -59,7 +63,7 @@ const hasStale = offers.some(stale);
                     {isHome && (
                       <>
                         {" "}
-                        <span class="badge risk-0">{es.common.residenceTag}</span>
+                        <span class="badge risk-0">{msg.common.residenceTag}</span>
                       </>
                     )}
                   </>
@@ -72,12 +76,12 @@ const hasStale = offers.some(stale);
                 {(o.status !== "accepted" || o.flags.length > 0) && (
                   <div class="badges">
                     {o.status !== "accepted" && (
-                      <span class="badge badge-neutral" title={es.offerStatusTitles[o.status]}>
-                        {lookup(es.offerStatus, o.status)}
+                      <span class="badge badge-neutral" title={msg.offerStatusTitles[o.status]}>
+                        {lookup(msg.offerStatus, o.status)}
                       </span>
                     )}
                     {o.flags.map((f) => (
-                      <span class="badge badge-neutral">{lookup(es.flags, f)}</span>
+                      <span class="badge badge-neutral">{lookup(msg.flags, f)}</span>
                     ))}
                   </div>
                 )}
@@ -99,22 +103,22 @@ const hasStale = offers.some(stale);
               <td>
                 <ChannelBadge channel={o.channel} />
               </td>
-              <td>{o.vat_included === null ? es.common.unknown : o.vat_included ? es.common.yes : es.common.no}</td>
+              <td>{o.vat_included === null ? msg.common.unknown : o.vat_included ? msg.common.yes : msg.common.no}</td>
               <td>
                 <a
                   href={o.source_url}
                   rel="nofollow noopener noreferrer external"
-                  aria-label={es.common.sourceLinkLabel(
-                    lookup(es.sourceKinds, o.source_kind),
+                  aria-label={msg.common.sourceLinkLabel(
+                    lookup(msg.sourceKinds, o.source_kind),
                     `${site.serviceName(o.service_id)}, ${site.countryName(o.country)}`,
                   )}
                 >
-                  {lookup(es.sourceKinds, o.source_kind)}
+                  {lookup(msg.sourceKinds, o.source_kind)}
                 </a>
                 {o.extraction === "llm" && (
                   <>
                     {" "}
-                    <span class="badge badge-neutral">{lookup(es.extraction, o.extraction)}</span>
+                    <span class="badge badge-neutral">{lookup(msg.extraction, o.extraction)}</span>
                   </>
                 )}
               </td>
@@ -132,4 +136,4 @@ const hasStale = offers.some(stale);
     </tbody>
   </table>
 </TableWrap>
-{hasStale && <p class="note">{es.common.staleFxNote}</p>}
+{hasStale && <p class="note">{msg.common.staleFxNote}</p>}
