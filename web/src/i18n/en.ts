@@ -820,7 +820,7 @@ export const en = {
       },
       {
         title: "App Store as a fallback",
-        text: "When the official website shows the price based on the visitor's IP or only after signing in (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, Prime Video, Duolingo, TIDAL, Deezer, Canva, Adobe Express, ChatGPT, Claude) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
+        text: "When the official website shows the price based on the visitor's IP or only after signing in (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, Duolingo, TIDAL, Deezer, Canva, Adobe Express, ChatGPT, Claude) or its robots.txt does not allow agents like this one (Disney+), the public in-app purchase list of each country's App Store is used. Those rows carry the “App Store” channel and the “may carry a markup” flag: they tend to cost more than the website.",
       },
       {
         title: "Deterministic reading; the LLM only as a fallback",

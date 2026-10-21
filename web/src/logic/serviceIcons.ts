@@ -40,8 +40,7 @@ export const SERVICE_WORDMARKS: Readonly<Record<string, string>> = {
   vix: "ViX",
   // Simple Icons dropped the OpenAI mark at the brand's request.
   chatgpt: "GPT",
-  // Simple Icons has no Prime Video, Canva or Xbox mark (removed or never added).
-  prime_video: "prime",
+  // Simple Icons has no Canva or Xbox mark (removed or never added).
   canva: "Canva",
   xbox_game_pass: "Xbox",
 };

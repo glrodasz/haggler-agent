@@ -395,29 +395,6 @@ services:
         channel: ios_iap
         params: {app_id: 6473753684, exclude_patterns: ['team', 'enterprise', 'credit']}
 
-  - id: prime_video
-    name: Prime Video
-    category: video
-    eu_geo_class: audiovisual_excluded
-    homepage: https://www.primevideo.com
-    official_domains: [primevideo.com, amazon.com]
-    research_urls:
-      - https://www.primevideo.com/help?nodeId=202095490
-    default_plan: standard
-    notes_es: >-
-      Precio de la suscripción a Prime Video sola, del listado de compras in-app del App Store. No
-      incluye Amazon Prime (envíos), que en muchos países trae Prime Video sin coste extra.
-    plans:
-      - {id: standard, label_es: Prime Video, label_en: Prime Video, rank: 1, plausible_monthly_eur: [0.5, 20],
-         iap_patterns: ['^(?!.*(ad.?free|sin anuncios|sem an[uú]ncios|ohne werbung|utan reklam|amazon prime\b)).*prime video']}
-      - {id: ad_free, label_es: Sin anuncios (complemento), label_en: Ad-free (add-on), rank: 2,
-         plausible_monthly_eur: [0.3, 10],
-         iap_patterns: ['ad.?free|sin anuncios|sem an[uú]ncios|ohne werbung|utan reklam|sans pub']}
-    sources:
-      - adapter: appstore_iap
-        channel: ios_iap
-        params: {app_id: 545519333}
-
   - id: duolingo
     name: Duolingo
     category: education
@@ -480,7 +457,10 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 292738169}
+        params:
+          app_id: 292738169
+          # US legacy/regional SKUs ("Deezer Premium USA", "Premium+ US", "Premium for Brazil").
+          exclude_patterns: ['premium\s*\+', '\bfor [a-z]+$', '\busa?\b', 'united states']
 
   - id: canva
     name: Canva

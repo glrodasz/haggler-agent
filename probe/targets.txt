@@ -31,7 +31,6 @@ paramount_plus SE CO US GB DE MX BR CA
 crunchyroll SE CO US BR DE MX IN
 chatgpt SE CO US IN TR
 claude SE CO US BR TR
-prime_video SE CO US DE IN BR
 duolingo SE CO US DE BR
 tidal SE CO US DE BR
 deezer SE CO US DE BR
