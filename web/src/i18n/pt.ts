@@ -117,6 +117,7 @@ export const pt = {
     bundle: "Pacote",
     productivity: "Produtividade",
     gaming: "Jogos",
+    ai: "Inteligência artificial",
     other: "Outros",
   } as Record<string, string>,
 
@@ -825,7 +826,7 @@ export const pt = {
       },
       {
         title: "App Store como alternativa",
-        text: "Quando o site oficial mostra o preço conforme o IP do visitante (YouTube Premium, Google One, HBO Max) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
+        text: "Quando o site oficial mostra o preço conforme o IP do visitante ou só depois de entrar na conta (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
       },
       {
         title: "Leitura determinística; o LLM só como alternativa",
