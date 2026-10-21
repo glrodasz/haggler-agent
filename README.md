@@ -63,7 +63,7 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 
 | Step | How |
 |---|---|
-| Sources | Official pages addressable by country (iCloud+ support, apple.com/{country}, spotify.com/{country}, Netflix help, Microsoft Store catalog) and, for services that price by IP or behind a login (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) or disallow bots in robots.txt (Disney+), each country's **App Store** in-app purchase listing. A secondary Netflix dataset (tompec, CC BY 4.0) for cross-checking. |
+| Sources | Official pages addressable by country (iCloud+ support, apple.com/{country}, spotify.com/{country}, Netflix help, Microsoft Store catalog for Microsoft 365 and Xbox Game Pass) and, for services that price by IP or behind a login (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, Duolingo, TIDAL, Deezer, Canva, Adobe Express, ChatGPT, Claude) or disallow bots in robots.txt (Disney+), each country's **App Store** in-app purchase listing. A secondary Netflix dataset (tompec, CC BY 4.0) for cross-checking. |
 | Extraction | Deterministic parsers, with a quote-only Gemini fallback (see above). |
 | Normalization | ECB and central bank rates via Frankfurter (COP from BanRep, ARS from BCRA…), monthly equivalent, VAT included yes/no. |
 | Validation | Currency vs. country, plausible ranges, plan ordering, changes over 30 % quarantined until confirmed, last known value carried forward when a source fails. A quarantined change goes live when the next run sees the same value or an independent LLM read agrees with the parser. |

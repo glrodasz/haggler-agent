@@ -118,6 +118,7 @@ export const pt = {
     productivity: "Produtividade",
     gaming: "Jogos",
     ai: "Inteligência artificial",
+    education: "Educação",
     other: "Outros",
   } as Record<string, string>,
 
@@ -865,11 +866,11 @@ export const pt = {
     collect: [
       {
         title: "Fontes oficiais primeiro",
-        text: "Todos os dias um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store. Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.",
+        text: "Todos os dias um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store (Microsoft 365 e Xbox Game Pass). Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.",
       },
       {
         title: "App Store como alternativa",
-        text: "Quando o site oficial mostra o preço conforme o IP do visitante ou só depois de entrar na conta (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, ChatGPT, Claude) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
+        text: "Quando o site oficial mostra o preço conforme o IP do visitante ou só depois de entrar na conta (YouTube Premium, Google One, HBO Max, Paramount+, Crunchyroll, Duolingo, TIDAL, Deezer, Canva, Adobe Express, ChatGPT, Claude) ou o robots.txt não permite o acesso de agentes como este (Disney+), usa-se a lista pública de compras dentro do app da App Store de cada país. Essas linhas levam o canal «App Store» e a marca «pode ter acréscimo»: costumam ser mais caras que o site.",
       },
       {
         title: "Leitura determinística; o LLM só como alternativa",

@@ -395,6 +395,132 @@ services:
         channel: ios_iap
         params: {app_id: 6473753684, exclude_patterns: ['team', 'enterprise', 'credit']}
 
+  - id: duolingo
+    name: Duolingo
+    category: education
+    eu_geo_class: eservice_art4_1b
+    homepage: https://www.duolingo.com
+    official_domains: [duolingo.com]
+    research_urls:
+      - https://www.duolingo.com/terms
+    default_plan: super
+    plans:
+      - {id: super, label_es: Super, label_en: Super, rank: 1, plausible_monthly_eur: [0.5, 20],
+         iap_patterns: ['^(?!.*(famil|\bmax\b)).*super']}
+      - {id: super_family, label_es: Super Familiar, label_en: Super Family, rank: 2, plausible_monthly_eur: [0.8, 30],
+         iap_patterns: ['^(?!.*\bmax\b).*famil']}
+      - {id: max, label_es: Max, label_en: Max, rank: 3, plausible_monthly_eur: [1, 40],
+         iap_patterns: ['^(?!.*famil).*\bmax\b']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 570060128, exclude_patterns: ['gems?\b', 'joyas', 'gemas', 'lingots?', 'streak', 'racha']}
+
+  - id: tidal
+    name: TIDAL
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://tidal.com
+    official_domains: [tidal.com]
+    research_urls:
+      - https://tidal.com/terms
+    default_plan: individual
+    plans:
+      - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
+         iap_patterns: ['student|estudiant|estudante|studenter|studierend|étudiant']}
+      - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.5, 25],
+         iap_patterns: ['^(?!.*(student|estudiant|estudante|studenter|studierend|étudiant|famil|\bduo\b)).*(individual|individuell|individuel|personal|premium|hifi|tidal)']}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 2, plausible_monthly_eur: [0.8, 35],
+         iap_patterns: ['famil']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 913943275, exclude_patterns: ['djs?\b', 'upload']}
+
+  - id: deezer
+    name: Deezer
+    category: music
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.deezer.com
+    official_domains: [deezer.com]
+    research_urls:
+      - https://www.deezer.com/legal/cgu
+    default_plan: premium
+    plans:
+      - {id: student, label_es: Estudiantes, label_en: Student, rank: 0, plausible_monthly_eur: [0.3, 12],
+         iap_patterns: ['student|estudiant|estudante|studenter|studierend|étudiant']}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [0.5, 20],
+         iap_patterns: ['^(?!.*(student|estudiant|estudante|studenter|studierend|étudiant|famil|\bduo\b)).*(premium|individual|personal|deezer)']}
+      - {id: duo, label_es: Duo, label_en: Duo, rank: 2, plausible_monthly_eur: [0.8, 25], iap_patterns: ['\bduo\b']}
+      - {id: family, label_es: Familiar, label_en: Family, rank: 3, plausible_monthly_eur: [1, 35],
+         iap_patterns: ['famil']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params:
+          app_id: 292738169
+          # US legacy/regional SKUs ("Deezer Premium USA", "Premium+ US", "Premium for Brazil").
+          exclude_patterns: ['premium\s*\+', '\bfor [a-z]+$', '\busa?\b', 'united states']
+
+  - id: canva
+    name: Canva
+    category: productivity
+    eu_geo_class: eservice_art4_1b
+    homepage: https://www.canva.com
+    official_domains: [canva.com]
+    research_urls:
+      - https://www.canva.com/policies/terms-of-use/
+    default_plan: pro
+    plans:
+      - {id: pro, label_es: Pro, label_en: Pro, rank: 1, plausible_monthly_eur: [1, 30],
+         iap_patterns: ['^(?!.*(teams?\b|equipo|business|negocio)).*\bpro\b']}
+      - {id: business, label_es: Business, label_en: Business, rank: 2, plausible_monthly_eur: [2, 60],
+         iap_patterns: ['teams?\b|equipo|business|negocio']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 897446215, exclude_patterns: ['credit', 'cr[eé]dito', 'element', 'photo', 'foto']}
+
+  - id: adobe_express
+    name: Adobe Express
+    category: productivity
+    eu_geo_class: eservice_art4_1b
+    homepage: https://www.adobe.com/express/
+    official_domains: [adobe.com]
+    research_urls:
+      - https://www.adobe.com/legal/terms.html
+    default_plan: premium
+    plans:
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [1, 30],
+         iap_patterns: ['^(?!.*(teams?\b|equipo|business)).*(premium|express)']}
+    sources:
+      - adapter: appstore_iap
+        channel: ios_iap
+        params: {app_id: 1051937863, exclude_patterns: ['teams?\b', 'equipo', 'business', 'credit', 'cr[eé]dito']}
+
+  - id: xbox_game_pass
+    name: Xbox Game Pass
+    category: gaming
+    eu_geo_class: copyright_art3_5_only
+    homepage: https://www.xbox.com/xbox-game-pass
+    official_domains: [xbox.com, microsoft.com]
+    research_urls:
+      - https://www.microsoft.com/en-us/servicesagreement
+    default_plan: ultimate
+    plans:
+      - {id: essential, label_es: Essential, label_en: Essential, rank: 0, plausible_monthly_eur: [0.5, 15]}
+      - {id: premium, label_es: Premium, label_en: Premium, rank: 1, plausible_monthly_eur: [1, 25]}
+      - {id: pc, label_es: PC Game Pass, label_en: PC Game Pass, rank: 1, plausible_monthly_eur: [1, 25]}
+      - {id: ultimate, label_es: Ultimate, label_en: Ultimate, rank: 2, plausible_monthly_eur: [2, 40]}
+    sources:
+      - adapter: ms_displaycatalog
+        params:
+          # Microsoft Store bigIds of the Game Pass tiers (Core/Standard were renamed
+          # Essential/Premium in 2025).
+          big_ids: {essential: CFQ7TTC0K5DJ, premium: CFQ7TTC0P85B, pc: CFQ7TTC0KGQ8, ultimate: CFQ7TTC0KHS0}
+          url: "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={big_ids}&market={cc}&languages=en-US"
+          default_period: month
+
   # ---- Curated-only services (referenced by bundles; no price source yet) ----
   - id: vix
     name: ViX Premium
