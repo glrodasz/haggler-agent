@@ -13,6 +13,8 @@ instruments:
     card_bin_country_observed: {value: CO, sample_size: 1, last_seen: 2026-10-08}
     status: verified
     notes_es: Ya en uso por el usuario para la mayoría de suscripciones.
+    notes_en: Already used by the user for most subscriptions.
+    notes_pt: Já usado pelo usuário para a maioria das assinaturas.
 
   - id: revolut_eea
     name: Revolut
@@ -28,6 +30,12 @@ instruments:
     notes_es: >-
       Licencia bancaria lituana; IBAN LT o local según el país de residencia (Revolut está
       desplegando IBAN locales país por país). El país BIN de la tarjeta debe observarse.
+    notes_en: >-
+      Lithuanian banking licence; LT or local IBAN depending on the country of residence (Revolut is
+      rolling out local IBANs country by country). The card's BIN country has to be observed.
+    notes_pt: >-
+      Licença bancária lituana; IBAN LT ou local conforme o país de residência (a Revolut está
+      lançando IBANs locais país a país). O país BIN do cartão precisa ser observado.
 
   - id: wise_eea
     name: Wise
@@ -81,6 +89,8 @@ instruments:
     evidence:
       - {url: "https://www.paysera.lt/v2/en-LT/faq/where-paysera-works", kind: official}
     notes_es: Una cuenta por persona; puede pedir prueba de residencia.
+    notes_en: One account per person; may ask for proof of residence.
+    notes_pt: Uma conta por pessoa; pode pedir comprovante de residência.
 
   - id: bancolombia_exterior
     name: Bancolombia Cuenta Colombianos en el Exterior
@@ -97,3 +107,5 @@ instruments:
     evidence:
       - {url: "https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior", kind: official}
     notes_es: Para ciudadanos colombianos con cédula; tarjeta débito virtual en la app.
+    notes_en: For Colombian citizens with a cédula; virtual debit card in the app.
+    notes_pt: Para cidadãos colombianos com cédula; cartão de débito virtual no app.

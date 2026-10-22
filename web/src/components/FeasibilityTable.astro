@@ -1,5 +1,5 @@
 ---
-import { getMessages, lookupFor } from "../i18n";
+import { getMessages, localNote, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
 import { hostOf } from "../logic/format";
 import { localeOfUrl, routesFor } from "../logic/paths";
@@ -51,6 +51,7 @@ const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {
       {
         records.map((r) => {
           const details = r.evidence.length + r.assumptions_es.length + r.reasons_es.length > 0;
+          const note = localNote(locale, r);
           return (
             <tr class={isPending(r) ? "is-pending" : undefined}>
               <th scope="row">
@@ -85,7 +86,7 @@ const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {
                 )}
               </td>
               <td class="notes">
-                {r.notes_es && <span lang="es">{r.notes_es}</span>}
+                {note.text && <span lang={note.lang}>{note.text}</span>}
                 {r.tos_clause_url && (
                   <div class="small">
                     <a href={r.tos_clause_url} rel="nofollow noopener noreferrer external">

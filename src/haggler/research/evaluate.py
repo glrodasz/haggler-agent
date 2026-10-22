@@ -181,6 +181,8 @@ class Assessment:
     researched_on: date | None = None
     record_id: str | None = None
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
 
     def verdict(self) -> Verdict:
         return Verdict(
@@ -690,6 +692,8 @@ def _curated(record: FeasibilityRecord) -> Assessment:
         researched_on=record.last_verified,
         record_id=record.id,
         notes_es=" ".join(record.notes_es.split()),
+        notes_en=" ".join(record.notes_en.split()),
+        notes_pt=" ".join(record.notes_pt.split()),
     )
 
 
@@ -781,6 +785,14 @@ def _from_template(
         notes_es=(
             f"Mismos términos y pasos que la ficha curada {record.id}, aplicados a {target}: "
             "sin investigar este país en concreto."
+        ),
+        notes_en=(
+            f"Same terms and steps as the curated record {record.id}, applied to {target}: "
+            "this country has not been researched on its own."
+        ),
+        notes_pt=(
+            f"Mesmos termos e passos da ficha curada {record.id}, aplicados a {target}: "
+            "este país não foi pesquisado especificamente."
         ),
     )
 

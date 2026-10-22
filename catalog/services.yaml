@@ -57,6 +57,12 @@ services:
     notes_es: >-
       La web oficial muestra el precio según la IP del visitante; en v1 se usa el listado de compras
       in-app del App Store, que suele ser más caro que la web.
+    notes_en: >-
+      The official site shows the price based on the visitor's IP; v1 uses the App Store in-app
+      purchase list, which is usually more expensive than the website.
+    notes_pt: >-
+      O site oficial mostra o preço conforme o IP do visitante; na v1 usa-se a lista de compras
+      in-app da App Store, que costuma ser mais cara que o site.
     plans:
       - {id: individual, label_es: Individual, label_en: Individual, rank: 1, plausible_monthly_eur: [0.8, 30],
          iap_patterns: ['^(?!.*(fam[ií]l|\baile\b|rodzin|csal[aá]d|rodin|keluarga|gia đình|perhe|student|studenc|estudiant|estudant|universit|studierend|[ée]tudiant|öğrenci|studer|opiskelija|di[aá]k|pelajar|mahasiswa|sinh viên|\blite\b|\bduo\b|music)).*premium']}
@@ -86,6 +92,18 @@ services:
       y bots de IA con nombre propio ("User-agent: *" / "Disallow: /"). Respetamos robots.txt y
       nunca falsificamos el user agent, así que la fuente web (adapter disney_web) queda fuera
       del catálogo; su código y sus tests se conservan por si Disney cambia su robots.txt.
+    notes_en: >-
+      Prices come from the App Store in-app purchase list (app 1446075923), not the website:
+      www.disneyplus.com/robots.txt forbids access to every agent except search engines and named AI
+      bots ("User-agent: *" / "Disallow: /"). We respect robots.txt and never fake the user agent,
+      so the web source (adapter disney_web) is left out of the catalog; its code and tests are kept
+      in case Disney changes its robots.txt.
+    notes_pt: >-
+      Os preços vêm da lista de compras in-app da App Store (app 1446075923), não do site:
+      www.disneyplus.com/robots.txt proíbe o acesso de todos os agentes, exceto buscadores e bots de
+      IA com nome próprio ("User-agent: *" / "Disallow: /"). Respeitamos o robots.txt e nunca
+      falsificamos o user agent, então a fonte web (adapter disney_web) fica fora do catálogo; seu
+      código e seus testes são mantidos caso a Disney mude o robots.txt.
     plans:
       - {id: standard_with_ads, label_es: Estándar con anuncios, label_en: Standard with ads, rank: 1, ads: true,
          plausible_monthly_eur: [0.8, 20],
@@ -187,6 +205,11 @@ services:
     default_plan: 100gb
     notes_es: >-
       La web oficial muestra el precio según la IP; en v1 se usa el listado de compras in-app del App Store.
+    notes_en: >-
+      The official site shows the price based on the IP; v1 uses the App Store in-app purchase list.
+    notes_pt: >-
+      O site oficial mostra o preço conforme o IP; na v1 usa-se a lista de compras in-app da App
+      Store.
     plans:
       - {id: 100gb, label_es: 100 GB, label_en: 100 GB, rank: 0, plausible_monthly_eur: [0.2, 5],
          iap_patterns: ['\b100\s*GB\b']}
@@ -298,6 +321,14 @@ services:
       Los precios salen del listado de compras in-app del App Store. En EE. UU. el plan sin
       anuncios se llama Premium y el más barato Essential (con anuncios); en otros países suele
       haber un único plan, que aquí cuenta como Estándar.
+    notes_en: >-
+      Prices come from the App Store in-app purchase list. In the US the ad-free plan is called
+      Premium and the cheapest one Essential (with ads); other countries usually have a single plan,
+      counted here as Standard.
+    notes_pt: >-
+      Os preços vêm da lista de compras in-app da App Store. Nos EUA o plano sem anúncios se chama
+      Premium e o mais barato Essential (com anúncios); em outros países costuma haver um único
+      plano, que aqui conta como Padrão.
     plans:
       - {id: essential, label_es: Essential (con anuncios), label_en: Essential (with ads), rank: 0, ads: true,
          plausible_monthly_eur: [0.5, 20],
@@ -359,6 +390,12 @@ services:
     notes_es: >-
       Precios del listado de compras in-app del App Store; la web (chatgpt.com) cobra lo mismo o
       menos según el país.
+    notes_en: >-
+      Prices from the App Store in-app purchase list; the website (chatgpt.com) charges the same or
+      less depending on the country.
+    notes_pt: >-
+      Preços da lista de compras in-app da App Store; o site (chatgpt.com) cobra o mesmo ou menos,
+      conforme o país.
     plans:
       - {id: go, label_es: Go, label_en: Go, rank: 0, plausible_monthly_eur: [0.5, 15],
          iap_patterns: ['\bgo\b']}
@@ -383,6 +420,12 @@ services:
     notes_es: >-
       Precios del listado de compras in-app del App Store, que en algunos países supera el
       precio web de claude.ai.
+    notes_en: >-
+      Prices from the App Store in-app purchase list, which in some countries is higher than the
+      claude.ai web price.
+    notes_pt: >-
+      Preços da lista de compras in-app da App Store, que em alguns países supera o preço do site
+      claude.ai.
     plans:
       - {id: pro, label_es: Pro, label_en: Pro, rank: 1, plausible_monthly_eur: [5, 45],
          iap_patterns: ['\bpro\b']}

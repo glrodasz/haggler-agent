@@ -32,6 +32,14 @@ records:
       El país se fija en el registro (ubicación al suscribirse). Usarla principalmente fuera de CO
       contradice los términos; no se conocen cancelaciones por vivir en el exterior. El catálogo
       sigue la ubicación actual.
+    notes_en: >-
+      The country is set at sign-up (location when subscribing). Using it mainly outside CO goes
+      against the terms; no cancellations for living abroad are known. The catalog follows the
+      current location.
+    notes_pt: >-
+      O país é definido no cadastro (localização ao assinar). Usá-la principalmente fora de CO
+      contraria os termos; não se conhecem cancelamentos por morar no exterior. O catálogo segue a
+      localização atual.
 
   - id: youtube_premium_co_from_se
     service_id: youtube_premium
@@ -56,6 +64,8 @@ records:
     confidence: medium
     last_verified: 2026-10-08
     notes_es: El país de suscripción debe coincidir con dónde vives; Google lo verifica.
+    notes_en: The subscription country must match where you live; Google checks it.
+    notes_pt: O país da assinatura deve coincidir com onde você mora; o Google verifica.
 
   - id: youtube_premium_us_from_se
     service_id: youtube_premium
@@ -72,6 +82,8 @@ records:
     confidence: medium
     last_verified: 2026-10-08
     notes_es: Requiere instrumento de pago estadounidense; no disponible para este perfil.
+    notes_en: Requires a US payment method; not available for this profile.
+    notes_pt: Exige um meio de pagamento dos EUA; não disponível para este perfil.
 
   - id: spotify_co_from_se
     service_id: spotify
@@ -92,6 +104,12 @@ records:
     notes_es: >-
       La tarjeta debe ser del país de la cuenta (la del usuario es CO). Los términos 2025 exigen que
       la cuenta esté en el país de residencia.
+    notes_en: >-
+      The card must be from the account's country (the user's is CO). The 2025 terms require the
+      account to be in the country of residence.
+    notes_pt: >-
+      O cartão deve ser do país da conta (o do usuário é CO). Os termos de 2025 exigem que a conta
+      esteja no país de residência.
 
   - id: disney_plus_co_from_se
     service_id: disney_plus
@@ -110,6 +128,8 @@ records:
     confidence: low
     last_verified: 2026-10-08
     notes_es: Controles de hogar en LatAm desde 2024; error 73 con VPN.
+    notes_en: Household checks in Latin America since 2024; error 73 with a VPN.
+    notes_pt: Controles de residência na América Latina desde 2024; erro 73 com VPN.
 
   - id: hbo_max_co_from_se
     service_id: hbo_max
@@ -125,6 +145,8 @@ records:
     confidence: low
     last_verified: 2026-10-08
     notes_es: El país de origen es donde te registraste; fuera del EEE ves el catálogo local.
+    notes_en: Your home country is where you signed up; outside the EEA you see the local catalog.
+    notes_pt: O país de origem é onde você se cadastrou; fora do EEE você vê o catálogo local.
 
   - id: icloud_plus_co_from_se
     service_id: icloud_plus
@@ -146,6 +168,12 @@ records:
     notes_es: >-
       Cambiar el país de la cuenta Apple afecta a todo el storefront (apps, Music, suscripciones,
       Family Sharing). Requiere saldo cero y método de pago del país.
+    notes_en: >-
+      Changing the Apple Account country affects the whole storefront (apps, Music, subscriptions,
+      Family Sharing). It needs a zero balance and a payment method from that country.
+    notes_pt: >-
+      Mudar o país da conta Apple afeta toda a loja (apps, Music, assinaturas, Compartilhamento
+      Familiar). Exige saldo zero e meio de pagamento do país.
 
   - id: icloud_plus_lt_from_se
     service_id: icloud_plus
@@ -167,6 +195,14 @@ records:
     notes_es: >-
       Derecho UE no probado: servicio tipo nube; el precio legal sería el neto lituano + IVA sueco.
       Apple exige dirección de facturación del país, por eso hoy implica declarar datos falsos.
+    notes_en: >-
+      Untested EU right: cloud-type service; the legal price would be the Lithuanian net price +
+      Swedish VAT. Apple requires a billing address in that country, so today it means giving false
+      information.
+    notes_pt: >-
+      Direito da UE não testado: serviço do tipo nuvem; o preço legal seria o líquido lituano + IVA
+      sueco. A Apple exige endereço de cobrança do país, por isso hoje implica declarar dados
+      falsos.
 
   - id: google_one_lt_from_se
     service_id: google_one
@@ -188,6 +224,12 @@ records:
     notes_es: >-
       El perfil de pagos de Google no cambia de país (hay que crear otro) y Play solo permite un
       cambio cada 12 meses estando físicamente en el país.
+    notes_en: >-
+      A Google payments profile can't change country (you have to create a new one), and Play only
+      allows one change every 12 months while physically in the country.
+    notes_pt: >-
+      O perfil de pagamentos do Google não muda de país (é preciso criar outro) e a Play só permite
+      uma mudança a cada 12 meses estando fisicamente no país.
 
   - id: apple_one_co_from_se
     service_id: apple_one
@@ -249,3 +291,7 @@ records:
     confidence: low
     last_verified: 2026-10-08
     notes_es: La región de la cuenta Microsoft solo cambia cada 3 meses y el saldo no se transfiere.
+    notes_en: >-
+      A Microsoft account's region can only change every 3 months and the balance doesn't carry
+      over.
+    notes_pt: A região da conta Microsoft só muda a cada 3 meses e o saldo não é transferido.

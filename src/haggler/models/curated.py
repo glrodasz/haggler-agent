@@ -114,6 +114,8 @@ class FeasibilityRecord(_Strict):
     verified_by: VerifiedBy = "search_summary"
     last_verified: date
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
 
 
@@ -152,6 +154,8 @@ class PaymentInstrument(_Strict):
     status: CuratedStatus = "unverified"
     evidence: list[Evidence] = Field(default_factory=list)
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
 
 
 class PaymentInstrumentsFile(_Strict):
@@ -299,6 +303,8 @@ class BundleVerdictRecord(_Strict):
     status: Literal["unverified", "verified"] = "unverified"
     last_verified: date
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
 
 
 # A bundle's state is derived (watcher, user report, dates): the YAML may only say that it is
@@ -334,6 +340,8 @@ class Bundle(_Strict):
     last_verified: date
     confidence: Confidence = "low"
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
 
     @field_validator("evidence")
     @classmethod

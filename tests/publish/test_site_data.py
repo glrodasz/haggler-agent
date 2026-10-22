@@ -47,6 +47,8 @@ SERVICE_KEYS = {
     "homepage",
     "default_plan",
     "notes_es",
+    "notes_en",
+    "notes_pt",
     "eu_geo_class",
     "plans",
 }
@@ -109,6 +111,8 @@ RECORD_KEYS = {
     "confidence",
     "status",
     "notes_es",
+    "notes_en",
+    "notes_pt",
     "tos_clause_url",
     "profile",
     "provenance",
@@ -170,6 +174,8 @@ BUNDLE_KEYS = {
     "verdicts",
     "pending_changes",
     "notes_es",
+    "notes_en",
+    "notes_pt",
     "last_verified",
 }
 BUNDLE_PRICE_KEYS = {
@@ -245,6 +251,8 @@ BUNDLE_VERDICT_KEYS = {
     "confidence",
     "status",
     "notes_es",
+    "notes_en",
+    "notes_pt",
     "steps",
     "assumptions_es",
     "reasons_es",

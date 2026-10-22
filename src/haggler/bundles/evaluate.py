@@ -155,6 +155,8 @@ class BundleAssessment:
     confidence: str
     status: str
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
     steps: tuple[FeasibilityStep, ...] = ()
     assumptions_es: tuple[str, ...] = ()
     reasons_es: tuple[str, ...] = ()
@@ -183,6 +185,8 @@ class _Route:
     status: str
     eu_badge: bool = False
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
     pending: bool = False
     researched: bool = False
     work: Work = field(default_factory=Work)
@@ -501,6 +505,8 @@ def _curated(bundle: Bundle, record: BundleVerdictRecord, profile: Profile, fact
         status=record.status if verified else "unverified",
         eu_badge=any(b.strength in EU_BADGE_STRENGTHS for b in record.legal_basis),
         notes_es=" ".join(record.notes_es.split()),
+        notes_en=" ".join(record.notes_en.split()),
+        notes_pt=" ".join(record.notes_pt.split()),
         work=w,
     )
 
@@ -536,6 +542,8 @@ def _observed(
         status=a.status if a.evaluated else "unverified",
         eu_badge=a.eu_badge,
         notes_es=a.notes_es,
+        notes_en=a.notes_en,
+        notes_pt=a.notes_pt,
         pending=a.provenance == "agent_pending",
         work=w,
     )
@@ -738,6 +746,8 @@ def assess_bundle(
         confidence="low" if rank == UNKNOWN_RANK else min(confidences, key=_CONFIDENCE_ORDER.index),
         status="verified" if verified else "unverified",
         notes_es=route.notes_es,
+        notes_en=route.notes_en,
+        notes_pt=route.notes_pt,
         steps=steps,
         assumptions_es=tuple(dict.fromkeys(_sentence(x) for x in w.assumptions)),
         reasons_es=tuple(dict.fromkeys(_sentence(x) for x in w.reasons)),

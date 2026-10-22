@@ -1,5 +1,5 @@
 ---
-import { getMessages, lookupFor } from "../i18n";
+import { getMessages, localNote, lookupFor } from "../i18n";
 import { localeOfUrl } from "../logic/paths";
 import { getSite } from "../logic/data";
 import type { BundleVerdict } from "../logic/types";
@@ -22,6 +22,7 @@ const f = msg.feasibility;
 // "unknown" (facts missing) is one of each axis' values in msg.axes: "Sin datos".
 const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {}, value);
 const pending = v.provenance === "agent_pending";
+const note = localNote(locale, v);
 ---
 
 <div class={pending ? "verdict is-pending" : "verdict"}>
@@ -45,7 +46,7 @@ const pending = v.provenance === "agent_pending";
     <dt>{t.verdictStatus}</dt>
     <dd>{lookup(msg.curatedStatus, v.status)}</dd>
   </dl>
-  {v.notes_es && <p class="small" lang="es">{v.notes_es}</p>}
+  {note.text && <p class="small" lang={note.lang}>{note.text}</p>}
   {
     v.reasons_es.length > 0 && (
       <>

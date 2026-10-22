@@ -134,11 +134,19 @@ bundles:
         confidence: low
         last_verified: 2026-10-08
         notes_es: según uso propio; sin cita de los términos
+        notes_en: based on own use; no quote from the terms
+        notes_pt: segundo uso próprio; sem citação dos termos
     last_verified: 2026-10-11
     notes_es: >-
       Precio regular 21.900 COP/mes; los 2 primeros meses, 19.900. El usuario lo usa desde Suecia
       con tarjeta colombiana. HBO Max, Paramount+ y ViX aparecen como 30 % de descuento, no
       incluidos.
+    notes_en: >-
+      Regular price 21,900 COP/month; the first 2 months, 19,900. The user uses it from Sweden with
+      a Colombian card. HBO Max, Paramount+ and ViX show up as a 30% discount, not included.
+    notes_pt: >-
+      Preço regular 21.900 COP/mês; nos 2 primeiros meses, 19.900. O usuário o usa da Suécia com
+      cartão colombiano. HBO Max, Paramount+ e ViX aparecem como 30% de desconto, não incluídos.
 
   - bundle_id: meli_plus_co_esencial
     provider_id: mercado_libre
@@ -180,8 +188,12 @@ bundles:
         confidence: low
         last_verified: 2026-10-08
         notes_es: según uso propio; sin cita de los términos
+        notes_en: based on own use; no quote from the terms
+        notes_pt: segundo uso próprio; sem citação dos termos
     last_verified: 2026-10-11
     notes_es: Envíos gratis; sin streaming incluido.
+    notes_en: Free shipping; no streaming included.
+    notes_pt: Frete grátis; sem streaming incluído.
 
   - bundle_id: meli_plus_mx_mega
     provider_id: mercado_libre
@@ -290,6 +302,16 @@ bundles:
       servicios es +130 kr. El precio se revisa a mano: la lista de precios en PDF da 699 kr en
       una fila de tabla sin el nombre del plan, y la página del producto no lo muestra como texto.
       Fecha de vigencia de la lista de precios sin confirmar.
+    notes_en: >-
+      Only makes sense if you already pay for Obegränsad Plus (569 kr); the marginal cost of the
+      three services is +130 kr. The price is checked by hand: the PDF price list gives 699 kr in a
+      table row without the plan name, and the product page doesn't show it as text. Price list
+      validity date unconfirmed.
+    notes_pt: >-
+      Só faz sentido se você já paga o Obegränsad Plus (569 kr); o custo marginal dos três serviços
+      é +130 kr. O preço é revisado à mão: a lista de preços em PDF dá 699 kr numa linha de tabela
+      sem o nome do plano, e a página do produto não o mostra como texto. Data de vigência da lista
+      de preços não confirmada.
 
   - bundle_id: go3_lt_filmai_netflix
     provider_id: go3
@@ -310,6 +332,9 @@ bundles:
     watch: {mode: "off"}
     last_verified: 2026-10-08
     notes_es: El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.
+    notes_en: The included Netflix plan is unclear; Go3 content is limited to the Baltic countries.
+    notes_pt: >-
+      O plano da Netflix incluído não está claro; o conteúdo do Go3 se limita aos países bálticos.
 
   - bundle_id: apple_one_individual_se
     provider_id: apple
@@ -552,3 +577,11 @@ bundles:
       Plan de Google One. Según la ayuda de Google incluye YouTube Premium Lite en Colombia (sin
       YouTube Music, sin reproducción en segundo plano ni descargas). El almacenamiento y Gemini no
       se cuentan como componentes.
+    notes_en: >-
+      Google One plan. According to Google's help it includes YouTube Premium Lite in Colombia (no
+      YouTube Music, no background play or downloads). Storage and Gemini are not counted as
+      components.
+    notes_pt: >-
+      Plano do Google One. Segundo a ajuda do Google, inclui YouTube Premium Lite na Colômbia (sem
+      YouTube Music, sem reprodução em segundo plano nem downloads). O armazenamento e o Gemini não
+      contam como componentes.

@@ -106,6 +106,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -140,6 +142,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -174,6 +178,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -208,6 +214,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Controles de hogar en LatAm desde 2024; error 73 con VPN.",
+      "notes_en": "Household checks in Latin America since 2024; error 73 with a VPN.",
+      "notes_pt": "Controles de residência na América Latina desde 2024; erro 73 com VPN.",
       "tos_clause_url": "https://www.disneyplus.com/legal/subscriber-agreement",
       "researched_on": "2026-10-08",
       "steps": [
@@ -244,6 +252,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "El perfil de pagos de Google no cambia de país (hay que crear otro) y Play solo permite un cambio cada 12 meses estando físicamente en el país.",
+      "notes_en": "A Google payments profile can't change country (you have to create a new one), and Play only allows one change every 12 months while physically in the country.",
+      "notes_pt": "O perfil de pagamentos do Google não muda de país (é preciso criar outro) e a Play só permite uma mudança a cada 12 meses estando fisicamente no país.",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -278,6 +288,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "El país de origen es donde te registraste; fuera del EEE ves el catálogo local.",
+      "notes_en": "Your home country is where you signed up; outside the EEA you see the local catalog.",
+      "notes_pt": "O país de origem é onde você se cadastrou; fora do EEE você vê o catálogo local.",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -306,6 +318,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Cambiar el país de la cuenta Apple afecta a todo el storefront (apps, Music, suscripciones, Family Sharing). Requiere saldo cero y método de pago del país.",
+      "notes_en": "Changing the Apple Account country affects the whole storefront (apps, Music, subscriptions, Family Sharing). It needs a zero balance and a payment method from that country.",
+      "notes_pt": "Mudar o país da conta Apple afeta toda a loja (apps, Music, assinaturas, Compartilhamento Familiar). Exige saldo zero e meio de pagamento do país.",
       "tos_clause_url": "https://www.apple.com/legal/internet-services/icloud/",
       "researched_on": "2026-10-08",
       "steps": [
@@ -348,6 +362,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "Derecho UE no probado: servicio tipo nube; el precio legal sería el neto lituano + IVA sueco. Apple exige dirección de facturación del país, por eso hoy implica declarar datos falsos.",
+      "notes_en": "Untested EU right: cloud-type service; the legal price would be the Lithuanian net price + Swedish VAT. Apple requires a billing address in that country, so today it means giving false information.",
+      "notes_pt": "Direito da UE não testado: serviço do tipo nuvem; o preço legal seria o líquido lituano + IVA sueco. A Apple exige endereço de cobrança do país, por isso hoje implica declarar dados falsos.",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -382,6 +398,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "La región de la cuenta Microsoft solo cambia cada 3 meses y el saldo no se transfiere.",
+      "notes_en": "A Microsoft account's region can only change every 3 months and the balance doesn't carry over.",
+      "notes_pt": "A região da conta Microsoft só muda a cada 3 meses e o saldo não é transferido.",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -416,6 +434,8 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "El país se fija en el registro (ubicación al suscribirse). Usarla principalmente fuera de CO contradice los términos; no se conocen cancelaciones por vivir en el exterior. El catálogo sigue la ubicación actual.",
+      "notes_en": "The country is set at sign-up (location when subscribing). Using it mainly outside CO goes against the terms; no cancellations for living abroad are known. The catalog follows the current location.",
+      "notes_pt": "O país é definido no cadastro (localização ao assinar). Usá-la principalmente fora de CO contraria os termos; não se conhecem cancelamentos por morar no exterior. O catálogo segue a localização atual.",
       "tos_clause_url": "https://help.netflix.com/legal/termsofuse",
       "researched_on": "2026-10-08",
       "steps": [
@@ -458,6 +478,8 @@
       "confidence": "low",
       "status": "verified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [],
@@ -496,6 +518,8 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "La tarjeta debe ser del país de la cuenta (la del usuario es CO). Los términos 2025 exigen que la cuenta esté en el país de residencia.",
+      "notes_en": "The card must be from the account's country (the user's is CO). The 2025 terms require the account to be in the country of residence.",
+      "notes_pt": "O cartão deve ser do país da conta (o do usuário é CO). Os termos de 2025 exigem que a conta esteja no país de residência.",
       "tos_clause_url": "https://www.spotify.com/int/legal/end-user-agreement/",
       "researched_on": "2026-10-08",
       "steps": [
@@ -532,6 +556,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [
@@ -589,6 +615,8 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "El país de suscripción debe coincidir con dónde vives; Google lo verifica.",
+      "notes_en": "The subscription country must match where you live; Google checks it.",
+      "notes_pt": "O país da assinatura deve coincidir com onde você mora; o Google verifica.",
       "tos_clause_url": "https://www.youtube.com/t/terms_paycontent",
       "researched_on": "2026-10-08",
       "steps": [
@@ -631,6 +659,8 @@
       "confidence": "medium",
       "status": "unverified",
       "notes_es": "Requiere instrumento de pago estadounidense; no disponible para este perfil.",
+      "notes_en": "Requires a US payment method; not available for this profile.",
+      "notes_pt": "Exige um meio de pagamento dos EUA; não disponível para este perfil.",
       "tos_clause_url": null,
       "researched_on": "2026-10-08",
       "steps": [
@@ -665,6 +695,8 @@
       "confidence": "low",
       "status": "verified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [
@@ -734,6 +766,8 @@
       "confidence": "low",
       "status": "verified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [],
@@ -772,6 +806,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [],
@@ -817,6 +853,8 @@
       "confidence": "low",
       "status": "unverified",
       "notes_es": "",
+      "notes_en": "",
+      "notes_pt": "",
       "tos_clause_url": null,
       "researched_on": "2026-10-06",
       "steps": [
@@ -1713,7 +1751,9 @@
         "USD"
       ],
       "url": "https://revolut.com/",
-      "notes_es": "Licencia bancaria lituana; IBAN LT para residentes en Suecia (Revolut está desplegando IBAN locales país por país). El país BIN de la tarjeta debe observarse."
+      "notes_es": "Licencia bancaria lituana; IBAN LT para residentes en Suecia (Revolut está desplegando IBAN locales país por país). El país BIN de la tarjeta debe observarse.",
+      "notes_en": "Lithuanian banking licence; LT IBAN for residents of Sweden (Revolut is rolling out local IBANs country by country). The card's BIN country has to be observed.",
+      "notes_pt": "Licença bancária lituana; IBAN LT para residentes na Suécia (a Revolut está lançando IBANs locais país a país). O país BIN do cartão precisa ser observado."
     },
     {
       "id": "wise_eea",
@@ -1732,7 +1772,9 @@
         "GBP"
       ],
       "url": "https://wise.com/help/articles/2968915",
-      "notes_es": ""
+      "notes_es": "",
+      "notes_en": "",
+      "notes_pt": ""
     },
     {
       "id": "n26",
@@ -1749,7 +1791,9 @@
         "EUR"
       ],
       "url": "https://support.n26.com/en-eu/account-and-personal-details/opening-an-account/can-i-open-an-account-if-i-live-outside-the-eurozone",
-      "notes_es": ""
+      "notes_es": "",
+      "notes_en": "",
+      "notes_pt": ""
     },
     {
       "id": "bunq",
@@ -1765,7 +1809,9 @@
         "EUR"
       ],
       "url": "https://bunq.com/",
-      "notes_es": ""
+      "notes_es": "",
+      "notes_en": "",
+      "notes_pt": ""
     },
     {
       "id": "paysera",
@@ -1781,7 +1827,9 @@
         "EUR"
       ],
       "url": "https://www.paysera.lt/v2/en-LT/faq/where-paysera-works",
-      "notes_es": "Una cuenta por persona; puede pedir prueba de residencia."
+      "notes_es": "Una cuenta por persona; puede pedir prueba de residencia.",
+      "notes_en": "One account per person; may ask for proof of residence.",
+      "notes_pt": "Uma conta por pessoa; pode pedir comprovante de residência."
     },
     {
       "id": "bancolombia_exterior",
@@ -1799,7 +1847,9 @@
         "COP"
       ],
       "url": "https://www.bancolombia.com/personas/productos/cuentas/colombianos-exterior",
-      "notes_es": "Para ciudadanos colombianos con cédula; tarjeta débito virtual en la app."
+      "notes_es": "Para ciudadanos colombianos con cédula; tarjeta débito virtual en la app.",
+      "notes_en": "For Colombian citizens with a cédula; virtual debit card in the app.",
+      "notes_pt": "Para cidadãos colombianos com cédula; cartão de débito virtual no app."
     }
   ]
 }
