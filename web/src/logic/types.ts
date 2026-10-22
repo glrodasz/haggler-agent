@@ -241,7 +241,11 @@ export interface FeasibilityView {
   steps: Step[];
   evidence: Evidence[];
   assumptions_es: string[];
+  assumptions_en: string[];
+  assumptions_pt: string[];
   reasons_es: string[];
+  reasons_en: string[];
+  reasons_pt: string[];
   /** YYYY-MM-DD; null when unknown. */
   researched_on: string | null;
 }
@@ -494,7 +498,11 @@ export interface BundleVerdict {
   notes_pt: string;
   steps: Step[];
   assumptions_es: string[];
+  assumptions_en: string[];
+  assumptions_pt: string[];
   reasons_es: string[];
+  reasons_en: string[];
+  reasons_pt: string[];
   components: BundleVerdictComponent[];
 }
 
@@ -581,6 +589,8 @@ export interface Bundle {
   display_status: BundleDisplayStatus;
   /** Why the bundle is not verified (at least one unless display_status is "verified"). */
   status_reasons_es: string[];
+  status_reasons_en: string[];
+  status_reasons_pt: string[];
   verified_by: BundleVerifiedBy;
   verified_at: string | null;
   checked_at: string | null;

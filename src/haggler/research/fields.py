@@ -33,6 +33,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Literal
 from urllib.parse import urlsplit, urlunsplit
 
+from haggler.i18n import Text
 from haggler.money import format_money_code, parse_money_code
 from haggler.research.kinds import KINDS, SubjectKind
 
@@ -631,6 +632,39 @@ def value_label_es(field_name: str, value: str) -> str:
     if spec is None:
         return value
     return spec.value_labels_es.get(value, value)
+
+
+# English and Portuguese labels of the values the site's reasons quote (research.evaluate
+# tos_axis); a bundle_ twin shares its service field's labels.
+_VALUE_LABELS_EN_PT: dict[str, dict[str, tuple[str, str]]] = {
+    "residence_clause": {
+        "primary_use_in_account_country": (
+            "primary use in the account's country",
+            "uso principal no país da conta",
+        ),
+        "account_country_must_match_residence": (
+            "the account's country must be the country of residence",
+            "o país da conta deve ser o de residência",
+        ),
+        "must_reside": ("residents of the country only", "só para residentes do país"),
+    },
+    "enforcement_event": {
+        "location_verification": ("location checks", "verificação de localização"),
+        "forced_price_change": (
+            "forced price or country change",
+            "mudança forçada de preço ou país",
+        ),
+        "suspension": ("suspensions", "suspensões"),
+        "cancellation": ("cancellations", "cancelamentos"),
+    },
+}
+
+
+def value_label(field_name: str, value: str) -> str:
+    """value_label_es as a Text when the value has English and Portuguese labels."""
+    es = value_label_es(field_name, value)
+    en_pt = _VALUE_LABELS_EN_PT.get(field_name.removeprefix("bundle_"), {}).get(value)
+    return Text(es, *en_pt) if en_pt else es
 
 
 def vocabulary_prompt(level: SubjectKind) -> str:

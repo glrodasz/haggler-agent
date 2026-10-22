@@ -35,10 +35,11 @@ manual and unverified reasons also say what the watcher found ("robots.txt no pe
 si hay otra más nueva.", "Último valor confirmado 21.900 COP el 3 de octubre de 2026; ya no se
 confirma.").
 
-Every state but verified carries at least one Spanish reason (status_reasons_es; verified only
-the edition reason of a medium confidence), naming components by their service names. The card's
-badge already shows the dates it rests on (manual age, end date, last check), so the reasons do
-not repeat them; a date only a reason gives is written out in Spanish. Confidence is low unless
+Every state but verified carries at least one reason (status_reasons_es/_en/_pt, each a
+haggler.i18n.Text; verified only the edition reason of a medium confidence), naming components
+by their service names. The card's badge already shows the dates it rests on (manual age, end
+date, last check), so the reasons do not repeat them; a date only a reason gives is written out
+in each language. Confidence is low unless
 verified; manual is medium at most.
 """
 
@@ -47,10 +48,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
-from decimal import Decimal
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
+from haggler.i18n import Text, concat, fill, join_list, long_date, money, tr
 from haggler.models.bundles import AnchorCheck, BundleWatchState, PageCheck, anchor_hash
 from haggler.models.curated import Anchor, Bundle
 
@@ -65,56 +66,99 @@ DECISIVE_FACTS = ("price", "base_price", "component")
 # Anchor states that undo an earlier verification (unreadable / not_checked do not).
 _UNCONFIRMED = ("missing", "embedded_only", "outdated_document")
 _CONFIDENCE_ORDER = ("low", "medium", "high")
-_MONTHS_ES = (
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
-)
-
 _SOURCE_REASONS = {
-    "search_summary": (
-        "{what} tomados de un resumen de búsqueda; sin verificar en la página oficial."
+    "search_summary": tr(
+        "{what} tomados de un resumen de búsqueda; sin verificar en la página oficial.",
+        "{what} taken from a search summary; not checked on the official page.",
+        "{what} tirados de um resumo de busca; sem verificar na página oficial.",
     ),
-    "agent_research": (
-        "{what} propuestos por la investigación automática; sin verificar en la página oficial."
+    "agent_research": tr(
+        "{what} propuestos por la investigación automática; sin verificar en la página oficial.",
+        "{what} proposed by automated research; not checked on the official page.",
+        "{what} propostos pela pesquisa automática; sem verificar na página oficial.",
     ),
-    "official_fetch": (
-        "{what} copiados de la página oficial, pero el vigilante aún no los ha confirmado."
+    "official_fetch": tr(
+        "{what} copiados de la página oficial, pero el vigilante aún no los ha confirmado.",
+        "{what} copied from the official page, but the watcher has not confirmed them yet.",
+        "{what} copiados da página oficial, mas o vigilante ainda não os confirmou.",
     ),
 }
 # Once the watcher has read the pages, its own reasons say what it confirmed and what not.
-_WATCHED_SOURCE_REASONS = {"official_fetch": "{what} copiados de la página oficial."}
-_WATCH_REASONS = {
-    "manual": "Se revisa a mano: sus páginas no están en la vigilancia automática.",
-    "off": "No se vigila: sus valores no se comprueban de forma automática.",
-    "auto": "El vigilante aún no ha leído sus páginas oficiales.",
+_WATCHED_SOURCE_REASONS = {
+    "official_fetch": tr(
+        "{what} copiados de la página oficial.",
+        "{what} copied from the official page.",
+        "{what} copiados da página oficial.",
+    )
 }
-_FACT_ES = {
-    "price": "El precio",
-    "base_price": "El precio del plan base",
-    "intro": "El precio de introducción",
-    "validity": "La vigencia",
+# The {what} of a source reason.
+_PRICE_AND_COMPONENTS = tr("Precio y componentes", "Price and components", "Preço e componentes")
+_COMPONENTS = tr("Componentes", "Components", "Componentes")
+_WATCH_REASONS = {
+    "manual": tr(
+        "Se revisa a mano: sus páginas no están en la vigilancia automática.",
+        "Checked by hand: its pages are not in the automatic watch.",
+        "Revisado à mão: suas páginas não estão na vigilância automática.",
+    ),
+    "off": tr(
+        "No se vigila: sus valores no se comprueban de forma automática.",
+        "Not watched: its values are not checked automatically.",
+        "Não vigiado: seus valores não são verificados automaticamente.",
+    ),
+    "auto": tr(
+        "El vigilante aún no ha leído sus páginas oficiales.",
+        "The watcher has not read its official pages yet.",
+        "O vigilante ainda não leu suas páginas oficiais.",
+    ),
+}
+_FACTS = {
+    "price": tr("El precio", "The price", "O preço"),
+    "base_price": tr("El precio del plan base", "The base plan price", "O preço do plano base"),
+    "intro": tr("El precio de introducción", "The introductory price", "O preço promocional"),
+    "validity": tr("La vigencia", "The validity", "A vigência"),
 }
 _PAGE_REASONS = {
-    "blocked": "{host} bloquea la lectura automática; no se confirma desde ahí.",
-    "robots_disallowed": "robots.txt no permite leer {host}.",
-    "not_found": "Una página vigilada de {host} ya no existe.",
-    "failed": "No se pudo leer {host} en la última revisión.",
-    "unsupported_content": "{host} no sirve una página de texto legible.",
-    "pdf_error": "El PDF de {host} no tiene texto legible (cifrado, escaneado o demasiado grande).",
-    "wrong_country": (
-        "{host} mostró la página de otro país (dominio o moneda); no confirma esta oferta."
+    "blocked": tr(
+        "{host} bloquea la lectura automática; no se confirma desde ahí.",
+        "{host} blocks automated reading; nothing is confirmed from there.",
+        "{host} bloqueia a leitura automática; nada se confirma por lá.",
     ),
-    "over_budget": "{host} no se leyó en la última revisión (límite de páginas por corrida).",
+    "robots_disallowed": tr(
+        "robots.txt no permite leer {host}.",
+        "robots.txt does not allow reading {host}.",
+        "O robots.txt não permite ler {host}.",
+    ),
+    "not_found": tr(
+        "Una página vigilada de {host} ya no existe.",
+        "A watched page on {host} no longer exists.",
+        "Uma página vigiada de {host} não existe mais.",
+    ),
+    "failed": tr(
+        "No se pudo leer {host} en la última revisión.",
+        "{host} could not be read in the last check.",
+        "Não foi possível ler {host} na última revisão.",
+    ),
+    "unsupported_content": tr(
+        "{host} no sirve una página de texto legible.",
+        "{host} does not serve a readable text page.",
+        "{host} não serve uma página de texto legível.",
+    ),
+    "pdf_error": tr(
+        "El PDF de {host} no tiene texto legible (cifrado, escaneado o demasiado grande).",
+        "The PDF on {host} has no readable text (encrypted, scanned or too large).",
+        "O PDF de {host} não tem texto legível (criptografado, escaneado ou grande demais).",
+    ),
+    "wrong_country": tr(
+        "{host} mostró la página de otro país (dominio o moneda); no confirma esta oferta.",
+        "{host} showed another country's page (domain or currency); it does not confirm this "
+        "offer.",
+        "{host} mostrou a página de outro país (domínio ou moeda); não confirma esta oferta.",
+    ),
+    "over_budget": tr(
+        "{host} no se leyó en la última revisión (límite de páginas por corrida).",
+        "{host} was not read in the last check (page limit per run).",
+        "{host} não foi lido na última revisão (limite de páginas por execução).",
+    ),
 }
 
 
@@ -148,20 +192,6 @@ def expired_on(bundle: Bundle) -> date:
     if bundle.status == "expired":
         return min(bundle.valid_until, bundle.last_verified)
     return bundle.valid_until
-
-
-def _date_es(d: date) -> str:
-    """'31 de agosto de 2026', like the site's long dates."""
-    return f"{d.day} de {_MONTHS_ES[d.month - 1]} de {d.year}"
-
-
-def _money_es(amount: Decimal, currency: str) -> str:
-    """'21.900 COP', '13,99 EUR'."""
-    if amount == amount.to_integral_value():
-        text = f"{int(amount):,}".replace(",", ".")
-    else:
-        text = f"{amount:,.2f}".replace(",", " ").replace(".", ",").replace(" ", ".")
-    return f"{text} {currency}"
 
 
 def _host(url: str) -> str:
@@ -211,11 +241,12 @@ class _WatchView:
     confirmed_components: frozenset[str] = frozenset()
 
 
-def _what(anchor: Anchor, names: Mapping[str, str]) -> str:
+def _what(anchor: Anchor, names: Mapping[str, str]) -> Text:
     if anchor.fact == "component":
         sid = anchor.service_id or ""
-        return f"El componente {names.get(sid, sid)}"
-    return _FACT_ES[anchor.fact]
+        name = names.get(sid, sid)
+        return tr(f"El componente {name}", f"The component {name}", f"O componente {name}")
+    return _FACTS[anchor.fact]
 
 
 def _edition_reasons(bundle: Bundle, pages: Iterable[PageCheck]) -> list[str]:
@@ -224,13 +255,36 @@ def _edition_reasons(bundle: Bundle, pages: Iterable[PageCheck]) -> list[str]:
     for p in pages:
         if p.edition is None or p.status == "superseded":
             continue
+        e = p.edition
         if p.edition_check == "unchecked":
-            out.append(f"Según la lista {p.edition}; no se pudo comprobar si hay otra más nueva.")
-        elif p.edition_check == "validity":
-            since = f" (desde el {_date_es(bundle.valid_from)})" if bundle.valid_from else ""
             out.append(
-                f"Vigente según la propia lista {p.edition}{since}; no se pudo comprobar si hay "
-                "otra más nueva."
+                tr(
+                    f"Según la lista {e}; no se pudo comprobar si hay otra más nueva.",
+                    f"According to price list {e}; it could not be checked whether a newer one "
+                    "exists.",
+                    f"Segundo a tabela {e}; não foi possível verificar se há outra mais nova.",
+                )
+            )
+        elif p.edition_check == "validity":
+            since = (
+                fill(tr(" (desde el {d})", " (since {d})", " (desde {d})"), d=long_date(start))
+                if (start := bundle.valid_from)
+                else ""
+            )
+            out.append(
+                concat(
+                    tr(
+                        f"Vigente según la propia lista {e}",
+                        f"Valid according to price list {e} itself",
+                        f"Vigente segundo a própria tabela {e}",
+                    ),
+                    since,
+                    tr(
+                        "; no se pudo comprobar si hay otra más nueva.",
+                        "; it could not be checked whether a newer one exists.",
+                        "; não foi possível verificar se há outra mais nova.",
+                    ),
+                )
             )
     return list(dict.fromkeys(out))
 
@@ -242,11 +296,20 @@ def _page_reasons(bundle: Bundle, pages: Iterable[PageCheck], today: date) -> li
         host = _host(p.final_url or p.url)
         if p.paused(today) and p.paused_until is not None:
             out.append(
-                f"La lectura de {host} está en pausa hasta el {_date_es(p.paused_until)} tras "
-                "varias revisiones fallidas."
+                fill(
+                    tr(
+                        "La lectura de {host} está en pausa hasta el {until} tras varias "
+                        "revisiones fallidas.",
+                        "Reading {host} is paused until {until} after several failed checks.",
+                        "A leitura de {host} está em pausa até {until} após várias revisões "
+                        "falhas.",
+                    ),
+                    host=host,
+                    until=long_date(p.paused_until),
+                )
             )
         elif p.status in _PAGE_REASONS:
-            out.append(_PAGE_REASONS[p.status].format(host=host))
+            out.append(fill(_PAGE_REASONS[p.status], host=host))
     out += _edition_reasons(bundle, pages)
     return list(dict.fromkeys(out))
 
@@ -263,8 +326,15 @@ def _last_confirmed(
         if anchor_confirmed(check, today) or price.amount is None:
             continue
         out.append(
-            f"Último valor confirmado {_money_es(price.amount, price.currency)} el "
-            f"{_date_es(check.last_verified_at)}; ya no se confirma."
+            fill(
+                tr(
+                    "Último valor confirmado {value} el {day}; ya no se confirma.",
+                    "Last confirmed value {value} on {day}; no longer confirmed.",
+                    "Último valor confirmado {value} em {day}; não se confirma mais.",
+                ),
+                value=money(price.amount, price.currency),
+                day=long_date(check.last_verified_at),
+            )
         )
     return list(dict.fromkeys(out))
 
@@ -303,24 +373,58 @@ def _watch_view(
         if a.fact not in DECISIVE_FACTS or c is None:
             continue
         host = _host(c.url)
+        what = _what(a, names)
         if c.status == "missing":
             if c.via is None:
-                review.append(f"{_what(a, names)} ya no aparece en {host}.")
+                review.append(
+                    fill(
+                        tr(
+                            "{what} ya no aparece en {host}.",
+                            "{what} no longer appears on {host}.",
+                            "{what} não aparece mais em {host}.",
+                        ),
+                        what=what,
+                        host=host,
+                    )
+                )
             else:
                 review.append(
-                    f"{_what(a, names)} sigue en {host}, pero ya no indica el valor registrado."
+                    fill(
+                        tr(
+                            "{what} sigue en {host}, pero ya no indica el valor registrado.",
+                            "{what} is still on {host}, but no longer states the recorded value.",
+                            "{what} continua em {host}, mas não indica mais o valor registrado.",
+                        ),
+                        what=what,
+                        host=host,
+                    )
                 )
         elif c.unconfirmed == "missing" and c.unconfirmed_on is not None:
             # Missing when the page last loaded; the runs since could not read it.
             review.append(
-                f"{_what(a, names)} no aparecía en {host} la última vez que se pudo leer "
-                f"({_date_es(c.unconfirmed_on)})."
+                fill(
+                    tr(
+                        "{what} no aparecía en {host} la última vez que se pudo leer ({day}).",
+                        "{what} did not appear on {host} the last time it could be read ({day}).",
+                        "{what} não aparecia em {host} da última vez que se pôde ler ({day}).",
+                    ),
+                    what=what,
+                    host=host,
+                    day=long_date(c.unconfirmed_on),
+                )
             )
     for p in pages.values():
         if p.status == "superseded":
+            new, old = p.newest_edition, p.edition
             review.append(
-                f"Hay una edición más nueva de la lista de precios ({p.newest_edition}); los "
-                f"valores son de la edición {p.edition} hasta revisarlos."
+                tr(
+                    f"Hay una edición más nueva de la lista de precios ({new}); los valores son "
+                    f"de la edición {old} hasta revisarlos.",
+                    f"There is a newer edition of the price list ({new}); the values are from "
+                    f"edition {old} until reviewed.",
+                    f"Há uma edição mais nova da tabela de preços ({new}); os valores são da "
+                    f"edição {old} até serem revisados.",
+                )
             )
     if review:
         decision = BundleState(
@@ -336,33 +440,69 @@ def _watch_view(
     included = {c.service_id for c in bundle.components if c.inclusion == "included"}
     why: list[str] = []
     if bundle.price.source == "curated" and not any(a.fact == "price" for a, _c in pairs):
-        why.append("El precio no tiene un ancla que el vigilante pueda buscar.")
+        why.append(
+            tr(
+                "El precio no tiene un ancla que el vigilante pueda buscar.",
+                "The price has no anchor the watcher can look for.",
+                "O preço não tem uma âncora que o vigilante possa buscar.",
+            )
+        )
     unanchored = included - {a.service_id for a, _c in pairs if a.fact == "component"}
     if unanchored:
         n = len(unanchored)
         why.append(
-            "Falta el ancla de 1 componente incluido."
+            tr(
+                "Falta el ancla de 1 componente incluido.",
+                "1 included component has no anchor.",
+                "Falta a âncora de 1 componente incluído.",
+            )
             if n == 1
-            else f"Faltan las anclas de {n} componentes incluidos."
+            else tr(
+                f"Faltan las anclas de {n} componentes incluidos.",
+                f"{n} included components have no anchor.",
+                f"Faltam as âncoras de {n} componentes incluídos.",
+            )
         )
     for a, c in decisive:
         if c is None:
             continue
         if c.status == "embedded_only":
             why.append(
-                f"{_what(a, names)} solo aparece en datos embebidos de la página, no en su texto "
-                "visible."
+                fill(
+                    tr(
+                        "{what} solo aparece en datos embebidos de la página, no en su texto "
+                        "visible.",
+                        "{what} only appears in the page's embedded data, not in its visible text.",
+                        "{what} só aparece em dados incorporados da página, não no texto visível.",
+                    ),
+                    what=_what(a, names),
+                )
             )
         elif c.unconfirmed == "embedded_only":
             why.append(
-                f"{_what(a, names)} solo aparecía en datos embebidos de la página la última vez "
-                "que se pudo leer."
+                fill(
+                    tr(
+                        "{what} solo aparecía en datos embebidos de la página la última vez que "
+                        "se pudo leer.",
+                        "{what} only appeared in the page's embedded data the last time it could "
+                        "be read.",
+                        "{what} só aparecia em dados incorporados da página da última vez que se "
+                        "pôde ler.",
+                    ),
+                    what=_what(a, names),
+                )
             )
     observed_ok = not price_missing and (
         price_observed_on is None or (today - price_observed_on).days <= VERIFY_MAX_AGE_DAYS
     )
     if bundle.price.source == "observed" and not price_missing and not observed_ok:
-        why.append("El precio observado no es de los datos diarios recientes.")
+        why.append(
+            tr(
+                "El precio observado no es de los datos diarios recientes.",
+                "The observed price is not from recent daily data.",
+                "O preço observado não é dos dados diários recentes.",
+            )
+        )
     stale = [a for a, _c in decisive if not confirmed[id(a)]]
     if not why and not stale and (bundle.price.source == "curated" or observed_ok):
         dates = [c.last_verified_at for _a, c in decisive if c and c.last_verified_at]
@@ -384,7 +524,13 @@ def _watch_view(
 
     reasons = [*why, *page_why, *last]
     if stale and not reasons:
-        reasons.append("El vigilante aún no ha confirmado todas sus anclas.")
+        reasons.append(
+            tr(
+                "El vigilante aún no ha confirmado todas sus anclas.",
+                "The watcher has not confirmed all its anchors yet.",
+                "O vigilante ainda não confirmou todas as suas âncoras.",
+            )
+        )
     return _WatchView(
         reasons=tuple(dict.fromkeys(reasons)),
         checked_at=w.checked_at,
@@ -395,11 +541,31 @@ def _watch_view(
 
 # ------------------------------------------------------------------ pending changes
 
-_PENDING_SOURCES_ES = {"watcher": "el vigilante", "agent": "la investigación automática"}
+_PENDING_SOURCES = {
+    "watcher": tr("el vigilante", "the watcher", "o vigilante"),
+    "agent": tr("la investigación automática", "automated research", "a pesquisa automática"),
+}
+# English and Portuguese names of the fields a pending change can touch (the card's
+# "pendingFields"); Spanish comes from the field spec.
+_PENDING_FIELDS_EN_PT = {
+    "bundle_price": ("price", "preço"),
+    "bundle_intro_price": ("introductory price", "preço promocional"),
+    "bundle_base_price": ("base plan price", "preço do plano base"),
+    "bundle_intro_months": ("months at the introductory price", "meses do preço promocional"),
+    "bundle_contract_months": ("minimum term", "fidelidade"),
+    "bundle_intro_until": ("end of the introductory price", "fim do preço promocional"),
+    "bundle_offer_until": ("end of the offer", "fim da oferta"),
+    "bundle_includes": ("included service", "serviço incluído"),
+    "bundle_discount": ("discount", "desconto"),
+    "bundle_available": ("still on sale", "continua à venda"),
+    "bundle_price_list_url": ("price list", "tabela de preços"),
+}
 
 
-def _join_es(items: Sequence[str]) -> str:
-    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} y {items[-1]}"
+def _pending_label(change: Proposal) -> Text:
+    es = change.label_es[:1].lower() + change.label_es[1:]
+    en, pt = _PENDING_FIELDS_EN_PT.get(change.field, (change.field, change.field))
+    return tr(es, en, pt)
 
 
 def _pending_reasons(changes: Sequence[Proposal]) -> list[str]:
@@ -407,11 +573,18 @@ def _pending_reasons(changes: Sequence[Proposal]) -> list[str]:
     lists the values under "Cambios pendientes de revisión")."""
     if not changes:
         return []
-    labels = list(dict.fromkeys(c.label_es[:1].lower() + c.label_es[1:] for c in changes))
-    sources = list(dict.fromkeys(_PENDING_SOURCES_ES[c.source] for c in changes))
+    labels = list(dict.fromkeys(_pending_label(c) for c in changes))
+    sources = list(dict.fromkeys(_PENDING_SOURCES[c.source] for c in changes))
     return [
-        f"Cambios pendientes de revisión: {_join_es(labels)} (según {_join_es(sources)}, en la "
-        "página oficial)."
+        fill(
+            tr(
+                "Cambios pendientes de revisión: {fields} (según {sources}, en la página oficial).",
+                "Changes pending review: {fields} (according to {sources}, on the official page).",
+                "Mudanças pendentes de revisão: {fields} (segundo {sources}, na página oficial).",
+            ),
+            fields=join_list(labels),
+            sources=join_list(sources),
+        )
     ]
 
 
@@ -436,9 +609,21 @@ def bundle_state(
     if is_expired(bundle, today):
         reasons: list[str] = []
         if bundle.valid_until is not None and bundle.valid_until < today:
-            reasons.append("La oferta pasó su fecha de fin.")
+            reasons.append(
+                tr(
+                    "La oferta pasó su fecha de fin.",
+                    "The offer is past its end date.",
+                    "A oferta passou da data de término.",
+                )
+            )
         if bundle.status == "expired":
-            reasons.append("Marcada como vencida en los datos curados.")
+            reasons.append(
+                tr(
+                    "Marcada como vencida en los datos curados.",
+                    "Marked as expired in the curated data.",
+                    "Marcada como vencida nos dados curados.",
+                )
+            )
         end = expired_on(bundle)
         return BundleState(
             display_status="expired",
@@ -483,9 +668,17 @@ def bundle_state(
     price_reason = []
     if price_missing:
         price_reason.append(
-            "Aún no hay un precio publicado de este plan en los datos diarios."
+            tr(
+                "Aún no hay un precio publicado de este plan en los datos diarios.",
+                "There is no published price for this plan in the daily data yet.",
+                "Ainda não há um preço publicado deste plano nos dados diários.",
+            )
             if bundle.price.source == "observed"
-            else "El precio no está registrado."
+            else tr(
+                "El precio no está registrado.",
+                "The price is not recorded.",
+                "O preço não está registrado.",
+            )
         )
     if bundle.verified_by == "user_report" and report is not None:
         age = (today - report.date).days
@@ -494,7 +687,11 @@ def bundle_state(
                 display_status="manual",
                 # The badge shows its age, counted to the same day (meta.generated_at).
                 reasons_es=(
-                    "Verificación manual: no cuenta como fuente oficial.",
+                    tr(
+                        "Verificación manual: no cuenta como fuente oficial.",
+                        "Manual check: it does not count as an official source.",
+                        "Verificação manual: não conta como fonte oficial.",
+                    ),
                     *price_reason,
                     *view.reasons,
                 ),
@@ -506,20 +703,33 @@ def bundle_state(
     reasons = []
     if bundle.verified_by == "user_report":
         if report is None:
-            reasons.append("Verificación manual sin fecha; no cuenta.")
+            reasons.append(
+                tr(
+                    "Verificación manual sin fecha; no cuenta.",
+                    "Manual check without a date; it does not count.",
+                    "Verificação manual sem data; não conta.",
+                )
+            )
         else:
             reasons.append(
-                f"La verificación manual del {_date_es(report.date)} tiene más de "
-                f"{MANUAL_MAX_AGE_DAYS} días."
+                fill(
+                    tr(
+                        "La verificación manual del {day} tiene más de {n} días.",
+                        "The manual check of {day} is more than {n} days old.",
+                        "A verificação manual de {day} tem mais de {n} dias.",
+                    ),
+                    day=long_date(report.date),
+                    n=str(MANUAL_MAX_AGE_DAYS),
+                )
             )
     else:
-        what = "Componentes" if bundle.price.source == "observed" else "Precio y componentes"
+        what = _COMPONENTS if bundle.price.source == "observed" else _PRICE_AND_COMPONENTS
         texts = (
             _SOURCE_REASONS
             if view.checked_at is None
             else _SOURCE_REASONS | _WATCHED_SOURCE_REASONS
         )
-        reasons.append(texts[bundle.verified_by].format(what=what))
+        reasons.append(fill(texts[bundle.verified_by], what=what))
     reasons.extend(price_reason)
     if view.reasons:
         reasons.extend(view.reasons)

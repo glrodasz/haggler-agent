@@ -1,5 +1,5 @@
 ---
-import { getMessages, localNote, lookupFor } from "../i18n";
+import { getMessages, localList, localNote, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
 import { hostOf } from "../logic/format";
 import { bundleAnchor, localeOfUrl, routesFor } from "../logic/paths";
@@ -28,6 +28,7 @@ const t = msg.bundle;
 const f = msg.feasibility;
 const price = b.price;
 const note = localNote(locale, b);
+const statusReasons = localList(locale, b, "status_reasons");
 const per = periodSuffix(price.period);
 const money = (value: number | null) => formatPrice(value, price.currency);
 const names = (ids: readonly string[]) => ids.map((id) => site.serviceName(id)).join(", ");
@@ -165,10 +166,10 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     {statusDate && <> · {statusDate}</>}
   </p>
   {
-    b.status_reasons_es.length > 0 && (
-      <ul class="small muted status-reasons" aria-label={t.statusReasons}>
-        {b.status_reasons_es.map((r) => (
-          <li lang="es">{r}</li>
+    statusReasons.items.length > 0 && (
+      <ul class="small muted status-reasons" aria-label={t.statusReasons} lang={statusReasons.lang}>
+        {statusReasons.items.map((r) => (
+          <li>{r}</li>
         ))}
       </ul>
     )

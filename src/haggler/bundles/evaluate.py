@@ -87,7 +87,6 @@ from haggler.bundles.pricing import counted_components
 from haggler.bundles.status import BundleState, bundle_state, is_expired
 from haggler.feasibility import (
     EU_BADGE_STRENGTHS,
-    LABEL_INFO,
     LABELS,
     LEGALITY_RANK,
     PRACTICAL_RANK,
@@ -95,7 +94,9 @@ from haggler.feasibility import (
     UNKNOWN_LABEL,
     UNKNOWN_RANK,
     axes_rank,
+    label_name,
 )
+from haggler.i18n import Text, join, sentence, tr
 from haggler.models.curated import (
     Bundle,
     BundleComponent,
@@ -106,6 +107,7 @@ from haggler.models.curated import (
 from haggler.models.profiles import Profile
 from haggler.models.research import Claim, SubjectKind, subject_key
 from haggler.research.evaluate import (
+    MISSING_OFFICIAL_FACTS,
     UNKNOWN_AXIS,
     Assessment,
     EvalContext,
@@ -192,14 +194,6 @@ class _Route:
     work: Work = field(default_factory=Work)
 
 
-def _sentence(text: str) -> str:
-    text = " ".join(text.split())
-    if not text:
-        return text
-    text = text[0].upper() + text[1:]
-    return text if text[-1] in ".!?" else text + "."
-
-
 def _label(rank: int) -> str:
     return LABELS[rank] if 0 <= rank < len(LABELS) else UNKNOWN_LABEL
 
@@ -211,19 +205,34 @@ def _service_name(ctx: EvalContext, service_id: str) -> str:
         return service_id
 
 
-def _false_step_es(step: FeasibilityStep) -> str:
+def _false_step(step: FeasibilityStep) -> str:
     """What a step that needs a false declaration makes the subscriber declare. A presence step
     of that kind is false about the residence (the subscription country must be where one lives),
     not about the trip itself."""
     v = step.value
+    residence = tr(
+        f"declarar {v} como país de residencia",
+        f"declaring {v} as country of residence",
+        f"declarar {v} como país de residência",
+    )
     return {
-        "presence": f"declarar {v} como país de residencia",
-        "declare_country": f"declarar {v} como país de residencia",
-        "billing_address": f"declarar una dirección de facturación en {v}",
-        "store_region": f"declarar {v} como país de la cuenta de la tienda",
-        "payment_country": f"un medio de pago de {v}",
-        "local_id": f"un documento de {v}",
-        "local_phone": f"un teléfono de {v}",
+        "presence": residence,
+        "declare_country": residence,
+        "billing_address": tr(
+            f"declarar una dirección de facturación en {v}",
+            f"declaring a billing address in {v}",
+            f"declarar um endereço de cobrança em {v}",
+        ),
+        "store_region": tr(
+            f"declarar {v} como país de la cuenta de la tienda",
+            f"declaring {v} as the store account's country",
+            f"declarar {v} como país da conta da loja",
+        ),
+        "payment_country": tr(
+            f"un medio de pago de {v}", f"a payment method from {v}", f"um meio de pagamento de {v}"
+        ),
+        "local_id": tr(f"un documento de {v}", f"an ID document from {v}", f"um documento de {v}"),
+        "local_phone": tr(f"un teléfono de {v}", f"a phone number from {v}", f"um telefone de {v}"),
     }.get(step.type, f"{step.type} {v}")
 
 
@@ -249,7 +258,7 @@ def _local_bank(t: str, profile: Profile, facts: Facts, w: Work) -> str | None:
     return None
 
 
-def _impossible(w: Work, reason: str) -> None:
+def _impossible(w: Work, reason: Text) -> None:
     w.practical.append("impossible")
     w.reasons.append(reason)
 
@@ -331,11 +340,24 @@ def _researched(
         if profile.has_phone(t):
             w.step("local_phone", t)
         else:
-            _impossible(w, f"Exige un número de teléfono de {t}; el perfil no tiene uno.")
+            _impossible(
+                w,
+                tr(
+                    f"Exige un número de teléfono de {t}; el perfil no tiene uno.",
+                    f"Requires a phone number from {t}; the profile has none.",
+                    f"Exige um número de telefone de {t}; o perfil não tem um.",
+                ),
+            )
     if implied("self_declared"):
         w.false_declaration = True
         w.step("declare_country", t, requires_false_declaration=True)
-        w.reasons.append(f"exige declarar {t} como país propio sin vivir allí")
+        w.reasons.append(
+            tr(
+                f"exige declarar {t} como país propio sin vivir allí",
+                f"requires declaring {t} as your own country without living there",
+                f"exige declarar {t} como país próprio sem morar lá",
+            )
+        )
     w.use(used, key)
     return r.model_copy(update=updates), list({c.id: c for c in used}.values())
 
@@ -364,24 +386,53 @@ def _gates(
             name = _ID_NAMES.get(local_id.lower(), local_id)
             which = "" if local_id == _ID_REQUIRED else f" ({name})"
             _impossible(
-                w, f"Exige un documento de identidad de {t}{which}; el perfil no tiene uno."
+                w,
+                tr(
+                    f"Exige un documento de identidad de {t}{which}; el perfil no tiene uno.",
+                    f"Requires an ID document from {t}{which}; the profile has none.",
+                    f"Exige um documento de identidade de {t}{which}; o perfil não tem um.",
+                ),
             )
     elif route and local_id.lower() == "unknown":
-        w.assumptions.append(f"se asume que no se pide un documento de identidad de {t}")
+        w.assumptions.append(
+            tr(
+                f"se asume que no se pide un documento de identidad de {t}",
+                f"assumes no ID document from {t} is asked for",
+                f"supõe-se que não se pede um documento de identidade de {t}",
+            )
+        )
 
     if r.local_line in ("mobile", "both"):
         if profile.has_phone(t):
             w.step("local_phone", t)
         else:
-            _impossible(w, f"Exige una línea móvil de {t}; el perfil no tiene un teléfono de {t}.")
+            _impossible(
+                w,
+                tr(
+                    f"Exige una línea móvil de {t}; el perfil no tiene un teléfono de {t}.",
+                    f"Requires a mobile line from {t}; the profile has no phone number from {t}.",
+                    f"Exige uma linha móvel de {t}; o perfil não tem um telefone de {t}.",
+                ),
+            )
     if r.local_line in ("fixed", "both") and not profile.has_address(t):
         _impossible(
             w,
-            f"Exige una línea fija de {t}, instalada en un domicilio en {t}; "
-            f"el perfil no tiene uno.",
+            tr(
+                f"Exige una línea fija de {t}, instalada en un domicilio en {t}; "
+                "el perfil no tiene uno.",
+                f"Requires a landline from {t}, installed at a home in {t}; the profile has none.",
+                f"Exige uma linha fixa de {t}, instalada num domicílio em {t}; "
+                "o perfil não tem um.",
+            ),
         )
     if route and r.local_line == "unknown":
-        w.assumptions.append(f"se asume que no se pide una línea de teléfono de {t}")
+        w.assumptions.append(
+            tr(
+                f"se asume que no se pide una línea de teléfono de {t}",
+                f"assumes no phone line from {t} is asked for",
+                f"supõe-se que não se pede uma linha telefônica de {t}",
+            )
+        )
     if mode == _HOME:
         return False
 
@@ -394,14 +445,24 @@ def _gates(
             w.step("payment_country", t)
         else:
             _impossible(
-                w, f"Exige una tarjeta emitida en {t}; el perfil no tiene ni puede obtener una."
+                w,
+                tr(
+                    f"Exige una tarjeta emitida en {t}; el perfil no tiene ni puede obtener una.",
+                    f"Requires a card issued in {t}; the profile has none and can't get one.",
+                    f"Exige um cartão emitido em {t}; o perfil não tem nem pode obter um.",
+                ),
             )
     elif pay == "local_bank":
         if _local_bank(t, profile, facts, w) is not None:
             w.step("payment_country", t)
         else:
             _impossible(
-                w, f"Exige una cuenta bancaria de {t}; el perfil no tiene ni puede abrir una."
+                w,
+                tr(
+                    f"Exige una cuenta bancaria de {t}; el perfil no tiene ni puede abrir una.",
+                    f"Requires a bank account from {t}; the profile has none and can't open one.",
+                    f"Exige uma conta bancária de {t}; o perfil não tem nem pode abrir uma.",
+                ),
             )
     elif pay == "carrier_bill":
         if profile.has_phone(t):
@@ -409,7 +470,12 @@ def _gates(
         else:
             _impossible(
                 w,
-                f"Se paga en la factura de una línea de {t}; el perfil no tiene una línea de {t}.",
+                tr(
+                    f"Se paga en la factura de una línea de {t}; "
+                    f"el perfil no tiene una línea de {t}.",
+                    f"Paid on the bill of a line from {t}; the profile has no line from {t}.",
+                    f"Paga-se na fatura de uma linha de {t}; o perfil não tem uma linha de {t}.",
+                ),
             )
     elif route and pay == "unknown":
         if held_card(t, profile, facts, w) is not None:
@@ -417,7 +483,12 @@ def _gates(
         else:
             w.payment_unknown = True
             w.reasons.append(
-                f"no se sabe qué medio de pago acepta y el perfil no tiene una tarjeta de {t}"
+                tr(
+                    f"no se sabe qué medio de pago acepta y el perfil no tiene una tarjeta de {t}",
+                    f"unknown which payment methods it accepts, and the profile has no card "
+                    f"from {t}",
+                    f"não se sabe que meio de pagamento aceita e o perfil não tem um cartão de {t}",
+                )
             )
 
     if r.signup_presence == "checked":
@@ -425,17 +496,42 @@ def _gates(
             w.practical.append("presence_once")
             w.step("presence", t, requires_presence=True)
         else:
-            _impossible(w, f"Exige estar en {t} al contratar; el perfil no viaja a {t}.")
+            _impossible(
+                w,
+                tr(
+                    f"Exige estar en {t} al contratar; el perfil no viaja a {t}.",
+                    f"Requires being in {t} to sign up; the profile doesn't travel to {t}.",
+                    f"Exige estar em {t} ao contratar; o perfil não viaja para {t}.",
+                ),
+            )
     elif route and r.signup_presence == "unknown":
-        w.assumptions.append(f"se asume que no se verifica la ubicación al contratar en {t}")
+        w.assumptions.append(
+            tr(
+                f"se asume que no se verifica la ubicación al contratar en {t}",
+                f"assumes location is not checked at sign-up in {t}",
+                f"supõe-se que a localização não é verificada ao contratar em {t}",
+            )
+        )
 
     # On the curated route the record already judged practicality: a credit check is only
     # stated (the return value is ignored there), a false declaration still adds its step.
     if r.credit_check:
         unknown = True
-        w.reasons.append(f"hace una consulta de crédito en {t}; no se sabe si el perfil la supera")
+        w.reasons.append(
+            tr(
+                f"hace una consulta de crédito en {t}; no se sabe si el perfil la supera",
+                f"runs a credit check in {t}; unknown whether the profile passes it",
+                f"faz uma consulta de crédito em {t}; não se sabe se o perfil a supera",
+            )
+        )
     elif route and r.credit_check is None:
-        w.assumptions.append("se asume que no hay una consulta de crédito")
+        w.assumptions.append(
+            tr(
+                "se asume que no hay una consulta de crédito",
+                "assumes there is no credit check",
+                "supõe-se que não há uma consulta de crédito",
+            )
+        )
 
     if r.billing_address == "required":
         if profile.has_address(t):
@@ -444,14 +540,31 @@ def _gates(
             w.false_declaration = True
             w.step("billing_address", t, requires_false_declaration=True)
             w.reasons.append(
-                f"exige una dirección de facturación en {t} y el perfil no tiene una real allí"
+                tr(
+                    f"exige una dirección de facturación en {t} y el perfil no tiene una real allí",
+                    f"requires a billing address in {t}, and the profile has no real one there",
+                    f"exige um endereço de cobrança em {t} e o perfil não tem um real lá",
+                )
             )
     elif route and r.billing_address == "unknown":
-        w.assumptions.append(f"se asume que no se pide una dirección de facturación en {t}")
+        w.assumptions.append(
+            tr(
+                f"se asume que no se pide una dirección de facturación en {t}",
+                f"assumes no billing address in {t} is asked for",
+                f"supõe-se que não se pede um endereço de cobrança em {t}",
+            )
+        )
     if r.residency == "required":
         w.false_declaration = True
         w.step("declare_country", t, requires_false_declaration=True)
-        w.reasons.append(f"exige vivir en {t} y el perfil vive en {profile.residence_country}")
+        home = profile.residence_country
+        w.reasons.append(
+            tr(
+                f"exige vivir en {t} y el perfil vive en {home}",
+                f"requires living in {t}, and the profile lives in {home}",
+                f"exige morar em {t} e o perfil mora em {home}",
+            )
+        )
     return unknown
 
 
@@ -488,7 +601,7 @@ def _clause_verified(record: BundleVerdictRecord) -> bool:
 def _curated(bundle: Bundle, record: BundleVerdictRecord, profile: Profile, facts: Facts) -> _Route:
     w = Work()
     w.steps.extend(record.steps)
-    w.reasons.extend(record.reasons_es)
+    w.reasons.extend(record.reasons)
     _gates(bundle, profile, facts, w, _CURATED)
     verified = _clause_verified(record)
     # The stated requirements only make the record's practicality harder (presence, impossible).
@@ -671,18 +784,37 @@ def assess_bundle(
                     w.steps.append(s)
             # The record's free-text note stays on the service's own feasibility record: it may
             # name what is false in words the bundle wording check does not let through.
-            steps_es = ", ".join(_false_step_es(s) for s in false_steps)
+            steps = join(", ", (_false_step(s) for s in false_steps))
+            level = label_name(a.label)
             w.reasons.append(
-                f"Incluye {name}: su ficha curada en {t} exige una declaración falsa "
-                f"({steps_es}), así que el paquete hereda su nivel «{LABEL_INFO[a.label][0]}»."
+                tr(
+                    f"Incluye {name}: su ficha curada en {t} exige una declaración falsa "
+                    f"({steps}), así que el paquete hereda su nivel «{level}».",
+                    f"Includes {name}: its curated record in {t} requires a false declaration "
+                    f"({steps.en}), so the bundle inherits its level “{level.en}”.",
+                    f"Inclui {name}: sua ficha curada em {t} exige uma declaração falsa "
+                    f"({steps.pt}), então o pacote herda seu nível «{level.pt}».",
+                )
             )
         if a.rank == 4 or a.practical == "impossible":
             impossible_parts = True
             comp_ranks.append(4)
-            w.reasons.append(f"Incluye {name}, que no es factible en {t} para este perfil.")
+            w.reasons.append(
+                tr(
+                    f"Incluye {name}, que no es factible en {t} para este perfil.",
+                    f"Includes {name}, which is not feasible in {t} for this profile.",
+                    f"Inclui {name}, que não é viável em {t} para este perfil.",
+                )
+            )
             continue
         if a.rank == UNKNOWN_RANK:
-            w.reasons.append(f"Incluye {name}, sin evaluar en {t}.")
+            w.reasons.append(
+                tr(
+                    f"Incluye {name}, sin evaluar en {t}.",
+                    f"Includes {name}, not evaluated in {t}.",
+                    f"Inclui {name}, sem avaliação em {t}.",
+                )
+            )
             if strict:
                 for axis in parts:
                     parts[axis].append(UNKNOWN_AXIS)
@@ -712,14 +844,20 @@ def assess_bundle(
             tos = _worst_known("tos", parts["tos"])
             practical = _worst_known("practical", parts["practical"])
             rank = max(floor, _known_rank(legality, tos, practical), *comp_ranks)
-            w.assumptions.append("hay partes del paquete sin evaluar: el nivel podría ser peor")
+            w.assumptions.append(
+                tr(
+                    "hay partes del paquete sin evaluar: el nivel podría ser peor",
+                    "parts of the bundle are not evaluated: the level could be worse",
+                    "há partes do pacote sem avaliação: o nível poderia ser pior",
+                )
+            )
         else:
             rank = UNKNOWN_RANK
     else:
         rank = max(axes_rank(legality, tos, practical, steps), floor or 0, *comp_ranks)
         if route.kind in (_OBSERVED, _ROUTE) and rank < 2 and w.assumptions:
             rank = UNKNOWN_RANK
-            w.reasons.append("faltan hechos con fuente oficial para descartar riesgos")
+            w.reasons.append(MISSING_OFFICIAL_FACTS)
 
     if route.kind == _HOME:
         provenance = "home"
@@ -749,7 +887,7 @@ def assess_bundle(
         notes_en=route.notes_en,
         notes_pt=route.notes_pt,
         steps=steps,
-        assumptions_es=tuple(dict.fromkeys(_sentence(x) for x in w.assumptions)),
-        reasons_es=tuple(dict.fromkeys(_sentence(x) for x in w.reasons)),
+        assumptions_es=tuple(dict.fromkeys(sentence(x) for x in w.assumptions)),
+        reasons_es=tuple(dict.fromkeys(sentence(x) for x in w.reasons)),
         components=tuple(components),
     )

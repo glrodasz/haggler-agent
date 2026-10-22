@@ -10,6 +10,7 @@ import pytest
 
 from haggler.catalog import load_catalog, load_feasibility, load_payment_instruments
 from haggler.compare import cheapest
+from haggler.i18n import Text
 from haggler.models.curated import FeasibilityFile, ObservedBin, PaymentInstrumentsFile
 from haggler.models.observations import PublishedPrice
 from haggler.models.profiles import Profile
@@ -407,6 +408,9 @@ def test_missing_optional_facts_are_assumptions_with_low_confidence():
     )
     assert a.rank == 2 and a.confidence == "low"
     assert len(a.assumptions_es) == 5
+    # The site shows them in every language.
+    assert all(isinstance(x, Text) and x.en and x.pt for x in [*a.assumptions_es, *a.reasons_es])
+    assert "Assumes" not in a.assumptions_es[0] and a.assumptions_es[0].en.startswith("assumes")
 
 
 def test_rank_below_two_needs_facts_not_assumptions():

@@ -49,6 +49,7 @@ from haggler.feasibility import (
     Verdict,
 )
 from haggler.fx import ecb, frankfurter, open_er_api
+from haggler.i18n import LOCALES, localized
 from haggler.models.bundles import AnchorCheck, BundleWatchState, WatchFile
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
@@ -639,6 +640,12 @@ def _attributions(catalog: Catalog) -> list[dict[str, str]]:
     return out
 
 
+def _localized(name: str, texts: Iterable[str]) -> dict[str, list[str]]:
+    """{name}_es/_en/_pt of generated sentences (haggler.i18n.Text; a plain str is Spanish only)."""
+    texts = list(texts)
+    return {f"{name}_{loc}": [localized(t, loc) for t in texts] for loc in LOCALES}
+
+
 def _project_url(url: str) -> str:
     """raw.githubusercontent.com/<owner>/<repo>/... -> github.com/<owner>/<repo> (human page)."""
     parts = urlsplit(url)
@@ -757,8 +764,8 @@ def _assessment_json(a: Assessment) -> dict[str, Any]:
             }
             for e in a.evidence
         ],
-        "assumptions_es": list(a.assumptions_es),
-        "reasons_es": list(a.reasons_es),
+        **_localized("assumptions", a.assumptions_es),
+        **_localized("reasons", a.reasons_es),
         "researched_on": a.researched_on.isoformat() if a.researched_on else None,
     }
 
@@ -1062,8 +1069,8 @@ def _bundle_verdict_json(a: BundleAssessment) -> dict[str, Any]:
         "notes_en": a.notes_en,
         "notes_pt": a.notes_pt,
         "steps": [s.model_dump(mode="json") for s in a.steps],
-        "assumptions_es": list(a.assumptions_es),
-        "reasons_es": list(a.reasons_es),
+        **_localized("assumptions", a.assumptions_es),
+        **_localized("reasons", a.reasons_es),
         "components": [
             {
                 "service_id": c.service_id,
@@ -1307,7 +1314,7 @@ def _bundle_json(
         ],
         "requirements": _requirements_json(b.requirements),
         "display_status": state.display_status,
-        "status_reasons_es": list(state.reasons_es),
+        **_localized("status_reasons", state.reasons_es),
         "verified_by": b.verified_by,
         "verified_at": _iso(state.verified_at),
         "checked_at": _iso(state.checked_at),

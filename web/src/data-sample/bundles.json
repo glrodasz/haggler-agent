@@ -114,6 +114,12 @@
     "status_reasons_es": [
       "Cambios pendientes de revisión: precio del paquete (según la investigación automática, en la página oficial)."
     ],
+    "status_reasons_en": [
+      "Changes pending review: bundle price (according to automated research, on the official page)."
+    ],
+    "status_reasons_pt": [
+      "Mudanças pendentes de revisão: preço do pacote (segundo a pesquisa automática, na página oficial)."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -175,7 +181,11 @@
           }
         ],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "disney_plus",
@@ -207,10 +217,32 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en CO."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from CO is asked for.",
+          "Assumes location is not checked at sign-up in CO.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in CO is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de CO.",
+          "Supõe-se que a localização não é verificada ao contratar em CO.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em CO."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de CO (cédula); el perfil no tiene uno.",
           "Incluye Disney+, sin evaluar en CO."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from CO (cédula); the profile has none.",
+          "Includes Disney+, not evaluated in CO."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de CO (cédula); o perfil não tem um.",
+          "Inclui Disney+, sem avaliação em CO."
         ],
         "components": [
           {
@@ -371,6 +403,14 @@
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Se revisa a mano: sus páginas no están en la vigilancia automática."
     ],
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Checked by hand: its pages are not in the automatic watch."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Revisado à mão: suas páginas não estão na vigilância automática."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -409,7 +449,11 @@
           }
         ],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": []
       },
       {
@@ -433,9 +477,29 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en CO."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from CO is asked for.",
+          "Assumes location is not checked at sign-up in CO.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in CO is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de CO.",
+          "Supõe-se que a localização não é verificada ao contratar em CO.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em CO."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de CO (cédula); el perfil no tiene uno."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from CO (cédula); the profile has none."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de CO (cédula); o perfil não tem um."
         ],
         "components": []
       }
@@ -605,6 +669,14 @@
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "No se vigila: sus valores no se comprueban de forma automática."
     ],
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Not watched: its values are not checked automatically."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Não vigiado: seus valores não são verificados automaticamente."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -647,6 +719,18 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en MX."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from MX is asked for.",
+          "Assumes location is not checked at sign-up in MX.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in MX is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de MX.",
+          "Supõe-se que a localização não é verificada ao contratar em MX.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em MX."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de MX (CURP); el perfil no tiene uno.",
@@ -655,6 +739,24 @@
           "Incluye Disney+, sin evaluar en MX.",
           "Incluye HBO Max, sin evaluar en MX.",
           "Incluye Apple TV, sin evaluar en MX."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from MX (CURP); the profile has none.",
+          "Unknown which payment methods it accepts, and the profile has no card from MX.",
+          "Includes Netflix, not evaluated in MX.",
+          "Includes Disney+, not evaluated in MX.",
+          "Includes HBO Max, not evaluated in MX.",
+          "Includes Apple TV, not evaluated in MX."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de MX (CURP); o perfil não tem um.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de MX.",
+          "Inclui Netflix, sem avaliação em MX.",
+          "Inclui Disney+, sem avaliação em MX.",
+          "Inclui HBO Max, sem avaliação em MX.",
+          "Inclui Apple TV, sem avaliação em MX."
         ],
         "components": [
           {
@@ -708,6 +810,18 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en MX."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from MX is asked for.",
+          "Assumes location is not checked at sign-up in MX.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in MX is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de MX.",
+          "Supõe-se que a localização não é verificada ao contratar em MX.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em MX."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de MX (CURP); el perfil no tiene uno.",
@@ -716,6 +830,24 @@
           "Incluye Disney+, sin evaluar en MX.",
           "Incluye HBO Max, sin evaluar en MX.",
           "Incluye Apple TV, sin evaluar en MX."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from MX (CURP); the profile has none.",
+          "Unknown which payment methods it accepts, and the profile has no card from MX.",
+          "Includes Netflix, not evaluated in MX.",
+          "Includes Disney+, not evaluated in MX.",
+          "Includes HBO Max, not evaluated in MX.",
+          "Includes Apple TV, not evaluated in MX."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de MX (CURP); o perfil não tem um.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de MX.",
+          "Inclui Netflix, sem avaliação em MX.",
+          "Inclui Disney+, sem avaliação em MX.",
+          "Inclui HBO Max, sem avaliação em MX.",
+          "Inclui Apple TV, sem avaliação em MX."
         ],
         "components": [
           {
@@ -914,6 +1046,14 @@
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "No se vigila: sus valores no se comprueban de forma automática."
     ],
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Not watched: its values are not checked automatically."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Não vigiado: seus valores não são verificados automaticamente."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -956,6 +1096,18 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en BR."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from BR is asked for.",
+          "Assumes location is not checked at sign-up in BR.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in BR is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de BR.",
+          "Supõe-se que a localização não é verificada ao contratar em BR.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em BR."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de BR (CPF); el perfil no tiene uno.",
@@ -964,6 +1116,24 @@
           "Incluye Disney+, sin evaluar en BR.",
           "Incluye HBO Max, sin evaluar en BR.",
           "Incluye Apple TV, sin evaluar en BR."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from BR (CPF); the profile has none.",
+          "Unknown which payment methods it accepts, and the profile has no card from BR.",
+          "Includes Netflix, not evaluated in BR.",
+          "Includes Disney+, not evaluated in BR.",
+          "Includes HBO Max, not evaluated in BR.",
+          "Includes Apple TV, not evaluated in BR."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de BR (CPF); o perfil não tem um.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de BR.",
+          "Inclui Netflix, sem avaliação em BR.",
+          "Inclui Disney+, sem avaliação em BR.",
+          "Inclui HBO Max, sem avaliação em BR.",
+          "Inclui Apple TV, sem avaliação em BR."
         ],
         "components": [
           {
@@ -1017,6 +1187,18 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en BR."
         ],
+        "assumptions_en": [
+          "Assumes no phone line from BR is asked for.",
+          "Assumes location is not checked at sign-up in BR.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in BR is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede uma linha telefônica de BR.",
+          "Supõe-se que a localização não é verificada ao contratar em BR.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em BR."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "Exige un documento de identidad de BR (CPF); el perfil no tiene uno.",
@@ -1025,6 +1207,24 @@
           "Incluye Disney+, sin evaluar en BR.",
           "Incluye HBO Max, sin evaluar en BR.",
           "Incluye Apple TV, sin evaluar en BR."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Requires an ID document from BR (CPF); the profile has none.",
+          "Unknown which payment methods it accepts, and the profile has no card from BR.",
+          "Includes Netflix, not evaluated in BR.",
+          "Includes Disney+, not evaluated in BR.",
+          "Includes HBO Max, not evaluated in BR.",
+          "Includes Apple TV, not evaluated in BR."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Exige um documento de identidade de BR (CPF); o perfil não tem um.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de BR.",
+          "Inclui Netflix, sem avaliação em BR.",
+          "Inclui Disney+, sem avaliação em BR.",
+          "Inclui HBO Max, sem avaliação em BR.",
+          "Inclui Apple TV, sem avaliação em BR."
         ],
         "components": [
           {
@@ -1211,6 +1411,14 @@
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Se revisa a mano: sus páginas no están en la vigilancia automática."
     ],
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Checked by hand: its pages are not in the automatic watch."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Revisado à mão: suas páginas não estão na vigilância automática."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -1261,7 +1469,11 @@
           }
         ],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "netflix",
@@ -1315,7 +1527,11 @@
           }
         ],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "netflix",
@@ -1454,6 +1670,14 @@
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "No se vigila: sus valores no se comprueban de forma automática."
     ],
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Not watched: its values are not checked automatically."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Não vigiado: seus valores não são verificados automaticamente."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -1496,10 +1720,32 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en LT."
         ],
+        "assumptions_en": [
+          "Assumes no ID document from LT is asked for.",
+          "Assumes location is not checked at sign-up in LT.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in LT is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede um documento de identidade de LT.",
+          "Supõe-se que a localização não é verificada ao contratar em LT.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em LT."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "No se sabe qué medio de pago acepta y el perfil no tiene una tarjeta de LT.",
           "Incluye Netflix, sin evaluar en LT."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Unknown which payment methods it accepts, and the profile has no card from LT.",
+          "Includes Netflix, not evaluated in LT."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de LT.",
+          "Inclui Netflix, sem avaliação em LT."
         ],
         "components": [
           {
@@ -1532,10 +1778,32 @@
           "Se asume que no hay una consulta de crédito.",
           "Se asume que no se pide una dirección de facturación en LT."
         ],
+        "assumptions_en": [
+          "Assumes no ID document from LT is asked for.",
+          "Assumes location is not checked at sign-up in LT.",
+          "Assumes there is no credit check.",
+          "Assumes no billing address in LT is asked for."
+        ],
+        "assumptions_pt": [
+          "Supõe-se que não se pede um documento de identidade de LT.",
+          "Supõe-se que a localização não é verificada ao contratar em LT.",
+          "Supõe-se que não há uma consulta de crédito.",
+          "Supõe-se que não se pede um endereço de cobrança em LT."
+        ],
         "reasons_es": [
           "No se encontró en los términos una regla sobre el país de residencia.",
           "No se sabe qué medio de pago acepta y el perfil no tiene una tarjeta de LT.",
           "Incluye Netflix, sin evaluar en LT."
+        ],
+        "reasons_en": [
+          "No rule on the country of residence was found in the terms.",
+          "Unknown which payment methods it accepts, and the profile has no card from LT.",
+          "Includes Netflix, not evaluated in LT."
+        ],
+        "reasons_pt": [
+          "Não se encontrou nos termos uma regra sobre o país de residência.",
+          "Não se sabe que meio de pagamento aceita e o perfil não tem um cartão de LT.",
+          "Inclui Netflix, sem avaliação em LT."
         ],
         "components": [
           {
@@ -1715,6 +1983,14 @@
       "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Se revisa a mano: sus páginas no están en la vigilancia automática."
     ],
+    "status_reasons_en": [
+      "Components taken from a search summary; not checked on the official page.",
+      "Checked by hand: its pages are not in the automatic watch."
+    ],
+    "status_reasons_pt": [
+      "Componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Revisado à mão: suas páginas não estão na vigilância automática."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -1740,7 +2016,11 @@
         "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "apple_music",
@@ -1788,7 +2068,11 @@
         "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "apple_music",
@@ -1972,6 +2256,14 @@
       "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Se revisa a mano: sus páginas no están en la vigilancia automática."
     ],
+    "status_reasons_en": [
+      "Components taken from a search summary; not checked on the official page.",
+      "Checked by hand: its pages are not in the automatic watch."
+    ],
+    "status_reasons_pt": [
+      "Componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Revisado à mão: suas páginas não estão na vigilância automática."
+    ],
     "verified_by": "search_summary",
     "verified_at": null,
     "checked_at": null,
@@ -1997,7 +2289,11 @@
         "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "apple_music",
@@ -2045,7 +2341,11 @@
         "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
+        "assumptions_en": [],
+        "assumptions_pt": [],
         "reasons_es": [],
+        "reasons_en": [],
+        "reasons_pt": [],
         "components": [
           {
             "service_id": "apple_music",
@@ -2225,6 +2525,12 @@
     "display_status": "expired",
     "status_reasons_es": [
       "La oferta pasó su fecha de fin."
+    ],
+    "status_reasons_en": [
+      "The offer is past its end date."
+    ],
+    "status_reasons_pt": [
+      "A oferta passou da data de término."
     ],
     "verified_by": "search_summary",
     "verified_at": null,

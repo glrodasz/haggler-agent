@@ -22,6 +22,7 @@ from haggler.catalog import (
     load_profiles,
 )
 from haggler.feasibility import UNKNOWN_RANK, find_record, record_rank
+from haggler.i18n import Text
 from haggler.models.curated import Bundle, FeasibilityFile, FeasibilityRecord, UserReport
 from haggler.models.profiles import Profile
 from haggler.models.research import (
@@ -871,7 +872,9 @@ def test_bundle_facts_reach_site_data_through_data_research(tmp_path: Path) -> N
 
 # Nothing published may suggest a way around a requirement (user principle 5).
 BLACKLIST = re.compile(
-    r"\bvpn\b|\bproxy\b|direcci[oó]n falsa|otra direcci[oó]n|datos falsos", re.IGNORECASE
+    r"\bvpn\b|\bproxy\b|direcci[oó]n falsa|otra direcci[oó]n|datos falsos"
+    r"|false address|another address|false data|endere[cç]o falso|outro endere[cç]o|dados falsos",
+    re.IGNORECASE,
 )
 
 
@@ -920,7 +923,11 @@ def test_no_evasion_wording_in_any_verdict() -> None:
         for profile in (CO, EU, newcomer):
             a = assess_bundle(b, profile, CTX)
             if a is not None:
-                texts += [*a.reasons_es, *a.assumptions_es, a.notes_es]
+                generated = [*a.reasons_es, *a.assumptions_es]
+                # Every generated sentence is a Text, so the site shows it in each language.
+                assert [t for t in generated if not isinstance(t, Text)] == []
+                texts += [*generated, a.notes_es]
+                texts += [x for t in generated for x in (t.en, t.pt)]
     assert texts
     assert [t for t in texts if BLACKLIST.search(t)] == []
     assert BLACKLIST.search("Usa una VPN") and BLACKLIST.search("da otra dirección")

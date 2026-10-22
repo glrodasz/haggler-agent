@@ -131,16 +131,26 @@
       "apple_arcade"
     ],
     "standalone_sum_eur": 20.91,
+    "status_reasons_en": [
+      "Components taken from a search summary; not checked on the official page.",
+      "Checked by hand: its pages are not in the automatic watch."
+    ],
     "status_reasons_es": [
       "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Se revisa a mano: sus páginas no están en la vigilancia automática."
+    ],
+    "status_reasons_pt": [
+      "Componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Revisado à mão: suas páginas não estão na vigilância automática."
     ],
     "tier": "individual",
     "valid_from": null,
     "valid_until": null,
     "verdicts": [
       {
+        "assumptions_en": [],
         "assumptions_es": [],
+        "assumptions_pt": [],
         "components": [
           {
             "label": "official_home",
@@ -182,7 +192,9 @@
         "profile": "se_resident_co_citizen",
         "provenance": "home",
         "rank": 0,
+        "reasons_en": [],
         "reasons_es": [],
+        "reasons_pt": [],
         "status": "unverified",
         "steps": [],
         "tos": "compliant"
@@ -288,17 +300,29 @@
       "apple_music"
     ],
     "standalone_sum_eur": null,
+    "status_reasons_en": [
+      "Components taken from a search summary; not checked on the official page.",
+      "There is no published price for this plan in the daily data yet.",
+      "Not watched: its values are not checked automatically."
+    ],
     "status_reasons_es": [
       "Componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "Aún no hay un precio publicado de este plan en los datos diarios.",
       "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "status_reasons_pt": [
+      "Componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Ainda não há um preço publicado deste plano nos dados diários.",
+      "Não vigiado: seus valores não são verificados automaticamente."
     ],
     "tier": "family",
     "valid_from": null,
     "valid_until": null,
     "verdicts": [
       {
+        "assumptions_en": [],
         "assumptions_es": [],
+        "assumptions_pt": [],
         "components": [
           {
             "label": "official_home",
@@ -319,7 +343,9 @@
         "profile": "se_resident_co_citizen",
         "provenance": "home",
         "rank": 0,
+        "reasons_en": [],
         "reasons_es": [],
+        "reasons_pt": [],
         "status": "unverified",
         "steps": [],
         "tos": "compliant"
@@ -505,16 +531,26 @@
     "saving_pct": -47.07,
     "standalone_missing": [],
     "standalone_sum_eur": 3.76,
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Not watched: its values are not checked automatically."
+    ],
     "status_reasons_es": [
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Não vigiado: seus valores não são verificados automaticamente."
     ],
     "tier": "total",
     "valid_from": null,
     "valid_until": null,
     "verdicts": [
       {
+        "assumptions_en": [],
         "assumptions_es": [],
+        "assumptions_pt": [],
         "components": [
           {
             "label": "tos_breach_low_enforcement",
@@ -535,8 +571,14 @@
         "profile": "se_resident_co_citizen",
         "provenance": "curated",
         "rank": 4,
+        "reasons_en": [
+          "Requires an ID document from CO (cédula); the profile has none."
+        ],
         "reasons_es": [
           "Exige un documento de identidad de CO (cédula); el perfil no tiene uno."
+        ],
+        "reasons_pt": [
+          "Exige um documento de identidade de CO (cédula); o perfil não tem um."
         ],
         "status": "unverified",
         "steps": [],
@@ -685,16 +727,26 @@
     "saving_pct": 54.87,
     "standalone_missing": [],
     "standalone_sum_eur": 26.19,
+    "status_reasons_en": [
+      "Price and components taken from a search summary; not checked on the official page.",
+      "Not watched: its values are not checked automatically."
+    ],
     "status_reasons_es": [
       "Precio y componentes tomados de un resumen de búsqueda; sin verificar en la página oficial.",
       "No se vigila: sus valores no se comprueban de forma automática."
+    ],
+    "status_reasons_pt": [
+      "Preço e componentes tirados de um resumo de busca; sem verificar na página oficial.",
+      "Não vigiado: seus valores não são verificados automaticamente."
     ],
     "tier": "plus",
     "valid_from": null,
     "valid_until": null,
     "verdicts": [
       {
+        "assumptions_en": [],
         "assumptions_es": [],
+        "assumptions_pt": [],
         "components": [
           {
             "label": "official_home",
@@ -722,9 +774,17 @@
         "profile": "se_resident_co_citizen",
         "provenance": "home",
         "rank": 4,
+        "reasons_en": [
+          "Requires an ID document from SE (personnummer); the profile has none.",
+          "Requires a mobile line from SE; the profile has no phone number from SE."
+        ],
         "reasons_es": [
           "Exige un documento de identidad de SE (personnummer); el perfil no tiene uno.",
           "Exige una línea móvil de SE; el perfil no tiene un teléfono de SE."
+        ],
+        "reasons_pt": [
+          "Exige um documento de identidade de SE (personnummer); o perfil não tem um.",
+          "Exige uma linha móvel de SE; o perfil não tem um telefone de SE."
         ],
         "status": "unverified",
         "steps": [],
@@ -803,9 +863,17 @@
     "saving_pct": -43.06,
     "standalone_missing": [],
     "standalone_sum_eur": 6.99,
+    "status_reasons_en": [
+      "The offer is past its end date.",
+      "Marked as expired in the curated data."
+    ],
     "status_reasons_es": [
       "La oferta pasó su fecha de fin.",
       "Marcada como vencida en los datos curados."
+    ],
+    "status_reasons_pt": [
+      "A oferta passou da data de término.",
+      "Marcada como vencida nos dados curados."
     ],
     "tier": "annual",
     "valid_from": null,
