@@ -29,6 +29,25 @@ def _env_float(name: str, default: float) -> float:
     return float(value) if value else default
 
 
+def _env_host_intervals(name: str, default: dict[str, float]) -> dict[str, float]:
+    """ "host=seconds,host=seconds" -> {host: seconds}; unset or empty keeps the default."""
+    value = os.getenv(name)
+    if not value:
+        return dict(default)
+    out: dict[str, float] = {}
+    for item in value.split(","):
+        host, _, seconds = item.strip().partition("=")
+        if host and seconds:
+            out[host.strip().lower()] = float(seconds)
+    return out
+
+
+# apps.apple.com serves one App Store listing per (service, storefront): 13 services x 67
+# countries, each with a redirect hop, would take ~90 min at the 3 s default and overrun the
+# daily job's task timeout. Apple's storefront is built for far more traffic than 1 request/s.
+DEFAULT_HOST_INTERVALS_S = {"apps.apple.com": 1.0}
+
+
 @dataclass(frozen=True)
 class Settings:
     # Storage: "local" (directory) | "gcs" (bucket) | "memory" (tests).
@@ -109,6 +128,12 @@ class Settings:
     )
     per_host_interval_s: float = field(
         default_factory=lambda: _env_float("HAGGLER_PER_HOST_INTERVAL_S", 3.0)
+    )
+    # Per-host overrides of per_host_interval_s (a robots.txt Crawl-delay still wins if longer).
+    host_intervals_s: dict[str, float] = field(
+        default_factory=lambda: _env_host_intervals(
+            "HAGGLER_HOST_INTERVALS_S", DEFAULT_HOST_INTERVALS_S
+        )
     )
     fetch_concurrency: int = field(default_factory=lambda: _env_int("HAGGLER_FETCH_CONCURRENCY", 8))
     respect_robots: bool = field(
