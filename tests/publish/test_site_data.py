@@ -119,7 +119,11 @@ RECORD_KEYS = {
     "steps",
     "evidence",
     "assumptions_es",
+    "assumptions_en",
+    "assumptions_pt",
     "reasons_es",
+    "reasons_en",
+    "reasons_pt",
     "researched_on",
 }
 CHEAPEST_KEYS = {"service_id", "plan_id", "home", "best_by_risk", "savings_month_eur"}
@@ -163,6 +167,8 @@ BUNDLE_KEYS = {
     "requirements",
     "display_status",
     "status_reasons_es",
+    "status_reasons_en",
+    "status_reasons_pt",
     "verified_by",
     "verified_at",
     "checked_at",
@@ -255,7 +261,11 @@ BUNDLE_VERDICT_KEYS = {
     "notes_pt",
     "steps",
     "assumptions_es",
+    "assumptions_en",
+    "assumptions_pt",
     "reasons_es",
+    "reasons_en",
+    "reasons_pt",
     "components",
 }
 VERDICT_COMPONENT_KEYS = {"service_id", "target_country", "label", "rank", "provenance"}

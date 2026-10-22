@@ -1,5 +1,5 @@
 ---
-import { getMessages, localNote, lookupFor } from "../i18n";
+import { getMessages, localList, localNote, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
 import { hostOf } from "../logic/format";
 import { localeOfUrl, routesFor } from "../logic/paths";
@@ -52,6 +52,8 @@ const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {
         records.map((r) => {
           const details = r.evidence.length + r.assumptions_es.length + r.reasons_es.length > 0;
           const note = localNote(locale, r);
+          const reasons = localList(locale, r, "reasons");
+          const assumptions = localList(locale, r, "assumptions");
           return (
             <tr class={isPending(r) ? "is-pending" : undefined}>
               <th scope="row">
@@ -131,22 +133,22 @@ const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {
                         })}
                       </ul>
                     )}
-                    {r.assumptions_es.length > 0 && (
+                    {assumptions.items.length > 0 && (
                       <>
                         <p class="small evidence-heading">{f.assumptionsTitle}</p>
-                        <ul class="small">
-                          {r.assumptions_es.map((a) => (
-                            <li lang="es">{a}</li>
+                        <ul class="small" lang={assumptions.lang}>
+                          {assumptions.items.map((a) => (
+                            <li>{a}</li>
                           ))}
                         </ul>
                       </>
                     )}
-                    {r.reasons_es.length > 0 && (
+                    {reasons.items.length > 0 && (
                       <>
                         <p class="small evidence-heading">{f.reasonsTitle}</p>
-                        <ul class="small">
-                          {r.reasons_es.map((a) => (
-                            <li lang="es">{a}</li>
+                        <ul class="small" lang={reasons.lang}>
+                          {reasons.items.map((a) => (
+                            <li>{a}</li>
                           ))}
                         </ul>
                       </>

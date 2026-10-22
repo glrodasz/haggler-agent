@@ -1,5 +1,5 @@
 ---
-import { getMessages, localNote, lookupFor } from "../i18n";
+import { getMessages, localList, localNote, lookupFor } from "../i18n";
 import { localeOfUrl } from "../logic/paths";
 import { getSite } from "../logic/data";
 import type { BundleVerdict } from "../logic/types";
@@ -23,6 +23,8 @@ const f = msg.feasibility;
 const axis = (name: string, value: string) => lookup(msg.axes[name]?.values ?? {}, value);
 const pending = v.provenance === "agent_pending";
 const note = localNote(locale, v);
+const reasons = localList(locale, v, "reasons");
+const assumptions = localList(locale, v, "assumptions");
 ---
 
 <div class={pending ? "verdict is-pending" : "verdict"}>
@@ -48,24 +50,24 @@ const note = localNote(locale, v);
   </dl>
   {note.text && <p class="small" lang={note.lang}>{note.text}</p>}
   {
-    v.reasons_es.length > 0 && (
+    reasons.items.length > 0 && (
       <>
         <p class="small evidence-heading">{f.reasonsTitle}</p>
-        <ul class="small">
-          {v.reasons_es.map((r) => (
-            <li lang="es">{r}</li>
+        <ul class="small" lang={reasons.lang}>
+          {reasons.items.map((r) => (
+            <li>{r}</li>
           ))}
         </ul>
       </>
     )
   }
   {
-    v.assumptions_es.length > 0 && (
+    assumptions.items.length > 0 && (
       <>
         <p class="small evidence-heading">{f.assumptionsTitle}</p>
-        <ul class="small">
-          {v.assumptions_es.map((a) => (
-            <li lang="es">{a}</li>
+        <ul class="small" lang={assumptions.lang}>
+          {assumptions.items.map((a) => (
+            <li>{a}</li>
           ))}
         </ul>
       </>

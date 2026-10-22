@@ -18,6 +18,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
+from haggler.i18n import Text
+
 CuratedStatus = Literal["verified", "unverified", "expired"]
 Confidence = Literal["low", "medium", "high"]
 VerifiedBy = Literal["official_fetch", "search_summary", "user_report", "agent_research"]
@@ -297,6 +299,9 @@ class BundleVerdictRecord(_Strict):
     practical: Practicality
     steps: list[FeasibilityStep] = Field(default_factory=list)
     reasons_es: list[str] = Field(default_factory=list)
+    # Same length as reasons_es when given; a missing translation shows the Spanish one.
+    reasons_en: list[str] = Field(default_factory=list)
+    reasons_pt: list[str] = Field(default_factory=list)
     tos_clause: TosClause | None = None
     legal_basis: list[LegalBasis] = Field(default_factory=list)
     confidence: Confidence = "low"
@@ -305,6 +310,16 @@ class BundleVerdictRecord(_Strict):
     notes_es: str = ""
     notes_en: str = ""
     notes_pt: str = ""
+
+    @property
+    def reasons(self) -> list[Text]:
+        def at(texts: list[str], i: int, es: str) -> str:
+            return texts[i] if i < len(texts) and texts[i] else es
+
+        return [
+            Text(es, at(self.reasons_en, i, es), at(self.reasons_pt, i, es))
+            for i, es in enumerate(self.reasons_es)
+        ]
 
 
 # A bundle's state is derived (watcher, user report, dates): the YAML may only say that it is

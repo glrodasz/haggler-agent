@@ -126,7 +126,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -162,7 +166,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -198,7 +206,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -236,7 +248,11 @@
         }
       ],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -272,7 +288,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -302,7 +322,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -346,7 +370,11 @@
         }
       ],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -382,7 +410,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -418,7 +450,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -462,7 +498,11 @@
         }
       ],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -499,9 +539,31 @@
         "se asume que no se pide un teléfono de LT",
         "se asume que no se pide una dirección de facturación en LT"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in LT",
+        "assumes there are no periodic location checks in LT",
+        "assumes no ID document from LT is asked for",
+        "assumes no phone number from LT is asked for",
+        "assumes no billing address in LT is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em LT",
+        "supõe-se que não há verificações periódicas de localização em LT",
+        "supõe-se que não se pede um documento de LT",
+        "supõe-se que não se pede um telefone de LT",
+        "supõe-se que não se pede um endereço de cobrança em LT"
+      ],
       "reasons_es": [
         "los términos exigen: uso principal en el país de la cuenta",
         "no se sabe si el pago exige una tarjeta de LT"
+      ],
+      "reasons_en": [
+        "the terms require: primary use in the account's country",
+        "unknown whether payment requires a card from LT"
+      ],
+      "reasons_pt": [
+        "os termos exigem: uso principal no país da conta",
+        "não se sabe se o pagamento exige um cartão de LT"
       ]
     },
     {
@@ -540,7 +602,11 @@
         }
       ],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -597,8 +663,28 @@
         "se asume que no se pide un teléfono de LT",
         "se asume que no se pide una dirección de facturación en LT"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in LT",
+        "assumes there are no periodic location checks in LT",
+        "assumes no ID document from LT is asked for",
+        "assumes no phone number from LT is asked for",
+        "assumes no billing address in LT is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em LT",
+        "supõe-se que não há verificações periódicas de localização em LT",
+        "supõe-se que não se pede um documento de LT",
+        "supõe-se que não se pede um telefone de LT",
+        "supõe-se que não se pede um endereço de cobrança em LT"
+      ],
       "reasons_es": [
         "los términos exigen: el país de la cuenta debe ser el de residencia"
+      ],
+      "reasons_en": [
+        "the terms require: the account's country must be the country of residence"
+      ],
+      "reasons_pt": [
+        "os termos exigem: o país da conta deve ser o de residência"
       ]
     },
     {
@@ -643,7 +729,11 @@
         }
       ],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_co_citizen",
@@ -679,7 +769,11 @@
       ],
       "evidence": [],
       "assumptions_es": [],
-      "reasons_es": []
+      "assumptions_en": [],
+      "assumptions_pt": [],
+      "reasons_es": [],
+      "reasons_en": [],
+      "reasons_pt": []
     },
     {
       "profile": "se_resident_eu_generic",
@@ -747,9 +841,29 @@
         "se asume que no se pide un documento de LT",
         "se asume que no se pide un teléfono de LT"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in LT",
+        "assumes there are no periodic location checks in LT",
+        "assumes no ID document from LT is asked for",
+        "assumes no phone number from LT is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em LT",
+        "supõe-se que não há verificações periódicas de localização em LT",
+        "supõe-se que não se pede um documento de LT",
+        "supõe-se que não se pede um telefone de LT"
+      ],
       "reasons_es": [
         "los términos exigen: el país de la cuenta debe ser el de residencia",
         "exige una dirección de facturación en LT y el perfil no tiene una real"
+      ],
+      "reasons_en": [
+        "the terms require: the account's country must be the country of residence",
+        "requires a billing address in LT, and the profile has no real one"
+      ],
+      "reasons_pt": [
+        "os termos exigem: o país da conta deve ser o de residência",
+        "exige um endereço de cobrança em LT e o perfil não tem um real"
       ]
     },
     {
@@ -787,9 +901,31 @@
         "se asume que no se pide un teléfono de CO",
         "se asume que no se pide una dirección de facturación en CO"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in CO",
+        "assumes there are no periodic location checks in CO",
+        "assumes no ID document from CO is asked for",
+        "assumes no phone number from CO is asked for",
+        "assumes no billing address in CO is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em CO",
+        "supõe-se que não há verificações periódicas de localização em CO",
+        "supõe-se que não se pede um documento de CO",
+        "supõe-se que não se pede um telefone de CO",
+        "supõe-se que não se pede um endereço de cobrança em CO"
+      ],
       "reasons_es": [
         "los términos exigen: uso principal en el país de la cuenta",
         "no se sabe si el pago exige una tarjeta de CO"
+      ],
+      "reasons_en": [
+        "the terms require: primary use in the account's country",
+        "unknown whether payment requires a card from CO"
+      ],
+      "reasons_pt": [
+        "os termos exigem: uso principal no país da conta",
+        "não se sabe se o pagamento exige um cartão de CO"
       ]
     },
     {
@@ -834,9 +970,31 @@
         "se asume que no se pide un teléfono de CO",
         "se asume que no se pide una dirección de facturación en CO"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in CO",
+        "assumes there are no periodic location checks in CO",
+        "assumes no ID document from CO is asked for",
+        "assumes no phone number from CO is asked for",
+        "assumes no billing address in CO is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em CO",
+        "supõe-se que não há verificações periódicas de localização em CO",
+        "supõe-se que não se pede um documento de CO",
+        "supõe-se que não se pede um telefone de CO",
+        "supõe-se que não se pede um endereço de cobrança em CO"
+      ],
       "reasons_es": [
         "los términos exigen: uso principal en el país de la cuenta",
         "exige un medio de pago de CO y el perfil no tiene ni puede obtener en línea uno"
+      ],
+      "reasons_en": [
+        "the terms require: primary use in the account's country",
+        "requires a payment method from CO, and the profile has none and can't get one online"
+      ],
+      "reasons_pt": [
+        "os termos exigem: uso principal no país da conta",
+        "exige um meio de pagamento de CO e o perfil não tem nem pode obter um online"
       ]
     },
     {
@@ -894,8 +1052,28 @@
         "se asume que no se pide un teléfono de LT",
         "se asume que no se pide una dirección de facturación en LT"
       ],
+      "assumptions_en": [
+        "assumes location is not checked at sign-up in LT",
+        "assumes there are no periodic location checks in LT",
+        "assumes no ID document from LT is asked for",
+        "assumes no phone number from LT is asked for",
+        "assumes no billing address in LT is asked for"
+      ],
+      "assumptions_pt": [
+        "supõe-se que a localização não é verificada no cadastro em LT",
+        "supõe-se que não há verificações periódicas de localização em LT",
+        "supõe-se que não se pede um documento de LT",
+        "supõe-se que não se pede um telefone de LT",
+        "supõe-se que não se pede um endereço de cobrança em LT"
+      ],
       "reasons_es": [
         "los términos exigen: el país de la cuenta debe ser el de residencia"
+      ],
+      "reasons_en": [
+        "the terms require: the account's country must be the country of residence"
+      ],
+      "reasons_pt": [
+        "os termos exigem: o país da conta deve ser o de residência"
       ]
     }
   ],

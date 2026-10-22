@@ -15,6 +15,8 @@
  *   tr[data-offer-svc]              an OfferTable row: [data-cell=risk] (and data-rank, then
  *                                   OFFERS_PATCHED_EVENT so a risk sort re-sorts), [data-home-tag] and
  *                                   [data-cell=second] (monthly in the residence currency)
+ *   [data-bundle-visitor=ID]        a bundle card's visitor verdict (shown unless the visitor is the
+ *                                   default profile), [data-bundle-visitor-who|verdict]
  *   [data-cell=home-head|saving-head|second-head]   headers naming the residence/currency
  */
 
@@ -225,8 +227,34 @@ function patchOffers(state: ProfileState): void {
   }
 }
 
+/** A bundle card's "For your profile": the visitor's own label when they are not the default
+ * profile (whose detailed verdict, built into the card, stays below as the example). */
+function patchBundleCards(state: ProfileState): void {
+  const { view, kit } = state;
+  const { msg, fmt } = kitOf(state);
+  const own = view.preset !== kit.default_profile;
+  const ties = view.profile.ties.map((t) => kit.country_names[t.cc] ?? t.cc);
+  for (const box of document.querySelectorAll<HTMLElement>("[data-bundle-visitor]")) {
+    const v = own ? view.bundleVerdict(box.dataset.bundleVisitor ?? "") : undefined;
+    box.hidden = v === undefined;
+    if (v === undefined) continue;
+    const who = box.querySelector("[data-bundle-visitor-who]");
+    if (who) {
+      who.textContent = msg.visitorProfile.youLive(
+        view.residenceName,
+        ties.length > 0 ? fmt.formatList(ties) : null,
+      );
+    }
+    const verdict = box.querySelector("[data-bundle-visitor-verdict]");
+    if (verdict) {
+      fill(verdict, riskBadge(state, v.label, v.rank), ...(v.eu_badge ? [" ", euBadge(state)] : []));
+    }
+  }
+}
+
 export function patchPage(state: ProfileState): void {
   patchNotes(state);
+  patchBundleCards(state);
   patchServices(state);
   patchSummaries(state);
   patchOffers(state);

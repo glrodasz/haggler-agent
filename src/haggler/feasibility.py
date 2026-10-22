@@ -22,6 +22,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from haggler.i18n import Text
 from haggler.models.curated import FeasibilityFile, FeasibilityRecord, FeasibilityStep
 
 LABELS = (
@@ -94,6 +95,28 @@ LABEL_INFO: dict[str, tuple[str, str]] = {
         "Se muestra como referencia, pero nunca se elige como la opción más barata.",
     ),
 }
+
+# The names the English and Portuguese site gives each label (web/src/i18n riskLabels).
+_LABEL_NAMES_EN_PT: dict[str, tuple[str, str]] = {
+    "official_home": ("Official", "Oficial"),
+    "eu_right_untested": ("EU right untested", "Direito da UE não testado"),
+    "tos_breach_low_enforcement": (
+        "Breaches ToS, no known enforcement",
+        "Viola os termos, sem controle conhecido",
+    ),
+    "tos_breach_enforced": (
+        "Breaches ToS, actively enforced",
+        "Viola os termos, com controle ativo",
+    ),
+    "not_feasible": ("Not feasible", "Não viável"),
+    UNKNOWN_LABEL: ("Not evaluated", "Sem avaliação"),
+}
+
+
+def label_name(label: str) -> Text:
+    """A label's name in the site's three languages, for sentences that quote it."""
+    en, pt = _LABEL_NAMES_EN_PT.get(label, (label, label))
+    return Text(LABEL_INFO[label][0] if label in LABEL_INFO else label, en, pt)
 
 
 @dataclass(frozen=True)

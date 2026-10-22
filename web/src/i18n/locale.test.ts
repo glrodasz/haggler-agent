@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { en } from "./en";
 import { es } from "./es";
-import { getMessages, localNote } from "./index";
+import { getMessages, localList, localNote } from "./index";
 import {
   alternateLinks,
   LOCALES,
@@ -29,9 +29,14 @@ describe("locale redirect truth table", () => {
     ["/pt/", "es", ["es"], null],
     ["/", null, ["sv-SE", "de"], null],
   ];
-  it.each(cases)("%s, saved %s, %j -> %s", (pathname, savedLocale, languages, expected) => {
-    expect(resolveLocaleRedirect({ pathname, savedLocale, languages })).toBe(expected);
-  });
+  it.each(cases)(
+    "%s, saved %s, %j -> %s",
+    (pathname, savedLocale, languages, expected) => {
+      expect(resolveLocaleRedirect({ pathname, savedLocale, languages })).toBe(
+        expected,
+      );
+    },
+  );
 });
 
 describe("locale paths", () => {
@@ -46,20 +51,29 @@ describe("locale paths", () => {
   });
 
   it("honors alternates and falls back to the locale home", () => {
-    expect(switchLocalePath("/posts/a", "es", { en: "/posts/a", es: "/es/posts/b" })).toBe(
-      "/es/posts/b",
-    );
+    expect(
+      switchLocalePath("/posts/a", "es", { en: "/posts/a", es: "/es/posts/b" }),
+    ).toBe("/es/posts/b");
     expect(switchLocalePath("/posts/a", "pt", { en: "/posts/a" })).toBe("/pt/");
   });
 
   it("lists every version plus x-default", () => {
     const links = alternateLinks("/services/", "https://example.com");
-    expect(links.map((l) => l.hreflang)).toEqual(["en", "es", "pt", "x-default"]);
+    expect(links.map((l) => l.hreflang)).toEqual([
+      "en",
+      "es",
+      "pt",
+      "x-default",
+    ]);
     expect(links.at(-1)?.href).toBe("https://example.com/services/");
   });
 
   it("negotiates in the user's priority order", () => {
-    expect(parseAcceptLanguage("sv, es;q=0.8, en;q=0.9")).toEqual(["sv", "en", "es"]);
+    expect(parseAcceptLanguage("sv, es;q=0.8, en;q=0.9")).toEqual([
+      "sv",
+      "en",
+      "es",
+    ]);
     expect(negotiateLocale(["sv", "pt-PT", "es"])).toBe("pt");
     expect(readCookie("a=1; locale=es", "locale")).toBe("es");
   });
@@ -73,7 +87,9 @@ function texts(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(texts);
   if (value && typeof value === "object") {
     // Build errors (developer-facing) take a list, not text.
-    return Object.entries(value).flatMap(([k, v]) => (k === "errors" ? [] : texts(v)));
+    return Object.entries(value).flatMap(([k, v]) =>
+      k === "errors" ? [] : texts(v),
+    );
   }
   return typeof value === "string" ? [value] : [];
 }
@@ -81,7 +97,11 @@ function texts(value: unknown): string[] {
 /** The key paths of a dictionary, to compare shapes at runtime too (records included). */
 function keys(value: unknown, path = ""): string[] {
   if (typeof value === "function" || typeof value === "string") return [path];
-  if (Array.isArray(value)) return [`${path}[${value.length}]`, ...value.flatMap((v, i) => keys(v, `${path}[${i}]`))];
+  if (Array.isArray(value))
+    return [
+      `${path}[${value.length}]`,
+      ...value.flatMap((v, i) => keys(v, `${path}[${i}]`)),
+    ];
   if (value && typeof value === "object") {
     return Object.entries(value).flatMap(([k, v]) => keys(v, `${path}.${k}`));
   }
@@ -91,7 +111,9 @@ function keys(value: unknown, path = ""): string[] {
 describe("dictionaries", () => {
   // planNames and profileNames are lookups: Spanish takes them from the data.
   const comparable = (m: object) =>
-    keys(m).filter((k) => !k.startsWith(".planNames") && !k.startsWith(".profileNames"));
+    keys(m).filter(
+      (k) => !k.startsWith(".planNames") && !k.startsWith(".profileNames"),
+    );
 
   it.each([
     ["es", es],
@@ -117,13 +139,31 @@ describe("dictionaries", () => {
 
   // Same rule as es.test.ts: a VPN or false data is only ever mentioned to rule it out.
   it.each([
-    ["en", en, /\bvpn\b|proxy|another address|fake address|false information|forg/i, /\bnever\b|\bnot\b/i],
-    ["pt", pt, /\bvpn\b|proxy|outro endereço|endereço falso|dados falsos|falsific/i, /\bnunca\b|\bnão\b/i],
-  ] as const)("%s mentions workarounds only to rule them out", (_name, dict, forbidden, negation) => {
-    const sentences = texts(dict).flatMap((t) => t.split(/(?<=[.;:])\s+/));
-    const mentions = sentences.filter((t) => forbidden.test(t));
-    expect(mentions.filter((t) => !negation.test(t) && !/requires giving|exige declarar/i.test(t))).toEqual([]);
-  });
+    [
+      "en",
+      en,
+      /\bvpn\b|proxy|another address|fake address|false information|forg/i,
+      /\bnever\b|\bnot\b/i,
+    ],
+    [
+      "pt",
+      pt,
+      /\bvpn\b|proxy|outro endereço|endereço falso|dados falsos|falsific/i,
+      /\bnunca\b|\bnão\b/i,
+    ],
+  ] as const)(
+    "%s mentions workarounds only to rule them out",
+    (_name, dict, forbidden, negation) => {
+      const sentences = texts(dict).flatMap((t) => t.split(/(?<=[.;:])\s+/));
+      const mentions = sentences.filter((t) => forbidden.test(t));
+      expect(
+        mentions.filter(
+          (t) =>
+            !negation.test(t) && !/requires giving|exige declarar/i.test(t),
+        ),
+      ).toEqual([]);
+    },
+  );
 });
 
 describe("localNote", () => {
@@ -136,5 +176,27 @@ describe("localNote", () => {
 
   it("falls back to the Spanish original when a translation is missing", () => {
     expect(localNote("pt", notes)).toEqual({ text: "Hola", lang: "es" });
+  });
+});
+
+describe("localList", () => {
+  const record = {
+    reasons_es: ["Uno.", "Dos."],
+    reasons_en: ["One.", "Two."],
+    reasons_pt: [],
+  };
+
+  it("picks the visitor's language", () => {
+    expect(localList("en", record, "reasons")).toEqual({
+      items: ["One.", "Two."],
+      lang: "en",
+    });
+  });
+
+  it("falls back to Spanish when the locale's list is missing or out of step", () => {
+    expect(localList("pt", record, "reasons")).toEqual({
+      items: ["Uno.", "Dos."],
+      lang: "es",
+    });
   });
 });

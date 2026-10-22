@@ -71,6 +71,7 @@ from haggler.feasibility import (
     eu_badge,
     record_rank,
 )
+from haggler.i18n import concat, join, tr
 from haggler.models.catalog import Catalog
 from haggler.models.curated import (
     Evidence,
@@ -83,12 +84,18 @@ from haggler.models.curated import (
 )
 from haggler.models.profiles import Profile
 from haggler.models.research import Claim, ReviewFile, SubjectFacts, subject_key
-from haggler.research.fields import FIELD_SPECS, severity, value_label_es
+from haggler.research.fields import FIELD_SPECS, severity, value_label
 from haggler.research.review import ReviewIndex
 
 STALE_AFTER_DAYS = 365
 ENFORCEMENT_WINDOW_DAYS = 730
 UNKNOWN_AXIS = "unknown"
+# Rule 8: a derived rank below 2 that rests on assumptions.
+MISSING_OFFICIAL_FACTS = tr(
+    "faltan hechos con fuente oficial para descartar riesgos",
+    "official facts are missing to rule out risks",
+    "faltam fatos com fonte oficial para descartar riscos",
+)
 
 # Values that make a purchase easier: only an official source can establish them.
 POSITIVE_VALUES: dict[str, frozenset[str]] = {
@@ -389,10 +396,22 @@ def obtainable(inst: PaymentInstrument, profile: Profile, facts: Facts, w: Work)
             return False
         w.use(accepted_docs[usable[0]], key)
     elif not inst.required_id_countries:
-        w.assumptions.append(f"se asume que {inst.name} acepta los documentos del perfil")
+        w.assumptions.append(
+            tr(
+                f"se asume que {inst.name} acepta los documentos del perfil",
+                f"assumes {inst.name} accepts the profile's documents",
+                f"supõe-se que {inst.name} aceita os documentos do perfil",
+            )
+        )
     local = facts.resolve(key, "requires_local_address")
     if local is None:
-        w.assumptions.append(f"se asume que {inst.name} no exige una dirección en su país")
+        w.assumptions.append(
+            tr(
+                f"se asume que {inst.name} no exige una dirección en su país",
+                f"assumes {inst.name} does not require an address in its country",
+                f"supõe-se que {inst.name} não exige um endereço no seu país",
+            )
+        )
     elif local.value == "true":
         w.use(local.claims, key)
         if not profile.has_address(inst.issuer_country):
@@ -456,7 +475,13 @@ def _payment(t: str, profile: Profile, facts: Facts, w: Work, svc_key: str, pair
             w.step("gift_card", t)
             return
         w.payment_unknown = True
-        w.reasons.append(f"no se sabe si el pago exige una tarjeta de {t}")
+        w.reasons.append(
+            tr(
+                f"no se sabe si el pago exige una tarjeta de {t}",
+                f"unknown whether payment requires a card from {t}",
+                f"não se sabe se o pagamento exige um cartão de {t}",
+            )
+        )
         return
     obtain = obtainable_card(t, profile, facts, w)
     if obtain is not None:
@@ -469,7 +494,12 @@ def _payment(t: str, profile: Profile, facts: Facts, w: Work, svc_key: str, pair
         return
     w.practical.append("impossible")
     w.reasons.append(
-        f"exige un medio de pago de {t} y el perfil no tiene ni puede obtener en línea uno"
+        tr(
+            f"exige un medio de pago de {t} y el perfil no tiene ni puede obtener en línea uno",
+            f"requires a payment method from {t}, and the profile has none and can't get one "
+            "online",
+            f"exige um meio de pagamento de {t} e o perfil não tem nem pode obter um online",
+        )
     )
 
 
@@ -481,7 +511,7 @@ def requirement(
     *,
     assumed: str,
     required: str,
-    assumption_es: str,
+    assumption: str,
     implied: list[Claim] | None = None,
     implied_key: str = "",
 ) -> bool:
@@ -496,7 +526,7 @@ def requirement(
         w.use(implied, implied_key)
         return True
     if res is None:
-        w.assumptions.append(assumption_es)
+        w.assumptions.append(assumption)
         return assumed == required
     return False
 
@@ -508,7 +538,13 @@ def _practical(
     if avail is not None and avail.value == "false":
         w.use(avail.claims, pair_key_)
         w.practical.append("impossible")
-        w.reasons.append(f"el servicio no se vende en {t}")
+        w.reasons.append(
+            tr(
+                f"el servicio no se vende en {t}",
+                f"the service is not sold in {t}",
+                f"o serviço não é vendido em {t}",
+            )
+        )
         return
 
     _payment(t, profile, facts, w, svc_key, pair_key_)
@@ -521,7 +557,11 @@ def _practical(
         "signup_location",
         assumed="not_checked",
         required="checked",
-        assumption_es=f"se asume que no se verifica la ubicación al registrarse en {t}",
+        assumption=tr(
+            f"se asume que no se verifica la ubicación al registrarse en {t}",
+            f"assumes location is not checked at sign-up in {t}",
+            f"supõe-se que a localização não é verificada no cadastro em {t}",
+        ),
         implied=basis.get("signup_location"),
         implied_key=svc_key,
     ):
@@ -530,7 +570,13 @@ def _practical(
             w.step("presence", t, requires_presence=True)
         else:
             w.practical.append("impossible")
-            w.reasons.append(f"exige estar en {t} al registrarse y el perfil no viaja a {t}")
+            w.reasons.append(
+                tr(
+                    f"exige estar en {t} al registrarse y el perfil no viaja a {t}",
+                    f"requires being in {t} at sign-up, and the profile doesn't travel to {t}",
+                    f"exige estar em {t} no cadastro e o perfil não viaja para {t}",
+                )
+            )
 
     if requirement(
         facts,
@@ -539,14 +585,24 @@ def _practical(
         "periodic_location_check",
         assumed="false",
         required="true",
-        assumption_es=f"se asume que no hay verificaciones periódicas de ubicación en {t}",
+        assumption=tr(
+            f"se asume que no hay verificaciones periódicas de ubicación en {t}",
+            f"assumes there are no periodic location checks in {t}",
+            f"supõe-se que não há verificações periódicas de localização em {t}",
+        ),
     ):
         if profile.presence_in(t) == "periodic":
             w.practical.append("presence_periodic")
             w.step("presence", t, requires_presence=True)
         else:
             w.practical.append("impossible")
-            w.reasons.append(f"exige volver a {t} periódicamente")
+            w.reasons.append(
+                tr(
+                    f"exige volver a {t} periódicamente",
+                    f"requires going back to {t} regularly",
+                    f"exige voltar a {t} periodicamente",
+                )
+            )
 
     if requirement(
         facts,
@@ -555,13 +611,23 @@ def _practical(
         "local_id_required",
         assumed="false",
         required="true",
-        assumption_es=f"se asume que no se pide un documento de {t}",
+        assumption=tr(
+            f"se asume que no se pide un documento de {t}",
+            f"assumes no ID document from {t} is asked for",
+            f"supõe-se que não se pede um documento de {t}",
+        ),
     ):
         if profile.has_document(t):
             w.step("local_id", t)
         else:
             w.practical.append("impossible")
-            w.reasons.append(f"exige un documento de {t}")
+            w.reasons.append(
+                tr(
+                    f"exige un documento de {t}",
+                    f"requires an ID document from {t}",
+                    f"exige um documento de {t}",
+                )
+            )
 
     if requirement(
         facts,
@@ -570,7 +636,11 @@ def _practical(
         "local_phone_required",
         assumed="false",
         required="true",
-        assumption_es=f"se asume que no se pide un teléfono de {t}",
+        assumption=tr(
+            f"se asume que no se pide un teléfono de {t}",
+            f"assumes no phone number from {t} is asked for",
+            f"supõe-se que não se pede um telefone de {t}",
+        ),
         implied=basis.get("phone_number"),
         implied_key=svc_key,
     ):
@@ -578,7 +648,13 @@ def _practical(
             w.step("local_phone", t)
         else:
             w.practical.append("impossible")
-            w.reasons.append(f"exige un número de teléfono de {t}")
+            w.reasons.append(
+                tr(
+                    f"exige un número de teléfono de {t}",
+                    f"requires a phone number from {t}",
+                    f"exige um número de telefone de {t}",
+                )
+            )
 
     if requirement(
         facts,
@@ -587,7 +663,11 @@ def _practical(
         "billing_address",
         assumed="not_required",
         required="required",
-        assumption_es=f"se asume que no se pide una dirección de facturación en {t}",
+        assumption=tr(
+            f"se asume que no se pide una dirección de facturación en {t}",
+            f"assumes no billing address in {t} is asked for",
+            f"supõe-se que não se pede um endereço de cobrança em {t}",
+        ),
         implied=basis.get("billing_address"),
         implied_key=svc_key,
     ):
@@ -597,14 +677,24 @@ def _practical(
             w.false_declaration = True
             w.step("billing_address", t, requires_false_declaration=True)
             w.reasons.append(
-                f"exige una dirección de facturación en {t} y el perfil no tiene una real"
+                tr(
+                    f"exige una dirección de facturación en {t} y el perfil no tiene una real",
+                    f"requires a billing address in {t}, and the profile has no real one",
+                    f"exige um endereço de cobrança em {t} e o perfil não tem um real",
+                )
             )
 
     if "self_declared" in basis and not profile.lives_in(t):
         w.use(basis["self_declared"], svc_key)
         w.false_declaration = True
         w.step("declare_country", t, requires_false_declaration=True)
-        w.reasons.append(f"exige declarar {t} como país propio sin vivir allí")
+        w.reasons.append(
+            tr(
+                f"exige declarar {t} como país propio sin vivir allí",
+                f"requires declaring {t} as your own country without living there",
+                f"exige declarar {t} como país próprio sem morar lá",
+            )
+        )
 
 
 def tos_axis(
@@ -631,19 +721,45 @@ def tos_axis(
         used = [*(clause.claims if clause else []), *events]
         w.use(used, svc_key)
         if clause is not None:
-            w.reasons.append("los términos exigen: " + value_label_es(clause_field, clause.value))
+            w.reasons.append(
+                concat(
+                    tr("los términos exigen: ", "the terms require: ", "os termos exigem: "),
+                    value_label(clause_field, clause.value),
+                )
+            )
         if recent:
-            kinds = sorted({value_label_es(event_field, c.value) for c in recent})
-            w.reasons.append("control documentado: " + ", ".join(kinds))
+            kinds = sorted({value_label(event_field, c.value) for c in recent})
+            w.reasons.append(
+                concat(
+                    tr(
+                        "control documentado: ",
+                        "documented enforcement: ",
+                        "controle documentado: ",
+                    ),
+                    join(", ", kinds),
+                )
+            )
             return "breach_enforced", used
         if events:
-            w.reasons.append("hubo controles, pero hace más de dos años")
+            w.reasons.append(
+                tr(
+                    "hubo controles, pero hace más de dos años",
+                    "there were checks, but more than two years ago",
+                    "houve controles, mas há mais de dois anos",
+                )
+            )
         return "breach_unenforced", used
     allowed = facts.resolve(svc_key, allowed_field)
     if allowed is not None:
         w.use(allowed.claims, svc_key)
         return "compliant", allowed.claims
-    w.reasons.append("no se encontró en los términos una regla sobre el país de residencia")
+    w.reasons.append(
+        tr(
+            "no se encontró en los términos una regla sobre el país de residencia",
+            "no rule on the country of residence was found in the terms",
+            "não se encontrou nos termos uma regra sobre o país de residência",
+        )
+    )
     return UNKNOWN_AXIS, []
 
 
@@ -903,7 +1019,7 @@ def _researched(
         rank = max(LEGALITY_RANK[legality], TOS_RANK[tos], PRACTICAL_RANK[practical])
         if rank < 2 and w.assumptions:
             rank = UNKNOWN_RANK
-            w.reasons.append("faltan hechos con fuente oficial para descartar riesgos")
+            w.reasons.append(MISSING_OFFICIAL_FACTS)
 
     claims = list(w.claims.values())
     pending = facts.pending(claims)
