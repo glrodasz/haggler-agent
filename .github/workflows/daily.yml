@@ -29,7 +29,8 @@ env:
 jobs:
   daily:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # Covers the job's 75m task timeout plus its one retry (deploy-job.yml).
+    timeout-minutes: 160
     steps:
       - name: Check repository variables
         env:
