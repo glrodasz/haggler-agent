@@ -6,7 +6,9 @@
     "homepage": "https://www.netflix.com",
     "id": "netflix",
     "name": "Netflix",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": true,
@@ -35,7 +37,9 @@
     "homepage": "https://www.spotify.com",
     "id": "spotify",
     "name": "Spotify Premium",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,
@@ -58,7 +62,9 @@
     "homepage": "https://www.apple.com/icloud/",
     "id": "icloud_plus",
     "name": "iCloud+",
+    "notes_en": "",
     "notes_es": "Precios de la tabla oficial de Apple.",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,
@@ -81,7 +87,9 @@
     "homepage": "https://www.apple.com/apple-one/",
     "id": "apple_one",
     "name": "Apple One",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,
@@ -104,7 +112,9 @@
     "homepage": "https://www.apple.com/apple-music/",
     "id": "apple_music",
     "name": "Apple Music",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,
@@ -127,7 +137,9 @@
     "homepage": "https://www.apple.com/apple-tv/",
     "id": "apple_tv",
     "name": "Apple TV",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,
@@ -144,7 +156,9 @@
     "homepage": "https://www.apple.com/apple-arcade/",
     "id": "apple_arcade",
     "name": "Apple Arcade",
+    "notes_en": "",
     "notes_es": "",
+    "notes_pt": "",
     "plans": [
       {
         "ads": false,

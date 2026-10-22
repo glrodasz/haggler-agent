@@ -13,6 +13,8 @@ const inst = (id: string, eligible: string[], required: string[] = []): PaymentI
   currencies: ["EUR"],
   url: null,
   notes_es: "",
+  notes_en: "",
+  notes_pt: "",
 });
 
 const EEA = new Set(["SE", "LT", "DE"]);

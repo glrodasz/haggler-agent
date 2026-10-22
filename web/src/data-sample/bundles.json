@@ -158,6 +158,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "según uso propio; sin cita de los términos",
+        "notes_en": "based on own use; no quote from the terms",
+        "notes_pt": "segundo uso próprio; sem citação dos termos",
         "steps": [
           {
             "type": "payment_country",
@@ -196,6 +198,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de CO.",
@@ -294,6 +298,8 @@
       }
     ],
     "notes_es": "Fuentes en conflicto sobre el precio (COP 24.900 vs 21.900). El usuario lo usa desde Suecia con tarjeta colombiana. HBO Max aparece como 30 % de descuento, no incluido.",
+    "notes_en": "Sources disagree on the price (COP 24,900 vs 21,900). The user uses it from Sweden with a Colombian card. HBO Max shows up as a 30% discount, not included.",
+    "notes_pt": "Fontes em conflito sobre o preço (COP 24.900 vs 21.900). O usuário o usa da Suécia com cartão colombiano. HBO Max aparece como 30% de desconto, não incluído.",
     "last_verified": "2026-10-08"
   },
   {
@@ -386,6 +392,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "según uso propio; sin cita de los términos",
+        "notes_en": "based on own use; no quote from the terms",
+        "notes_pt": "segundo uso próprio; sem citação dos termos",
         "steps": [
           {
             "type": "payment_country",
@@ -416,6 +424,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de CO.",
@@ -491,6 +501,8 @@
     },
     "pending_changes": [],
     "notes_es": "Envíos gratis; sin streaming incluido.",
+    "notes_en": "Free shipping; no streaming included.",
+    "notes_pt": "Frete grátis; sem streaming incluído.",
     "last_verified": "2026-10-08"
   },
   {
@@ -626,6 +638,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de MX.",
@@ -685,6 +699,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de MX.",
@@ -794,6 +810,8 @@
     },
     "pending_changes": [],
     "notes_es": "",
+    "notes_en": "",
+    "notes_pt": "",
     "last_verified": "2026-10-08"
   },
   {
@@ -929,6 +947,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de BR.",
@@ -988,6 +1008,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide una línea de teléfono de BR.",
@@ -1097,6 +1119,8 @@
     },
     "pending_changes": [],
     "notes_es": "",
+    "notes_en": "",
+    "notes_pt": "",
     "last_verified": "2026-10-08"
   },
   {
@@ -1220,6 +1244,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [
           {
             "type": "local_id",
@@ -1272,6 +1298,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [
           {
             "type": "local_id",
@@ -1358,6 +1386,8 @@
     },
     "pending_changes": [],
     "notes_es": "Solo tiene sentido si ya pagas Obegränsad Plus (569 kr); el costo marginal de los tres servicios es +130 kr. Fecha de vigencia de la lista de precios sin confirmar.",
+    "notes_en": "Only makes sense if you already pay for Obegränsad Plus (569 kr); the marginal cost of the three services is +130 kr. Price list validity date unconfirmed.",
+    "notes_pt": "Só faz sentido se você já paga o Obegränsad Plus (569 kr); o custo marginal dos três serviços é +130 kr. Data de vigência da lista de preços não confirmada.",
     "last_verified": "2026-10-08"
   },
   {
@@ -1457,6 +1487,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide un documento de identidad de LT.",
@@ -1491,6 +1523,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [
           "Se asume que no se pide un documento de identidad de LT.",
@@ -1575,6 +1609,8 @@
     },
     "pending_changes": [],
     "notes_es": "El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.",
+    "notes_en": "The included Netflix plan is unclear; Go3 content is limited to the Baltic countries.",
+    "notes_pt": "O plano da Netflix incluído não está claro; o conteúdo do Go3 se limita aos países bálticos.",
     "last_verified": "2026-10-08"
   },
   {
@@ -1700,6 +1736,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
         "reasons_es": [],
@@ -1746,6 +1784,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
         "reasons_es": [],
@@ -1826,6 +1866,8 @@
     },
     "pending_changes": [],
     "notes_es": "",
+    "notes_en": "",
+    "notes_pt": "",
     "last_verified": "2026-10-08"
   },
   {
@@ -1951,6 +1993,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
         "reasons_es": [],
@@ -1997,6 +2041,8 @@
         "confidence": "low",
         "status": "unverified",
         "notes_es": "",
+        "notes_en": "",
+        "notes_pt": "",
         "steps": [],
         "assumptions_es": [],
         "reasons_es": [],
@@ -2077,6 +2123,8 @@
     },
     "pending_changes": [],
     "notes_es": "",
+    "notes_en": "",
+    "notes_pt": "",
     "last_verified": "2026-10-08"
   },
   {
@@ -2190,6 +2238,8 @@
     "rule": null,
     "pending_changes": [],
     "notes_es": "Fila ilustrativa: solo existe en los datos de ejemplo, para mostrar la sección de ofertas vencidas.",
+    "notes_en": "Illustrative row: it only exists in the sample data, to show the expired offers section.",
+    "notes_pt": "Linha ilustrativa: só existe nos dados de exemplo, para mostrar a seção de ofertas vencidas.",
     "last_verified": "2026-09-01"
   }
 ]

@@ -9,7 +9,7 @@ import ProfileNote from "../../../components/ProfileNote.astro";
 import RiskBadge from "../../../components/RiskBadge.astro";
 import { ServiceMark } from "../../../components/ServiceMark";
 import TableWrap from "../../../components/TableWrap.astro";
-import { getMessages, lookupFor } from "../../../i18n";
+import { getMessages, localNote, lookupFor } from "../../../i18n";
 import ProfileFeasibility from "../../../islands/ProfileFeasibility";
 import Base from "../../../layouts/Base.astro";
 import { getSite } from "../../../logic/data";
@@ -46,6 +46,7 @@ const summary = site.cheapest.find(
   (r) => r.service_id === service.id && r.plan_id === service.default_plan,
 );
 const defaultPlan = site.planLabel(service.id, service.default_plan);
+const note = localNote(locale, service);
 ---
 
 <Base
@@ -69,9 +70,9 @@ const defaultPlan = site.planLabel(service.id, service.default_plan);
   </ul>
   <ProfileNote />
   {
-    service.notes_es && (
+    note.text && (
       <aside class="callout" aria-label={t.notesTitle}>
-        <p lang="es">{service.notes_es}</p>
+        <p lang={note.lang}>{note.text}</p>
       </aside>
     )
   }

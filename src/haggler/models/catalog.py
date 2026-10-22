@@ -77,7 +77,10 @@ class ServiceDef(_Strict):
     research_urls: list[str] = Field(default_factory=list)
     # Names official and bundle pages print for the service (e.g. "Max" for HBO Max).
     aliases: list[str] = Field(default_factory=list)
+    # Shown in the visitor's language; a missing translation falls back to Spanish.
     notes_es: str = ""
+    notes_en: str = ""
+    notes_pt: str = ""
 
     @model_validator(mode="after")
     def _default_plan_exists(self) -> ServiceDef:

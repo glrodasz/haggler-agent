@@ -72,6 +72,8 @@ export interface ServiceInfo {
   homepage: string;
   default_plan: string;
   notes_es: string;
+  notes_en: string;
+  notes_pt: string;
   eu_geo_class: string;
   plans: PlanInfo[];
 }
@@ -233,6 +235,8 @@ export interface FeasibilityView {
   status: CuratedStatus;
   provenance: Provenance;
   notes_es: string;
+  notes_en: string;
+  notes_pt: string;
   tos_clause_url: string | null;
   steps: Step[];
   evidence: Evidence[];
@@ -279,6 +283,8 @@ export interface PaymentInstrumentView {
   currencies: string[];
   url: string | null;
   notes_es: string;
+  notes_en: string;
+  notes_pt: string;
 }
 
 export interface OfferRef {
@@ -484,6 +490,8 @@ export interface BundleVerdict {
   confidence: Confidence;
   status: VerdictStatus;
   notes_es: string;
+  notes_en: string;
+  notes_pt: string;
   steps: Step[];
   assumptions_es: string[];
   reasons_es: string[];
@@ -594,6 +602,8 @@ export interface Bundle {
   /** Official, value-checked changes awaiting review (the card lists them). */
   pending_changes: BundlePendingChange[];
   notes_es: string;
+  notes_en: string;
+  notes_pt: string;
   /** Last human review of the YAML row (YYYY-MM-DD). */
   last_verified: string | null;
 }

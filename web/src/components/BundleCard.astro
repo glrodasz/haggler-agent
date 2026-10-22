@@ -1,5 +1,5 @@
 ---
-import { getMessages, lookupFor } from "../i18n";
+import { getMessages, localNote, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
 import { hostOf } from "../logic/format";
 import { bundleAnchor, localeOfUrl, routesFor } from "../logic/paths";
@@ -27,6 +27,7 @@ const { formatDate, formatMoney, formatPercent, formatPrice, periodSuffix } = si
 const t = msg.bundle;
 const f = msg.feasibility;
 const price = b.price;
+const note = localNote(locale, b);
 const per = periodSuffix(price.period);
 const money = (value: number | null) => formatPrice(value, price.currency);
 const names = (ids: readonly string[]) => ids.map((id) => site.serviceName(id)).join(", ");
@@ -427,7 +428,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     )
   }
 
-  {b.notes_es && <p class="note" lang="es">{b.notes_es}</p>}
+  {note.text && <p class="note" lang={note.lang}>{note.text}</p>}
   <p class="small">
     <a href={b.official_url} rel="nofollow noopener noreferrer external">{t.officialPage}</a>
     {

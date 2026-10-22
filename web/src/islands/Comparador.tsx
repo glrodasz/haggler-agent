@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { ServiceMark } from "../components/ServiceMark";
-import { getMessages } from "../i18n";
+import { getMessages, localNote } from "../i18n";
 import type { Locale } from "../i18n/locale";
 import { instrumentAdvice } from "../logic/advice";
 import {
@@ -941,7 +941,7 @@ function ResidenceAdvice(props: {
   eea: ReadonlySet<string>;
   countryName: (cc: string) => string;
 }) {
-  const { msg } = useLocaleKit();
+  const { locale, msg } = useLocaleKit();
   const t = msg.compare;
   const { caps, countryName } = props;
   const advice = instrumentAdvice(props.instruments, caps, props.eea);
@@ -968,13 +968,20 @@ function ResidenceAdvice(props: {
       <p class="note">{t.adviceLead}</p>
       {advice.open.length > 0 ? (
         <ul class="advice-list">
-          {advice.open.map((i) => (
-            <li key={i.id}>
-              <strong>{name(i)}</strong>
-              <span class="small muted">{facts(i)}</span>
-              {i.notes_es && <span class="small">{i.notes_es}</span>}
-            </li>
-          ))}
+          {advice.open.map((i) => {
+            const note = localNote(locale, i);
+            return (
+              <li key={i.id}>
+                <strong>{name(i)}</strong>
+                <span class="small muted">{facts(i)}</span>
+                {note.text && (
+                  <span class="small" lang={note.lang}>
+                    {note.text}
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p class="note">{t.adviceNone}</p>

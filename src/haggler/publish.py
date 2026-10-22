@@ -662,6 +662,8 @@ def _services_json(catalog: Catalog, bundles: BundlesFile) -> list[dict[str, Any
             "homepage": s.homepage,
             "default_plan": s.default_plan,
             "notes_es": s.notes_es.strip(),
+            "notes_en": s.notes_en.strip(),
+            "notes_pt": s.notes_pt.strip(),
             "eu_geo_class": s.eu_geo_class,
             "plans": [
                 {"id": p.id, "label_es": p.label_es, "rank": p.rank, "ads": p.ads} for p in s.plans
@@ -741,6 +743,8 @@ def _assessment_json(a: Assessment) -> dict[str, Any]:
         "status": a.status,
         "provenance": a.provenance,
         "notes_es": a.notes_es,
+        "notes_en": a.notes_en,
+        "notes_pt": a.notes_pt,
         "tos_clause_url": str(tos_clause.url) if tos_clause else None,
         "steps": [s.model_dump(mode="json") for s in a.steps],
         "evidence": [
@@ -901,6 +905,8 @@ def _instruments_json(ctx: EvalContext) -> list[dict[str, Any]]:
                 "currencies": list(i.currencies),
                 "url": url,
                 "notes_es": " ".join(i.notes_es.split()),
+                "notes_en": " ".join(i.notes_en.split()),
+                "notes_pt": " ".join(i.notes_pt.split()),
             }
         )
     return out
@@ -1053,6 +1059,8 @@ def _bundle_verdict_json(a: BundleAssessment) -> dict[str, Any]:
         "confidence": a.confidence,
         "status": a.status,
         "notes_es": a.notes_es,
+        "notes_en": a.notes_en,
+        "notes_pt": a.notes_pt,
         "steps": [s.model_dump(mode="json") for s in a.steps],
         "assumptions_es": list(a.assumptions_es),
         "reasons_es": list(a.reasons_es),
@@ -1322,6 +1330,8 @@ def _bundle_json(
         # Official, value-checked proposals of the watcher and the agent (bundles.proposals).
         "pending_changes": [_pending_change_json(p) for p in changes],
         "notes_es": b.notes_es.strip(),
+        "notes_en": b.notes_en.strip(),
+        "notes_pt": b.notes_pt.strip(),
         "last_verified": b.last_verified.isoformat(),
     }
 

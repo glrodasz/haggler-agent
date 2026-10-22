@@ -728,8 +728,7 @@ export const es = {
     colCost: "EUR/mes",
     colSaving: (residence: string) => `Ahorro frente a ${residence}`,
     offersTitle: "Precios por país",
-    offersCaption: (name: string) =>
-      `Todas las ofertas de ${name}, ordenadas por precio mensual en EUR`,
+    offersCaption: (name: string) => `Todas las ofertas de ${name}`,
     convNote: (date: string) =>
       `«Mensual» divide el precio entre los meses del periodo y lo convierte con los tipos de cambio del ${date}, sin comisión.`,
     colCountry: "País",
@@ -807,7 +806,7 @@ export const es = {
     region: "Región",
     eu: "UE/EEE",
     offersTitle: "Ofertas",
-    offersCaption: (name: string) => `Todas las ofertas en ${name}, por servicio y plan`,
+    offersCaption: (name: string) => `Todas las ofertas en ${name}`,
     colService: "Servicio",
     noOffers: "Todavía no hay precios publicados para este país.",
     bundlesTitle: "Paquetes",
@@ -815,6 +814,18 @@ export const es = {
     feasibilityTitle: (residence: string) => `Factibilidad desde ${residence}`,
     noFeasibility: "No hay fichas de factibilidad para este país.",
     backToCountries: "Todos los países",
+  },
+
+  offerTable: {
+    filtersLabel: "Filtrar precios",
+    filterAll: "Todos",
+    clearFilters: "Quitar filtros",
+    showing: (from: string, to: string, total: string) => `Mostrando ${from}–${to} de ${total} precios`,
+    noMatches: "Ningún precio coincide con estos filtros.",
+    pagerLabel: "Páginas de precios",
+    previous: "Anterior",
+    next: "Siguiente",
+    pageLabel: (n: number) => `Página ${n}`,
   },
 
   changes: {

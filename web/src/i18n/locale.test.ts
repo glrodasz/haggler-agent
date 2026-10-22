@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { en } from "./en";
 import { es } from "./es";
-import { getMessages } from "./index";
+import { getMessages, localNote } from "./index";
 import {
   alternateLinks,
   LOCALES,
@@ -123,5 +123,18 @@ describe("dictionaries", () => {
     const sentences = texts(dict).flatMap((t) => t.split(/(?<=[.;:])\s+/));
     const mentions = sentences.filter((t) => forbidden.test(t));
     expect(mentions.filter((t) => !negation.test(t) && !/requires giving|exige declarar/i.test(t))).toEqual([]);
+  });
+});
+
+describe("localNote", () => {
+  const notes = { notes_es: "Hola", notes_en: "Hello", notes_pt: "" };
+
+  it("picks the visitor's language", () => {
+    expect(localNote("en", notes)).toEqual({ text: "Hello", lang: "en" });
+    expect(localNote("es", notes)).toEqual({ text: "Hola", lang: "es" });
+  });
+
+  it("falls back to the Spanish original when a translation is missing", () => {
+    expect(localNote("pt", notes)).toEqual({ text: "Hola", lang: "es" });
   });
 });

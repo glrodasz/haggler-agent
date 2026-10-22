@@ -731,7 +731,7 @@ export const en = {
     colCost: "EUR/month",
     colSaving: (residence: string) => `Saving vs ${residence}`,
     offersTitle: "Prices by country",
-    offersCaption: (name: string) => `Every ${name} offer, sorted by monthly price in EUR`,
+    offersCaption: (name: string) => `Every ${name} offer`,
     convNote: (date: string) =>
       `“Monthly” divides the price by the months in the period and converts it with the exchange rates of ${date}, with no fee.`,
     colCountry: "Country",
@@ -808,7 +808,7 @@ export const en = {
     region: "Region",
     eu: "EU/EEA",
     offersTitle: "Offers",
-    offersCaption: (name: string) => `Every offer in ${name}, by service and plan`,
+    offersCaption: (name: string) => `Every offer in ${name}`,
     colService: "Service",
     noOffers: "No prices published for this country yet.",
     bundlesTitle: "Bundles",
@@ -816,6 +816,19 @@ export const en = {
     feasibilityTitle: (residence: string) => `Feasibility from ${residence}`,
     noFeasibility: "There are no feasibility records for this country.",
     backToCountries: "All countries",
+  },
+
+  /** OfferTable: filters, sortable columns and pager (service and country pages). */
+  offerTable: {
+    filtersLabel: "Filter prices",
+    filterAll: "All",
+    clearFilters: "Clear filters",
+    showing: (from: string, to: string, total: string) => `Showing ${from}–${to} of ${total} prices`,
+    noMatches: "No prices match these filters.",
+    pagerLabel: "Price pages",
+    previous: "Previous",
+    next: "Next",
+    pageLabel: (n: number) => `Page ${n}`,
   },
 
   changes: {

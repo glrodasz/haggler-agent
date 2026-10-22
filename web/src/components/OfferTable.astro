@@ -2,6 +2,8 @@
 import { getMessages, lookupFor } from "../i18n";
 import { getSite } from "../logic/data";
 import { localeOfUrl, routesFor } from "../logic/paths";
+import { flagEmoji } from "../logic/format";
+import { OFFERS_FILTER_MIN_ROWS, type OfferFilterField, type OfferSortKey } from "../logic/offersView";
 import type { Offer } from "../logic/types";
 import ChannelBadge from "./ChannelBadge.astro";
 import CountryLabel from "./CountryLabel.astro";
@@ -28,28 +30,104 @@ const t = msg.service;
 const second = site.residenceCurrency !== "EUR" ? site.residenceCurrency : null;
 const stale = (o: Offer) => site.isStale(o.currency);
 const hasStale = offers.some(stale);
+
+// Filters, sortable headings and pager (browser script below). Options only list values that
+// appear in the table, so no choice leads to an empty page.
+const ot = msg.offerTable;
+const firstKey: OfferSortKey = mode === "service" ? "country" : "service";
+const defaultSort: OfferSortKey = mode === "service" ? "price" : "service";
+const channelName = (ch: string) => msg.channels[ch] ?? ch;
+const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, locale);
+const unique = <T,>(values: T[]) => [...new Set(values)];
+const optionsFor: Record<OfferFilterField, () => { value: string; name: string }[]> = {
+  service: () =>
+    unique(offers.map((o) => o.service_id))
+      .map((id) => ({ value: id, name: site.serviceName(id) }))
+      .sort(byName),
+  country: () =>
+    unique(offers.map((o) => o.country))
+      .sort((a, b) => site.countryName(a).localeCompare(site.countryName(b), locale))
+      .map((cc) => ({ value: cc, name: `${flagEmoji(cc)} ${site.countryName(cc)}` })),
+  // Only offered on a service page, where every row is the same service.
+  plan: () => {
+    const sid = offers[0]?.service_id ?? "";
+    return unique(offers.map((o) => o.plan_id))
+      .map((id) => ({ value: id, name: site.planLabel(sid, id), rank: site.planRank(sid, id) }))
+      .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, locale));
+  },
+  channel: () =>
+    unique(offers.map((o) => o.channel))
+      .map((ch) => ({ value: ch, name: channelName(ch) }))
+      .sort(byName),
+};
+const filterFields: OfferFilterField[] = mode === "service" ? ["country", "plan", "channel"] : ["service", "channel"];
+const filterLabels: Record<OfferFilterField, string> = {
+  service: msg.country.colService,
+  country: t.colCountry,
+  plan: t.colPlan,
+  channel: t.colChannel,
+};
+const filters =
+  offers.length >= OFFERS_FILTER_MIN_ROWS
+    ? filterFields
+        .map((field) => ({ field, label: filterLabels[field], options: optionsFor[field]() }))
+        .filter((f) => f.options.length > 1)
+    : [];
 ---
 
+<div
+  class="offers"
+  data-offers
+  data-locale={locale}
+  data-default-sort={defaultSort}
+  data-showing={ot.showing("{from}", "{to}", "{total}")}
+  data-page-label={ot.pageLabel(0).replace("0", "{n}")}
+  data-previous={ot.previous}
+  data-next={ot.next}
+>
+  {/* Filters, sorting and pager only work with JavaScript, so they start hidden; without it the
+      table lists every row in the page's own order. */}
+  {
+    filters.length > 0 && (
+      <form class="table-filters" aria-label={ot.filtersLabel} data-offers-filters hidden>
+        {filters.map((f) => (
+          <label class="table-filter">
+            <span>{f.label}</span>
+            <select name={f.field} data-field={f.field}>
+              <option value="">{ot.filterAll}</option>
+              {f.options.map((o) => (
+                <option value={o.value}>{o.name}</option>
+              ))}
+            </select>
+          </label>
+        ))}
+        <button type="reset" class="link-button table-filters-clear" data-offers-clear>
+          {ot.clearFilters}
+        </button>
+      </form>
+    )
+  }
+  <p class="table-count" aria-live="polite" data-offers-count hidden />
 <TableWrap captionId={captionId}>
   <table>
     <caption id={captionId}>{caption}</caption>
     <thead>
       <tr>
-        <th scope="col">{mode === "service" ? t.colCountry : msg.country.colService}</th>
-        <th scope="col">{t.colPlan}</th>
+        <th scope="col" data-sort={firstKey}>{mode === "service" ? t.colCountry : msg.country.colService}</th>
+        <th scope="col" data-sort="plan">{t.colPlan}</th>
         <th scope="col" class="num">{t.colLocal}</th>
-        <th scope="col" class="num">{t.colMonthlyIn("EUR")}</th>
-        <th scope="col" class="num" data-cell="second-head" hidden={second === null}>
+        <th scope="col" class="num" data-sort="price">{t.colMonthlyIn("EUR")}</th>
+        <th scope="col" class="num" data-cell="second-head" data-sort="price" hidden={second === null}>
           {second && t.colMonthlyIn(second)}
         </th>
-        <th scope="col">{t.colChannel}</th>
+        <th scope="col" data-sort="channel">{t.colChannel}</th>
         <th scope="col">{t.colVat}</th>
         <th scope="col">{t.colSource}</th>
-        <th scope="col">{t.colRiskLabel}</th>
-        <th scope="col">{t.colUpdated}</th>
+        <th scope="col" data-sort="risk">{t.colRiskLabel}</th>
+        <th scope="col" data-sort="updated">{t.colUpdated}</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody data-offers-rows>
       {
         offers.map((o) => {
           const isHome = o.country === site.meta.residence;
@@ -64,6 +142,17 @@ const hasStale = offers.some(stale);
               data-offer-currency={o.currency}
               data-offer-monthly={o.monthly_equiv}
               data-offer-eur={o.monthly_eur ?? ""}
+              data-service={o.service_id}
+              data-country={o.country}
+              data-plan={o.plan_id}
+              data-channel={o.channel}
+              data-service-name={site.serviceName(o.service_id)}
+              data-country-name={site.countryName(o.country)}
+              data-plan-name={site.planLabel(o.service_id, o.plan_id)}
+              data-plan-rank={site.planRank(o.service_id, o.plan_id)}
+              data-channel-name={channelName(o.channel)}
+              data-rank={o.rank}
+              data-updated={o.last_changed}
             >
               <th scope="row">
                 {mode === "service" ? (
@@ -141,4 +230,15 @@ const hasStale = offers.some(stale);
     </tbody>
   </table>
 </TableWrap>
+  <p class="table-empty" data-offers-empty hidden>
+    {ot.noMatches}
+  </p>
+  <nav class="pager" aria-label={ot.pagerLabel} data-offers-pager hidden />
+</div>
 {hasStale && <p class="note">{msg.common.staleFxNote}</p>}
+
+<script>
+  import { setupOfferTable } from "../logic/offersDom";
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-offers]")) setupOfferTable(root);
+</script>
