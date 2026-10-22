@@ -800,6 +800,7 @@ export const en = {
     colRegion: "Region",
     colEu: "EU/EEA",
     colOffers: "Offers",
+    comparisonTag: "In your comparison",
   },
 
   country: {

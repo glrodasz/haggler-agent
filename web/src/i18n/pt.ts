@@ -807,6 +807,7 @@ export const pt = {
     colRegion: "Região",
     colEu: "UE/EEE",
     colOffers: "Ofertas",
+    comparisonTag: "Na sua comparação",
   },
 
   country: {

@@ -23,14 +23,14 @@ const countries = [...site.countries].sort((a, b) =>
 <Base title={t.title} current="countries">
   <h1>{t.heading}</h1>
   <p class="lead">{t.lead}</p>
-  <TableWrap captionId="paises-caption">
-    <table>
+  <TableWrap captionId="paises-caption" stickyHead>
+    <table data-countries data-tag-yours={msg.common.residenceTag} data-tag-comparison={t.comparisonTag}>
       <caption id="paises-caption">{t.caption}</caption>
       <thead>
         <tr>
           <th scope="col">{t.colCountry}</th>
           <th scope="col">{t.colCurrency}</th>
-          <th scope="col">{t.colRegion}</th>
+          <th scope="col" class="wide-only">{t.colRegion}</th>
           <th scope="col">{t.colEu}</th>
           <th scope="col" class="num">{t.colOffers}</th>
         </tr>
@@ -38,18 +38,18 @@ const countries = [...site.countries].sort((a, b) =>
       <tbody>
         {
           countries.map((c) => (
-            <tr class={c.cc === site.meta.residence ? "is-home" : undefined}>
+            <tr data-cc={c.cc} class={c.cc === site.meta.residence ? "is-home" : undefined}>
               <th scope="row">
                 <CountryLabel cc={c.cc} />
                 {c.cc === site.meta.residence && (
                   <>
                     {" "}
-                    <span class="badge risk-0">{msg.common.residenceTag}</span>
+                    <span class="badge risk-0" data-pin-tag>{msg.common.residenceTag}</span>
                   </>
                 )}
               </th>
               <td>{c.currency}</td>
-              <td>{lookup(msg.regions, c.region)}</td>
+              <td class="wide-only">{lookup(msg.regions, c.region)}</td>
               <td>{c.eu_eea ? msg.common.yes : msg.common.no}</td>
               <td class="num">{site.offersForCountry(c.cc).length}</td>
             </tr>
@@ -59,3 +59,67 @@ const countries = [...site.countries].sort((a, b) =>
     </table>
   </TableWrap>
 </Base>
+
+<script>
+  import { loadKit } from "../../../logic/profileClient";
+  import { type Pin, pinnedCountries } from "../../../logic/pinnedCountries";
+  import { locateVisitor, onProfileChange, readSavedProfile } from "../../../logic/visitor";
+
+  // The built table is alphabetical with the site's default residence tagged (the no-JS view).
+  // Here the visitor's own country moves to the top, then their comparator residence if different.
+  const table = document.querySelector<HTMLTableElement>("table[data-countries]");
+  if (table) setup(table);
+
+  function trackHeaderHeight() {
+    const header = document.querySelector<HTMLElement>(".site-header");
+    if (!header) return;
+    const set = () =>
+      document.documentElement.style.setProperty("--site-header-height", `${header.offsetHeight}px`);
+    set();
+    new ResizeObserver(set).observe(header);
+  }
+
+  function setup(table: HTMLTableElement) {
+    trackHeaderHeight();
+    const body = table.tBodies[0]!;
+    const rows = [...body.rows];
+    const byCc = new Map(rows.map((tr) => [tr.dataset.cc ?? "", tr]));
+    const tags = {
+      yours: { text: table.dataset.tagYours ?? "", className: "badge risk-0" },
+      comparison: { text: table.dataset.tagComparison ?? "", className: "badge badge-neutral" },
+    };
+
+    const render = (pins: Pin[]) => {
+      for (const tr of rows) {
+        tr.classList.remove("is-home");
+        tr.querySelector("[data-pin-tag]")?.remove();
+      }
+      const pinned = new Set(pins.map((p) => p.cc));
+      for (const { cc, tag } of pins) {
+        const tr = byCc.get(cc)!;
+        tr.classList.add("is-home");
+        const badge = document.createElement("span");
+        badge.className = tags[tag].className;
+        badge.dataset.pinTag = "";
+        badge.textContent = tags[tag].text;
+        tr.cells[0]!.append(" ", badge);
+      }
+      body.replaceChildren(
+        ...pins.map((p) => byCc.get(p.cc)!),
+        ...rows.filter((tr) => !pinned.has(tr.dataset.cc ?? "")),
+      );
+    };
+
+    const update = async () => {
+      const [kit, located] = await Promise.all([loadKit(), locateVisitor()]);
+      const saved = kit
+        ? readSavedProfile(kit.residences.map((r) => r.cc), new Set(kit.tie_countries))
+        : null;
+      const pins = pinnedCountries(located?.cc ?? null, saved?.residence ?? null, new Set(byCc.keys()));
+      // Nothing known about the visitor: keep the built page as it is.
+      if (pins.length) render(pins);
+    };
+    void update();
+    onProfileChange(() => void update());
+  }
+</script>
