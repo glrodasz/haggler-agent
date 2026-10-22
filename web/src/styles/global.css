@@ -472,6 +472,24 @@ tfoot td {
 .notes {
   min-width: 16rem;
 }
+/* A scrolling wrapper would trap position: sticky, so this one lets the table overflow instead
+   (only used on narrow tables). --site-header-height is measured by the page's script; the
+   fallback is the one-row desktop header. Collapsed borders do not stick, hence the shadow. */
+.table-wrap.has-sticky-head {
+  overflow: visible;
+}
+.has-sticky-head thead th {
+  position: sticky;
+  top: var(--site-header-height, 4.5rem);
+  z-index: 1;
+  box-shadow: inset 0 -1px 0 var(--color-border);
+}
+/* Without sideways scrolling, a phone drops the columns it can live without. */
+@media (max-width: 36rem) {
+  .has-sticky-head .wide-only {
+    display: none;
+  }
+}
 tr.is-home > * {
   background: color-mix(in srgb, var(--risk-0-bg) 55%, transparent);
 }

@@ -799,6 +799,7 @@ export const es = {
     colRegion: "Región",
     colEu: "UE/EEE",
     colOffers: "Ofertas",
+    comparisonTag: "En tu comparación",
   },
 
   country: {
