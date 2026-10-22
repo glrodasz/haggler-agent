@@ -453,6 +453,30 @@ async def test_concurrent_requests_to_one_host_are_serialised(clock, router):
     assert starts == [1000.0, 1002.5, 1005.0, 1007.5]
 
 
+async def test_host_interval_override(clock, router):
+    starts: list[float] = []
+
+    def record(request: httpx.Request) -> httpx.Response:
+        starts.append(clock.now)
+        return httpx.Response(200, text="ok")
+
+    router.route(host="www.example.com").mock(side_effect=record)
+    async with HttpFetcher(
+        settings(respect_robots=False, host_intervals_s={"www.example.com": 1.0}),
+        monotonic=clock.monotonic,
+        sleep=clock.sleep,
+    ) as f:
+        await asyncio.gather(*(f.fetch(f"{SITE}/p{i}") for i in range(3)))
+    assert starts == [1000.0, 1001.0, 1002.0]
+
+
+def test_host_intervals_from_env(monkeypatch):
+    monkeypatch.setenv("HAGGLER_HOST_INTERVALS_S", "Apps.Apple.com=2, example.org=0.5")
+    assert Settings().host_intervals_s == {"apps.apple.com": 2.0, "example.org": 0.5}
+    monkeypatch.delenv("HAGGLER_HOST_INTERVALS_S")
+    assert Settings().host_intervals_s == {"apps.apple.com": 1.0}
+
+
 async def test_crawl_delay_above_interval_is_honoured(clock, router):
     allow_robots(router, body="User-agent: *\nCrawl-delay: 10\nDisallow:\n")
     router.get(f"{SITE}/a").mock(return_value=httpx.Response(200))

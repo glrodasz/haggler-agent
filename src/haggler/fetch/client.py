@@ -278,7 +278,8 @@ class HttpFetcher:
 
     def _interval(self, host: str) -> float:
         delay = min(self._crawl_delay.get(host, 0.0), MAX_CRAWL_DELAY_S)
-        return max(self.settings.per_host_interval_s, delay)
+        base = self.settings.host_intervals_s.get(host, self.settings.per_host_interval_s)
+        return max(base, delay)
 
     @asynccontextmanager
     async def _host_slot(self, host: str) -> AsyncIterator[None]:
