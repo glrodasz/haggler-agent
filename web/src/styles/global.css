@@ -1882,40 +1882,77 @@ fieldset.own > legend {
   border-radius: var(--radius);
 }
 
-/* /changes: filters above the table and a pager below it (both need JavaScript). */
-.changes [hidden] {
+/* Filterable tables (/changes, OfferTable): filters above the table and a pager below it (both
+   need JavaScript). */
+.changes [hidden],
+.offers [hidden] {
   display: none !important;
 }
-.changes-filters {
+.table-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   align-items: end;
   gap: var(--space-3);
   margin: 0 0 var(--space-4);
 }
-.changes-filter {
+.table-filter {
   display: grid;
   gap: var(--space-1);
   font-size: var(--text-sm);
   font-weight: 600;
 }
-.changes-clear {
+.table-filters-clear {
   justify-self: start;
   min-height: 2.75rem;
 }
-.changes-count {
+.table-count {
   margin: 0 0 var(--space-3);
   font-size: var(--text-sm);
   color: var(--color-muted);
 }
-.changes-count:focus {
+.table-count:focus {
   outline: none;
 }
-.changes-empty {
+.table-empty {
+  margin: 0 0 var(--space-4);
   padding: var(--space-5) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   color: var(--color-muted);
+}
+.offers .pager {
+  margin: 0 0 var(--space-4);
+}
+/* A sortable column heading: the whole heading is the button. */
+th.is-sortable {
+  padding: 0;
+}
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2);
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.num .sort-button {
+  justify-content: flex-end;
+}
+.sort-button:hover .sort-label {
+  text-decoration: underline;
+}
+.sort-icon {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+th[aria-sort] .sort-icon {
+  color: var(--color-fg);
+  font-weight: 600;
 }
 .pager ul {
   display: flex;

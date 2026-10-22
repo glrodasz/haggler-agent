@@ -12,7 +12,8 @@
  *                                   [data-cell=home] and [data-cell=risk][data-level=k]
  *   table[data-profile-summary]     a service's cheapest per level: [data-service][data-plan],
  *                                   rows tr[data-level], cells [data-cell=offer|cost|saving]
- *   tr[data-offer-svc]              an OfferTable row: [data-cell=risk], [data-home-tag] and
+ *   tr[data-offer-svc]              an OfferTable row: [data-cell=risk] (and data-rank, then
+ *                                   OFFERS_PATCHED_EVENT so a risk sort re-sorts), [data-home-tag] and
  *                                   [data-cell=second] (monthly in the residence currency)
  *   [data-cell=home-head|saving-head|second-head]   headers naming the residence/currency
  */
@@ -20,6 +21,7 @@
 import { getMessages } from "../i18n";
 import type { PricedOffer } from "./compare";
 import { flagEmoji, formatFor } from "./format";
+import { OFFERS_PATCHED_EVENT } from "./offersView";
 import { routesFor } from "./paths";
 import { encodeProfile } from "./profile";
 import type { ProfileState } from "./profileClient";
@@ -187,6 +189,7 @@ function patchOffers(state: ProfileState): void {
   for (const row of document.querySelectorAll<HTMLElement>("tr[data-offer-svc]")) {
     const { offerSvc = "", offerCc = "", offerCurrency = "" } = row.dataset;
     const v = view.verdict(offerSvc, offerCc);
+    row.dataset.rank = String(v.rank);
     const risk = row.querySelector('[data-cell="risk"]');
     if (risk) {
       fill(
@@ -227,4 +230,5 @@ export function patchPage(state: ProfileState): void {
   patchServices(state);
   patchSummaries(state);
   patchOffers(state);
+  document.dispatchEvent(new Event(OFFERS_PATCHED_EVENT));
 }

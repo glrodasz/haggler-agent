@@ -65,9 +65,9 @@ const filters = [
       >
         {/* Filters and pager only work with JavaScript, so they start hidden; without it the
             page lists every row. */}
-        <form class="changes-filters" aria-label={t.filtersLabel} data-changes-filters hidden>
+        <form class="table-filters" aria-label={t.filtersLabel} data-changes-filters hidden>
           {filters.map((f) => (
-            <label class="changes-filter">
+            <label class="table-filter">
               <span>{f.label}</span>
               <select name={QUERY_KEYS[f.field]} data-field={f.field}>
                 <option value="">{t.filterAll}</option>
@@ -77,11 +77,11 @@ const filters = [
               </select>
             </label>
           ))}
-          <button type="reset" class="link-button changes-clear" data-changes-clear>
+          <button type="reset" class="link-button table-filters-clear" data-changes-clear>
             {t.clearFilters}
           </button>
         </form>
-        <p class="changes-count" aria-live="polite" data-changes-count hidden />
+        <p class="table-count" aria-live="polite" data-changes-count hidden />
         <TableWrap captionId="cambios-caption">
           <table>
             <caption id="cambios-caption">{t.caption}</caption>
@@ -132,7 +132,7 @@ const filters = [
             </tbody>
           </table>
         </TableWrap>
-        <p class="changes-empty" data-changes-empty hidden>
+        <p class="table-empty" data-changes-empty hidden>
           {t.noMatches}
         </p>
         <nav class="pager" aria-label={t.pagerLabel} data-changes-pager hidden />
@@ -147,7 +147,6 @@ const filters = [
     type ChangesFilters,
     type ChangesState,
     matchesFilters,
-    pageItems,
     pageSlice,
     parseChangesQuery,
     sanitizeFilters,
@@ -155,6 +154,7 @@ const filters = [
   } from "../../logic/changesView";
   import { isLocale } from "../../i18n/locale";
   import { formatFor } from "../../logic/format";
+  import { renderPager } from "../../logic/pagerDom";
 
   const root = document.querySelector<HTMLElement>("[data-changes]");
   if (root) setup(root);
@@ -191,38 +191,6 @@ const filters = [
       return filters;
     }
 
-    function pageLink(page: number, label: string, current = false): HTMLElement {
-      const link = document.createElement("a");
-      link.href = location.pathname + toChangesQuery({ ...state, page });
-      link.textContent = label;
-      link.className = "pager-link";
-      link.dataset.page = String(page);
-      if (current) link.setAttribute("aria-current", "page");
-      return link;
-    }
-
-    // "← Anterior" / "Siguiente →"; phones keep only the arrow so the pager fits one line.
-    function step(page: number, enabled: boolean, label: string, arrow: string, before: boolean): HTMLElement {
-      const el = enabled ? pageLink(page, "") : inactive("");
-      const icon = document.createElement("span");
-      icon.setAttribute("aria-hidden", "true");
-      icon.textContent = arrow;
-      const word = document.createElement("span");
-      word.className = "pager-word";
-      word.textContent = label;
-      el.append(...(before ? [icon, word] : [word, icon]));
-      el.setAttribute("aria-label", label);
-      return el;
-    }
-
-    function inactive(label: string): HTMLElement {
-      const span = document.createElement("span");
-      span.className = "pager-link is-disabled";
-      span.setAttribute("aria-disabled", "true");
-      span.textContent = label;
-      return span;
-    }
-
     function render() {
       for (const s of selects) s.value = state[s.dataset.field as keyof ChangesFilters];
       const matching = rows.filter((r) => matchesFilters(r.facets, state));
@@ -240,31 +208,11 @@ const filters = [
         .replace("{to}", integer(slice.end))
         .replace("{total}", integer(matching.length));
 
-      pager.replaceChildren();
-      pager.hidden = slice.pages <= 1;
-      if (slice.pages > 1) {
-        const list = document.createElement("ul");
-        const item = (child: HTMLElement) => {
-          const li = document.createElement("li");
-          li.append(child);
-          list.append(li);
-        };
-        item(step(slice.page - 1, slice.page > 1, text("previous"), "←", true));
-        for (const n of pageItems(slice.page, slice.pages)) {
-          if (n === null) {
-            const gap = document.createElement("span");
-            gap.className = "pager-gap";
-            gap.textContent = "…";
-            item(gap);
-            continue;
-          }
-          const link = pageLink(n, String(n), n === slice.page);
-          link.setAttribute("aria-label", text("pageLabel").replace("{n}", String(n)));
-          item(link);
-        }
-        item(step(slice.page + 1, slice.page < slice.pages, text("next"), "→", false));
-        pager.append(list);
-      }
+      renderPager(pager, slice, (page) => location.pathname + toChangesQuery({ ...state, page }), {
+        previous: text("previous"),
+        next: text("next"),
+        pageLabel: (n) => text("pageLabel").replace("{n}", String(n)),
+      });
       form.querySelector<HTMLElement>("[data-changes-clear]")!.hidden = !selects.some((s) => s.value);
     }
 
