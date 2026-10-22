@@ -294,6 +294,7 @@ export const es = {
     marginalEur: "Adicional (EUR)",
     standalone: "Por separado",
     saving: "Ahorro",
+    costsMore: (pct: string) => `Ninguno: cuesta ${pct} más que por separado`,
     /** The line under the full price of a bundle sold on top of a base plan. */
     marginalLine: (basePlan: string, amount: string) => `Si ya pagas ${basePlan}: +${amount}`,
     basePlanFallback: "el plan base",
@@ -685,6 +686,12 @@ export const es = {
         ties === null ? ", sin vínculos con otros países" : `, con vínculos con ${ties}`
       }.`,
     forDefault: (profile: string) => `Precios y riesgos del perfil «${profile}».`,
+    youLive: (residence: string, ties: string | null) =>
+      `Vives en ${residence}${
+        ties === null ? ", sin vínculos con otros países" : `, con vínculos con ${ties}`
+      }.`,
+    exampleDetails: (profile: string) =>
+      `El detalle de abajo es del perfil de ejemplo «${profile}»: las razones y la evidencia solo existen para perfiles revisados a mano.`,
     change: "Cámbialo en el comparador",
     feasibilityLead:
       "Etiquetas para tu perfil, con las mismas reglas que el comparador. Solo aparecen los países que tenemos evaluados; las fichas con pruebas y notas solo existen para los perfiles revisados a mano.",

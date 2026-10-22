@@ -296,6 +296,8 @@ export const en = {
     marginalEur: "Extra (EUR)",
     standalone: "Separately",
     saving: "Saving",
+    /** A bundle dearer than its included services bought separately (negative saving). */
+    costsMore: (pct: string) => `None: it costs ${pct} more than separately`,
     /** The line under the full price of a bundle sold on top of a base plan. */
     marginalLine: (basePlan: string, amount: string) => `If you already pay for ${basePlan}: +${amount}`,
     basePlanFallback: "the base plan",
@@ -686,6 +688,13 @@ export const en = {
         ties === null ? ", with no ties to other countries" : `, with ties to ${ties}`
       }.`,
     forDefault: (profile: string) => `Prices and risks for the profile “${profile}”.`,
+    /** A bundle card's "For your profile" once the visitor's profile is known. */
+    youLive: (residence: string, ties: string | null) =>
+      `You live in ${residence}${
+        ties === null ? ", with no ties to other countries" : `, with ties to ${ties}`
+      }.`,
+    exampleDetails: (profile: string) =>
+      `The details below are for the example profile “${profile}”: reasons and evidence only exist for hand-reviewed profiles.`,
     change: "Change it in the comparison",
     feasibilityLead:
       "Labels for your profile, with the same rules as the comparison. Only the countries we have evaluated appear; records with evidence and notes only exist for hand-reviewed profiles.",

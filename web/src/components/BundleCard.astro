@@ -255,7 +255,9 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
     <dt>{t.saving}</dt>
     <dd>
       <span class={savingClass(saving)} title={t.savingHelp}>
-        {formatPercent(saving, { signed: true })}
+        {saving !== null && saving < 0
+          ? t.costsMore(formatPercent(-saving))
+          : formatPercent(saving, { signed: true })}
       </span>
       {savingNotes.length > 0 && <span class="muted small"> ({savingNotes.join(", ")})</span>}
     </dd>
@@ -328,6 +330,19 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
   }
 
   <h4>{t.forProfile}</h4>
+  {/* Filled by logic/profilePatch.ts when the visitor's profile is not the default one: their
+      own label from the bundle's rule; the default profile's detailed verdict stays below. */}
+  <div class="bundle-visitor" data-bundle-visitor={b.bundle_id} hidden>
+    <p class="small muted" data-bundle-visitor-who></p>
+    <p class="badges" data-bundle-visitor-verdict></p>
+    {
+      defaultProfile && (
+        <p class="small muted">
+          {msg.visitorProfile.exampleDetails(site.profileName(defaultProfile.id))}
+        </p>
+      )
+    }
+  </div>
   {defaultProfile && <p class="small muted">{site.profileName(defaultProfile.id)}</p>}
   {
     verdicts.main ? (
