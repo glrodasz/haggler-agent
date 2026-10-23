@@ -1059,6 +1059,7 @@ OFFICIAL_FETCH = {
     "apple_one_individual_co",
     "apple_one_family_co",
     "google_ai_pro_co",
+    "claro_tv_plus_streamings_br",
 } | APPLE_ONE_WAVE_2
 
 
@@ -1084,6 +1085,11 @@ def test_wave_1_anchors_come_from_the_watch_probe() -> None:
         assert facts[bundle_id] == ["component"]
         assert rows[bundle_id].watch.mode == "manual"
         assert rows[bundle_id].price.intro_months == 6
+    # Wave 3 (2026-10-23): Claro tv+ Streamings is anchored; MagentaTV SmartStream's price is not
+    # (its 0 € intro sits between the plan's name and 20 €), so it stays manual.
+    assert facts["claro_tv_plus_streamings_br"] == ["component", "price"]
+    assert facts["magenta_tv_smartstream_de"] == ["component"]
+    assert rows["magenta_tv_smartstream_de"].watch.mode == "manual"
     assert facts["meli_plus_co_esencial"] == ["price"]
     assert facts["google_ai_pro_co"] == ["component", "price"]
     for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):

@@ -3409,6 +3409,7 @@ bundles:
     last_verified: 2026-10-23
 
   # Wave 3 (phase 3): pages readable to our fetch (bundles probe of 2026-10-23, run 39924603868).
+  # Canal+ FR answers 403 (robots.txt too), so it has no row.
   - bundle_id: magenta_tv_smartstream_de
     provider_id: telekom_de
     provider_type: telco_fixed_tv
@@ -3417,13 +3418,13 @@ bundles:
     tier: smartstream
     aliases: [MagentaTV SmartStream, SmartStream]
     official_url: https://www.telekom.de/magenta-tv/smartstream
+    # The card: "RTL+ Premium, Netflix, Disney+ inklusive (mit Werbung bei den Streaming-Partnern)
+    # / 0 € mtl. / ab dem 7. Monat 20 € mtl." The watcher can't tie 20 € to the plan (the 0 € intro
+    # sits between them), so the price has no anchor and the row stays manual.
     price: {amount: "20", currency: EUR, period: month, tax_included: true, intro_amount: "0", intro_months: 6}
     components:
-      - {service_id: netflix, inclusion: included}
-      - {service_id: disney_plus, inclusion: included}
-      - {service_id: hbo_max, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
-      - {service_id: apple_tv, inclusion: included}
+      - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_line: none, local_payment: unknown}
     evidence:
       - {url: "https://www.telekom.de/magenta-tv/smartstream", kind: official}
@@ -3433,6 +3434,16 @@ bundles:
       mode: manual
       pages:
         - {url: "https://www.telekom.de/magenta-tv/smartstream", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39924732638).
+      anchors:
+        - fact: component
+          service_id: netflix
+          url: https://www.telekom.de/magenta-tv/smartstream
+          text: RTL+ Premium, Netflix, Disney+ inklusive (mit Werbung bei den Streaming-Partnern)
+        - fact: component
+          service_id: disney_plus
+          url: https://www.telekom.de/magenta-tv/smartstream
+          text: RTL+ Premium, Netflix, Disney+ inklusive (mit Werbung bei den Streaming-Partnern)
     last_verified: 2026-10-23
 
   - bundle_id: claro_tv_plus_streamings_br
@@ -3441,24 +3452,50 @@ bundles:
     country: BR
     name: Claro tv+ Streamings
     tier: streamings
-    aliases: [Claro tv+ Streamings, Streamings]
+    aliases: [Claro tv+ Streamings]
     official_url: https://www.claro.com.br/claro-tv-mais
     price: {amount: "79.90", currency: BRL, period: month, tax_included: true}
+    # Five apps on the plan's card; Amazon Prime is not in the catalog. No live channels.
     components:
       - {service_id: netflix, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
       - {service_id: hbo_max, inclusion: included}
       - {service_id: apple_tv, inclusion: included}
-      - {service_id: disney_plus, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
     requirements: {local_payment: unknown}
     evidence:
       - {url: "https://www.claro.com.br/claro-tv-mais", kind: official}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.claro.com.br/claro-tv-mais", kind: html}
+      # The price from probe --mode watch (2026-10-23, run 39924732638; the block from the plan's
+      # name); the components on the plan's description line under it.
+      anchors:
+        - fact: price
+          url: https://www.claro.com.br/claro-tv-mais
+          text: |-
+            Claro tv+ Streamings
+            Uma seleção de cinco apps pra quem prefere maratonar pagando menos: Netflix, Amazon Prime, Disney+, HBO Max e Apple TV. Plano sem canais ao vivo.
+            Por:
+            R$79,90/mês
+        - fact: component
+          service_id: netflix
+          url: https://www.claro.com.br/claro-tv-mais
+          text: 'Uma seleção de cinco apps pra quem prefere maratonar pagando menos: Netflix, Amazon Prime, Disney+, HBO Max e Apple TV. Plano sem canais ao vivo.'
+        - fact: component
+          service_id: disney_plus
+          url: https://www.claro.com.br/claro-tv-mais
+          text: 'Uma seleção de cinco apps pra quem prefere maratonar pagando menos: Netflix, Amazon Prime, Disney+, HBO Max e Apple TV. Plano sem canais ao vivo.'
+        - fact: component
+          service_id: hbo_max
+          url: https://www.claro.com.br/claro-tv-mais
+          text: 'Uma seleção de cinco apps pra quem prefere maratonar pagando menos: Netflix, Amazon Prime, Disney+, HBO Max e Apple TV. Plano sem canais ao vivo.'
+        - fact: component
+          service_id: apple_tv
+          url: https://www.claro.com.br/claro-tv-mais
+          text: 'Uma seleção de cinco apps pra quem prefere maratonar pagando menos: Netflix, Amazon Prime, Disney+, HBO Max e Apple TV. Plano sem canais ao vivo.'
     last_verified: 2026-10-23
 
   - bundle_id: google_ai_pro_co

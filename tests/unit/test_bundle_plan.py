@@ -127,7 +127,8 @@ def test_only_auto_bundles_are_planned_automatically():
 
 
 # The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11), Meli+ MX/BR/CL,
-# Telia Streaming Maxad and Apple One in 26 more countries (watch probes of 2026-10-23).
+# Telia Streaming Maxad, Apple One in 26 more countries and Claro tv+ Streamings (watch probes
+# of 2026-10-23).
 REAL_AUTO = [
     "meli_plus_co_total",
     "meli_plus_co_esencial",
@@ -196,6 +197,7 @@ REAL_AUTO = [
     "apple_one_premier_us",
     "apple_one_individual_vn",
     "apple_one_family_vn",
+    "claro_tv_plus_streamings_br",
     "google_ai_pro_co",
 ]
 

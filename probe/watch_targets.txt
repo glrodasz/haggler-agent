@@ -96,3 +96,7 @@ apple_one_family_us
 apple_one_premier_us
 apple_one_individual_vn
 apple_one_family_vn
+
+# Wave 3 (watch probe of 2026-10-23); MagentaTV SmartStream is manual (no price anchor)
+magenta_tv_smartstream_de
+claro_tv_plus_streamings_br
