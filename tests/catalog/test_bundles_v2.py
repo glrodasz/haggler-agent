@@ -947,15 +947,21 @@ def test_wave_1_values_match_the_official_pages() -> None:
     # The wave-1 rows were checked against probe --mode watch on 2026-10-11 (their anchors).
     for bundle_id in WAVE_1:
         expected[bundle_id][10] = "2026-10-11"  # last_verified
+    # Watch probe of 2026-10-23: Meli+ Total's price anchor again (its intro is gone), Meli+
+    # MX/BR (price "Plan Mega - $ 399/mes", "Plano Mega A partir de R$ 74,90") and the Go3
+    # price list ("Go3 Filmai + Netflix Premium 19,99").
+    for bundle_id in ("meli_plus_co_total", "meli_plus_mx_mega", "meli_plus_br_mega"):
+        expected[bundle_id][10] = "2026-10-23"
+    go3 = expected["go3_lt_filmai_netflix"]
+    go3[1], go3[10] = "19.99", "2026-10-23"
+    go3[7] = [("netflix", "premium", "included", None, None)]
     for bundle_id, (*head, requirements) in expected.items():
         assert _values(rows[bundle_id]) == head, bundle_id
         assert rows[bundle_id].requirements == BundleRequirements(**requirements), bundle_id
-    # The same quote's "19900 pesos por mes, por 2 meses": Meli+ Total's intro price, the only
-    # one among these rows.
+    # Meli+ Total's 2-month intro at 19 900 COP ended (gone from the page since 2026-10-15):
+    # no row has an intro price.
     intro = {i: (_str(rows[i].price.intro_amount), rows[i].price.intro_months) for i in expected}
-    assert intro == {
-        i: ("19900", 2) if i == "meli_plus_co_total" else (None, None) for i in expected
-    }
+    assert intro == {i: (None, None) for i in expected}
     # Telia: edition 18 of the price list moved to a new asset URL (the old /assets/m/... one
     # redirects there) and is still the newest link on the price-list index on 2026-10-11.
     telia = rows["telia_se_obegransad_streaming"]
@@ -983,6 +989,7 @@ def test_wave_1_values_match_the_official_pages() -> None:
 OFFICIAL_FETCH = {
     "meli_plus_co_total",
     "meli_plus_co_esencial",
+    "meli_plus_mx_mega",
     "apple_one_individual_se",
     "apple_one_family_se",
     "apple_one_individual_co",
@@ -994,10 +1001,16 @@ OFFICIAL_FETCH = {
 def test_wave_1_anchors_come_from_the_watch_probe() -> None:
     rows = {b.bundle_id: b for b in load_bundles().bundles}
     assert {i for i, b in rows.items() if b.verified_by == "official_fetch"} == OFFICIAL_FETCH
-    # Auto only where the watch probe left the bundle verified (runs 38148273652, 38148424547).
-    assert {i for i, b in rows.items() if b.watch.mode == "auto"} == OFFICIAL_FETCH
+    # Auto where the watch probe left the bundle verified (runs 38148273652, 38148424547 and,
+    # for Meli+ MX, 39907618228), plus Meli+ BR: its price is anchored on the plans page, its
+    # components only appear in the page's subscriptions menu, so it is watched but unverified.
+    assert {i for i, b in rows.items() if b.watch.mode == "auto"} == OFFICIAL_FETCH | {
+        "meli_plus_br_mega"
+    }
     facts = {i: sorted({a.fact for a in b.watch.anchors}) for i, b in rows.items()}
-    assert facts["meli_plus_co_total"] == ["component", "intro", "price"]
+    assert facts["meli_plus_co_total"] == ["component", "price"]
+    assert facts["meli_plus_mx_mega"] == ["component", "price"]
+    assert facts["meli_plus_br_mega"] == ["price"]
     assert facts["meli_plus_co_esencial"] == ["price"]
     assert facts["google_ai_pro_co"] == ["component", "price"]
     for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):
@@ -1017,9 +1030,10 @@ def test_wave_1_anchors_come_from_the_watch_probe() -> None:
         "paramount_plus",
         "vix",
     }
-    # Outside wave 1, nothing is watched or anchored.
-    for bundle_id in ("meli_plus_mx_mega", "meli_plus_br_mega", "go3_lt_filmai_netflix"):
-        assert rows[bundle_id].watch.mode == "off" and not rows[bundle_id].watch.anchors
+    # Go3: its price list prints amounts without a currency sign, so nothing can be anchored;
+    # it is checked by hand.
+    go3 = rows["go3_lt_filmai_netflix"]
+    assert go3.watch.mode == "manual" and not go3.watch.anchors
 
 
 def test_apple_pages_of_another_country_fail(cat, profiles, instruments) -> None:
