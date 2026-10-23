@@ -374,6 +374,92 @@ bundles:
       sem o nome do plano, e a página do produto não o mostra como texto. Data de vigência da lista
       de preços não confirmada.
 
+  # Telia Play streaming packages (phase 3, PR G): sold without a Telia line and without a
+  # binding period. Product pages readable (bundles probe of 2026-10-23, run 39923901294).
+  - bundle_id: telia_se_streaming_mer
+    provider_id: telia_se
+    provider_type: telco_fixed_tv
+    country: SE
+    name: Streaming Mer
+    tier: streaming_mer
+    aliases: [Streaming Mer]
+    official_url: https://www.telia.se/tv/streaming/streaming-mer
+    price: {amount: "269", currency: SEK, period: month, tax_included: true, intro_amount: "199", intro_months: 6}
+    components:
+      - {service_id: netflix, inclusion: included}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+      - {service_id: youtube_premium, inclusion: included}
+      - {service_id: spotify, inclusion: included}
+    requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
+    evidence:
+      - {url: "https://www.telia.se/tv/streaming/streaming-mer", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telia.se/tv/streaming/streaming-mer", kind: html}
+    last_verified: 2026-10-23
+
+  - bundle_id: telia_se_streaming_maxad
+    provider_id: telia_se
+    provider_type: telco_fixed_tv
+    country: SE
+    name: Streaming Maxad
+    tier: streaming_maxad
+    aliases: [Streaming Maxad]
+    official_url: https://www.telia.se/tv/streaming/streaming-maxad
+    price: {amount: "319", currency: SEK, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, inclusion: included}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+      - {service_id: youtube_premium, inclusion: included}
+      - {service_id: spotify, inclusion: included}
+    requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
+    evidence:
+      - {url: "https://www.telia.se/tv/streaming/streaming-maxad", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telia.se/tv/streaming/streaming-maxad", kind: html}
+    last_verified: 2026-10-23
+
+  - bundle_id: telia_se_streaming_mest
+    provider_id: telia_se
+    provider_type: telco_fixed_tv
+    country: SE
+    name: Streaming Mest
+    tier: streaming_mest
+    aliases: [Streaming Mest]
+    official_url: https://www.telia.se/tv/streaming/streaming-mest
+    price: {amount: "499", currency: SEK, period: month, tax_included: true, intro_amount: "399", intro_months: 6}
+    components:
+      - {service_id: netflix, inclusion: included}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+      - {service_id: youtube_premium, inclusion: included}
+      - {service_id: spotify, inclusion: included}
+    requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
+    evidence:
+      - {url: "https://www.telia.se/tv/streaming/streaming-mest", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telia.se/tv/streaming/streaming-mest", kind: html}
+    last_verified: 2026-10-23
+
   # Meli+ Chile (phase 3, PR F): the same planes page as Colombia, readable and watched in auto
   # mode. Meli+ Argentina has no row: its planes and hub pages show no ARS amounts to our fetch
   # (bundles probe of 2026-10-23, run 39923218350).
