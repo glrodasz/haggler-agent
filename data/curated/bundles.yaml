@@ -374,8 +374,9 @@ bundles:
       sem o nome do plano, e a página do produto não o mostra como texto. Data de vigência da lista
       de preços não confirmada.
 
-  # Meli+ Chile (phase 3, PR F): the planes page is readable (bundles probe of 2026-10-23,
-  # "$ 2.990/mes" and "$ 6.990/mes"). Meli+ Argentina's pages show no ARS amounts, so it has no row.
+  # Meli+ Chile (phase 3, PR F): the same planes page as Colombia, readable and watched in auto
+  # mode. Meli+ Argentina has no row: its planes and hub pages show no ARS amounts to our fetch
+  # (bundles probe of 2026-10-23, run 39923218350).
   - bundle_id: meli_plus_cl_total
     provider_id: mercado_libre
     provider_type: marketplace
@@ -385,24 +386,32 @@ bundles:
     aliases: [Meli+ Total, Plan Total]
     official_url: https://www.mercadolibre.cl/suscripciones/melimas/planes
     price: {amount: "6990", currency: CLP, period: month, tax_included: true}
+    # Only Disney+ is on the plan's card. HBO Max, Paramount+ and ViX appear only in the page's
+    # subscriptions menu, and unlike Colombia there is no discount line for them (watch probe of
+    # 2026-10-23).
     components:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
-      - {service_id: hbo_max, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
-      - {service_id: netflix, inclusion: included}
-      - {service_id: apple_tv, inclusion: included}
-      - {service_id: vix, inclusion: included}
-      - {service_id: spotify, inclusion: included}
-      - {service_id: deezer, inclusion: included}
     requirements: {local_id: RUT, local_payment: unknown}
     evidence:
       - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: official}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39923392619).
+      anchors:
+        - fact: price
+          url: https://www.mercadolibre.cl/suscripciones/melimas/planes
+          text: |-
+            Plan Total
+            -
+            $ 6.990/mes
+        - fact: component
+          service_id: disney_plus
+          url: https://www.mercadolibre.cl/suscripciones/melimas/planes
+          text: Disney+ Estándar con anuncios.Disney+ Estándar con anuncios.
     last_verified: 2026-10-23
 
   - bundle_id: meli_plus_cl_esencial
@@ -419,11 +428,19 @@ bundles:
     evidence:
       - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: official}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39923392619).
+      anchors:
+        - fact: price
+          url: https://www.mercadolibre.cl/suscripciones/melimas/planes
+          text: |-
+            Plan Esencial
+            -
+            $ 2.990/mes
     last_verified: 2026-10-23
 
   - bundle_id: go3_lt_filmai_netflix

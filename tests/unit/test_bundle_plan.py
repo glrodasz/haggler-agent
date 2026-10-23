@@ -126,13 +126,15 @@ def test_only_auto_bundles_are_planned_automatically():
     assert sel.errors == []
 
 
-# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11), Meli+ MX/BR and
-# Apple One in 26 more countries (watch probes of 2026-10-23).
+# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11), Meli+ MX/BR/CL
+# and Apple One in 26 more countries (watch probes of 2026-10-23).
 REAL_AUTO = [
     "meli_plus_co_total",
     "meli_plus_co_esencial",
     "meli_plus_mx_mega",
     "meli_plus_br_mega",
+    "meli_plus_cl_total",
+    "meli_plus_cl_esencial",
     "apple_one_individual_se",
     "apple_one_family_se",
     "apple_one_individual_co",

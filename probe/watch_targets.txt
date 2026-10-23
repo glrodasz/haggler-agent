@@ -29,6 +29,10 @@ google_ai_pro_co
 meli_plus_mx_mega
 meli_plus_br_mega
 
+# Meli+ CL (watch probe of 2026-10-23); Meli+ AR shows no ARS amounts
+meli_plus_cl_total
+meli_plus_cl_esencial
+
 # Apple One in the other countries the daily job prices (watch probes of 2026-10-23)
 apple_one_individual_at
 apple_one_family_at
