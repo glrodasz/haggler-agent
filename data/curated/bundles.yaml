@@ -67,10 +67,9 @@ bundles:
     tier: total
     aliases: [Meli+ Total, Plan Total]
     official_url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
-    # The planes page (our probes of 2026-10-09 and 2026-10-11): "Precio actual con 9 por ciento
-    # de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes."
-    price: {amount: "21900", currency: COP, period: month, tax_included: true,
-            intro_amount: "19900", intro_months: 2}
+    # The planes page (watch probe of 2026-10-23): "Plan Total - $ 21.900/mes". The 2-month
+    # intro at 19 900 COP the probes of 2026-10-09 and 2026-10-11 read is gone since 2026-10-15.
+    price: {amount: "21900", currency: COP, period: month, tax_included: true}
     components:
       - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
       - {service_id: hbo_max, inclusion: discount_pct, value: "30"}
@@ -86,24 +85,16 @@ bundles:
       mode: auto
       pages:
         - {url: "https://www.mercadolibre.com.co/suscripciones/melimas/planes", kind: html}
-      # Copied from probe --mode watch (our fetch of the planes page, 2026-10-11). The card's
-      # screen-reader line states the regular price next to its intro; the benefit lines are
-      # printed twice, glued.
+      # Copied from probe --mode watch (our fetch of the planes page): the price anchor of
+      # 2026-10-23, the component anchors of 2026-10-11 (still verified on 2026-10-23). The
+      # benefit lines are printed twice, glued.
       anchors:
         - fact: price
           url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
           text: |-
             Plan Total
-            $ 21.900 9% OFF
-            $ 19.900/mes por 2 meses
-            Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes.
-        - fact: intro
-          url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
-          text: |-
-            Plan Total
-            $ 21.900 9% OFF
-            $ 19.900/mes por 2 meses
-            Precio actual con 9 por ciento de descuento: 19900 pesos por mes, por 2 meses. Precio anterior: $ 21.900 pesos por mes.
+            -
+            $ 21.900/mes
         - fact: component
           service_id: disney_plus
           url: https://www.mercadolibre.com.co/suscripciones/melimas/planes
@@ -136,17 +127,16 @@ bundles:
         notes_es: según uso propio; sin cita de los términos
         notes_en: based on own use; no quote from the terms
         notes_pt: segundo uso próprio; sem citação dos termos
-    last_verified: 2026-10-11
+    last_verified: 2026-10-23
     notes_es: >-
-      Precio regular 21.900 COP/mes; los 2 primeros meses, 19.900. El usuario lo usa desde Suecia
-      con tarjeta colombiana. HBO Max, Paramount+ y ViX aparecen como 30 % de descuento, no
-      incluidos.
+      Precio regular 21.900 COP/mes. El usuario lo usa desde Suecia con tarjeta colombiana. HBO
+      Max, Paramount+ y ViX aparecen como 30 % de descuento, no incluidos.
     notes_en: >-
-      Regular price 21,900 COP/month; the first 2 months, 19,900. The user uses it from Sweden with
-      a Colombian card. HBO Max, Paramount+ and ViX show up as a 30% discount, not included.
+      Regular price 21,900 COP/month. The user uses it from Sweden with a Colombian card. HBO Max,
+      Paramount+ and ViX show up as a 30% discount, not included.
     notes_pt: >-
-      Preço regular 21.900 COP/mês; nos 2 primeiros meses, 19.900. O usuário o usa da Suécia com
-      cartão colombiano. HBO Max, Paramount+ e ViX aparecem como 30% de desconto, não incluídos.
+      Preço regular 21.900 COP/mês. O usuário o usa da Suécia com cartão colombiano. HBO Max,
+      Paramount+ e ViX aparecem como 30% de desconto, não incluídos.
 
   - bundle_id: meli_plus_co_esencial
     provider_id: mercado_libre
@@ -211,12 +201,41 @@ bundles:
       - {service_id: apple_tv, plan_id: standard, inclusion: included}
     requirements: {local_id: CURP, local_payment: unknown}
     evidence:
+      - {url: "https://www.mercadolibre.com.mx/suscripciones/melimas/planes", kind: official}
       - {url: "https://expansion.mx/tecnologia/2026/02/24/mercado-libre-meli-mega-netflix-disney-hbo-max-apple-tv", kind: press}
     status: unverified
     valid_from: 2026-02-11
-    verified_by: search_summary
-    watch: {mode: "off"}
-    last_verified: 2026-10-08
+    verified_by: official_fetch
+    watch:
+      mode: auto
+      pages:
+        - {url: "https://www.mercadolibre.com.mx/suscripciones/melimas/planes", kind: html}
+      # Copied from probe --mode watch (2026-10-23). The page names the included services
+      # once, without their plans: the anchors confirm the service, not the plan.
+      anchors:
+        - fact: price
+          url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+          text: |-
+            Plan Mega
+            -
+            $ 399/mes
+        - fact: component
+          service_id: netflix
+          url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+          text: 'Entretenimento incluido: Disney+, Netflix, HBO Max, Apple TV'
+        - fact: component
+          service_id: disney_plus
+          url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+          text: 'Entretenimento incluido: Disney+, Netflix, HBO Max, Apple TV'
+        - fact: component
+          service_id: hbo_max
+          url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+          text: 'Entretenimento incluido: Disney+, Netflix, HBO Max, Apple TV'
+        - fact: component
+          service_id: apple_tv
+          url: https://www.mercadolibre.com.mx/suscripciones/melimas/planes
+          text: 'Entretenimento incluido: Disney+, Netflix, HBO Max, Apple TV'
+    last_verified: 2026-10-23
 
   - bundle_id: meli_plus_br_mega
     provider_id: mercado_libre
@@ -225,7 +244,8 @@ bundles:
     name: Meli+ Mega
     tier: mega
     aliases: [Meli+ Mega, Plano Mega]
-    official_url: https://www.mercadolivre.com.br/assinaturas/melimais
+    # The plans page (bundles probe, 2026-10-23); /assinaturas/melimais shows no amount.
+    official_url: https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos
     price: {amount: "74.90", currency: BRL, period: month, tax_included: true}
     components:
       - {service_id: netflix, plan_id: standard_with_ads, inclusion: included, ads: true}
@@ -234,12 +254,26 @@ bundles:
       - {service_id: apple_tv, plan_id: standard, inclusion: included}
     requirements: {local_id: CPF, local_payment: unknown}
     evidence:
+      - {url: "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos", kind: official}
       - {url: "https://tecnoblog.net/noticias/meli-mega-novo-plano-inclui-disney-netflix-hbo-max-e-apple-tv/", kind: press}
     status: unverified
     valid_from: 2025-10-07
     verified_by: search_summary
-    watch: {mode: "off"}
-    last_verified: 2026-10-08
+    watch:
+      mode: auto
+      pages:
+        - {url: "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos", kind: html}
+      # Copied from probe --mode watch (2026-10-23). Only the price: the page names Netflix,
+      # Disney+, HBO Max and Apple TV+ in its subscriptions menu, not in the plan's card, so
+      # the components stay as the press read them.
+      anchors:
+        - fact: price
+          url: https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos
+          text: |-
+            Plano Mega
+            A partir de
+            R$ 74,90 74,90 reais/mês
+    last_verified: 2026-10-23
 
   - bundle_id: telia_se_obegransad_streaming
     provider_id: telia_se
@@ -317,24 +351,34 @@ bundles:
     provider_id: go3
     provider_type: streaming_joint
     country: LT
-    name: Go3 Filmai + Netflix
+    name: Go3 Filmai + Netflix Premium
     tier: filmai_netflix
+    aliases: [Go3 Filmai + Netflix Premium, Go3 Film ai + Netflix Premium]
     official_url: https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf
-    price: {amount: "17.99", currency: EUR, period: month, tax_included: true}
+    # The price list (bundles probe, 2026-10-23): "Go3 Filmai + Netflix Premium 19,99".
+    price: {amount: "19.99", currency: EUR, period: month, tax_included: true}
     components:
-      - {service_id: netflix, inclusion: included}
+      - {service_id: netflix, plan_id: premium, inclusion: included}
     requirements: {local_line: none, local_payment: unknown}
     evidence:
       - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: official}
     status: unverified
     valid_from: 2026-09-04
+    # The values come from our probe of the price list, but without anchors they stay a
+    # search_summary (validate-catalog: official_fetch needs a price and component anchor).
     verified_by: search_summary
-    watch: {mode: "off"}
-    last_verified: 2026-10-08
-    notes_es: El plan de Netflix incluido no está claro; el contenido de Go3 se limita a los países bálticos.
-    notes_en: The included Netflix plan is unclear; Go3 content is limited to the Baltic countries.
+    # Manual: the price list prints its amounts without a currency sign ("19,99"), so the
+    # watcher cannot confirm a price in it (bundles and watch probes, 2026-10-23).
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://static3.go3.tv/file/go3/assets/legal/go3_lt_pricelist.pdf", kind: pdf}
+        - {url: "https://pagalba.go3.lt/en/article/go3-plans-and-pricing/", kind: html}
+    last_verified: 2026-10-23
+    notes_es: Incluye Netflix Premium según la lista de precios; el contenido de Go3 se limita a los países bálticos.
+    notes_en: Includes Netflix Premium according to the price list; Go3 content is limited to the Baltic countries.
     notes_pt: >-
-      O plano da Netflix incluído não está claro; o conteúdo do Go3 se limita aos países bálticos.
+      Inclui Netflix Premium segundo a lista de preços; o conteúdo do Go3 se limita aos países bálticos.
 
   - bundle_id: apple_one_individual_se
     provider_id: apple

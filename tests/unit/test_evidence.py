@@ -180,6 +180,41 @@ async def test_paraphrased_quote_is_not_verified():
     assert out.claims == [] and out.unverified[0].status == "quote_not_found"
 
 
+# Run 2026-10-19: the bundle agent sent Swedish letters and curly quotes as runs of "%".
+SV_PAGE = """<html><body><main><p>Personligt. 215 kr/mån. Spara 124 kr/mån** på
+favoritinnehåll och lagring i iCloud+.</p><p>Our Services are available for your use in your
+country or territory of residence (“Home Country”).</p></main></body></html>"""
+
+
+def test_restore_quote_reads_garbled_letters_from_the_page():
+    page = html_page(SV_PAGE)
+    assert (
+        page.restore_quote("Spara 124 kr/m%%n** p%%%% favoritinneh%%%%ll och lagring i iCloud+.")
+        == "Spara 124 kr/mån** på favoritinnehåll och lagring i iCloud+."
+    )
+    assert (
+        page.restore_quote("country or territory of residence (%%%%Home Country%%%%).")
+        == "country or territory of residence (“Home Country”)."
+    )
+    # Nothing to restore, or the rest of the quote is not on the page: None.
+    assert page.restore_quote("Spara 124 kr/mån på favoritinnehåll") is None
+    assert page.restore_quote("Spara 99 kr/m%%n** p%%%% favoritinneh%%%%ll") is None
+    # A real "%" (a discount) is not a garbled run.
+    assert page.restore_quote("30% OFF en HBO Max y Paramount+ en tu plan") is None
+
+
+async def test_garbled_quote_is_verified_with_the_page_text():
+    url = "https://www.apple.com/se/apple-one/"
+    out, _ = await verify(
+        [draft(quote="Spara 124 kr/m%%n** p%%%% favoritinneh%%%%ll och lagring", url=url)],
+        {url: SV_PAGE},
+    )
+    # Verified as a quote (the field is the service draft's; the page is press for netflix.com).
+    assert out.unverified == [] and out.claims[0].quote == (
+        "Spara 124 kr/mån** på favoritinnehåll och lagring"
+    )
+
+
 @pytest.mark.parametrize(
     ("error", "status"),
     [

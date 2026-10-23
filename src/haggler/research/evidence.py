@@ -50,7 +50,7 @@ import ipaddress
 import logging
 import re
 from collections.abc import Awaitable, Callable, Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlsplit, urlunsplit
@@ -289,6 +289,10 @@ def _locate(lines: list[str], needle: str) -> tuple[int, list[str]] | None:
     return first, lines[max(0, first - CONTEXT_BEFORE) : last + 1 + CONTEXT_AFTER]
 
 
+# A run of "%" where the model dropped non-ASCII letters (Page.restore_quote).
+GARBLED_RUN = re.compile(r"%{2,}")
+
+
 @dataclass
 class Page:
     url: str
@@ -345,6 +349,23 @@ class Page:
             return "nodes"
         if allow_embedded and contains_normalized("\n".join(self.embedded()), quote):
             return "embedded"
+        return None
+
+    def restore_quote(self, quote: str) -> str | None:
+        """The page's own text for a quote whose non-ASCII letters came back from the model as
+        runs of "%" ("m%%nad" for "månad", "%%%%Home Country%%%%" for curly quotes), or None.
+        Each run of two or more "%" stands for one or two non-ASCII characters; the rest must
+        match the page (case and whitespace aside), so a restored quote still proves itself."""
+        if not GARBLED_RUN.search(quote):
+            return None
+        parts = []
+        for piece in GARBLED_RUN.split(" ".join(quote.split())):
+            words = [re.escape(w) for w in piece.split(" ")]
+            parts.append(r"\s+".join(words))
+        pattern = re.compile(r"[^\x00-\x7f]{1,2}".join(parts), re.IGNORECASE)
+        for lines in (self.lines(), self.nodes()):
+            if hit := pattern.search("\n".join(lines)):
+                return " ".join(hit.group(0).split())
         return None
 
     def wall(self) -> str | None:
@@ -616,6 +637,12 @@ def _check(
     )
 
 
+def _restored(page: Page, valid: ValidDraft) -> ValidDraft:
+    """valid with its garbled quote replaced by the page's own text (Page.restore_quote)."""
+    fixed = page.restore_quote(valid.quote) if page.status is None else None
+    return replace(valid, quote=fixed) if fixed else valid
+
+
 async def verify_subject(
     drafts: list[ClaimDraft],
     *,
@@ -666,7 +693,10 @@ async def verify_subject(
             )
         else:
             page = await pages.get(valid.url)
-        status: CheckStatus = page.status or ("verified" if verifies(page) else "quote_not_found")
+            valid = _restored(page, valid)
+        status: CheckStatus = page.status or (
+            "verified" if verifies(page, valid=valid) else "quote_not_found"
+        )
         detail = page.detail
         if status == "quote_not_found" and page.contains(valid.quote):
             status = "invalid"
@@ -684,8 +714,10 @@ async def verify_subject(
             fallbacks += [("known_page", u) for u in known_pages or [] if u != valid.url]
             for kind_, uri in fallbacks:
                 alt = await pages.get(uri)
-                if alt.status is not None or not verifies(alt):
+                alt_valid = _restored(alt, valid)
+                if alt.status is not None or not verifies(alt, valid=alt_valid):
                     continue
+                valid = alt_valid
                 if kind_ == "grounding" and site_of(host_of(alt.final_url or "")) != site:
                     continue
                 page, status, via, detail = alt, "verified", kind_, alt.detail
