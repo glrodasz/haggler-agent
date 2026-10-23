@@ -18,8 +18,11 @@ Automatic choice (no explicit request):
 * Priority among the due ones, in order: the watcher found a change this run (changed /
   new_document; `watch` is this run's state, None when the watcher crashed); never researched;
   YAML values without an anchor (a price, base price or intro amount, an included component or
-  an end date that no watch anchor confirms); the offer or its intro ends soon; then the oldest
-  last success first (bundles.yaml order breaks ties).
+  an end date that no watch anchor confirms); the offer or its intro ends soon; a never
+  researched bundle with an observed price (one product in many countries, such as Apple One,
+  whose observed service is researched as a service already: a batch of new countries must not
+  hold back the bundles above for months); then the oldest last success first (bundles.yaml
+  order breaks ties).
 * Cap: `max_bundles` per run (HAGGLER_RESEARCH_MAX_BUNDLES); the rest are skipped with the reason.
 
 Explicit request (`haggler research run --bundles a,b`): exactly those bundles, ignoring
@@ -46,10 +49,11 @@ ENDING_SOON_DAYS = 14
 ENDING_WINDOW_DAYS = 14
 CHANGED_OUTCOMES = ("changed", "new_document")
 # Priority ranks (lower first).
-_CHANGED, _NEW, _UNANCHORED, _ENDING, _STALE = range(5)
+_CHANGED, _NEW, _UNANCHORED, _ENDING, _NEW_OBSERVED, _STALE = range(6)
 _PRIORITY_NOTES = {
     _CHANGED: "watch: {outcome}",
     _NEW: "never researched",
+    _NEW_OBSERVED: "never researched",
     _UNANCHORED: "values without an anchor: {missing}",
     _ENDING: "ends soon",
     _STALE: "oldest research",
@@ -159,7 +163,7 @@ def plan_bundles(
         if changed:
             rank = _CHANGED
         elif why == "new":
-            rank = _NEW
+            rank = _NEW_OBSERVED if b.price.source == "observed" else _NEW
         elif missing:
             rank = _UNANCHORED
         elif soon:
@@ -169,7 +173,7 @@ def plan_bundles(
         note = _PRIORITY_NOTES[rank].format(
             outcome=ws.outcome if ws else "", missing=", ".join(missing)
         )
-        reason = why if rank == _NEW else f"{why}; {note}"
+        reason = why if rank in (_NEW, _NEW_OBSERVED) else f"{why}; {note}"
         last = _last_success(key, facts, state) or date.min
         ranked.append(
             (

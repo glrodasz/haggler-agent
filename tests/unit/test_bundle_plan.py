@@ -144,10 +144,13 @@ REAL_AUTO = [
 def test_the_real_auto_bundles_are_the_ones_the_watch_probe_verified():
     # Never researched: every auto bundle is new; the cap keeps a run to 2 bundle subjects
     # (HAGGLER_RESEARCH_MAX_BUNDLES), after every Phase 2 subject (KIND_ORDER puts bundle last).
+    # The observed ones (Apple One) come after the rest.
     sel = plan(load_bundles(), max_bundles=10)
-    assert keys(sel) == [f"bundle:{i}" for i in REAL_AUTO]
+    observed = [i for i in REAL_AUTO if i.startswith("apple_one_")]
+    expected = [i for i in REAL_AUTO if i not in observed] + observed
+    assert keys(sel) == [f"bundle:{i}" for i in expected]
     assert {s.reason for s in sel.subjects} == {"new"}
-    assert keys(plan(load_bundles(), max_bundles=2)) == [f"bundle:{i}" for i in REAL_AUTO[:2]]
+    assert keys(plan(load_bundles(), max_bundles=2)) == [f"bundle:{i}" for i in expected[:2]]
 
 
 def test_priority_order_and_cap():
@@ -165,6 +168,15 @@ def test_priority_order_and_cap():
         no_anchor,
         row("never"),
         row("changed"),
+        row(
+            "never_observed",
+            price={
+                "amount": None,
+                "source": "observed",
+                "observed_service_id": "apple_one",
+                "observed_plan_id": "individual",
+            },
+        ),
     )
     facts, state = researched(
         ("stale_old", 90),
@@ -179,6 +191,7 @@ def test_priority_order_and_cap():
         "bundle:never",
         "bundle:unanchored",
         "bundle:ending",
+        "bundle:never_observed",
         "bundle:stale_old",
         "bundle:stale_recent",
     ]
@@ -186,6 +199,8 @@ def test_priority_order_and_cap():
     assert reasons["changed"] == "stale; watch: changed"
     assert reasons["unanchored"].startswith("stale; values without an anchor: price, disney_plus")
     assert reasons["ending"] == "stale; ends soon"
+    # A new country of an observed product (Apple One) waits behind the bundles above.
+    assert reasons["never_observed"] == "new"
     capped = plan(data, facts=facts, state=state, watch=watch(changed="changed"), max_bundles=2)
     assert keys(capped) == ["bundle:changed", "bundle:never"]
     assert capped.skipped["bundle:unanchored"] == "over the per-run bundle cap"
