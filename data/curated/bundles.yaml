@@ -26,6 +26,7 @@ providers:
       CO: [mercadolibre.com.co]
       MX: [mercadolibre.com.mx]
       BR: [mercadolivre.com.br]
+      CL: [mercadolibre.cl]
     automated_access: allowed
 
   - id: telia_se
@@ -372,6 +373,58 @@ bundles:
       é +130 kr. O preço é revisado à mão: a lista de preços em PDF dá 699 kr numa linha de tabela
       sem o nome do plano, e a página do produto não o mostra como texto. Data de vigência da lista
       de preços não confirmada.
+
+  # Meli+ Chile (phase 3, PR F): the planes page is readable (bundles probe of 2026-10-23,
+  # "$ 2.990/mes" and "$ 6.990/mes"). Meli+ Argentina's pages show no ARS amounts, so it has no row.
+  - bundle_id: meli_plus_cl_total
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CL
+    name: Meli+ Total
+    tier: total
+    aliases: [Meli+ Total, Plan Total]
+    official_url: https://www.mercadolibre.cl/suscripciones/melimas/planes
+    price: {amount: "6990", currency: CLP, period: month, tax_included: true}
+    components:
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+      - {service_id: netflix, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+      - {service_id: vix, inclusion: included}
+      - {service_id: spotify, inclusion: included}
+      - {service_id: deezer, inclusion: included}
+    requirements: {local_id: RUT, local_payment: unknown}
+    evidence:
+      - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: html}
+    last_verified: 2026-10-23
+
+  - bundle_id: meli_plus_cl_esencial
+    provider_id: mercado_libre
+    provider_type: marketplace
+    country: CL
+    name: Meli+ Esencial
+    tier: esencial
+    aliases: [Meli+ Esencial, Plan Esencial]
+    official_url: https://www.mercadolibre.cl/suscripciones/melimas/planes
+    price: {amount: "2990", currency: CLP, period: month, tax_included: true}
+    components: []
+    requirements: {local_id: RUT, local_payment: unknown}
+    evidence:
+      - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.mercadolibre.cl/suscripciones/melimas/planes", kind: html}
+    last_verified: 2026-10-23
 
   - bundle_id: go3_lt_filmai_netflix
     provider_id: go3
