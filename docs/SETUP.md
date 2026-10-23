@@ -131,7 +131,7 @@ Opcionales:
 | `HAGGLER_EXTRACT_MODEL` | variable | modelo Gemini del fallback LLM si el de por defecto (`gemini-3.1-flash-lite`) no está disponible en Vertex; `deploy-job.yml` lo pasa al job |
 | `HAGGLER_RESEARCH_MODEL` | variable | modelo Gemini con Google Search del job de investigación (por defecto `gemini-3-flash-preview`; el probe `mode=research` lista los disponibles) |
 | `HAGGLER_RESEARCH_MAX_BUNDLES` | variable | paquetes que el agente investiga por corrida (por defecto 2; §14); `deploy-job.yml` lo pasa al job de investigación si es un número entero |
-| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | variable | URL distintas que el vigilante de paquetes lee por corrida (por defecto 40; §14); igual que la anterior |
+| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | variable | URL distintas que el vigilante de paquetes lee por corrida (por defecto 80; §14); igual que la anterior |
 | `GEMINI_API_KEY` | **secreto** | clave de Google AI Studio, solo para `probe.yml` en `mode=full` y `mode=research` (sin ella el probe corre sin LLM) |
 
 Mientras falten variables, `deploy-job.yml` y el paso de sync de `publish.yml` no fallan: dejan un
@@ -595,7 +595,7 @@ plan_research → watch_bundles (vigilante, sin LLM) → research → verify_evi
   `--max-jobs 0` y con `--watch-only`. No usa el modelo ni Google Search.
 - **Qué lee**: las páginas (`watch.pages`) de cada paquete con `watch.mode: auto`, de un
   proveedor con `automated_access: allowed` y no vencido. Cada URL una vez por corrida, como
-  máximo `HAGGLER_BUNDLE_WATCH_MAX_PAGES` (40) URL distintas, con las reglas de acceso de todo el
+  máximo `HAGGLER_BUNDLE_WATCH_MAX_PAGES` (80) URL distintas, con las reglas de acceso de todo el
   agente: `robots.txt` en cada salto (también la página índice y el PDF), user agent
   identificable, al menos 3 s entre peticiones a un mismo host, sin proxies y sin evadir muros.
   Una página que no cabe en el tope queda `over_budget`, nunca se omite en silencio.
@@ -844,7 +844,7 @@ su reporte y no pisa `research/latest/`. En local (con red):
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `HAGGLER_RESEARCH_MAX_BUNDLES` | `2` | paquetes que el agente investiga por corrida, después de todo lo demás |
-| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | `40` | URL distintas que el vigilante lee por corrida (índices y PDF incluidos) |
+| `HAGGLER_BUNDLE_WATCH_MAX_PAGES` | `80` | URL distintas que el vigilante lee por corrida (índices y PDF incluidos) |
 
 En el job se fijan como variables de repositorio (§3): `deploy-job.yml` las pasa al job de
 investigación solo si existen y son números enteros. Un cambio hecho a mano con

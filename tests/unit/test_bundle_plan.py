@@ -126,17 +126,78 @@ def test_only_auto_bundles_are_planned_automatically():
     assert sel.errors == []
 
 
-# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11) and Meli+ MX/BR
-# (watch probe of 2026-10-23).
+# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11), Meli+ MX/BR/CL,
+# Telia Streaming Maxad, Apple One in 26 more countries and Claro tv+ Streamings (watch probes
+# of 2026-10-23).
 REAL_AUTO = [
     "meli_plus_co_total",
     "meli_plus_co_esencial",
     "meli_plus_mx_mega",
     "meli_plus_br_mega",
+    "telia_se_streaming_maxad",
+    "meli_plus_cl_total",
+    "meli_plus_cl_esencial",
     "apple_one_individual_se",
     "apple_one_family_se",
     "apple_one_individual_co",
     "apple_one_family_co",
+    "apple_one_individual_at",
+    "apple_one_family_at",
+    "apple_one_individual_be",
+    "apple_one_family_be",
+    "apple_one_individual_br",
+    "apple_one_family_br",
+    "apple_one_individual_ca",
+    "apple_one_family_ca",
+    "apple_one_premier_ca",
+    "apple_one_individual_ch",
+    "apple_one_family_ch",
+    "apple_one_individual_cl",
+    "apple_one_family_cl",
+    "apple_one_individual_cz",
+    "apple_one_family_cz",
+    "apple_one_individual_de",
+    "apple_one_family_de",
+    "apple_one_individual_dk",
+    "apple_one_family_dk",
+    "apple_one_individual_es",
+    "apple_one_family_es",
+    "apple_one_individual_fi",
+    "apple_one_family_fi",
+    "apple_one_individual_fr",
+    "apple_one_family_fr",
+    "apple_one_individual_gb",
+    "apple_one_family_gb",
+    "apple_one_premier_gb",
+    "apple_one_individual_hu",
+    "apple_one_family_hu",
+    "apple_one_individual_id",
+    "apple_one_family_id",
+    "apple_one_individual_ie",
+    "apple_one_family_ie",
+    "apple_one_premier_ie",
+    "apple_one_individual_it",
+    "apple_one_family_it",
+    "apple_one_individual_lu",
+    "apple_one_family_lu",
+    "apple_one_individual_mx",
+    "apple_one_family_mx",
+    "apple_one_individual_nl",
+    "apple_one_family_nl",
+    "apple_one_individual_no",
+    "apple_one_family_no",
+    "apple_one_individual_ph",
+    "apple_one_family_ph",
+    "apple_one_individual_pl",
+    "apple_one_individual_pt",
+    "apple_one_family_pt",
+    "apple_one_premier_pt",
+    "apple_one_individual_us",
+    "apple_one_family_us",
+    "apple_one_premier_us",
+    "apple_one_individual_vn",
+    "apple_one_family_vn",
+    "claro_tv_plus_streamings_br",
     "google_ai_pro_co",
 ]
 
@@ -144,10 +205,13 @@ REAL_AUTO = [
 def test_the_real_auto_bundles_are_the_ones_the_watch_probe_verified():
     # Never researched: every auto bundle is new; the cap keeps a run to 2 bundle subjects
     # (HAGGLER_RESEARCH_MAX_BUNDLES), after every Phase 2 subject (KIND_ORDER puts bundle last).
-    sel = plan(load_bundles(), max_bundles=10)
-    assert keys(sel) == [f"bundle:{i}" for i in REAL_AUTO]
+    # The observed ones (Apple One) come after the rest.
+    sel = plan(load_bundles(), max_bundles=len(REAL_AUTO))
+    observed = [i for i in REAL_AUTO if i.startswith("apple_one_")]
+    expected = [i for i in REAL_AUTO if i not in observed] + observed
+    assert keys(sel) == [f"bundle:{i}" for i in expected]
     assert {s.reason for s in sel.subjects} == {"new"}
-    assert keys(plan(load_bundles(), max_bundles=2)) == [f"bundle:{i}" for i in REAL_AUTO[:2]]
+    assert keys(plan(load_bundles(), max_bundles=2)) == [f"bundle:{i}" for i in expected[:2]]
 
 
 def test_priority_order_and_cap():
@@ -165,6 +229,15 @@ def test_priority_order_and_cap():
         no_anchor,
         row("never"),
         row("changed"),
+        row(
+            "never_observed",
+            price={
+                "amount": None,
+                "source": "observed",
+                "observed_service_id": "apple_one",
+                "observed_plan_id": "individual",
+            },
+        ),
     )
     facts, state = researched(
         ("stale_old", 90),
@@ -179,6 +252,7 @@ def test_priority_order_and_cap():
         "bundle:never",
         "bundle:unanchored",
         "bundle:ending",
+        "bundle:never_observed",
         "bundle:stale_old",
         "bundle:stale_recent",
     ]
@@ -186,6 +260,8 @@ def test_priority_order_and_cap():
     assert reasons["changed"] == "stale; watch: changed"
     assert reasons["unanchored"].startswith("stale; values without an anchor: price, disney_plus")
     assert reasons["ending"] == "stale; ends soon"
+    # A new country of an observed product (Apple One) waits behind the bundles above.
+    assert reasons["never_observed"] == "new"
     capped = plan(data, facts=facts, state=state, watch=watch(changed="changed"), max_bundles=2)
     assert keys(capped) == ["bundle:changed", "bundle:never"]
     assert capped.skipped["bundle:unanchored"] == "over the per-run bundle cap"

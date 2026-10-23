@@ -116,7 +116,7 @@ from haggler.text import normalize_for_match
 
 log = logging.getLogger(__name__)
 
-MAX_PAGES = 40
+MAX_PAGES = 80
 PAUSE_AFTER_UNREADABLE = 3
 PAUSE_DAYS = 28
 MAX_HINTS = 5
