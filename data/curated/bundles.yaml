@@ -77,6 +77,18 @@ providers:
       VN: [www.apple.com/vn/]
     automated_access: allowed
 
+  - id: telekom_de
+    name: Telekom
+    domains:
+      DE: [www.telekom.de]
+    automated_access: allowed
+
+  - id: claro_br
+    name: Claro
+    domains:
+      BR: [www.claro.com.br]
+    automated_access: allowed
+
   - id: google
     name: Google
     domains:
@@ -3394,6 +3406,59 @@ bundles:
           service_id: icloud_plus
           url: https://www.apple.com/vn/apple-one/
           text: Tiết kiệm 209.000đ/th** cho nội dung bạn yêu thích và dung lượng iCloud+.
+    last_verified: 2026-10-23
+
+  # Wave 3 (phase 3): pages readable to our fetch (bundles probe of 2026-10-23, run 39924603868).
+  - bundle_id: magenta_tv_smartstream_de
+    provider_id: telekom_de
+    provider_type: telco_fixed_tv
+    country: DE
+    name: MagentaTV SmartStream
+    tier: smartstream
+    aliases: [MagentaTV SmartStream, SmartStream]
+    official_url: https://www.telekom.de/magenta-tv/smartstream
+    price: {amount: "20", currency: EUR, period: month, tax_included: true, intro_amount: "0", intro_months: 6}
+    components:
+      - {service_id: netflix, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+    requirements: {local_line: none, local_payment: unknown}
+    evidence:
+      - {url: "https://www.telekom.de/magenta-tv/smartstream", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.telekom.de/magenta-tv/smartstream", kind: html}
+    last_verified: 2026-10-23
+
+  - bundle_id: claro_tv_plus_streamings_br
+    provider_id: claro_br
+    provider_type: telco_fixed_tv
+    country: BR
+    name: Claro tv+ Streamings
+    tier: streamings
+    aliases: [Claro tv+ Streamings, Streamings]
+    official_url: https://www.claro.com.br/claro-tv-mais
+    price: {amount: "79.90", currency: BRL, period: month, tax_included: true}
+    components:
+      - {service_id: netflix, inclusion: included}
+      - {service_id: hbo_max, inclusion: included}
+      - {service_id: apple_tv, inclusion: included}
+      - {service_id: disney_plus, inclusion: included}
+      - {service_id: paramount_plus, inclusion: included}
+    requirements: {local_payment: unknown}
+    evidence:
+      - {url: "https://www.claro.com.br/claro-tv-mais", kind: official}
+    status: unverified
+    verified_by: search_summary
+    watch:
+      mode: manual
+      pages:
+        - {url: "https://www.claro.com.br/claro-tv-mais", kind: html}
     last_verified: 2026-10-23
 
   - bundle_id: google_ai_pro_co
