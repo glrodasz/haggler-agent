@@ -1053,6 +1053,7 @@ OFFICIAL_FETCH = {
     "meli_plus_mx_mega",
     "meli_plus_cl_total",
     "meli_plus_cl_esencial",
+    "telia_se_streaming_maxad",
     "apple_one_individual_se",
     "apple_one_family_se",
     "apple_one_individual_co",
@@ -1076,6 +1077,13 @@ def test_wave_1_anchors_come_from_the_watch_probe() -> None:
     assert facts["meli_plus_br_mega"] == ["price"]
     assert facts["meli_plus_cl_total"] == ["component", "price"]
     assert facts["meli_plus_cl_esencial"] == ["price"]
+    assert facts["telia_se_streaming_maxad"] == ["component", "price"]
+    # Streaming Mer and Mest: a campaign price shown next to the struck-through regular one has
+    # no anchor, so they stay manual with component anchors only (watch probe of 2026-10-23).
+    for bundle_id in ("telia_se_streaming_mer", "telia_se_streaming_mest"):
+        assert facts[bundle_id] == ["component"]
+        assert rows[bundle_id].watch.mode == "manual"
+        assert rows[bundle_id].price.intro_months == 6
     assert facts["meli_plus_co_esencial"] == ["price"]
     assert facts["google_ai_pro_co"] == ["component", "price"]
     for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):

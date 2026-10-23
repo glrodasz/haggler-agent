@@ -374,8 +374,8 @@ bundles:
       sem o nome do plano, e a página do produto não o mostra como texto. Data de vigência da lista
       de preços não confirmada.
 
-  # Telia Play streaming packages (phase 3, PR G): sold without a Telia line and without a
-  # binding period. Product pages readable (bundles probe of 2026-10-23, run 39923901294).
+  # Telia streaming packages (phase 3, PR G): no binding period, and the product pages don't ask
+  # for a Telia line. Pages readable (bundles probe of 2026-10-23, run 39923901294).
   - bundle_id: telia_se_streaming_mer
     provider_id: telia_se
     provider_type: telco_fixed_tv
@@ -385,23 +385,40 @@ bundles:
     aliases: [Streaming Mer]
     official_url: https://www.telia.se/tv/streaming/streaming-mer
     price: {amount: "269", currency: SEK, period: month, tax_included: true, intro_amount: "199", intro_months: 6}
+    # The page shows the campaign price next to the struck-through regular one ("269 kr/mån
+    # Ordinarie pris: 269 kr/mån 199 kr/mån Pris: 199 kr/mån"; "Rabatten gäller i 6
+    # månader" on /tv/streaming), which the watcher reads as a comparison price, so the price has
+    # no anchor and the row stays manual until the campaign ends. 3 services.
     components:
-      - {service_id: netflix, inclusion: included}
-      - {service_id: hbo_max, inclusion: included}
-      - {service_id: disney_plus, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
-      - {service_id: apple_tv, inclusion: included}
-      - {service_id: youtube_premium, inclusion: included}
-      - {service_id: spotify, inclusion: included}
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
     evidence:
       - {url: "https://www.telia.se/tv/streaming/streaming-mer", kind: official}
     status: unverified
+    # No price anchor while the campaign runs (see above), so it stays a search_summary.
     verified_by: search_summary
     watch:
       mode: manual
       pages:
         - {url: "https://www.telia.se/tv/streaming/streaming-mer", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39924103086).
+      anchors:
+        - fact: component
+          service_id: netflix
+          url: https://www.telia.se/tv/streaming/streaming-mer
+          text: |-
+            3 streamingtjänster
+            Netflix Standard
+        - fact: component
+          service_id: hbo_max
+          url: https://www.telia.se/tv/streaming/streaming-mer
+          text: HBO Max Basic med reklam
+        - fact: component
+          service_id: disney_plus
+          url: https://www.telia.se/tv/streaming/streaming-mer
+          text: Disney+ Standard med reklam
     last_verified: 2026-10-23
 
   - bundle_id: telia_se_streaming_maxad
@@ -413,23 +430,41 @@ bundles:
     aliases: [Streaming Maxad]
     official_url: https://www.telia.se/tv/streaming/streaming-maxad
     price: {amount: "319", currency: SEK, period: month, tax_included: true}
+    # 4 services; the one the catalog lacks is not listed.
     components:
-      - {service_id: netflix, inclusion: included}
-      - {service_id: hbo_max, inclusion: included}
-      - {service_id: disney_plus, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
-      - {service_id: apple_tv, inclusion: included}
-      - {service_id: youtube_premium, inclusion: included}
-      - {service_id: spotify, inclusion: included}
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
     evidence:
       - {url: "https://www.telia.se/tv/streaming/streaming-maxad", kind: official}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.telia.se/tv/streaming/streaming-maxad", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39924103086).
+      anchors:
+        - fact: price
+          url: https://www.telia.se/tv/streaming/streaming-maxad
+          text: |-
+            Streaming Maxad
+            319 kr/mån Pris: 319 kr/mån
+        - fact: component
+          service_id: netflix
+          url: https://www.telia.se/tv/streaming/streaming-maxad
+          text: |-
+            4 streamingtjänster
+            Netflix Standard
+        - fact: component
+          service_id: hbo_max
+          url: https://www.telia.se/tv/streaming/streaming-maxad
+          text: HBO Max Basic med reklam
+        - fact: component
+          service_id: disney_plus
+          url: https://www.telia.se/tv/streaming/streaming-maxad
+          text: Disney+ Standard med reklam
     last_verified: 2026-10-23
 
   - bundle_id: telia_se_streaming_mest
@@ -441,23 +476,41 @@ bundles:
     aliases: [Streaming Mest]
     official_url: https://www.telia.se/tv/streaming/streaming-mest
     price: {amount: "499", currency: SEK, period: month, tax_included: true, intro_amount: "399", intro_months: 6}
+    # The page shows the campaign price next to the struck-through regular one ("499 kr/mån
+    # Ordinarie pris: 499 kr/mån 399 kr/mån Pris: 399 kr/mån"; "Rabatten gäller i 6
+    # månader" on /tv/streaming), which the watcher reads as a comparison price, so the price has
+    # no anchor and the row stays manual until the campaign ends. 6 services; the three the
+    # catalog lacks are not listed.
     components:
-      - {service_id: netflix, inclusion: included}
-      - {service_id: hbo_max, inclusion: included}
-      - {service_id: disney_plus, inclusion: included}
-      - {service_id: paramount_plus, inclusion: included}
-      - {service_id: apple_tv, inclusion: included}
-      - {service_id: youtube_premium, inclusion: included}
-      - {service_id: spotify, inclusion: included}
+      - {service_id: netflix, plan_id: standard, inclusion: included}
+      - {service_id: hbo_max, plan_id: basic_with_ads, inclusion: included, ads: true}
+      - {service_id: disney_plus, plan_id: standard_with_ads, inclusion: included, ads: true}
     requirements: {local_id: personnummer, local_line: none, local_payment: unknown}
     evidence:
       - {url: "https://www.telia.se/tv/streaming/streaming-mest", kind: official}
     status: unverified
+    # No price anchor while the campaign runs (see above), so it stays a search_summary.
     verified_by: search_summary
     watch:
       mode: manual
       pages:
         - {url: "https://www.telia.se/tv/streaming/streaming-mest", kind: html}
+      # Copied from probe --mode watch (2026-10-23, run 39924103086).
+      anchors:
+        - fact: component
+          service_id: netflix
+          url: https://www.telia.se/tv/streaming/streaming-mest
+          text: |-
+            6 streamingtjänster
+            Netflix Standard
+        - fact: component
+          service_id: hbo_max
+          url: https://www.telia.se/tv/streaming/streaming-mest
+          text: HBO Max Basic med reklam
+        - fact: component
+          service_id: disney_plus
+          url: https://www.telia.se/tv/streaming/streaming-mest
+          text: Disney+ Standard med reklam
     last_verified: 2026-10-23
 
   # Meli+ Chile (phase 3, PR F): the same planes page as Colombia, readable and watched in auto
