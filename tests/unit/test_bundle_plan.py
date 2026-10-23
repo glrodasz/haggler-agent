@@ -126,8 +126,8 @@ def test_only_auto_bundles_are_planned_automatically():
     assert sel.errors == []
 
 
-# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11) and Meli+ MX/BR
-# (watch probe of 2026-10-23).
+# The bundles in auto mode, in file order: wave 1 (milestone H10, 2026-10-11), Meli+ MX/BR and
+# Apple One in 26 more countries (watch probes of 2026-10-23).
 REAL_AUTO = [
     "meli_plus_co_total",
     "meli_plus_co_esencial",
@@ -137,6 +137,62 @@ REAL_AUTO = [
     "apple_one_family_se",
     "apple_one_individual_co",
     "apple_one_family_co",
+    "apple_one_individual_at",
+    "apple_one_family_at",
+    "apple_one_individual_be",
+    "apple_one_family_be",
+    "apple_one_individual_br",
+    "apple_one_family_br",
+    "apple_one_individual_ca",
+    "apple_one_family_ca",
+    "apple_one_premier_ca",
+    "apple_one_individual_ch",
+    "apple_one_family_ch",
+    "apple_one_individual_cl",
+    "apple_one_family_cl",
+    "apple_one_individual_cz",
+    "apple_one_family_cz",
+    "apple_one_individual_de",
+    "apple_one_family_de",
+    "apple_one_individual_dk",
+    "apple_one_family_dk",
+    "apple_one_individual_es",
+    "apple_one_family_es",
+    "apple_one_individual_fi",
+    "apple_one_family_fi",
+    "apple_one_individual_fr",
+    "apple_one_family_fr",
+    "apple_one_individual_gb",
+    "apple_one_family_gb",
+    "apple_one_premier_gb",
+    "apple_one_individual_hu",
+    "apple_one_family_hu",
+    "apple_one_individual_id",
+    "apple_one_family_id",
+    "apple_one_individual_ie",
+    "apple_one_family_ie",
+    "apple_one_premier_ie",
+    "apple_one_individual_it",
+    "apple_one_family_it",
+    "apple_one_individual_lu",
+    "apple_one_family_lu",
+    "apple_one_individual_mx",
+    "apple_one_family_mx",
+    "apple_one_individual_nl",
+    "apple_one_family_nl",
+    "apple_one_individual_no",
+    "apple_one_family_no",
+    "apple_one_individual_ph",
+    "apple_one_family_ph",
+    "apple_one_individual_pl",
+    "apple_one_individual_pt",
+    "apple_one_family_pt",
+    "apple_one_premier_pt",
+    "apple_one_individual_us",
+    "apple_one_family_us",
+    "apple_one_premier_us",
+    "apple_one_individual_vn",
+    "apple_one_family_vn",
     "google_ai_pro_co",
 ]
 
@@ -145,7 +201,7 @@ def test_the_real_auto_bundles_are_the_ones_the_watch_probe_verified():
     # Never researched: every auto bundle is new; the cap keeps a run to 2 bundle subjects
     # (HAGGLER_RESEARCH_MAX_BUNDLES), after every Phase 2 subject (KIND_ORDER puts bundle last).
     # The observed ones (Apple One) come after the rest.
-    sel = plan(load_bundles(), max_bundles=10)
+    sel = plan(load_bundles(), max_bundles=len(REAL_AUTO))
     observed = [i for i in REAL_AUTO if i.startswith("apple_one_")]
     expected = [i for i in REAL_AUTO if i not in observed] + observed
     assert keys(sel) == [f"bundle:{i}" for i in expected]

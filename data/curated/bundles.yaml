@@ -614,6 +614,9 @@ bundles:
   # (the apple_one App Store rows). The price is that daily row; the watcher confirms the plan's
   # components on apple.com. Premier also includes Apple News+ and Apple Fitness+, which the
   # catalog does not list as services.
+  # Anchors copied from probe --mode watch (2026-10-23, runs 39922023200 and 39922367401),
+  # preferring the shortest text without figures. As for SE and CO, apple.com names
+  # each service once for every plan, so an anchor confirms the service, not the plan.
   - bundle_id: apple_one_individual_at
     provider_id: apple
     provider_type: platform
@@ -630,11 +633,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/at/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/at/apple-one/
+          text: Spare 10,01 €/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_at
@@ -653,11 +679,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/at/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/at/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/at/apple-one/
+          text: Spare 10,01 €/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_be
@@ -676,11 +725,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/befr/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/befr/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_be
@@ -699,11 +771,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/befr/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/befr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/befr/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_br
@@ -722,11 +817,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/br/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/br/apple-one/
+          text: |-
+            Saiba mais
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/br/apple-one/
+          text: Depois de contratar um plano, você pode usar suas assinaturas do Apple One em qualquer lugar em que elas estejam disponíveis, como a internet (Apple Music e Apple TV), Apple TV e determinadas Smart TVs (Apple Music, Apple TV e Apple Fitness+), Apple Watch (Apple Fitness+), Android (Apple Music) e outros aparelhos de streaming de terceiros (Apple Music e Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/br/apple-one/
+          text: |-
+            Saiba mais
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/br/apple-one/
+          text: Economize R$ 31,70 por mês** em seu conteúdo favorito e armazenamento do iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_br
@@ -745,11 +861,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/br/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/br/apple-one/
+          text: |-
+            Saiba mais
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/br/apple-one/
+          text: |-
+            Até 2 TB para armazenar de fotos e vídeos a backups de aparelhos e vídeos de segurança residencial, tudo sincronizado em todos os seus aparelhos. Além de recursos poderosos para proteger sua privacidade.
+            Saiba mais
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/br/apple-one/
+          text: |-
+            Saiba mais
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/br/apple-one/
+          text: Economize R$ 82,60 por mês** no armazenamento máximo do iCloud+ e cinco assinaturas Apple.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_ca
@@ -768,11 +908,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ca/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ca/apple-one/
+          text: Once you subscribe, you can enjoy your Apple One subscriptions anywhere they’re available, including the web (Apple Music and Apple TV), Apple TV and select smart TVs (Apple Music, Apple TV and Apple Fitness+), Apple Watch (Apple Fitness+), Android devices (Apple Music) and other third-party streaming devices (Apple Music and Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ca/apple-one/
+          text: Save $14/mo.** on your favourite content and iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_ca
@@ -791,11 +952,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ca/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ca/apple-one/
+          text: Save $17/mo.** on even more iCloud+ storage and content for the whole family.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_premier_ca
@@ -814,11 +999,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 2tb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ca/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ca/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ca/apple-one/
+          text: Save $40/mo.** on the most iCloud+ storage and all six Apple subscriptions.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_ch
@@ -837,11 +1046,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/chde/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/chde/apple-one/
+          text: Spare CHF 10.80/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_ch
@@ -860,11 +1092,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/chde/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/chde/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/chde/apple-one/
+          text: Spare CHF 10.80/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_cl
@@ -883,11 +1138,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/cl/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/cl/apple-one/
+          text: Ahorra $7.570 al mes** en tu contenido favorito y almacenamiento en iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_cl
@@ -906,11 +1184,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/cl/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/cl/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/cl/apple-one/
+          text: Ahorra $10.570 al mes** en contenido para toda la familia y almacenamiento adicional en iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_cz
@@ -929,11 +1230,36 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/cz/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            Sleduj seriály, celovečerní filmy, dětské pořady a další produkci nejnápaditějších osobností televize a filmu. Nové Apple Originals přibývají každý měsíc.
+            Více
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/cz/apple-one/
+          text: Předplacené služby Apple One si můžeš užívat na všech platformách, kde jsou dostupné, včetně webu (Apple Music a Apple TV), Apple TV a vybraných chytrých televizí (Apple Music a Apple TV), zařízení s Androidem (Apple Music) a jiných streamovacích zařízení třetích stran (Apple Music a Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            katalogu vážné hudby na světě. A bez reklam.
+            Více
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            Celý svět zábavy, jakou svět neviděl.
+            iCloud+
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_cz
@@ -952,11 +1278,36 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/cz/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            Sleduj seriály, celovečerní filmy, dětské pořady a další produkci nejnápaditějších osobností televize a filmu. Nové Apple Originals přibývají každý měsíc.
+            Více
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/cz/apple-one/
+          text: Předplacené služby Apple One si můžeš užívat na všech platformách, kde jsou dostupné, včetně webu (Apple Music a Apple TV), Apple TV a vybraných chytrých televizí (Apple Music a Apple TV), zařízení s Androidem (Apple Music) a jiných streamovacích zařízení třetích stran (Apple Music a Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            katalogu vážné hudby na světě. A bez reklam.
+            Více
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/cz/apple-one/
+          text: |-
+            Celý svět zábavy, jakou svět neviděl.
+            iCloud+
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_de
@@ -975,11 +1326,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/de/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/de/apple-one/
+          text: Spare 10,01 €/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_de
@@ -998,11 +1372,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/de/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/de/apple-one/
+          text: |-
+            Weitere Infos
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/de/apple-one/
+          text: Spare 10,01 €/Monat** bei deinen Lieblingsinhalten und bei iCloud+ Speicher.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_dk
@@ -1021,11 +1418,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/dk/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/dk/apple-one/
+          text: |-
+            Læs mere
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/dk/apple-one/
+          text: Når du har oprettet et abonnement, kan du få adgang til dine Apple One-tjenester på alle de platforme, hvor de er tilgængelige, heriblandt på nettet (Apple Music og Apple TV), udvalgte Smart TV-modeller (Apple Music og Apple TV), Android (Apple Music) og andre tredjepartsenheder til streaming (Apple Music og Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/dk/apple-one/
+          text: |-
+            Læs mere
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/dk/apple-one/
+          text: Spar 87 kr./måned** på dit yndlingsindhold og lagringsplads med iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_dk
@@ -1044,11 +1462,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/dk/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/dk/apple-one/
+          text: |-
+            Læs mere
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/dk/apple-one/
+          text: Når du har oprettet et abonnement, kan du få adgang til dine Apple One-tjenester på alle de platforme, hvor de er tilgængelige, heriblandt på nettet (Apple Music og Apple TV), udvalgte Smart TV-modeller (Apple Music og Apple TV), Android (Apple Music) og andre tredjepartsenheder til streaming (Apple Music og Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/dk/apple-one/
+          text: |-
+            Læs mere
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/dk/apple-one/
+          text: Spar 87 kr./måned** på dit yndlingsindhold og lagringsplads med iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_es
@@ -1067,11 +1506,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/es/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/es/apple-one/
+          text: Apple One agrupa hasta cinco servicios de Apple en una sola suscripción mensual más económica, incluidos 2 TB de almacenamiento en iCloud+. Además, con el plan Familiar o Premium pueden unirse otras cinco personas, cada una con acceso privado en sus dispositivos. Nunca había sido tan fácil disfrutar de tanto por tan poco.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_es
@@ -1090,11 +1552,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/es/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/es/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/es/apple-one/
+          text: Apple One agrupa hasta cinco servicios de Apple en una sola suscripción mensual más económica, incluidos 2 TB de almacenamiento en iCloud+. Además, con el plan Familiar o Premium pueden unirse otras cinco personas, cada una con acceso privado en sus dispositivos. Nunca había sido tan fácil disfrutar de tanto por tan poco.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_fi
@@ -1113,11 +1598,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/fi/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/fi/apple-one/
+          text: Säästä 10,01 €/kk** suosikkisisällössäsi ja iCloud+-tallennustilassa.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_fi
@@ -1136,11 +1644,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/fi/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/fi/apple-one/
+          text: |-
+            Lisätietoja
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/fi/apple-one/
+          text: Säästä 10,01 €/kk** suosikkisisällössäsi ja iCloud+-tallennustilassa.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_fr
@@ -1159,11 +1690,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/fr/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/fr/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_fr
@@ -1182,11 +1736,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/fr/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/fr/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/fr/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_gb
@@ -1205,11 +1782,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/uk/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/uk/apple-one/
+          text: Once you subscribe, you can enjoy your Apple One subscriptions anywhere they’re available, including the web (Apple Music and Apple TV), Apple TV and selected smart TVs (Apple Music, Apple TV and Apple Fitness+), Apple Watch (Apple Fitness), Android devices (Apple Music) and other third-party streaming devices (Apple Music and Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/uk/apple-one/
+          text: Save £11.01/mo.** on your favourite content and iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_gb
@@ -1228,11 +1826,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/uk/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/uk/apple-one/
+          text: Save £15.01/mo.** on even more iCloud+ storage and content for the whole family.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_premier_gb
@@ -1251,11 +1873,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 2tb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/uk/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/uk/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/uk/apple-one/
+          text: Save £31.99/mo.** on the most iCloud+ storage and all six Apple subscriptions.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_hu
@@ -1274,11 +1920,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/hu/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/hu/apple-one/
+          text: |-
+            Bővebben
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/hu/apple-one/
+          text: Az Apple One előfizetőjeként a csomagban foglalt előfizetéseidet minden olyan platformon eléred, ahol az Apple One-on kívül is használhatók – így a weben (Apple Music és Apple TV), Apple TV-n és egyes okostévéken (Apple Music és Apple TV), androidos eszközökön (Apple Music), illetve külső gyártók egyéb streamelőeszközein (Apple Music és Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/hu/apple-one/
+          text: |-
+            Bővebben
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/hu/apple-one/
+          text: kedvenc tartalmaid és iCloud+-tárhelyed árából.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_hu
@@ -1297,11 +1964,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/hu/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/hu/apple-one/
+          text: |-
+            Bővebben
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/hu/apple-one/
+          text: Az Apple One előfizetőjeként a csomagban foglalt előfizetéseidet minden olyan platformon eléred, ahol az Apple One-on kívül is használhatók – így a weben (Apple Music és Apple TV), Apple TV-n és egyes okostévéken (Apple Music és Apple TV), androidos eszközökön (Apple Music), illetve külső gyártók egyéb streamelőeszközein (Apple Music és Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/hu/apple-one/
+          text: |-
+            Bővebben
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/hu/apple-one/
+          text: kedvenc tartalmaid és iCloud+-tárhelyed árából.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_id
@@ -1320,11 +2008,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/id/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/id/apple-one/
+          text: Hemat Rp 123.000/bulan.** untuk konten favorit Anda dan penyimpanan iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_id
@@ -1343,11 +2054,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/id/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/id/apple-one/
+          text: |-
+            Selengkapnya
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/id/apple-one/
+          text: Hemat Rp 123.000/bulan.** untuk konten favorit Anda dan penyimpanan iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_ie
@@ -1366,11 +2100,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ie/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ie/apple-one/
+          text: Once you subscribe, you can enjoy your Apple One subscriptions anywhere they’re available, including the web (Apple Music and Apple TV), Apple TV and selected smart TVs (Apple Music, Apple TV and Apple Fitness+), Apple Watch (Apple Fitness+), Android devices (Apple Music) and other third-party streaming devices (Apple Music and Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ie/apple-one/
+          text: Save €10.01/mo.** on your favourite content and iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_ie
@@ -1389,11 +2144,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ie/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ie/apple-one/
+          text: Save €12.01/mo.** on even more iCloud+ storage and content for the whole family.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_premier_ie
@@ -1412,11 +2191,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 2tb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ie/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ie/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ie/apple-one/
+          text: Save €20/mo.** on the most iCloud+ storage and all five Apple subscriptions.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_it
@@ -1435,11 +2238,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/it/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/it/apple-one/
+          text: Risparmi € 10.01 al mese** sui tuoi contenuti preferiti e sullo spazio di archiviazione iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_it
@@ -1458,11 +2284,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/it/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/it/apple-one/
+          text: |-
+            Scopri di più
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/it/apple-one/
+          text: Risparmi € 22 al mese,** con il massimo dello spazio di archiviazione iCloud+ e cinque abbonamenti Apple.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_lu
@@ -1481,11 +2330,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/lu/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/lu/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_lu
@@ -1504,11 +2376,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/lu/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/lu/apple-one/
+          text: |-
+            En savoir plus
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/lu/apple-one/
+          text: Économisez 10,01 €/mois** sur vos contenus favoris et votre stockage iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_mx
@@ -1527,11 +2422,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/mx/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/mx/apple-one/
+          text: Ahorra $175 al mes** en tu contenido favorito y almacenamiento en iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_mx
@@ -1550,11 +2468,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/mx/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/mx/apple-one/
+          text: |-
+            Más información
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/mx/apple-one/
+          text: Ahorra $227 al mes** en contenido para toda la familia y almacenamiento adicional en iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_nl
@@ -1573,11 +2514,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/nl/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/nl/apple-one/
+          text: Bespaar € 10,01/mnd.** op je favoriete content en je iCloud+-opslag.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_nl
@@ -1596,11 +2560,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/nl/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/nl/apple-one/
+          text: |-
+            Meer informatie
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/nl/apple-one/
+          text: Bespaar € 10,01/mnd.** op je favoriete content en je iCloud+-opslag.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_no
@@ -1619,11 +2606,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/no/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/no/apple-one/
+          text: |-
+            Se serier, spillefilmer, underholdning for barn og mer fra de mest kreative skaperne av TV og film – med nye Apple Originals hver måned.
+            Mer
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/no/apple-one/
+          text: Når du abonnerer på Apple One, kan du bruke tjenesten på alle plattformer tjenestene er tilgjengelig på, inkludert på internett (Apple Music og Apple TV), utvalgte smart-TV-er (Apple Music og Apple TV), Android (Apple Music) og andre tredjepartsenheter for strømming (Apple Music og Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/no/apple-one/
+          text: |-
+            Strøm eller last ned mer enn 100 millioner sanger og 30 000 spillelister. Opplev romtilpasset lyd, direktesendt Apple Music Radio og verdens største samling av klassisk musikk, helt uten reklame.
+            Mer
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/no/apple-one/
+          text: Spar kr 140 per mnd.** på innhold og lagringsplass i iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_no
@@ -1642,11 +2652,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/no/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/no/apple-one/
+          text: |-
+            Se serier, spillefilmer, underholdning for barn og mer fra de mest kreative skaperne av TV og film – med nye Apple Originals hver måned.
+            Mer
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/no/apple-one/
+          text: Når du abonnerer på Apple One, kan du bruke tjenesten på alle plattformer tjenestene er tilgjengelig på, inkludert på internett (Apple Music og Apple TV), utvalgte smart-TV-er (Apple Music og Apple TV), Android (Apple Music) og andre tredjepartsenheter for strømming (Apple Music og Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/no/apple-one/
+          text: |-
+            Strøm eller last ned mer enn 100 millioner sanger og 30 000 spillelister. Opplev romtilpasset lyd, direktesendt Apple Music Radio og verdens største samling av klassisk musikk, helt uten reklame.
+            Mer
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/no/apple-one/
+          text: Spar kr 140 per mnd.** på innhold og lagringsplass i iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_ph
@@ -1665,11 +2698,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ph/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ph/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ph/apple-one/
+          text: Once you subscribe, you can enjoy your Apple One subscriptions anywhere they’re available, including the web (Apple Music and Apple TV), Apple TV devices and select smart TVs (Apple Music and Apple TV), Android devices (Apple Music), and other third-party streaming devices (Apple Music and Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ph/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ph/apple-one/
+          text: Save ₱467/mo.** on your favorite content and iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_ph
@@ -1688,11 +2742,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/ph/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/ph/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/ph/apple-one/
+          text: |-
+            Up to 200GB of storage for everything from photos and files to videos and device backups, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/ph/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/ph/apple-one/
+          text: Save ₱587/mo.** on even more iCloud+ storage and content for the whole family.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_pl
@@ -1711,11 +2789,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/pl/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/pl/apple-one/
+          text: |-
+            Dowiedz się więcej
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/pl/apple-one/
+          text: |-
+            Dowiedz się więcej
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/pl/apple-one/
+          text: |-
+            Dowiedz się więcej
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/pl/apple-one/
+          text: do ulubionych treści i miejsca w iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_pt
@@ -1734,11 +2835,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/pt/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/pt/apple-one/
+          text: Após ativar a assinatura, pode usar as suas assinaturas Apple One onde quer que estejam disponíveis, incluindo a internet (Apple Music e Apple TV), Apple TV e algumas Smart TV (Apple Music, Apple TV e Apple Fitness+), Apple Watch (Apple Fitness+), dispositivos Android (Apple Music) ou outros dispositivos de streaming de terceiros (Apple Music e Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/pt/apple-one/
+          text: Poupe 10.01 €/mês** nos seus conteúdos preferidos e em armazenamento iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_pt
@@ -1757,11 +2879,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/pt/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Até 2 TB de armazenamento para guardar tudo: fotografias, vídeos, cópias de segurança de dispositivos, imagens de videovigilância da sua casa, tudo sincronizado em todos os dispositivos. E ferramentas avançadas para proteger a sua privacidade.
+            Saiba mais
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/pt/apple-one/
+          text: Poupe 19 €/mês** no máximo de armazenamento iCloud+ e cinco assinaturas Apple.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_premier_pt
@@ -1780,11 +2926,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 2tb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/pt/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Até 2 TB de armazenamento para guardar tudo: fotografias, vídeos, cópias de segurança de dispositivos, imagens de videovigilância da sua casa, tudo sincronizado em todos os dispositivos. E ferramentas avançadas para proteger a sua privacidade.
+            Saiba mais
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/pt/apple-one/
+          text: |-
+            Saiba mais
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/pt/apple-one/
+          text: Poupe 19 €/mês** no máximo de armazenamento iCloud+ e cinco assinaturas Apple.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_us
@@ -1803,11 +2973,32 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/apple-one/
+          text: Once you subscribe, you can enjoy your Apple One subscriptions anywhere they’re available, including the web (Apple Music and Apple TV), Apple TV devices and select smart TVs (Apple Music, Apple TV, and Apple Fitness+), Apple Watch (Apple Fitness+), Android devices (Apple Music), and other third-party streaming devices (Apple Music and Apple TV).
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/apple-one/
+          text: Save 31%** on your favorite content and iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_us
@@ -1826,11 +3017,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/apple-one/
+          text: Save $17/mo.** on even more iCloud+ storage and content for the whole family.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_premier_us
@@ -1849,11 +3064,35 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 2tb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Up to 2TB of storage for everything from photos and videos to device backups and home security videos, synced across all your devices. Plus powerful features to protect your privacy.
+            Learn more
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/apple-one/
+          text: |-
+            Learn more
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/apple-one/
+          text: Save 43%** on all six Apple subscriptions and 2TB of iCloud+ storage.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_individual_vn
@@ -1872,11 +3111,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 50gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/vn/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/vn/apple-one/
+          text: Tiết kiệm 209.000đ/th** cho nội dung bạn yêu thích và dung lượng iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: apple_one_family_vn
@@ -1895,11 +3157,34 @@ bundles:
       - {service_id: apple_arcade, plan_id: standard, inclusion: included}
       - {service_id: icloud_plus, plan_id: 200gb, inclusion: included}
     status: unverified
-    verified_by: search_summary
+    verified_by: official_fetch
     watch:
-      mode: manual
+      mode: auto
       pages:
         - {url: "https://www.apple.com/vn/apple-one/", kind: html}
+      anchors:
+        - fact: component
+          service_id: apple_music
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple Music
+        - fact: component
+          service_id: apple_tv
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple TV
+        - fact: component
+          service_id: apple_arcade
+          url: https://www.apple.com/vn/apple-one/
+          text: |-
+            Tìm hiểu thêm
+            Apple Arcade
+        - fact: component
+          service_id: icloud_plus
+          url: https://www.apple.com/vn/apple-one/
+          text: Tiết kiệm 209.000đ/th** cho nội dung bạn yêu thích và dung lượng iCloud+.
     last_verified: 2026-10-23
 
   - bundle_id: google_ai_pro_co
