@@ -35,7 +35,8 @@ Rules (all mandatory):
    the vocabulary below, the exact https URL of the page itself (its own address, never a
    vertexaisearch.cloud.google.com link), and `quote`: a CONTIGUOUS verbatim
    excerpt of that page (20-300 characters, original language, copied character for character,
-   no ellipsis, no paraphrase, no translation) that states the fact.
+   no ellipsis, no paraphrase, no translation; letters such as å, ö, ñ, ã and typographic
+   quotes stay as they are, never replaced by "%" or other placeholders) that states the fact.
 3. Never infer, generalize from other countries, or use memory without a source. If sources
    disagree, report each with its own quote.
 4. Never describe or suggest VPNs, proxies, fake addresses, false declarations or any way to
