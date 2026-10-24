@@ -2,169 +2,62 @@
   {
     "current": {
       "adapter_id": "appstore_iap",
-      "amount": "49.99",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "2530bf1125391327",
-      "country": "UY",
-      "currency": "USD",
-      "evidence_snippet": "Google AI Pro (10 TB) — USD 49.99",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "49.99",
-      "monthly_eur": "44.5742",
-      "obs_key": "google_one:ai_pro:UY:ios_iap:month",
-      "observed_at": "2026-10-21T02:43:21.068970Z",
-      "plan_id": "ai_pro",
-      "plan_label_raw": "Google AI Pro (10 TB)",
-      "reused": false,
-      "service_id": "google_one",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/uy/app/google-one/id1451784328",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "google_one:ai_pro:UY:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "289",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "91b8870f142e5133",
-      "country": "IN",
-      "currency": "INR",
-      "evidence_snippet": "YouTube Premium Two-person — ₹ 289",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "289.00",
-      "monthly_eur": "2.7147",
-      "obs_key": "youtube_premium:duo:IN:ios_iap:month",
-      "observed_at": "2026-10-21T02:43:21.070015Z",
-      "plan_id": "duo",
-      "plan_label_raw": "YouTube Premium Two-person",
-      "reused": false,
-      "service_id": "youtube_premium",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "youtube_premium:duo:IN:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "10.49",
+      "amount": "9.99",
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.9,
-      "content_hash": "a83f8ac640e676fe",
-      "country": "IE",
-      "currency": "EUR",
-      "evidence_snippet": "YouTube Premium €10.49",
+      "content_hash": "9b0f777ca58e0f4a",
+      "country": "AR",
+      "currency": "USD",
+      "evidence_snippet": "Super Duolingo USD 9.99",
       "extraction": "parser",
       "flags": [
         "iap_maybe_marked_up",
         "iap_duplicate",
         "big_change"
       ],
-      "monthly_equiv": "10.49",
-      "monthly_eur": "10.4900",
-      "obs_key": "youtube_premium:individual:IE:ios_iap:month",
-      "observed_at": "2026-10-21T02:18:30.945972Z",
-      "plan_id": "individual",
-      "plan_label_raw": "YouTube Premium",
+      "monthly_equiv": "9.99",
+      "monthly_eur": "8.9252",
+      "obs_key": "duolingo:super:AR:ios_iap:month",
+      "observed_at": "2026-10-24T02:38:37.664044Z",
+      "plan_id": "super",
+      "plan_label_raw": "Super Duolingo",
       "reused": false,
-      "service_id": "youtube_premium",
+      "service_id": "duolingo",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/ie/app/youtube/id544007664",
+      "source_url": "https://apps.apple.com/ar/app/duolingo-aprende-idiomas/id570060128",
       "status": "quarantined",
-      "vat_included": true
+      "vat_included": null
     },
-    "obs_key": "youtube_premium:individual:IE:ios_iap:month",
+    "obs_key": "duolingo:super:AR:ios_iap:month",
     "previous": {
       "adapter_id": "appstore_iap",
-      "amount": "20.99",
+      "amount": "5.49",
       "billing_period": "month",
       "channel": "ios_iap",
       "confidence": 0.9,
-      "country": "IE",
-      "currency": "EUR",
+      "country": "AR",
+      "currency": "USD",
       "extraction": "parser",
-      "first_seen": "2026-10-15",
+      "first_seen": "2026-10-22",
       "flags": [
+        "iap_duplicate",
         "iap_maybe_marked_up"
       ],
-      "last_changed": "2026-10-15",
-      "monthly_equiv": "20.99",
-      "obs_key": "youtube_premium:individual:IE:ios_iap:month",
-      "plan_id": "individual",
-      "plan_label_raw": "YouTube Premium",
-      "service_id": "youtube_premium",
+      "last_changed": "2026-10-22",
+      "monthly_equiv": "5.49",
+      "obs_key": "duolingo:super:AR:ios_iap:month",
+      "plan_id": "super",
+      "plan_label_raw": "Super Duolingo",
+      "service_id": "duolingo",
       "source_kind": "official",
-      "source_url": "https://apps.apple.com/ie/app/youtube/id544007664",
+      "source_url": "https://apps.apple.com/ar/app/duolingo-aprende-idiomas/id570060128",
       "status": "accepted",
-      "vat_included": true
+      "vat_included": null
     },
     "rule": "big_change",
     "rules": [
       "big_change"
-    ]
-  },
-  {
-    "current": {
-      "adapter_id": "appstore_iap",
-      "amount": "195",
-      "billing_period": "month",
-      "channel": "ios_iap",
-      "confidence": 0.7,
-      "content_hash": "91b8870f142e5133",
-      "country": "IN",
-      "currency": "INR",
-      "evidence_snippet": "YouTube Premium — ₹ 195",
-      "extraction": "llm",
-      "flags": [
-        "iap_maybe_marked_up",
-        "llm_new_key"
-      ],
-      "monthly_equiv": "195.00",
-      "monthly_eur": "1.8317",
-      "obs_key": "youtube_premium:individual:IN:ios_iap:month",
-      "observed_at": "2026-10-21T02:43:21.069982Z",
-      "plan_id": "individual",
-      "plan_label_raw": "YouTube Premium",
-      "reused": false,
-      "service_id": "youtube_premium",
-      "source_kind": "official",
-      "source_url": "https://apps.apple.com/in/app/youtube/id544007664",
-      "status": "quarantined",
-      "vat_included": true
-    },
-    "obs_key": "youtube_premium:individual:IN:ios_iap:month",
-    "previous": null,
-    "rule": "llm_new_key",
-    "rules": [
-      "llm_new_key"
     ]
   }
 ]
