@@ -1,11 +1,11 @@
 {
  "schema_version": 1,
- "run_id": "2026-10-19-r4bc019",
- "generated_at": "2026-10-19T03:23:14.981771Z",
+ "run_id": "2026-10-26-r466836",
+ "generated_at": "2026-10-26T04:23:14.937707Z",
  "bundles": [
   {
    "bundle_id": "meli_plus_co_total",
-   "outcome": "changed",
+   "outcome": "ok",
    "detail": "",
    "pages": [
     {
@@ -16,49 +16,34 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "bd44d85934fd2cc6",
+     "page_hash": "f2c0a188c8b73707",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
    ],
    "anchors": [
     {
-     "anchor_hash": "cc65320e10de",
+     "anchor_hash": "bb3a5098b8d7",
      "fact": "price",
      "service_id": null,
      "url": "https://www.mercadolibre.com.co/suscripciones/melimas/planes",
-     "status": "missing",
-     "via": null,
-     "detail": "not on the page",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-15",
-     "misses": 1,
-     "unconfirmed": "missing",
-     "unconfirmed_on": "2026-10-19"
-    },
-    {
-     "anchor_hash": "aebcaaa1b056",
-     "fact": "intro",
-     "service_id": null,
-     "url": "https://www.mercadolibre.com.co/suscripciones/melimas/planes",
-     "status": "missing",
-     "via": null,
-     "detail": "not on the page",
-     "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-15",
-     "misses": 1,
-     "unconfirmed": "missing",
-     "unconfirmed_on": "2026-10-19"
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
     },
     {
      "anchor_hash": "8deecd0103c8",
@@ -69,8 +54,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -84,8 +69,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -99,8 +84,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -114,15 +99,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "meli_plus_co_esencial",
@@ -137,15 +122,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "bd44d85934fd2cc6",
+     "page_hash": "f2c0a188c8b73707",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -160,33 +145,167 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "meli_plus_mx_mega",
-   "outcome": "off",
-   "detail": "watch.mode off",
-   "pages": [],
-   "anchors": [],
+   "outcome": "ok",
+   "detail": "",
+   "pages": [
+    {
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "kind": "html",
+     "final_url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "ok",
+     "http": 200,
+     "content_type": "text/html",
+     "detail": "",
+     "page_hash": "7c313ef756345dab",
+     "edition": null,
+     "newest_edition": null,
+     "newest_url": null,
+     "newest_status": null,
+     "newest_anchors": [],
+     "edition_check": null,
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
+     "unreadable_runs": 0,
+     "paused_until": null
+    }
+   ],
+   "anchors": [
+    {
+     "anchor_hash": "b8983ba4dc28",
+     "fact": "price",
+     "service_id": null,
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    },
+    {
+     "anchor_hash": "eb2d0f0fda08",
+     "fact": "component",
+     "service_id": "netflix",
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    },
+    {
+     "anchor_hash": "e8446f202ad9",
+     "fact": "component",
+     "service_id": "disney_plus",
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    },
+    {
+     "anchor_hash": "e3170aff46f3",
+     "fact": "component",
+     "service_id": "hbo_max",
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    },
+    {
+     "anchor_hash": "f6abf583463b",
+     "fact": "component",
+     "service_id": "apple_tv",
+     "url": "https://www.mercadolibre.com.mx/suscripciones/melimas/planes",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    }
+   ],
    "hints": [],
-   "checked_at": null
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "meli_plus_br_mega",
-   "outcome": "off",
-   "detail": "watch.mode off",
-   "pages": [],
-   "anchors": [],
+   "outcome": "ok",
+   "detail": "",
+   "pages": [
+    {
+     "url": "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos",
+     "kind": "html",
+     "final_url": "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos",
+     "status": "ok",
+     "http": 200,
+     "content_type": "text/html",
+     "detail": "",
+     "page_hash": "25c2d19248eee78e",
+     "edition": null,
+     "newest_edition": null,
+     "newest_url": null,
+     "newest_status": null,
+     "newest_anchors": [],
+     "edition_check": null,
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
+     "unreadable_runs": 0,
+     "paused_until": null
+    }
+   ],
+   "anchors": [
+    {
+     "anchor_hash": "ffa4aee73dd3",
+     "fact": "price",
+     "service_id": null,
+     "url": "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
+     "edition": null,
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
+    }
+   ],
    "hints": [],
-   "checked_at": null
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "telia_se_obegransad_streaming",
@@ -245,8 +364,8 @@
   },
   {
    "bundle_id": "go3_lt_filmai_netflix",
-   "outcome": "off",
-   "detail": "watch.mode off",
+   "outcome": "manual",
+   "detail": "watch.mode manual",
    "pages": [],
    "anchors": [],
    "hints": [],
@@ -272,8 +391,8 @@
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -288,8 +407,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -303,8 +422,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -318,8 +437,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -333,15 +452,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "apple_one_family_se",
@@ -363,8 +482,8 @@
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -379,8 +498,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -394,8 +513,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -409,8 +528,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -424,15 +543,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "apple_one_individual_co",
@@ -454,8 +573,8 @@
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -470,8 +589,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -485,8 +604,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -500,8 +619,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -515,15 +634,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "apple_one_family_co",
@@ -545,8 +664,8 @@
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -561,8 +680,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -576,8 +695,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -591,8 +710,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -606,15 +725,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   },
   {
    "bundle_id": "google_ai_pro_co",
@@ -629,15 +748,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c0c9b9933e78b0ac",
+     "page_hash": "448ed510ffe31df3",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     },
@@ -649,15 +768,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "dd27c7fd57692d66",
+     "page_hash": "1c83c6b5d92b5586",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-10-19",
-     "last_ok_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_ok_at": "2026-10-26",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -672,8 +791,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -687,15 +806,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-10-19",
-     "last_verified_at": "2026-10-19",
+     "checked_at": "2026-10-26",
+     "last_verified_at": "2026-10-26",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-10-19"
+   "checked_at": "2026-10-26"
   }
  ]
 }

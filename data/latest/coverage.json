@@ -1,5 +1,541 @@
 [
   {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "adobe_express",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "adobe_express",
+    "status": "ok"
+  },
+  {
     "adapter_id": "apple_marketing",
     "channel": "web",
     "country": "AL",
@@ -1611,6 +2147,2734 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "AL",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "canva",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "canva",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "chatgpt",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "chatgpt",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "claude",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "claude",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "crunchyroll",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "crunchyroll",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "deezer",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": "2026-10-26",
+    "service_id": "deezer",
+    "status": "failed"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "disney_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
     "failing_since": null,
     "service_id": "disney_plus",
     "status": "partial"
@@ -1618,54 +4882,6 @@
   {
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
-    "country": "AR",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "AT",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "BA",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "BE",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "BG",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "BO",
-    "failing_since": null,
-    "service_id": "disney_plus",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
     "country": "BR",
     "failing_since": null,
     "service_id": "disney_plus",
@@ -1709,7 +4925,7 @@
     "country": "CR",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1733,7 +4949,7 @@
     "country": "DE",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1869,7 +5085,7 @@
     "country": "IT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -1925,7 +5141,7 @@
     "country": "MT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2102,6 +5318,542 @@
     "failing_since": null,
     "service_id": "disney_plus",
     "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "duolingo",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "duolingo",
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2293,7 +6045,7 @@
     "country": "FR",
     "failing_since": null,
     "service_id": "google_one",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2765,7 +6517,7 @@
     "country": "DK",
     "failing_since": null,
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2899,9 +6651,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "IT",
-    "failing_since": null,
+    "failing_since": "2026-10-26",
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -3037,7 +6789,7 @@
     "country": "PL",
     "failing_since": null,
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -3107,9 +6859,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "TR",
-    "failing_since": null,
+    "failing_since": "2026-10-26",
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4768,6 +8520,542 @@
     "status": "ok"
   },
   {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "paramount_plus",
+    "status": "not_available"
+  },
+  {
     "adapter_id": "spotify_premium",
     "channel": "web",
     "country": "AL",
@@ -5308,6 +9596,1078 @@
     "channel": "ios_iap",
     "country": "AL",
     "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "tidal",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "tidal",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "AL",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "AR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "AT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BA",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BG",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BO",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "BR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CA",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CH",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IS",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "LU",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "LV",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "MD",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ME",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "MK",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "MT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "MX",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NG",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NI",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NL",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "NO",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PA",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PH",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PK",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PL",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PT",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "PY",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "RO",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "RS",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "SE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "SI",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "SK",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "SV",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "TR",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "UA",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "US",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "UY",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "VE",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "VN",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "ms_displaycatalog",
+    "channel": "web",
+    "country": "ZA",
+    "failing_since": null,
+    "service_id": "xbox_game_pass",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "AL",
+    "failing_since": null,
     "service_id": "youtube_premium",
     "status": "ok"
   },
@@ -5565,7 +10925,7 @@
     "country": "IN",
     "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",

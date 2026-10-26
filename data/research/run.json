@@ -1,35 +1,33 @@
 {
-  "as_of": "2026-10-19",
+  "as_of": "2026-10-26",
   "files": {
-    "bundle_watch.json": "89bc5d686b69b466f47420548eb623c08c2ef4ac30f79f022ca5433b8d672bf7",
-    "bundles.json": "8ad4735d91c64e03d6bd3bbbbb91e64382045ed377635ba98ec0f7095fbfab8b",
+    "bundle_watch.json": "d458a41ea58a8cfd7aaf2ff61db80b89e601ec224b41daaf3520c0c39a4fb113",
+    "bundles.json": "bbcf0fd09ebba675361f048f894bfd0d0c6363d3f3b503a18f5d4614e49acf1d",
     "instruments.json": "fbae4e1c4d951bab0d7eef82671d073d6f1d18ab628c57d6f6f64539d5758bc0",
-    "pairs.json": "c2050e8eacfef19c1a25f7a018521c2b62294bac44f0924d35dfeb3ae56dc7ce",
-    "services.json": "6fb099e02a46db75cfac06d74a3a069b027a9efd90c5089f702aa696df7b7f67"
+    "pairs.json": "51989809cff032854eb742ec5ef11dfb8624c00936e061362f5525f7c492be8f",
+    "services.json": "0a4c8db5a0b0a9ea84cbbc4fa9911b33a4a7ab4dd299f4a7c1ff5b8eeb5eaf54"
   },
-  "finished_at": "2026-10-19T03:25:24.462442+00:00",
+  "finished_at": "2026-10-26T04:25:34.559267+00:00",
   "report": {
     "bundle_watch": {
-      "anchors_verified": 23,
+      "anchors_verified": 30,
       "bundles": 11,
       "hints": 0,
       "outcomes": {
-        "changed": 1,
-        "manual": 1,
-        "off": 3,
-        "ok": 6
+        "manual": 2,
+        "ok": 9
       },
       "pages_over_budget": 0
     },
     "by_status": {
-      "nothing_found": 10,
-      "researched": 3
+      "nothing_found": 6,
+      "researched": 5
     },
-    "claims_verified": 7,
+    "claims_verified": 8,
     "errors": 0,
-    "planned": 13,
-    "queries": 97
+    "planned": 11,
+    "queries": 67
   },
-  "run_id": "2026-10-19-r4bc019",
+  "run_id": "2026-10-26-r466836",
   "schema_version": 1
 }
