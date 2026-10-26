@@ -2040,13 +2040,10 @@ main.is-wide {
     object-position: right center;
     opacity: 0.55;
   }
-  /* --hero-scroll is the page offset in px (set by the home page script): the hand lags
-     behind the page while the coin rises away from it. */
-  .hero-layer-hand {
-    transform: translate3d(0, calc(var(--hero-scroll, 0) * 0.12px), 0);
-  }
+  /* The home page script sets --hero-coin-drop as you scroll: the coin falls into the
+     open hand and stops just above it. */
   .hero-layer-coin {
-    transform: translate3d(0, calc(var(--hero-scroll, 0) * -0.1px), 0);
+    transform: translate3d(0, var(--hero-coin-drop, 0px), 0);
   }
   /* Ink fading to transparent keeps the copy on the left clear of the photo. */
   .hero-photo::after {

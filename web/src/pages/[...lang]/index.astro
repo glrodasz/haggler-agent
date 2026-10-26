@@ -299,8 +299,11 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
     });
   }
 
-  // Hero parallax: publishes the scroll offset as --hero-scroll and the CSS moves each layer
-  // at its own speed. Skipped on phones (no photo) and with reduced motion.
+  // Hero parallax: the coin falls toward the hand as the page scrolls and stops just above it.
+  // Skipped on phones (no photo) and with reduced motion.
+  const COIN_FALL_SPEED = 0.35;
+  // Gap between the coin and the fingertips in the 1920x1024 hero frame (public/hero/).
+  const COIN_MAX_DROP = 110;
   const photo = document.querySelector<HTMLElement>(".hero-photo");
   const wide = window.matchMedia("(min-width: 60rem)");
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -308,8 +311,10 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
     let frame = 0;
     const update = () => {
       frame = 0;
-      const offset = Math.min(window.scrollY, photo.offsetHeight);
-      photo.style.setProperty("--hero-scroll", String(offset));
+      // The layers use object-fit: cover, so frame pixels scale by the larger ratio.
+      const scale = Math.max(photo.offsetWidth / 1920, photo.offsetHeight / 1024);
+      const drop = Math.min(window.scrollY * COIN_FALL_SPEED, COIN_MAX_DROP * scale);
+      photo.style.setProperty("--hero-coin-drop", `${drop.toFixed(1)}px`);
     };
     const onScroll = () => {
       if (!frame && wide.matches && !calm.matches) frame = requestAnimationFrame(update);
