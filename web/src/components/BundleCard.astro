@@ -23,7 +23,7 @@ const site = getSite(locale);
 const msg = getMessages(locale);
 const lookup = lookupFor(msg);
 const routes = routesFor(locale);
-const { formatDate, formatMoney, formatPercent, formatPrice, periodSuffix } = site.fmt;
+const { formatDate, formatMoney, formatPercent, formatPrice, formatSavingPercent, periodSuffix } = site.fmt;
 const t = msg.bundle;
 const f = msg.feasibility;
 const price = b.price;
@@ -257,7 +257,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
       <span class={savingClass(saving)} title={t.savingHelp}>
         {saving !== null && saving < 0
           ? t.costsMore(formatPercent(-saving))
-          : formatPercent(saving, { signed: true })}
+          : formatSavingPercent(saving)}
       </span>
       {savingNotes.length > 0 && <span class="muted small"> ({savingNotes.join(", ")})</span>}
     </dd>

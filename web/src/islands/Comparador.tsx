@@ -684,17 +684,16 @@ export default function Comparador(props: ComparadorProps) {
             <>
               <div class="result-card">
                 <div class={`result-top ${hasSaving ? "is-positive" : ""}`}>
+                  {/* The yearly figure is always the anchor; without a saving it reads 0. */}
+                  <span class="result-label">{t.savingYearLabel}</span>
+                  <span class="result-amount">
+                    {formatNumber(hasSaving ? Math.round(totals.saving * 12) : 0, 0)}{" "}
+                    <span class="result-currency">{cur}</span>
+                  </span>
                   {hasSaving ? (
-                    <>
-                      <span class="result-label">{t.savingYearLabel}</span>
-                      <span class="result-amount">
-                        {formatNumber(Math.round(totals.saving * 12), 0)}{" "}
-                        <span class="result-currency">{cur}</span>
-                      </span>
-                      <span class="result-sub">
-                        {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
-                      </span>
-                    </>
+                    <span class="result-sub">
+                      {t.savingMonthLabel(formatMoney(totals.saving, cur))} · {riskName}
+                    </span>
                   ) : (
                     <>
                       <span class="result-sub result-none">

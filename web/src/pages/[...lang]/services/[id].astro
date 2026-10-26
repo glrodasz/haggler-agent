@@ -14,6 +14,7 @@ import ProfileFeasibility from "../../../islands/ProfileFeasibility";
 import Base from "../../../layouts/Base.astro";
 import { getSite } from "../../../logic/data";
 import { localeParams, routesFor } from "../../../logic/paths";
+import { riskClass } from "../../../logic/site";
 import type { Locale } from "../../../i18n/locale";
 import { RISK_LEVELS, type RiskKey, type ServiceInfo } from "../../../logic/types";
 
@@ -106,7 +107,10 @@ const note = localNote(locale, service);
                 return (
                   <tr data-level={k}>
                     <th scope="row">
-                      {msg.riskLevel(k)} · {info.name}
+                      <span class="risk-level-head">
+                        <span class={`risk-dot-label ${riskClass(k)}`}>{msg.compare.riskStop(k)}</span>
+                        <span>{info.name}</span>
+                      </span>
                     </th>
                     <td data-cell="offer">
                       {best ? (

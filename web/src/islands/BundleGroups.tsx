@@ -60,7 +60,7 @@ export default function BundleGroups(props: BundleGroupsProps) {
   const lookup = lookupFor(es);
   const t = es.bundlesIndex;
   const b = es.bundle;
-  const { formatMoney, formatPercent } = formatFor(props.locale);
+  const { formatMoney, formatSavingPercent } = formatFor(props.locale);
   const view = state?.view ?? null;
   const verdictOf = (x: BundleRow): (Mark & { pendingReview?: boolean }) | undefined => {
     if (!view) return x.main ?? undefined;
@@ -168,7 +168,7 @@ export default function BundleGroups(props: BundleGroupsProps) {
                         </td>
                         <td class="num">
                           <span class={savingClass(x.saving_pct)}>
-                            {formatPercent(x.saving_pct, { signed: true })}
+                            {formatSavingPercent(x.saving_pct)}
                           </span>
                           {x.notes.length > 0 && (
                             <div class="small muted">{x.notes.join(", ")}</div>

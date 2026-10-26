@@ -554,7 +554,7 @@ export const pt = {
     profileHelp:
       "Os rótulos de risco dependem do que você pode comprovar honestamente: onde mora, documentos, telefone, endereço, meios de pagamento e viagens.",
     profileLabel: "Perfil de viabilidade",
-    residenceLabel: "1. Em que país você mora?",
+    residenceLabel: "Em que país você mora?",
     residenceHelp: (host: string, byIp: boolean) =>
       byIp
         ? `Só listamos países cujos preços acompanhamos. Para começar pelo seu país, seu navegador pergunta ao ${host} o país do seu IP; não guardamos nada.`
@@ -569,9 +569,9 @@ export const pt = {
     locateLoading: "Consultando seu país pelo IP…",
     locateFailed: "Não conseguimos consultar seu IP. Escolha seu país na lista.",
     locateIp: "Usar meu IP",
-    ownLabel: (country: string) => `2. O que você tem de ${country}?`,
+    ownLabel: (country: string) => `O que você tem de ${country}?`,
     ownDoc: "Documento de identidade ou autorização de residência",
-    tiesLabel: "3. Você tem vínculos com outros países?",
+    tiesLabel: "Você tem vínculos com outros países?",
     tiesHelp:
       "Sua nacionalidade ou outros países onde você tem documentos, cartão, telefone ou endereço, ou para onde viaja. Só listamos países cujos preços acompanhamos.",
     tiesNone: "Nenhum.",
@@ -727,7 +727,8 @@ export const pt = {
     colCountries: "Países com preço",
     colDefaultPlan: "Plano padrão",
     colHome: (residence: string) => `Em ${residence}`,
-    colRisk: (rank: number) => `Risco ≤ ${rank}`,
+    colRisk: (rank: number) => `Nível ${rank}`,
+    colRiskHint: (rank: number) => `Oferta mais barata com risco de nível ${rank} ou menor`,
   },
 
   service: {

@@ -18,8 +18,9 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
-  --radius: 0.625rem;
-  --radius-lg: 1.25rem;
+  /* Two radii only: pills for controls, 8px for panels and cards. */
+  --radius: 0.5rem;
+  --radius-lg: var(--radius);
   --radius-pill: 999px;
   --max-width: 80rem;
   --text-sm: 0.875rem;
@@ -349,9 +350,9 @@ main.page {
 }
 main.page > h1 {
   margin: 0 0 var(--space-4);
-  font-size: clamp(2.2rem, 7vw, 4rem);
+  font-size: clamp(2rem, 5.5vw, 2.9rem);
   line-height: 1.08;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   max-width: 20ch;
 }
 main.page > h1::after,
@@ -489,9 +490,74 @@ tfoot td {
   .has-sticky-head .wide-only {
     display: none;
   }
+  .has-sticky-head [data-pin-tag] {
+    display: table;
+    margin-top: 0.2rem;
+  }
+}
+/* Phones: wide tables become one card per row, each cell with its column name, so the prices
+   are visible without scrolling sideways. Cells carry the name in data-label. */
+@media (max-width: 40rem) {
+  .table-wrap:has(> table.stack-on-phone) {
+    overflow: visible;
+  }
+  table.stack-on-phone thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  table.stack-on-phone,
+  table.stack-on-phone tbody,
+  table.stack-on-phone tr,
+  table.stack-on-phone th,
+  table.stack-on-phone td {
+    display: block;
+  }
+  table.stack-on-phone caption {
+    display: block;
+  }
+  table.stack-on-phone tr {
+    padding: var(--space-3) var(--space-3) var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+  table.stack-on-phone tbody th,
+  table.stack-on-phone td {
+    border: 0;
+    padding: 0.2rem 0;
+    white-space: normal;
+  }
+  table.stack-on-phone tbody th {
+    margin-bottom: var(--space-1);
+    font-size: 1rem;
+  }
+  table.stack-on-phone td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3);
+    text-align: right;
+  }
+  table.stack-on-phone td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 50%;
+    color: var(--color-muted);
+    text-align: left;
+  }
 }
 tr.is-home > * {
-  background: color-mix(in srgb, var(--risk-0-bg) 55%, transparent);
+  background: var(--color-surface);
+}
+/* Links inside tables: plain until hovered, so long tables do not read as walls of links. */
+.table-wrap a:not(.button) {
+  font-weight: 500;
+  text-decoration: none;
+}
+.table-wrap a:not(.button):hover,
+.table-wrap a:not(.button):focus-visible {
+  text-decoration: underline;
 }
 tr.is-inactive > * {
   color: var(--color-muted);
@@ -543,17 +609,14 @@ tr.is-pending > * {
   color: var(--risk-unknown-fg);
   border-style: dashed;
 }
-.channel-web {
-  background: var(--channel-web-bg);
-  color: var(--channel-web-fg);
-}
-.channel-ios_iap {
-  background: var(--channel-iap-bg);
-  color: var(--channel-iap-fg);
-}
+/* Channel and EU badges are facts, not judgements: outlined and colourless. Colour stays
+   for risk and status. */
+.channel-web,
+.channel-ios_iap,
 .badge-eu {
-  background: var(--eu-bg);
-  color: var(--eu-fg);
+  background: transparent;
+  color: var(--color-muted);
+  border-color: var(--color-border);
 }
 .badge-neutral {
   background: var(--color-surface);
@@ -883,7 +946,8 @@ input[type="radio"] {
   align-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  /* Borderless until chosen: the grid stays quiet and the picks stand out. */
+  border: 1px solid transparent;
   border-radius: var(--radius-lg);
   background: var(--color-bg);
   transition: border-color 0.15s;
@@ -939,6 +1003,8 @@ h1.service-title .monogram svg {
   overflow-wrap: anywhere;
 }
 .service-row select {
+  border-color: transparent;
+  background-color: var(--color-surface);
   min-height: 2.5rem;
   padding-left: 0.9rem;
   padding-right: 2rem;
@@ -956,6 +1022,7 @@ h1.service-title .monogram svg {
 .radio {
   position: relative;
   display: grid;
+  align-content: start;
   gap: var(--space-1);
   height: 100%;
   padding: var(--space-4);
@@ -1044,7 +1111,6 @@ h1.service-title .monogram svg {
 }
 .result-none {
   color: var(--color-ink-fg);
-  font-size: 1.25rem;
   font-weight: 600;
 }
 .result-chip {
@@ -1284,6 +1350,76 @@ h1.service-title .monogram svg {
 .toc {
   font-size: var(--text-sm);
 }
+/* Long reads (Metodología): numbered sections at reading width, the index beside them on wide
+   screens. */
+.doc-layout {
+  display: grid;
+  gap: var(--space-5);
+  counter-reset: doc-section;
+}
+.doc-layout > * {
+  min-width: 0;
+}
+.toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: toc;
+  display: grid;
+  gap: var(--space-1);
+}
+.toc li {
+  counter-increment: toc;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+}
+.toc li::before {
+  content: counter(toc, decimal-leading-zero);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.toc a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+.toc a:hover {
+  text-decoration: underline;
+}
+.doc-body {
+  max-width: 46rem;
+}
+.doc-body > section {
+  counter-increment: doc-section;
+  padding-top: var(--space-5);
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+.doc-body > section:first-child {
+  margin-top: 0;
+}
+.doc-body > section > h2 {
+  margin-top: 0;
+}
+.doc-body > section > h2::before {
+  content: counter(doc-section, decimal-leading-zero) " · ";
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.doc-body > section.callout {
+  border-top: 0;
+  padding-top: var(--space-4);
+}
+@media (min-width: 60rem) {
+  .doc-layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+  .doc-layout > .toc {
+    position: sticky;
+    top: calc(var(--site-header-height, 4.5rem) + var(--space-5));
+    align-self: start;
+  }
+}
 details {
   margin: 0 0 var(--space-4);
 }
@@ -1444,11 +1580,9 @@ main.is-wide {
    clickable tags; it stops on hover or focus and is a plain scrollable row with reduced motion. */
 .hero-savings {
   min-width: 0;
-  min-height: 4.25rem;
-  margin: 0 0 var(--space-5);
-  max-width: 40rem;
 }
 .hero-savings-label {
+  flex: none;
   margin: 0 0 var(--space-2);
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
@@ -1547,15 +1681,26 @@ main.is-wide {
   padding-left: var(--space-4);
   border-left: 1px solid var(--color-ink-border);
 }
-.hero-art {
+/* The chrome hand and coin sit behind the copy on wide screens; phones only get the copy. */
+.hero-stage {
+  position: relative;
+  overflow: hidden;
+}
+.hero-photo {
   display: none;
 }
-.hero-mark {
-  display: block;
-  width: min(100%, 22rem);
-  height: auto;
-  margin-inline: auto;
-  color: var(--color-ink-fg);
+.hero-stage > .hero-inner {
+  position: relative;
+}
+/* Savings tags under the hero, in their own strip so the title, lead and buttons read in order. */
+.hero-savings-strip {
+  border-top: 1px solid var(--color-ink-border);
+  padding: var(--space-4) 0;
+}
+.hero-savings-strip .hero-savings {
+  max-width: none;
+  min-height: 0;
+  margin: 0;
 }
 .workflow {
   border-top: 1px solid var(--color-ink-border);
@@ -1596,6 +1741,7 @@ main.is-wide {
   color: var(--color-ink-muted);
 }
 .workflow-icon {
+  position: relative;
   display: grid;
   place-items: center;
   flex: none;
@@ -1603,6 +1749,57 @@ main.is-wide {
   height: 2rem;
   border-radius: 50%;
   border: 1px solid var(--color-ink-border);
+}
+/* The agent at work: each icon pulses in turn and a dash travels to the next step. */
+.workflow-icon::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--color-ink-muted);
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: workflow-pulse 4.5s ease-in-out infinite;
+}
+.workflow-steps li:nth-child(2) .workflow-icon::after {
+  animation-delay: 1.5s;
+}
+.workflow-steps li:nth-child(3) .workflow-icon::after {
+  animation-delay: 3s;
+}
+.workflow-steps li:not(:last-child)::after {
+  content: "";
+  display: none;
+  flex: 1;
+  min-width: 1.5rem;
+  max-width: 6rem;
+  height: 1px;
+  margin-inline: var(--space-3);
+  background:
+    linear-gradient(var(--color-ink-muted), var(--color-ink-muted)) no-repeat -0.75rem 0 / 0.75rem 1px,
+    var(--color-ink-border);
+  animation: workflow-travel 3s linear infinite;
+}
+@keyframes workflow-pulse {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes workflow-travel {
+  to {
+    background-position:
+      calc(100% + 0.75rem) 0,
+      0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workflow-icon::after,
+  .workflow-steps li::after {
+    animation: none;
+  }
 }
 
 .steps-intro,
@@ -1616,12 +1813,23 @@ main.is-wide {
 .compare-section:focus {
   outline: none;
 }
+/* Only the hero title shouts; sections read as chapters. */
 .section-title {
   margin: 0 0 var(--space-3);
-  font-size: clamp(2rem, 6vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+.section-head {
+  margin-bottom: var(--space-6);
+}
+.section-head > *,
+.section-head .section-lead {
+  margin-bottom: 0;
+}
+.section-head .section-title {
+  margin-bottom: var(--space-2);
 }
 .section-lead {
   margin: 0 0 var(--space-6);
@@ -1717,6 +1925,10 @@ main.is-wide {
   .controls .radio-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* Three levels fill one row instead of leaving the third card alone. */
+  .controls .radio-list:has(> li:nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .result-top,
   .result-body {
     padding-inline: var(--space-6);
@@ -1727,14 +1939,49 @@ main.is-wide {
   .hero-inner {
     grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
   }
-  .hero-art {
+  .hero-photo {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+  .hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: right center;
+    /* The photo's pure black melts into the hero's ink in both themes. */
+    mix-blend-mode: lighten;
+    opacity: 0.55;
+  }
+  .hero-copy {
+    max-width: 40rem;
+  }
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+  .section-head .section-title {
+    margin-bottom: 0;
+  }
+  .section-head .section-lead {
+    max-width: 22rem;
+    text-align: right;
+  }
+  .hero-savings-strip .hero-savings {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+  }
+  .hero-savings-strip .hero-savings-label {
+    margin: 0;
+  }
+  .workflow-steps li:not(:last-child)::after {
     display: block;
   }
   .controls .service-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .hero-mark {
-    width: min(100%, 17rem);
   }
   .how-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1750,6 +1997,9 @@ main.is-wide {
    card sticks only within .comparador-main, so it scrolls away before the full-width detail
    and advice below instead of covering them. */
 @media (min-width: 72rem) {
+  .hero-photo img {
+    opacity: 1;
+  }
   .comparador-main {
     grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
     column-gap: var(--space-7);

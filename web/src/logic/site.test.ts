@@ -609,8 +609,8 @@ describe("bundles page (/paquetes) and the watched table", () => {
     expect(bundleAnchors({ evidence: [] })).toEqual({ verified: 0, total: 0 });
   });
 
-  it("marks savings as positive, negative or neither", () => {
-    expect(savingClass(12.5)).toBe("positive");
+  it("flags only a bundle that costs more", () => {
+    expect(savingClass(12.5)).toBe("");
     expect(savingClass(-4.22)).toBe("negative");
     expect(savingClass(0)).toBe("");
     expect(savingClass(null)).toBe("");
