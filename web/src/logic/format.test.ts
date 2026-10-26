@@ -10,6 +10,7 @@ const {
   formatNumber,
   formatPercent,
   formatPrice,
+  formatSavingPercent,
   formatSignedMoney,
   periodSuffix,
 } = formatFor("es");
@@ -66,6 +67,13 @@ describe("formatPercent and formatNumber", () => {
     expect(plain(formatPercent(-4.22, { signed: true }))).toBe("-4,2 %");
     expect(plain(formatPercent(16.67, { signed: true }))).toBe("+16,7 %");
     expect(formatPercent(null)).toBe(DASH);
+  });
+
+  it("shows a saving as a price cut", () => {
+    expect(plain(formatSavingPercent(60.9))).toBe("\u221260,9 %");
+    expect(plain(formatSavingPercent(-4.22))).toBe("+4,2 %");
+    expect(plain(formatSavingPercent(0))).toBe("0 %");
+    expect(formatSavingPercent(null)).toBe(DASH);
   });
 
   it("formats plain numbers", () => {

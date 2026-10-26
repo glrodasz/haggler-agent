@@ -377,7 +377,8 @@ export function pendingValueText(
 /** CSS modifier of a saving: positive, negative, or none (zero or unknown). */
 export function savingClass(pct: number | null): string {
   if (pct === null || pct === 0) return "";
-  return pct > 0 ? "positive" : "negative";
+  // A saving reads as a plain price cut; only a dearer bundle is flagged.
+  return pct > 0 ? "" : "negative";
 }
 
 /**

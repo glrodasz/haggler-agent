@@ -124,7 +124,12 @@ function patchServices(state: ProfileState): void {
   const { msg, fmt } = kitOf(state);
   for (const table of document.querySelectorAll("table[data-profile-services]")) {
     const head = table.querySelector('[data-cell="home-head"]');
-    if (head) head.textContent = msg.servicesIndex.colHome(view.residenceName);
+    const homeHead = msg.servicesIndex.colHome(view.residenceName);
+    if (head) head.textContent = homeHead;
+    // Phones show each cell with its column name (.stack-on-phone), so that name follows too.
+    for (const cell of table.querySelectorAll<HTMLElement>('[data-cell="home"]')) {
+      cell.dataset.label = homeHead;
+    }
     for (const row of table.querySelectorAll<HTMLElement>("tr[data-service]")) {
       const { service = "", plan = "" } = row.dataset;
       const result = view.cheapest(service, plan);

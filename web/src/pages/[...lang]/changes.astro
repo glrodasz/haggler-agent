@@ -83,7 +83,7 @@ const filters = [
         </form>
         <p class="table-count" aria-live="polite" data-changes-count hidden />
         <TableWrap captionId="cambios-caption">
-          <table>
+          <table class="stack-on-phone">
             <caption id="cambios-caption">{t.caption}</caption>
             <thead>
               <tr>
@@ -109,20 +109,21 @@ const filters = [
                   <th scope="row" class="nowrap">
                     <time datetime={c.date}>{formatDate(c.date)}</time>
                   </th>
-                  <td>
+                  <td data-label={t.colService}>
                     <a href={routes.service(c.service_id)}>{site.serviceName(c.service_id)}</a>
                   </td>
-                  <td>{site.planLabel(c.service_id, c.plan_id)}</td>
-                  <td>
+                  <td data-label={t.colPlan}>{site.planLabel(c.service_id, c.plan_id)}</td>
+                  <td data-label={t.colCountry}>
                     <CountryLabel cc={c.country} />
                   </td>
-                  <td>
+                  <td data-label={t.colChannel}>
                     <ChannelBadge channel={c.channel} />
                   </td>
-                  <td>{lookup(msg.changeKinds, c.kind)}</td>
-                  <td class="num">{site.formatChangeValue(c, c.old)}</td>
-                  <td class="num">{site.formatChangeValue(c, c.new)}</td>
+                  <td data-label={t.colKind}>{lookup(msg.changeKinds, c.kind)}</td>
+                  <td class="num" data-label={t.colOld}>{site.formatChangeValue(c, c.old)}</td>
+                  <td class="num" data-label={t.colNew}>{site.formatChangeValue(c, c.new)}</td>
                   <td
+                    data-label={t.colPct}
                     class={`num ${c.pct !== null && c.pct > 0 ? "negative" : c.pct !== null && c.pct < 0 ? "positive" : ""}`}
                   >
                     {formatPercent(c.pct, { signed: true })}

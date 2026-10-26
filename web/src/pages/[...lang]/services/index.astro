@@ -7,6 +7,7 @@ import { getMessages, lookupFor } from "../../../i18n";
 import Base from "../../../layouts/Base.astro";
 import { getSite } from "../../../logic/data";
 import { localeParams, routesFor } from "../../../logic/paths";
+import { riskClass } from "../../../logic/site";
 import { RISK_LEVELS, type RiskKey } from "../../../logic/types";
 
 export function getStaticPaths() {
@@ -31,7 +32,7 @@ const countriesWith = (id: string) => new Set(site.offersForService(id).map((o) 
   <p class="lead">{t.lead}</p>
   <ProfileNote />
   <TableWrap captionId="servicios-caption">
-    <table data-profile-services>
+    <table data-profile-services class="stack-on-phone">
       <caption id="servicios-caption">{t.caption}</caption>
       <thead>
         <tr>
@@ -42,7 +43,14 @@ const countriesWith = (id: string) => new Set(site.offersForService(id).map((o) 
           <th scope="col" class="num" data-cell="home-head">
             {t.colHome(site.residenceName)}
           </th>
-          {RISK_LEVELS.slice(1).map((k) => <th scope="col">{t.colRisk(k)}</th>)}
+          {
+            RISK_LEVELS.slice(1).map((k) => (
+              <th scope="col" title={t.colRiskHint(k)}>
+                <span class={`risk-dot-label ${riskClass(k)}`}>{t.colRisk(k)}</span>
+                <span class="visually-hidden"> ({t.colRiskHint(k)})</span>
+              </th>
+            ))
+          }
         </tr>
       </thead>
       <tbody>
@@ -57,16 +65,16 @@ const countriesWith = (id: string) => new Set(site.offersForService(id).map((o) 
                     <a href={routes.service(s.id)}>{s.name}</a>
                   </span>
                 </th>
-                <td>{lookup(msg.categories, s.category)}</td>
-                <td class="num">{countriesWith(s.id)}</td>
-                <td>{site.planLabel(s.id, s.default_plan)}</td>
-                <td class="num" data-cell="home">
+                <td data-label={t.colCategory}>{lookup(msg.categories, s.category)}</td>
+                <td class="num" data-label={t.colCountries}>{countriesWith(s.id)}</td>
+                <td data-label={t.colDefaultPlan}>{site.planLabel(s.id, s.default_plan)}</td>
+                <td class="num" data-cell="home" data-label={t.colHome(site.residenceName)}>
                   {formatMoney(row?.home?.cost_eur_with_fee, "EUR")}
                 </td>
                 {RISK_LEVELS.slice(1).map((k) => {
                   const best = row?.best_by_risk[`${k}` as RiskKey] ?? null;
                   return (
-                    <td class="nowrap" data-cell="risk" data-level={k}>
+                    <td class="nowrap" data-cell="risk" data-level={k} data-label={t.colRisk(k)}>
                       {best ? (
                         <>
                           <CountryLabel cc={best.country} link={false} />{" "}

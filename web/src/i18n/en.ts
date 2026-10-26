@@ -555,7 +555,7 @@ export const en = {
     profileHelp:
       "Risk labels depend on what you can honestly prove: where you live, documents, phone, address, payment methods and travel.",
     profileLabel: "Feasibility profile",
-    residenceLabel: "1. Which country do you live in?",
+    residenceLabel: "Which country do you live in?",
     residenceHelp: (host: string, byIp: boolean) =>
       byIp
         ? `We only list countries whose prices we track. To start from your country, your browser asks ${host} for your IP's country; we store nothing.`
@@ -570,9 +570,9 @@ export const en = {
     locateLoading: "Looking up your country by IP…",
     locateFailed: "We could not look up your IP. Pick your country from the list.",
     locateIp: "Use my IP",
-    ownLabel: (country: string) => `2. What do you have from ${country}?`,
+    ownLabel: (country: string) => `What do you have from ${country}?`,
     ownDoc: "ID document or residence permit",
-    tiesLabel: "3. Do you have ties with other countries?",
+    tiesLabel: "Do you have ties with other countries?",
     tiesHelp:
       "Your nationality, or other countries where you have documents, a card, a phone or an address, or that you travel to. We only list countries whose prices we track.",
     tiesNone: "None.",
@@ -724,7 +724,8 @@ export const en = {
     colCountries: "Countries with a price",
     colDefaultPlan: "Default plan",
     colHome: (residence: string) => `In ${residence}`,
-    colRisk: (rank: number) => `Risk ≤ ${rank}`,
+    colRisk: (rank: number) => `Level ${rank}`,
+    colRiskHint: (rank: number) => `Cheapest offer at risk level ${rank} or lower`,
   },
 
   service: {

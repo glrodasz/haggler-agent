@@ -31,7 +31,7 @@ const countries = [...site.countries].sort((a, b) =>
           <th scope="col">{t.colCountry}</th>
           <th scope="col">{t.colCurrency}</th>
           <th scope="col" class="wide-only">{t.colRegion}</th>
-          <th scope="col">{t.colEu}</th>
+          <th scope="col" class="wide-only">{t.colEu}</th>
           <th scope="col" class="num">{t.colOffers}</th>
         </tr>
       </thead>
@@ -50,7 +50,7 @@ const countries = [...site.countries].sort((a, b) =>
               </th>
               <td>{c.currency}</td>
               <td class="wide-only">{lookup(msg.regions, c.region)}</td>
-              <td>{c.eu_eea ? msg.common.yes : msg.common.no}</td>
+              <td class="wide-only">{c.eu_eea ? msg.common.yes : msg.common.no}</td>
               <td class="num">{site.offersForCountry(c.cc).length}</td>
             </tr>
           ))

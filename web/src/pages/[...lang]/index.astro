@@ -9,11 +9,10 @@ import Comparador, {
 import HeroSavings from "../../islands/HeroSavings";
 import { getMessages } from "../../i18n";
 import Icon from "../../components/Icon.astro";
-import LogoMark from "../../components/LogoMark.astro";
 import Base from "../../layouts/Base.astro";
 import { type CompareOfferFields, isCandidate } from "../../logic/compare";
 import { getSite } from "../../logic/data";
-import { localeParams, routesFor } from "../../logic/paths";
+import { localeParams, routesFor, withBase } from "../../logic/paths";
 import { countryOptions } from "../../logic/profile";
 import { inlineJson, packOffers } from "../../logic/transport";
 
@@ -101,18 +100,58 @@ const tieCountries: ComparadorCountry[] = countryOptions(
 const verdictsJson = inlineJson({ rules: site.feasibility.rules });
 
 const [before, after] = t.heroTitle.split(t.heroAccent);
+// Phones skip the photo (the copy fills the hero), so they get a blank pixel instead.
+const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+const heroSrcset = (ext: string) =>
+  [1280, 1920].map((w) => `${withBase(`hero/hand-${w}.${ext}`)} ${w}w`).join(", ");
 // The residence in the lead follows the visitor's profile (logic/profilePatch.ts).
 const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 ---
 
 <Base current="home" wide>
   <section class="hero" aria-labelledby="hero-titulo">
-    <div class="container hero-inner">
-      <div class="hero-copy">
-        <p class="eyebrow eyebrow-dot">{t.eyebrow}</p>
-        <h1 id="hero-titulo" class="hero-title dotted">
-          {before}<span class="accent">{t.heroAccent}</span>{after}
-        </h1>
+    <div class="hero-stage">
+      <picture class="hero-photo" aria-hidden="true">
+        <source media="(max-width: 59.99rem)" srcset={BLANK_PIXEL} />
+        <source type="image/avif" srcset={heroSrcset("avif")} sizes="100vw" />
+        <img
+          src={withBase("hero/hand-1920.webp")}
+          srcset={heroSrcset("webp")}
+          sizes="100vw"
+          alt=""
+          width="1920"
+          height="1024"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow eyebrow-dot">{t.eyebrow}</p>
+          <h1 id="hero-titulo" class="hero-title dotted">
+            {before}<span class="accent">{t.heroAccent}</span>{after}
+          </h1>
+          <p class="lead">
+            {leadBefore}<span data-profile-residence>{site.residenceName}</span>{leadAfter}
+          </p>
+          <div class="hero-actions">
+            <a class="button button-light" href="#comparar">
+              {t.ctaStart} <span aria-hidden="true">↓</span>
+            </a>
+            <a class="button button-link" href={routes.methodology()}>
+              {t.ctaMethod} <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <ul class="hero-stats">
+            <li>{t.stats.services(services.length)}</li>
+            <li>{t.stats.countries(priced.size)}</li>
+            <li>{t.stats.asOf(formatDate(site.meta.as_of))}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="hero-savings-strip">
+      <div class="container">
         <HeroSavings
           client:load
           locale={locale}
@@ -130,25 +169,6 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
           verdictsId="comparador-veredictos"
           targetId="comparar"
         />
-        <p class="lead">
-          {leadBefore}<span data-profile-residence>{site.residenceName}</span>{leadAfter}
-        </p>
-        <div class="hero-actions">
-          <a class="button button-light" href="#comparar">
-            {t.ctaStart} <span aria-hidden="true">↓</span>
-          </a>
-          <a class="button button-link" href={routes.methodology()}>
-            {t.ctaMethod} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-        <ul class="hero-stats">
-          <li>{t.stats.services(services.length)}</li>
-          <li>{t.stats.countries(priced.size)}</li>
-          <li>{t.stats.asOf(formatDate(site.meta.as_of))}</li>
-        </ul>
-      </div>
-      <div class="hero-art" aria-hidden="true">
-        <LogoMark size="100%" class="hero-mark" />
       </div>
     </div>
     <div class="workflow">
@@ -175,8 +195,10 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 
   <section class="steps-intro" aria-labelledby="pasos-titulo">
     <div class="container">
-      <h2 id="pasos-titulo" class="section-title dotted">{t.stepsTitle}</h2>
-      <p class="section-lead">{t.stepsLead}</p>
+      <div class="section-head">
+        <h2 id="pasos-titulo" class="section-title dotted">{t.stepsTitle}</h2>
+        <p class="section-lead">{t.stepsLead}</p>
+      </div>
       <ol class="step-cards">
         {
           t.steps.map((step, i) => (
@@ -239,8 +261,10 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 
   <section class="how-section" aria-labelledby="como-leer">
     <div class="container">
-      <h2 id="como-leer" class="section-title dotted">{t.howTitle}</h2>
-      <p><a class="button button-ghost" href={routes.methodology()}>{t.howLink}</a></p>
+      <div class="section-head">
+        <h2 id="como-leer" class="section-title dotted">{t.howTitle}</h2>
+        <p class="section-lead"><a class="button button-ghost" href={routes.methodology()}>{t.howLink}</a></p>
+      </div>
       <ul class="how-grid">
         {
           t.howItems.map((item, i) => (

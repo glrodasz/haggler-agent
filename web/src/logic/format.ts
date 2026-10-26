@@ -123,6 +123,12 @@ function createFormat(locale: Locale) {
     );
   }
 
+  /** A saving as a price cut, like the hero tags: "−12,5 %" cheaper, "+3 %" dearer. */
+  function formatSavingPercent(pct: number | null | undefined): string {
+    if (!isNumber(pct) || pct === 0) return formatPercent(pct);
+    return pct > 0 ? `\u2212${formatPercent(pct)}` : `+${formatPercent(-pct)}`;
+  }
+
   /** "8 oct 2026" */
   function formatDate(iso: string | null | undefined): string {
     const d = parseDate(iso);
@@ -169,6 +175,7 @@ function createFormat(locale: Locale) {
     formatMoney,
     formatPrice,
     formatSignedMoney,
+    formatSavingPercent,
     formatNumber,
     formatPercent,
     formatDate,
