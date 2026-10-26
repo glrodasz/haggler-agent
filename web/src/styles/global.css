@@ -2027,14 +2027,33 @@ main.is-wide {
     position: absolute;
     inset: 0;
   }
-  .hero-photo img {
+  /* Both layers share the same 1920x1024 frame, so they stay registered at any size. */
+  .hero-layer,
+  .hero-layer img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+  }
+  .hero-layer img {
     object-fit: cover;
     object-position: right center;
-    /* The photo's pure black melts into the hero's ink in both themes. */
-    mix-blend-mode: lighten;
     opacity: 0.55;
+  }
+  /* --hero-scroll is the page offset in px (set by the home page script): the hand lags
+     behind the page while the coin rises away from it. */
+  .hero-layer-hand {
+    transform: translate3d(0, calc(var(--hero-scroll, 0) * 0.12px), 0);
+  }
+  .hero-layer-coin {
+    transform: translate3d(0, calc(var(--hero-scroll, 0) * -0.1px), 0);
+  }
+  /* Ink fading to transparent keeps the copy on the left clear of the photo. */
+  .hero-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, var(--color-ink) 0%, var(--color-ink) 40%, transparent 85%);
   }
   .hero-copy {
     max-width: 40rem;
@@ -2080,8 +2099,11 @@ main.is-wide {
    card sticks only within .comparador-main, so it scrolls away before the full-width detail
    and advice below instead of covering them. */
 @media (min-width: 72rem) {
-  .hero-photo img {
+  .hero-layer img {
     opacity: 1;
+  }
+  .hero-photo::after {
+    background: linear-gradient(to right, var(--color-ink) 0%, var(--color-ink) 30%, transparent 65%);
   }
   .comparador-main {
     grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);

@@ -102,8 +102,10 @@ const verdictsJson = inlineJson({ rules: site.feasibility.rules });
 const [before, after] = t.heroTitle.split(t.heroAccent);
 // Phones skip the photo (the copy fills the hero), so they get a blank pixel instead.
 const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-const heroSrcset = (ext: string) =>
-  [1280, 1920].map((w) => `${withBase(`hero/hand-${w}.${ext}`)} ${w}w`).join(", ");
+const heroSrcset = (layer: string, ext: string) =>
+  [1280, 1920].map((w) => `${withBase(`hero/${layer}-${w}.${ext}`)} ${w}w`).join(", ");
+// Hand and coin are separate full-frame layers so they can drift at different speeds.
+const HERO_LAYERS = ["hand", "coin"];
 // The residence in the lead follows the visitor's profile (logic/profilePatch.ts).
 const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 ---
@@ -111,20 +113,24 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
 <Base current="home" wide>
   <section class="hero" aria-labelledby="hero-titulo">
     <div class="hero-stage">
-      <picture class="hero-photo" aria-hidden="true">
-        <source media="(max-width: 59.99rem)" srcset={BLANK_PIXEL} />
-        <source type="image/avif" srcset={heroSrcset("avif")} sizes="100vw" />
-        <img
-          src={withBase("hero/hand-1920.webp")}
-          srcset={heroSrcset("webp")}
-          sizes="100vw"
-          alt=""
-          width="1920"
-          height="1024"
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
+      <div class="hero-photo" aria-hidden="true">
+        {HERO_LAYERS.map((layer) => (
+          <picture class={`hero-layer hero-layer-${layer}`}>
+            <source media="(max-width: 59.99rem)" srcset={BLANK_PIXEL} />
+            <source type="image/avif" srcset={heroSrcset(layer, "avif")} sizes="100vw" />
+            <img
+              src={withBase(`hero/${layer}-1920.webp`)}
+              srcset={heroSrcset(layer, "webp")}
+              sizes="100vw"
+              alt=""
+              width="1920"
+              height="1024"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
+        ))}
+      </div>
       <div class="container hero-inner">
         <div class="hero-copy">
           <p class="eyebrow eyebrow-dot">{t.eyebrow}</p>
@@ -291,5 +297,24 @@ const [leadBefore, leadAfter] = t.lead("\u0000").split("\u0000");
       target.scrollIntoView();
       target.focus({ preventScroll: true });
     });
+  }
+
+  // Hero parallax: publishes the scroll offset as --hero-scroll and the CSS moves each layer
+  // at its own speed. Skipped on phones (no photo) and with reduced motion.
+  const photo = document.querySelector<HTMLElement>(".hero-photo");
+  const wide = window.matchMedia("(min-width: 60rem)");
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (photo) {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const offset = Math.min(window.scrollY, photo.offsetHeight);
+      photo.style.setProperty("--hero-scroll", String(offset));
+    };
+    const onScroll = () => {
+      if (!frame && wide.matches && !calm.matches) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 </script>
