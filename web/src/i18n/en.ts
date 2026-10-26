@@ -22,6 +22,8 @@ export const en = {
     },
     skipToContent: "Skip to content",
     navLabel: "Main",
+    menuOpen: "Open menu",
+    menuClose: "Close menu",
     nav: {
       home: "Compare",
       services: "Services",

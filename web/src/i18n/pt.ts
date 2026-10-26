@@ -23,6 +23,8 @@ export const pt = {
     },
     skipToContent: "Pular para o conteúdo",
     navLabel: "Principal",
+    menuOpen: "Abrir menu",
+    menuClose: "Fechar menu",
     nav: {
       home: "Comparador",
       services: "Serviços",
