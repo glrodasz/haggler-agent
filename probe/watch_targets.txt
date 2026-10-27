@@ -28,3 +28,75 @@ google_ai_pro_co
 # Meli+ MX and BR (watch probe of 2026-10-23); Go3 LT is manual (no currency sign in its PDF)
 meli_plus_mx_mega
 meli_plus_br_mega
+
+# Meli+ CL (watch probe of 2026-10-23); Meli+ AR shows no ARS amounts
+meli_plus_cl_total
+meli_plus_cl_esencial
+
+# Telia streaming packages (watch probe of 2026-10-23); Mer and Mest stay manual while their
+# campaign price runs
+telia_se_streaming_mer
+telia_se_streaming_maxad
+telia_se_streaming_mest
+
+# Apple One in the other countries the daily job prices (watch probes of 2026-10-23)
+apple_one_individual_at
+apple_one_family_at
+apple_one_individual_be
+apple_one_family_be
+apple_one_individual_br
+apple_one_family_br
+apple_one_individual_ca
+apple_one_family_ca
+apple_one_premier_ca
+apple_one_individual_ch
+apple_one_family_ch
+apple_one_individual_cl
+apple_one_family_cl
+apple_one_individual_cz
+apple_one_family_cz
+apple_one_individual_de
+apple_one_family_de
+apple_one_individual_dk
+apple_one_family_dk
+apple_one_individual_es
+apple_one_family_es
+apple_one_individual_fi
+apple_one_family_fi
+apple_one_individual_fr
+apple_one_family_fr
+apple_one_individual_gb
+apple_one_family_gb
+apple_one_premier_gb
+apple_one_individual_hu
+apple_one_family_hu
+apple_one_individual_id
+apple_one_family_id
+apple_one_individual_ie
+apple_one_family_ie
+apple_one_premier_ie
+apple_one_individual_it
+apple_one_family_it
+apple_one_individual_lu
+apple_one_family_lu
+apple_one_individual_mx
+apple_one_family_mx
+apple_one_individual_nl
+apple_one_family_nl
+apple_one_individual_no
+apple_one_family_no
+apple_one_individual_ph
+apple_one_family_ph
+apple_one_individual_pl
+apple_one_individual_pt
+apple_one_family_pt
+apple_one_premier_pt
+apple_one_individual_us
+apple_one_family_us
+apple_one_premier_us
+apple_one_individual_vn
+apple_one_family_vn
+
+# Wave 3 (watch probe of 2026-10-23); MagentaTV SmartStream is manual (no price anchor)
+magenta_tv_smartstream_de
+claro_tv_plus_streamings_br

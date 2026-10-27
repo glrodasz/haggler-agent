@@ -268,10 +268,12 @@ infra/                    GCP bootstrap and billing kill switch
 - [x] **Phase 1:** daily per-country prices and the public site.
 - [x] **Phase 2:** weekly feasibility research agent (quote-verified facts, deterministic
   per-profile evaluator, human review by evidence hash), comparator for any residence and ties.
-- [ ] **Phase 3 (current):** bundle monitoring (Meli+, Telia, Apple One…). Done: canonical YAML
-  with anchors, LLM-free watcher of official pages and PDFs, propose-only agent, derived status,
-  per-profile verdicts. Pending: first-wave anchors and the second wave (Telia Play).
-- [ ] **Phase 4:** in-browser combination optimizer (one region per Apple/Google account, limits
+- [x] **Phase 3:** bundle monitoring: canonical YAML with anchors, LLM-free watcher of official
+  pages and PDFs, propose-only agent, derived status, per-profile verdicts. Watched: Apple One in
+  28 countries, Meli+ (Colombia, Mexico, Brazil, Chile), Telia streaming packages and Obegränsad
+  Plus, Google AI Pro (Colombia), Claro tv+ Streamings, MagentaTV SmartStream and Go3. Campaign
+  prices the watcher can't tie to a plan stay on manual review.
+- [ ] **Phase 4 (next):** in-browser combination optimizer (one region per Apple/Google account, limits
   on foreign payment instruments, bundles as virtual SKUs).
 
 ## Contributing

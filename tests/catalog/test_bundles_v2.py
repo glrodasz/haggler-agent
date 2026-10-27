@@ -983,6 +983,67 @@ def test_wave_1_values_match_the_official_pages() -> None:
     assert bundles.provider("apple").domains["SE"] == ["www.apple.com/se/"]
 
 
+# Apple One in the other countries the daily job prices (phase 3, PR E): anchors from the watch
+# probe of 2026-10-23 (runs 39922023200 and 39922367401).
+APPLE_ONE_WAVE_2 = {
+    "apple_one_individual_at",
+    "apple_one_family_at",
+    "apple_one_individual_be",
+    "apple_one_family_be",
+    "apple_one_individual_br",
+    "apple_one_family_br",
+    "apple_one_individual_ca",
+    "apple_one_family_ca",
+    "apple_one_premier_ca",
+    "apple_one_individual_ch",
+    "apple_one_family_ch",
+    "apple_one_individual_cl",
+    "apple_one_family_cl",
+    "apple_one_individual_cz",
+    "apple_one_family_cz",
+    "apple_one_individual_de",
+    "apple_one_family_de",
+    "apple_one_individual_dk",
+    "apple_one_family_dk",
+    "apple_one_individual_es",
+    "apple_one_family_es",
+    "apple_one_individual_fi",
+    "apple_one_family_fi",
+    "apple_one_individual_fr",
+    "apple_one_family_fr",
+    "apple_one_individual_gb",
+    "apple_one_family_gb",
+    "apple_one_premier_gb",
+    "apple_one_individual_hu",
+    "apple_one_family_hu",
+    "apple_one_individual_id",
+    "apple_one_family_id",
+    "apple_one_individual_ie",
+    "apple_one_family_ie",
+    "apple_one_premier_ie",
+    "apple_one_individual_it",
+    "apple_one_family_it",
+    "apple_one_individual_lu",
+    "apple_one_family_lu",
+    "apple_one_individual_mx",
+    "apple_one_family_mx",
+    "apple_one_individual_nl",
+    "apple_one_family_nl",
+    "apple_one_individual_no",
+    "apple_one_family_no",
+    "apple_one_individual_ph",
+    "apple_one_family_ph",
+    "apple_one_individual_pl",
+    "apple_one_individual_pt",
+    "apple_one_family_pt",
+    "apple_one_premier_pt",
+    "apple_one_individual_us",
+    "apple_one_family_us",
+    "apple_one_premier_us",
+    "apple_one_individual_vn",
+    "apple_one_family_vn",
+}
+
 # The wave-1 rows the watch probe confirmed on 2026-10-11 (probe --mode watch): every included
 # component and the price (or the daily row, for an observed price) have an anchor, and the
 # probe left them verified, so they are watched in auto mode.
@@ -990,12 +1051,16 @@ OFFICIAL_FETCH = {
     "meli_plus_co_total",
     "meli_plus_co_esencial",
     "meli_plus_mx_mega",
+    "meli_plus_cl_total",
+    "meli_plus_cl_esencial",
+    "telia_se_streaming_maxad",
     "apple_one_individual_se",
     "apple_one_family_se",
     "apple_one_individual_co",
     "apple_one_family_co",
     "google_ai_pro_co",
-}
+    "claro_tv_plus_streamings_br",
+} | APPLE_ONE_WAVE_2
 
 
 def test_wave_1_anchors_come_from_the_watch_probe() -> None:
@@ -1011,11 +1076,25 @@ def test_wave_1_anchors_come_from_the_watch_probe() -> None:
     assert facts["meli_plus_co_total"] == ["component", "price"]
     assert facts["meli_plus_mx_mega"] == ["component", "price"]
     assert facts["meli_plus_br_mega"] == ["price"]
+    assert facts["meli_plus_cl_total"] == ["component", "price"]
+    assert facts["meli_plus_cl_esencial"] == ["price"]
+    assert facts["telia_se_streaming_maxad"] == ["component", "price"]
+    # Streaming Mer and Mest: a campaign price shown next to the struck-through regular one has
+    # no anchor, so they stay manual with component anchors only (watch probe of 2026-10-23).
+    for bundle_id in ("telia_se_streaming_mer", "telia_se_streaming_mest"):
+        assert facts[bundle_id] == ["component"]
+        assert rows[bundle_id].watch.mode == "manual"
+        assert rows[bundle_id].price.intro_months == 6
+    # Wave 3 (2026-10-23): Claro tv+ Streamings is anchored; MagentaTV SmartStream's price is not
+    # (its 0 € intro sits between the plan's name and 20 €), so it stays manual.
+    assert facts["claro_tv_plus_streamings_br"] == ["component", "price"]
+    assert facts["magenta_tv_smartstream_de"] == ["component"]
+    assert rows["magenta_tv_smartstream_de"].watch.mode == "manual"
     assert facts["meli_plus_co_esencial"] == ["price"]
     assert facts["google_ai_pro_co"] == ["component", "price"]
     for bundle_id in ("apple_one_individual_se", "apple_one_family_se"):
         assert facts[bundle_id] == ["component"]  # the price is the daily apple_one row
-    for bundle_id in ("apple_one_individual_co", "apple_one_family_co"):
+    for bundle_id in ("apple_one_individual_co", "apple_one_family_co", *APPLE_ONE_WAVE_2):
         assert facts[bundle_id] == ["component"]
     # Telia: its components are on the product page, but the price list prints 699 kr in a
     # table row without the plan's name, so the price has no anchor and stays manual.
