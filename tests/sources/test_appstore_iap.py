@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from haggler.sources.appstore_iap import (
     items_from_json,
     items_from_text,
     name_period,
+    names_country,
     text_lines,
 )
 from haggler.sources.base import match_iap_plan
@@ -109,13 +111,12 @@ def test_us_youtube_2025_design(catalog):
     assert all(FLAG_MARKUP in o.flags for o in result.observations)
     assert by_plan["family"].plan_label_raw == "YouTube Premium (Family)"
     assert "$34.99" in by_plan["family"].evidence_snippet
-    # "YouTube Music Premium" is excluded by the source's exclude_patterns, not unmapped.
-    assert [i.name for i in result.unmapped] == ["Super Chat"]
-    (req,) = result.llm_requests
-    assert (req.reason, req.service_id, req.country) == ("unmapped_iap", "youtube_premium", "US")
-    assert req.page_text == "Super Chat — $4.99"
+    # "YouTube Music Premium" is excluded by the source's exclude_patterns; "Super Chat" matches
+    # no plan and the source sets drop_unmatched, so neither goes to the LLM.
+    assert not result.unmapped and not result.llm_requests
     assert result.missing_plans == ["duo"]
     assert any("excluded 1" in n for n in result.notes)
+    assert any("dropped 1 item(s)" in n for n in result.notes)
 
 
 def test_us_youtube_every_extractor_reads_the_list(catalog):
@@ -656,3 +657,143 @@ def test_one_name_listed_twice_still_keeps_the_lowest(catalog):
     assert _periods(result) == {("individual", "month"): Decimal("11.99")}
     assert FLAG_DUPLICATE in result.observations[0].flags
     assert not result.unmapped and not result.llm_requests
+
+
+# LLM jobs the 2026-10-22 daily run spent on known noise (probe of every storefront).
+def test_youtube_drops_rentals_super_chat_and_memberships(catalog):
+    rows = [
+        ("YouTube Premium", "11,99 €"),
+        ("Movies & Shows", "3,99 €"),
+        ("Super Thanks", "1,99 €"),
+        ("Pase de Oro", "4,99 €"),
+    ]
+    result = _parse(catalog, "youtube_premium", "EE", _iap_page(rows))
+    assert _periods(result) == {("individual", "month"): Decimal("11.99")}
+    assert not result.unmapped and not result.llm_requests
+
+
+def test_deezer_other_countries_skus_are_dropped(catalog):
+    rows = [
+        ("Deezer Premium", "14,99 €"),
+        ("Deezer Premium Turkey", "1,99 €"),
+        ("Deezer Premium Croatia", "8,49 €"),
+        ("Deezer Family", "22,99 €"),
+        ("Deezer Premium Student", "7,49 €"),
+    ]
+    result = _parse(catalog, "deezer", "BA", _iap_page(rows))
+    assert _periods(result) == {
+        ("premium", "month"): Decimal("14.99"),
+        ("family", "month"): Decimal("22.99"),
+        ("student", "month"): Decimal("7.49"),
+    }
+    assert not result.unmapped and not result.llm_requests
+
+
+@pytest.mark.parametrize(
+    ("cc", "rows", "expected"),
+    [
+        (
+            "RO",
+            [
+                ("Deezer Premium", "79,99 RON"),
+                ("Deezer Premium Romania", "72,99 RON"),
+                ("Deezer Family", "114,99 RON"),
+                ("Deezer Family Romania", "104,99 RON"),
+            ],
+            {("premium", "month"): Decimal("72.99"), ("family", "month"): Decimal("104.99")},
+        ),
+        (
+            "CZ",
+            [
+                ("Deezer Premium", "409,00 Kč"),
+                ("Deezer for Czech republic", "379,00 Kč"),
+                ("Deezer Premium Czech Rep", "379,00 Kč"),
+            ],
+            {("premium", "month"): Decimal("379.00")},
+        ),
+        (
+            "PH",
+            [
+                ("Deezer Premium", "₱ 749.00"),
+                ("Deezer Family the Philippines", "₱ 999.00"),
+                ("Deezer Family", "₱ 1,100.00"),
+            ],
+            {("premium", "month"): Decimal("749.00"), ("family", "month"): Decimal("999.00")},
+        ),
+    ],
+)
+def test_deezer_own_regional_sku_replaces_the_generic(catalog, cc, rows, expected):
+    result = _parse(catalog, "deezer", cc, _iap_page(rows))
+    assert _periods(result) == expected
+    assert not result.unmapped and not result.llm_requests
+
+
+def test_chatgpt_pro_keeps_the_200_tier(catalog):
+    rows = [
+        ("ChatGPT Plus", "$19.99"),
+        ("ChatGPT Pro 100", "$100.00"),
+        ("ChatGPT Pro 200", "$200.00"),
+        ("ChatGPT Pro 500", "$500.00"),
+    ]
+    result = _parse(catalog, "chatgpt", "US", _iap_page(rows))
+    assert _periods(result) == {
+        ("plus", "month"): Decimal("19.99"),
+        ("pro", "month"): Decimal("200.00"),
+    }
+    assert not result.unmapped and not result.llm_requests
+
+
+@pytest.mark.parametrize(
+    ("service_id", "name", "plan"),
+    [
+        ("google_one", "100 Go – Forfait mensuel", "100gb"),
+        ("google_one", "200 Go – Forfait annuel", "200gb"),
+        ("hbo_max", "Basis mit Werbung", "basic_with_ads"),
+        ("hbo_max", "Base con pubblicità", "basic_with_ads"),
+        ("hbo_max", "Standard", "standard"),
+        ("disney_plus", "Disney+ Prémium", "premium"),
+        ("canva", "Canva Equipas - Mensal", "business"),
+        ("canva", "Canva en Équipe - Mensuel", "business"),
+    ],
+)
+def test_localized_names_map_without_the_llm(catalog, service_id, name, plan):
+    assert match_iap_plan(catalog.service(service_id), name) == [plan]
+
+
+@pytest.mark.parametrize(
+    ("service_id", "name"),
+    [
+        ("duolingo", "Juwelenkarre (3000)"),
+        ("duolingo", "Barile di gemme (1200)"),
+        ("duolingo", "Barril de Cristais (1200)"),
+        ("duolingo", "Kist met Juwelen"),
+        ("hbo_max", "Legacy Standard"),
+        ("hbo_max", "HBO Max DAZN"),
+        ("disney_plus", "Premier Access: Black Widow"),
+        ("adobe_express", "Adobe Design Mobile : Monthly"),
+        ("adobe_express", "Apps de diseño de Adobe: mes"),
+        ("adobe_express", "Adobe Grafica Mobile: annuale"),
+        ("adobe_express", "Abbonamento a Spark - Annuale"),
+    ],
+)
+def test_known_noise_is_excluded(catalog, service_id, name):
+    svc = catalog.service(service_id)
+    src = next(s for s in svc.sources if s.adapter == "appstore_iap")
+    patterns = src.params["exclude_patterns"]
+    assert any(re.search(p, name, re.IGNORECASE) for p in patterns)
+
+
+@pytest.mark.parametrize(
+    ("suffix", "cc", "expected"),
+    [
+        ("czech rep", "CZ", True),
+        ("czech republic", "CZ", True),
+        ("philippines", "PH", True),
+        ("romania", "RO", True),
+        ("united kingdom", "US", False),
+        ("united states", "GB", False),
+        ("turkey", "BA", False),
+    ],
+)
+def test_names_country(catalog, suffix, cc, expected):
+    assert names_country(suffix, catalog.country(cc)) is expected

@@ -37,3 +37,4 @@ deezer SE CO US DE BR
 canva SE CO US DE IN
 adobe_express SE CO US DE
 xbox_game_pass SE CO US DE TR BR
+prime_video US CA MX BR GB IE DE FR IT ES NL BE SE PL TR

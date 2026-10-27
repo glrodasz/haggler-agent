@@ -888,7 +888,7 @@ export const pt = {
     collect: [
       {
         title: "Fontes oficiais primeiro",
-        text: "Todos os dias um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store (Microsoft 365 e Xbox Game Pass). Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.",
+        text: "Todos os dias um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store (Microsoft 365 e Xbox Game Pass) e a página do Amazon Prime de cada loja Amazon (Prime Video, com o preço do Amazon Prime, que o inclui). Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.",
       },
       {
         title: "App Store como alternativa",

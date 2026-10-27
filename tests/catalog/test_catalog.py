@@ -36,7 +36,7 @@ def test_catalog_shape():
     cat = load_catalog()
     assert len(cat.countries) == 67
     priced = [s for s in cat.services if s.sources]
-    assert len(priced) == 21
+    assert len(priced) == 22
     assert {"SE", "LT", "CO", "US"} <= set(cat.country_codes())
     # Dollarized markets accept their own currency and the one services bill in there.
     assert cat.country("BO").expected_currencies("web") == ["BOB", "USD"]

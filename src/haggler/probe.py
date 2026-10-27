@@ -544,7 +544,8 @@ def render_adapters_md(rows: list[dict[str, Any]], *, generated_at: datetime) ->
             )
             + " |"
         )
-    failures = [r for r in rows if r["status"] not in QUIET_STATUSES]
+    # Unmapped items become LLM jobs in the daily run, so they are listed even on "ok" rows.
+    failures = [r for r in rows if r["status"] not in QUIET_STATUSES or r["unmapped"]]
     if failures:
         lines += ["", "## Detalles", ""]
         for row in failures:
