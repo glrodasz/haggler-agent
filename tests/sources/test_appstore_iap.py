@@ -671,13 +671,12 @@ def test_youtube_drops_rentals_super_chat_and_memberships(catalog):
     assert not result.unmapped and not result.llm_requests
 
 
-def test_deezer_regional_skus_are_excluded(catalog):
+def test_deezer_other_countries_skus_are_dropped(catalog):
     rows = [
         ("Deezer Premium", "14,99 €"),
         ("Deezer Premium Turkey", "1,99 €"),
         ("Deezer Premium Croatia", "8,49 €"),
         ("Deezer Family", "22,99 €"),
-        ("Deezer Family Portugal", "19,99 €"),
         ("Deezer Premium Student", "7,49 €"),
     ]
     result = _parse(catalog, "deezer", "BA", _iap_page(rows))
@@ -686,6 +685,45 @@ def test_deezer_regional_skus_are_excluded(catalog):
         ("family", "month"): Decimal("22.99"),
         ("student", "month"): Decimal("7.49"),
     }
+    assert not result.unmapped and not result.llm_requests
+
+
+@pytest.mark.parametrize(
+    ("cc", "rows", "expected"),
+    [
+        (
+            "RO",
+            [
+                ("Deezer Premium", "79,99 RON"),
+                ("Deezer Premium Romania", "72,99 RON"),
+                ("Deezer Family", "114,99 RON"),
+                ("Deezer Family Romania", "104,99 RON"),
+            ],
+            {("premium", "month"): Decimal("72.99"), ("family", "month"): Decimal("104.99")},
+        ),
+        (
+            "CZ",
+            [
+                ("Deezer Premium", "409,00 Kč"),
+                ("Deezer for Czech republic", "379,00 Kč"),
+                ("Deezer Premium Czech Rep", "379,00 Kč"),
+            ],
+            {("premium", "month"): Decimal("379.00")},
+        ),
+        (
+            "PH",
+            [
+                ("Deezer Premium", "₱ 749.00"),
+                ("Deezer Family the Philippines", "₱ 999.00"),
+                ("Deezer Family", "₱ 1,100.00"),
+            ],
+            {("premium", "month"): Decimal("749.00"), ("family", "month"): Decimal("999.00")},
+        ),
+    ],
+)
+def test_deezer_own_regional_sku_replaces_the_generic(catalog, cc, rows, expected):
+    result = _parse(catalog, "deezer", cc, _iap_page(rows))
+    assert _periods(result) == expected
     assert not result.unmapped and not result.llm_requests
 
 

@@ -28,8 +28,13 @@ Premium" at $18.99 and $15.99). Different names at different prices that land on
 period only by default are more likely a variant the patterns do not know ("YouTube Premium
 Estudante" read as Individual), so those items go to the LLM instead of publishing the lowest.
 
-Source param drop_unmatched: items no plan pattern matches are ignored instead of sent to the
-LLM (the YouTube app also sells Super Chat, movie rentals and channel memberships with any name).
+Source params that cut LLM jobs where a listing is known to be noisy:
+  - drop_unmatched: items no plan pattern matches are ignored instead of sent to the LLM (the
+    YouTube app also sells Super Chat, movie rentals and channel memberships with any name);
+  - regional_skus: a list of plan words; text after one of them is a country ("Deezer Premium
+    Romania", "Deezer for Czech republic"). Storefronts list the generic SKU next to their own
+    country's, and sometimes other countries' ("Deezer Premium Turkey" in Bosnia): another
+    country's SKU is dropped, and the storefront's own SKU replaces the generic one of its plan.
 """
 
 from __future__ import annotations
@@ -623,6 +628,56 @@ def _canonical_problem(tree: LexborHTMLParser, country: CountryDef) -> str | Non
 # ------------------------------------------------------------------ adapter
 
 
+_NOT_A_COUNTRY = re.compile(
+    r"student|estudiant|estudante|etudiant|studierend|studenter|\bduo\b|famil|individual|try"
+)
+
+
+def regional_suffix(name: str, words: Sequence[str]) -> str | None:
+    """Folded text after the last plan word of a regional SKU name ("Deezer Premium for Czech
+    rep." -> "czech rep"), "" for a generic name, None when no plan word appears."""
+    folded = fold(name)
+    ends = [m.end() for w in words for m in re.finditer(rf"\b{re.escape(fold(w))}\b", folded)]
+    if not ends:
+        return None
+    rest = folded[max(ends) :].split()
+    while rest and rest[0] in {"for", "the", "in"}:
+        rest = rest[1:]
+    return " ".join(rest)
+
+
+def names_country(suffix: str, country: CountryDef) -> bool:
+    """True when `suffix` names `country` ("czech rep" for Czechia: compared on 5 letters)."""
+    if len(suffix) < 3:
+        return False
+    for name in (country.name_en, *country.aliases_en, country.cc):
+        n = fold(name)
+        if suffix == n or (len(suffix) >= 5 and len(n) >= 5 and suffix[:5] == n[:5]):
+            return True
+    return False
+
+
+def split_regional(
+    items: list[IapItem], words: Sequence[str], country: CountryDef, notes: list[str]
+) -> tuple[list[IapItem], set[int]]:
+    """Drop other countries' SKUs; return the kept items and the id()s of this country's own."""
+    kept: list[IapItem] = []
+    own: set[int] = set()
+    foreign = 0
+    for it in items:
+        suffix = regional_suffix(it.name, words)
+        if not suffix or _NOT_A_COUNTRY.search(suffix):
+            kept.append(it)
+        elif names_country(suffix, country):
+            kept.append(it)
+            own.add(id(it))
+        else:
+            foreign += 1
+    if foreign:
+        notes.append(f"dropped {foreign} other countries' regional SKU(s)")
+    return kept, own
+
+
 class AppStoreIapAdapter(PerCountryAdapter):
     id: ClassVar[str] = "appstore_iap"
 
@@ -678,6 +733,9 @@ class AppStoreIapAdapter(PerCountryAdapter):
         excluded = 0
         dropped = 0
         drop_unmatched = bool(task.params.get("drop_unmatched"))
+        own: set[int] = set()
+        if words := task.params.get("regional_skus"):
+            items, own = split_regional(items, words, country, notes)
         for it in items:
             if it.amount is None or it.amount <= 0:
                 notes.append(f"unpriced: {it.name} {it.price_text}")
@@ -706,6 +764,11 @@ class AppStoreIapAdapter(PerCountryAdapter):
             seen = ", ".join(f"{c}x{n}" for c, n in sorted(foreign.items()))
             notes.append(f"ignored prices in {seen}; expected {', '.join(expected)}")
 
+        for plan_id, group in by_plan.items():
+            regional = [it for it in group if id(it) in own]
+            if regional and len(regional) < len(group):
+                notes.append(f"{plan_id}: kept {len(regional)} {country.cc} regional SKU(s)")
+                by_plan[plan_id] = regional
         observations: list[ObservationDraft] = []
         for plan in svc.plans:
             if plan.id in by_plan:
