@@ -18,6 +18,7 @@ from haggler.sources.appstore_iap import (
     items_from_json,
     items_from_text,
     name_period,
+    names_country,
     text_lines,
 )
 from haggler.sources.base import match_iap_plan
@@ -780,3 +781,19 @@ def test_known_noise_is_excluded(catalog, service_id, name):
     src = next(s for s in svc.sources if s.adapter == "appstore_iap")
     patterns = src.params["exclude_patterns"]
     assert any(re.search(p, name, re.IGNORECASE) for p in patterns)
+
+
+@pytest.mark.parametrize(
+    ("suffix", "cc", "expected"),
+    [
+        ("czech rep", "CZ", True),
+        ("czech republic", "CZ", True),
+        ("philippines", "PH", True),
+        ("romania", "RO", True),
+        ("united kingdom", "US", False),
+        ("united states", "GB", False),
+        ("turkey", "BA", False),
+    ],
+)
+def test_names_country(catalog, suffix, cc, expected):
+    assert names_country(suffix, catalog.country(cc)) is expected

@@ -646,13 +646,23 @@ def regional_suffix(name: str, words: Sequence[str]) -> str | None:
     return " ".join(rest)
 
 
+def _token_prefix(a: str, b: str) -> bool:
+    short, long_ = sorted((a, b), key=len)
+    return long_.startswith(short) and (len(short) >= 3 or short == long_)
+
+
 def names_country(suffix: str, country: CountryDef) -> bool:
-    """True when `suffix` names `country` ("czech rep" for Czechia: compared on 5 letters)."""
-    if len(suffix) < 3:
+    """True when `suffix` names `country`: word by word, each word a prefix of the other's
+    ("czech rep" names Czech Republic, "czech" names Czechia; "united kingdom" does not name
+    United States)."""
+    words = suffix.split()
+    if not words:
         return False
     for name in (country.name_en, *country.aliases_en, country.cc):
-        n = fold(name)
-        if suffix == n or (len(suffix) >= 5 and len(n) >= 5 and suffix[:5] == n[:5]):
+        n = fold(name).split()
+        if words == n:
+            return True
+        if len(words[0]) >= 4 and all(_token_prefix(a, b) for a, b in zip(words, n, strict=False)):
             return True
     return False
 
