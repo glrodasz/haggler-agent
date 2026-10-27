@@ -517,9 +517,9 @@ services:
     default_plan: pro
     plans:
       - {id: pro, label_es: Pro, label_en: Pro, rank: 1, plausible_monthly_eur: [1, 30],
-         iap_patterns: ['^(?!.*(teams?\b|equipo|business|negocio)).*\bpro\b']}
+         iap_patterns: ['^(?!.*(teams?\b|equip[oa]|[ée]quipe|business|negocio)).*\bpro\b']}
       - {id: business, label_es: Business, label_en: Business, rank: 2, plausible_monthly_eur: [2, 60],
-         iap_patterns: ['teams?\b|equipo|business|negocio']}
+         iap_patterns: ['teams?\b|equip[oa]|[ée]quipe|business|negocio']}
     sources:
       - adapter: appstore_iap
         channel: ios_iap
@@ -540,7 +540,7 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 1051937863, exclude_patterns: ['teams?\b', 'equipo', 'business', 'credit', 'cr[eé]dito']}
+        params: {app_id: 1051937863, exclude_patterns: ['design mobil', 'apps de dise', 'grafica mobile', '\bspark\b', 'teams?\b', 'equipo', 'business', 'credit', 'cr[eé]dito']}
 
   - id: xbox_game_pass
     name: Xbox Game Pass
@@ -594,7 +594,9 @@ services:
     sources:
       - adapter: amazon_prime
         params:
-          url: "https://www.{host}/amazonprime"
+          url: "https://www.{host}/{path}"
+          # amazon.com.tr answers /amazonprime with HTTP 503; /prime is its Prime page.
+          paths: {TR: prime}
           domains:
             US: amazon.com
             CA: amazon.ca

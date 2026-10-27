@@ -64,6 +64,7 @@ def test_plans_one_task_per_amazon_store(catalog):
     assert "CO" not in tasks
     assert tasks["DE"].url == "https://www.amazon.de/amazonprime"
     assert tasks["GB"].host == "www.amazon.co.uk"
+    assert tasks["TR"].url == "https://www.amazon.com.tr/prime"
 
 
 def test_regular_prices_skip_discounted_memberships(catalog):

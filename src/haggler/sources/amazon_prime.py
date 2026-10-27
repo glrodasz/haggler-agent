@@ -2,7 +2,8 @@
 
 Prime Video has no in-app subscription on the App Store and primevideo.com prices follow the
 visitor's IP, so the catalog records the Amazon Prime membership, which includes Prime Video,
-from the store of each country that has one (params.domains {CC: host}). The page states the
+from the store of each country that has one (params.domains {CC: host}; params.paths {CC: path}
+overrides the default /amazonprime path). The page states the
 regular price in a sentence such as "After, Prime is just €8.99 per month." / "Prime kosztuje
 69 zł za rok."; it also advertises discounted memberships (Prime Student, Young Adults, Surface
 trials, government assistance) at lower prices. Those lines print the regular price struck next
@@ -48,7 +49,8 @@ class AmazonPrimeAdapter(PerCountryAdapter):
             host = domains.get(country.cc)
             if not host or not src.applies_to(country.cc):
                 continue
-            url = src.params["url"].format(host=host)
+            path = (src.params.get("paths") or {}).get(country.cc, "amazonprime")
+            url = src.params["url"].format(host=host, path=path)
             tasks.append(
                 Task(
                     task_id=make_task_id(self.id, svc.id, country.cc),

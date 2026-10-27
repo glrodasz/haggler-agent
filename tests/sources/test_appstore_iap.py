@@ -711,6 +711,8 @@ def test_chatgpt_pro_keeps_the_200_tier(catalog):
         ("hbo_max", "Base con pubblicità", "basic_with_ads"),
         ("hbo_max", "Standard", "standard"),
         ("disney_plus", "Disney+ Prémium", "premium"),
+        ("canva", "Canva Equipas - Mensal", "business"),
+        ("canva", "Canva en Équipe - Mensuel", "business"),
     ],
 )
 def test_localized_names_map_without_the_llm(catalog, service_id, name, plan):
@@ -727,6 +729,10 @@ def test_localized_names_map_without_the_llm(catalog, service_id, name, plan):
         ("hbo_max", "Legacy Standard"),
         ("hbo_max", "HBO Max DAZN"),
         ("disney_plus", "Premier Access: Black Widow"),
+        ("adobe_express", "Adobe Design Mobile : Monthly"),
+        ("adobe_express", "Apps de diseño de Adobe: mes"),
+        ("adobe_express", "Adobe Grafica Mobile: annuale"),
+        ("adobe_express", "Abbonamento a Spark - Annuale"),
     ],
 )
 def test_known_noise_is_excluded(catalog, service_id, name):
