@@ -77,7 +77,7 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 544007664, exclude_patterns: ['music']}
+        params: {app_id: 544007664, exclude_patterns: ['music'], drop_unmatched: true}
 
   - id: disney_plus
     name: Disney+
@@ -116,14 +116,14 @@ services:
          aliases: [standard, estándar, standaard, standart, padrão, estandar],
          iap_patterns: ['^(?!.*(\bads\b|advert|rekla+m|rekl[aáā]m|\bpub\b|werbung|an[uú]ncio|publicid|publicit|pubblicit|mainok|reclam|hirdet|iklan|qu[aả]ng c[aá]o|\bb[aá]sic)).*(standard|est[aá]ndar|padr[aã]o|standaard|standart)']}
       - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
-         aliases: [premium], iap_patterns: ['premium']}
+         aliases: [premium], iap_patterns: ['pr[eé]mium']}
     sources:
       - adapter: appstore_iap
         channel: ios_iap
         params:
           app_id: 1446075923
           # Bundles and add-ons sold in the same app (Disney+, Hulu, ESPN+, Max, Star+ ...).
-          exclude_patterns: ['hulu', 'espn', 'bundle', 'combo', '\bduo\b', '\btrio\b', 'star\+', '\bmax\b', 'paquete', 'pacote', 'paket']
+          exclude_patterns: ['hulu', 'espn', 'premier access', 'bundle', 'combo', '\bduo\b', '\btrio\b', 'star\+', '\bmax\b', 'paquete', 'pacote', 'paket']
         # Disney+ is not sold there (other apps such as JioHotstar).
         exclude: [IN, ID, PK, NG, VN]
 
@@ -139,15 +139,15 @@ services:
     plans:
       - {id: basic_with_ads, label_es: Básico con anuncios, label_en: Basic with ads, rank: 1, ads: true,
          plausible_monthly_eur: [0.8, 20],
-         iap_patterns: ['b[aá]sic|with ads|con anuncios|com an[uú]ncios|med reklam']}
+         iap_patterns: ['b[aá]si[cs]|\bbase\b|with ads|con anuncios|com an[uú]ncios|med reklam|werbung|pubblicit']}
       - {id: standard, label_es: Estándar, label_en: Standard, rank: 2, plausible_monthly_eur: [1.2, 25],
-         iap_patterns: ['^(?!.*(ads|anunc|an[uú]nc|reklam|b[aá]sic)).*(standard|est[aá]ndar|padr[aã]o)']}
+         iap_patterns: ['^(?!.*(ads|anunc|an[uú]nc|reklam|b[aá]si[cs]|\bbase\b|werbung|pubblicit)).*(standard|est[aá]ndar|padr[aã]o)']}
       - {id: premium, label_es: Premium, label_en: Premium, rank: 3, plausible_monthly_eur: [1.5, 30],
          iap_patterns: ['premium|platin']}
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 1666653815, exclude_patterns: ['sport', 'deport', 'esporte', 'add-on']}
+        params: {app_id: 1666653815, exclude_patterns: ['sport', 'deport', 'esporte', 'add-on', 'legacy', '\bmobile\b', 'dazn']}
         exclude: [CA, IN]
 
   - id: spotify
@@ -212,11 +212,11 @@ services:
       Store.
     plans:
       - {id: 100gb, label_es: 100 GB, label_en: 100 GB, rank: 0, plausible_monthly_eur: [0.2, 5],
-         iap_patterns: ['\b100\s*GB\b']}
+         iap_patterns: ['\b100\s*(GB|Go)\b']}
       - {id: 200gb, label_es: 200 GB, label_en: 200 GB, rank: 1, plausible_monthly_eur: [0.3, 7],
-         iap_patterns: ['\b200\s*GB\b']}
+         iap_patterns: ['\b200\s*(GB|Go)\b']}
       - {id: 2tb, label_es: 2 TB, label_en: 2 TB, rank: 2, plausible_monthly_eur: [1.5, 25],
-         iap_patterns: ['^(?!.*\bai\b).*\b2\s*TB\b']}
+         iap_patterns: ['^(?!.*\bai\b).*\b2\s*(TB|To)\b']}
       - {id: ai_plus, label_es: Google AI Plus, label_en: Google AI Plus, rank: 2, plausible_monthly_eur: [1, 20],
          iap_patterns: ['\bai\s*plus\b']}
       - {id: ai_pro, label_es: Google AI Pro, label_en: Google AI Pro, rank: 3, plausible_monthly_eur: [3, 45],
@@ -406,7 +406,7 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 6448311069, exclude_patterns: ['team', 'business', 'enterprise', 'credit']}
+        params: {app_id: 6448311069, exclude_patterns: ['team', 'business', 'enterprise', 'credit', 'pro\s*(100|500)\b']}
 
   - id: claude
     name: Claude
@@ -457,7 +457,7 @@ services:
     sources:
       - adapter: appstore_iap
         channel: ios_iap
-        params: {app_id: 570060128, exclude_patterns: ['gems?\b', 'joyas', 'gemas', 'lingots?', 'streak', 'racha']}
+        params: {app_id: 570060128, exclude_patterns: ['gems?\b', 'joyas', 'gemas', 'gemme', 'juwel', 'cristais', 'schatzkiste', '\bkist\b', 'lingots?', 'streak', 'racha']}
 
   - id: tidal
     name: TIDAL
@@ -502,6 +502,7 @@ services:
         channel: ios_iap
         params:
           app_id: 292738169
+          lowest_across_names: true
           # US legacy/regional SKUs ("Deezer Premium USA", "Premium+ US", "Premium for Brazil").
           exclude_patterns: ['premium\s*\+', '\bfor [a-z]+$', '\busa?\b', 'united states']
 

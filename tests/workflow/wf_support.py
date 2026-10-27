@@ -18,7 +18,7 @@ from haggler.config import Settings
 from haggler.fetch import RawResponse
 from haggler.fx.service import StaticFxService
 from haggler.jobs.daily import DailyOptions, run_daily
-from haggler.models.catalog import Catalog
+from haggler.models.catalog import Catalog, ServiceDef
 from haggler.models.fx import FxRate, FxTable
 from haggler.models.run import RunReport
 from haggler.pipeline.deps import Deps
@@ -52,9 +52,18 @@ def page(name: str) -> str:
     return PAGES.joinpath(name).read_text(encoding="utf-8")
 
 
+def _keep_unmapped(svc: ServiceDef) -> ServiceDef:
+    """The US YouTube fixture's "Super Chat" is these tests' unmapped_iap LLM job, which the real
+    source drops (drop_unmatched): switch that off so the LLM path stays exercised."""
+    sources = [
+        s.model_copy(update={"params": {**s.params, "drop_unmatched": False}}) for s in svc.sources
+    ]
+    return svc.model_copy(update={"sources": sources})
+
+
 def subset_catalog(full: Catalog) -> Catalog:
     return Catalog(
-        services=[full.service(s) for s in SERVICES],
+        services=[_keep_unmapped(full.service(s)) for s in SERVICES],
         countries=[full.country(c) for c in COUNTRIES],
         fx_pins={k: v for k, v in full.fx_pins.items() if k == "COP"},
     )
