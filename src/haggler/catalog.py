@@ -37,6 +37,7 @@ KNOWN_ADAPTERS = {
     "icloud_support",
     "apple_marketing",
     "ms_displaycatalog",
+    "amazon_prime",
 }
 
 

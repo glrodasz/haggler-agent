@@ -16,6 +16,7 @@ ADAPTERS: dict[str, str] = {
     "icloud_support": "haggler.sources.icloud_support:ICloudSupportAdapter",
     "apple_marketing": "haggler.sources.apple_marketing:AppleMarketingAdapter",
     "ms_displaycatalog": "haggler.sources.ms_displaycatalog:MsDisplayCatalogAdapter",
+    "amazon_prime": "haggler.sources.amazon_prime:AmazonPrimeAdapter",
 }
 
 

@@ -885,7 +885,7 @@ export const en = {
     collect: [
       {
         title: "Official sources first",
-        text: "Every day an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog (Microsoft 365 and Xbox Game Pass). It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.",
+        text: "Every day an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog (Microsoft 365 and Xbox Game Pass) and the Amazon Prime page of each Amazon store (Prime Video, priced as Amazon Prime, which includes it). It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.",
       },
       {
         title: "App Store as a fallback",

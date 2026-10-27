@@ -43,4 +43,5 @@ export const SERVICE_WORDMARKS: Readonly<Record<string, string>> = {
   // Simple Icons has no Canva or Xbox mark (removed or never added).
   canva: "Canva",
   xbox_game_pass: "Xbox",
+  prime_video: "Prime",
 };

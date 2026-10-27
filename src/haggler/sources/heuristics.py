@@ -34,13 +34,13 @@ PriceRole = Literal["regular", "intro", "compare", "savings"]
 # ---- billing period markers ----------------------------------------------------------------
 
 _MONTH_WORD = (
-    r"(?:month|måna?d(?:en)?|måned(?:en)?|maand|mes|monat|mois|mese|miesiąc|měsíc|hónap|ay"
+    r"(?:month|måna?d(?:en)?|måned(?:en)?|maand|mês|mes|monat|mois|mese|miesiąc|měsíc|hónap|ay"
     r"|bulan|tháng|mnd)"
 )
 _YEAR_WORD = r"(?:year|år(?:et)?|jahr|an|año|ano|anno|jaar|rok|yıl|év)"
 _PER = r"(?:per|pr\.?|a|al|por|par|pro|i|om|w|na|za|each)"
 _MONTH = re.compile(
-    rf"(/\s*(mo|mth|month|mes|mån|månad|md|mnd|mois|monat|mese|ay|mies|měs|hó|lună|mês|maand"
+    rf"(/\s*(mo|mth|month|mes|mån|månad|md|mnd|mois|monat|mese|ay|miesiąc|mies|měs|hó|lună|mês|maand"
     rf"|kk|kuukausi|mėn|mēn|kuu)(?![^\W\d_])"
     rf"|\b{_PER}\s+{_MONTH_WORD}\b|al\s+mes|i\s+månaden|pr\.?\s*md|par\s+mois"
     rf"|monthly|mensual|mensal|månadsvis|aylık|miesięcznie|kuukaudessa|/m\b)",
@@ -49,7 +49,7 @@ _MONTH = re.compile(
 _YEAR = re.compile(
     rf"(/\s*(yr|year|año|ano|år|an|jahr|anno|yıl|rok|év|jaar|v|vuosi|metus|metai|gadā|gads"
     rf"|aasta)(?![^\W\d_])"
-    rf"|\b{_PER}\s+{_YEAR_WORD}\b|al\s+año|om\s+året|i\s+året|par\s+an|per\s+annum"
+    rf"|\b{_PER}\s+{_YEAR_WORD}\b|al\s+año|om\s+året|i\s+året|par\s+an|all['’]anno|per\s+annum"
     rf"|annual|yearly|anual|årlig|årsvis|yıllık|rocznie|vuodessa)",
     re.IGNORECASE,
 )

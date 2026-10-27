@@ -880,7 +880,7 @@ export const es = {
     collect: [
       {
         title: "Fuentes oficiales primero",
-        text: "Cada día un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, la web de Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store (Microsoft 365 y Xbox Game Pass). Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.",
+        text: "Cada día un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, la web de Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store (Microsoft 365 y Xbox Game Pass) y la página de Amazon Prime de cada tienda Amazon (Prime Video, con el precio de Amazon Prime, que lo incluye). Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.",
       },
       {
         title: "App Store como respaldo",

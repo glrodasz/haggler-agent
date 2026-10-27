@@ -564,6 +564,53 @@ services:
           url: "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={big_ids}&market={cc}&languages=en-US"
           default_period: month
 
+  - id: prime_video
+    name: Prime Video
+    category: video
+    eu_geo_class: audiovisual_excluded
+    homepage: https://www.primevideo.com
+    official_domains: [primevideo.com, amazon.com, amazon.ca, amazon.com.mx, amazon.com.br,
+                       amazon.co.uk, amazon.ie, amazon.de, amazon.fr, amazon.it, amazon.es,
+                       amazon.nl, amazon.com.be, amazon.se, amazon.pl, amazon.com.tr]
+    aliases: [Amazon Prime Video, Amazon Prime]
+    research_urls:
+      - https://www.amazon.de/gp/help/customer/display.html?nodeId=G34EUPKVMYFW8N2U
+    default_plan: prime
+    notes_es: >-
+      El precio es el de Amazon Prime, que incluye Prime Video, en la tienda de Amazon de cada país.
+      Solo hay precio en países con tienda Amazon propia; primevideo.com muestra el precio según la
+      IP del visitante y la app no vende la suscripción.
+    notes_en: >-
+      The price is Amazon Prime, which includes Prime Video, from each country's Amazon store. Only
+      countries with their own Amazon store have a price; primevideo.com shows the price based on
+      the visitor's IP and the app does not sell the subscription.
+    notes_pt: >-
+      O preço é o do Amazon Prime, que inclui o Prime Video, na loja Amazon de cada país. Só há
+      preço em países com loja Amazon própria; o primevideo.com mostra o preço conforme o IP do
+      visitante e o app não vende a assinatura.
+    plans:
+      - {id: prime, label_es: Amazon Prime, label_en: Amazon Prime, rank: 1, plausible_monthly_eur: [1, 25]}
+    sources:
+      - adapter: amazon_prime
+        params:
+          url: "https://www.{host}/amazonprime"
+          domains:
+            US: amazon.com
+            CA: amazon.ca
+            MX: amazon.com.mx
+            BR: amazon.com.br
+            GB: amazon.co.uk
+            IE: amazon.ie
+            DE: amazon.de
+            FR: amazon.fr
+            IT: amazon.it
+            ES: amazon.es
+            NL: amazon.nl
+            BE: amazon.com.be
+            SE: amazon.se
+            PL: amazon.pl
+            TR: amazon.com.tr
+
   # ---- Curated-only services (referenced by bundles; no price source yet) ----
   - id: vix
     name: ViX Premium
