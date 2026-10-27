@@ -671,19 +671,21 @@ def test_youtube_drops_rentals_super_chat_and_memberships(catalog):
     assert not result.unmapped and not result.llm_requests
 
 
-def test_deezer_regional_sku_keeps_the_lowest(catalog):
+def test_deezer_regional_skus_are_excluded(catalog):
     rows = [
         ("Deezer Premium", "14,99 €"),
+        ("Deezer Premium Turkey", "1,99 €"),
+        ("Deezer Premium Croatia", "8,49 €"),
         ("Deezer Family", "22,99 €"),
         ("Deezer Family Portugal", "19,99 €"),
+        ("Deezer Premium Student", "7,49 €"),
     ]
-    result = _parse(catalog, "deezer", "PT", _iap_page(rows))
+    result = _parse(catalog, "deezer", "BA", _iap_page(rows))
     assert _periods(result) == {
         ("premium", "month"): Decimal("14.99"),
-        ("family", "month"): Decimal("19.99"),
+        ("family", "month"): Decimal("22.99"),
+        ("student", "month"): Decimal("7.49"),
     }
-    family = next(o for o in result.observations if o.plan_id == "family")
-    assert FLAG_DUPLICATE in family.flags
     assert not result.unmapped and not result.llm_requests
 
 

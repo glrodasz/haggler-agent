@@ -502,9 +502,11 @@ services:
         channel: ios_iap
         params:
           app_id: 292738169
-          lowest_across_names: true
-          # US legacy/regional SKUs ("Deezer Premium USA", "Premium+ US", "Premium for Brazil").
-          exclude_patterns: ['premium\s*\+', '\bfor [a-z]+$', '\busa?\b', 'united states']
+          # US legacy/regional SKUs ("Deezer Premium USA", "Premium+ US", "Premium for Brazil")
+          # and regional SKUs named after a country, which storefronts list next to the generic
+          # one, even other countries' ("Deezer Premium Turkey" at 1,99 € in Bosnia).
+          exclude_patterns: ['premium\s*\+', '\bfor [a-z]+$', '\busa?\b', 'united states',
+                             '^deezer\s+(premium|family|famille)\s+(?!.*(student|estudiant|[ée]tudiant|\bduo\b))\S']
 
   - id: canva
     name: Canva

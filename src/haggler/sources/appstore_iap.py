@@ -28,12 +28,8 @@ Premium" at $18.99 and $15.99). Different names at different prices that land on
 period only by default are more likely a variant the patterns do not know ("YouTube Premium
 Estudante" read as Individual), so those items go to the LLM instead of publishing the lowest.
 
-Two source params cut those LLM jobs where the listing is known to be noisy:
-  - drop_unmatched: items no plan pattern matches are ignored instead of sent to the LLM (the
-    YouTube app also sells Super Chat, movie rentals and channel memberships with any name);
-  - lowest_across_names: different names on one plan's period are duplicates, so the lowest
-    price is kept with the iap_duplicate flag (Deezer lists "Deezer Family" next to a cheaper
-    regional SKU "Deezer Family Portugal").
+Source param drop_unmatched: items no plan pattern matches are ignored instead of sent to the
+LLM (the YouTube app also sells Super Chat, movie rentals and channel memberships with any name).
 """
 
 from __future__ import annotations
@@ -774,7 +770,6 @@ class AppStoreIapAdapter(PerCountryAdapter):
             guessed = [it for it in group if id(it) in defaulted]
             if (
                 guessed
-                and not task.params.get("lowest_across_names")
                 and len({it.amount for it in group}) > 1
                 and len({_name_key(it.name) for it in group}) > 1
             ):
