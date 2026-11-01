@@ -15,7 +15,7 @@ cheaper offers you can actually get, and at what risk.**
 
 [**Live site**](https://haggler.guillermorodas.com/) · [How it works](#how-it-works) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Deploy](docs/SETUP.md)
 
-<img src="docs/assets/comparator.png" alt="Haggler comparator: pick your subscriptions and see yearly savings per risk level" width="860">
+<img src="web/public/og/haggler.png" alt="Haggler: subscription prices by country, with their risk" width="860">
 
 ## Why
 
