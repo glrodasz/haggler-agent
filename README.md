@@ -77,7 +77,7 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 | Discover | Three ADK `single_turn` agents with Gemini, Google Search and structured output. |
 | Verify | Our fetch must find the literal quote on the cited page or on the subject's known official pages. |
 | Evaluate | The pure evaluator derives the three axes per profile: card country, presence, documents, address. Curated data wins, and upgrading a verdict requires an official source. |
-| Review | `haggler research review` / `accept`. The comparator excludes unreviewed findings unless the visitor opts in. |
+| Review | `haggler research review` / `accept`. The comparator counts unreviewed findings but marks them *pending review*. |
 
 ### Bundle monitoring
 
@@ -176,9 +176,9 @@ flowchart TB
 
 The agents only discover. Fetched page text never goes back to the model, a fact without a verified
 quote is dropped, and any route that needs a false declaration is "not feasible" by rule. Findings
-count only once a maintainer accepts them (`haggler research review` / `accept`, or by merging the
-`research-review` PR that `publish` opens with proposed decisions); visitors can opt in to
-unreviewed findings on the site.
+become reviewed once a maintainer accepts them (`haggler research review` / `accept`, or by merging
+the `research-review` PR that `publish` opens with proposed decisions); until then the comparator
+still counts them, marked *pending review*.
 
 The front end is a static Astro + Preact site. Python stays the single source of truth for
 verdicts: [`profile_rules.py`](src/haggler/profile_rules.py) explores the evaluator with a
