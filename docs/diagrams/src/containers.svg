@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 710" width="880" role="img">
+<title>Haggler containers: what runs where (C4 level 2)</title>
+<desc>Cloud Scheduler triggers two Cloud Run jobs that fetch public vendor pages, call Gemini only as a fallback, and write snapshots to a GCS bucket. GitHub Actions reads the bucket, opens data-sync PRs to the repository and deploys a static site to GitHub Pages, where verdicts run in the visitor's browser.</desc>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M2 1L8 5L2 9"/></marker>
+<marker id="al" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk e-coral" d="M2 1L8 5L2 9"/></marker>
+</defs>
+
+<g class="s-gray">
+<rect x="280" y="30" width="220" height="56" rx="8"/>
+<text class="th" x="390" y="50" text-anchor="middle" dominant-baseline="central">Public web</text>
+<text class="ts" x="390" y="69" text-anchor="middle" dominant-baseline="central">vendor pages, App Store, FX</text>
+</g>
+
+<g class="ct-purple">
+<rect x="30" y="110" width="820" height="210" rx="16"/>
+<text class="th" x="52" y="136" dominant-baseline="central">Google Cloud</text>
+<text class="ts" x="52" y="155" dominant-baseline="central">runs unattended</text>
+</g>
+<g class="ct-purple dash">
+<rect x="270" y="150" width="240" height="152" rx="10"/>
+<text class="ts" x="288" y="166" dominant-baseline="central">Cloud Run jobs</text>
+</g>
+<g class="n-purple">
+<rect x="60" y="198" width="170" height="56" rx="8"/>
+<text class="th" x="145" y="217" text-anchor="middle" dominant-baseline="central">Cloud Scheduler</text>
+<text class="ts" x="145" y="236" text-anchor="middle" dominant-baseline="central">OIDC trigger</text>
+</g>
+<g class="n-purple">
+<rect x="290" y="180" width="200" height="50" rx="8"/>
+<text class="tm" x="390" y="197" text-anchor="middle" dominant-baseline="central">haggler-daily</text>
+<text class="ts" x="390" y="215" text-anchor="middle" dominant-baseline="central">prices, every day</text>
+</g>
+<g class="n-purple">
+<rect x="290" y="242" width="200" height="50" rx="8"/>
+<text class="tm" x="390" y="259" text-anchor="middle" dominant-baseline="central">haggler-research</text>
+<text class="ts" x="390" y="277" text-anchor="middle" dominant-baseline="central">feasibility, Mondays</text>
+</g>
+<g class="s-coral dash">
+<rect x="600" y="180" width="220" height="50" rx="8"/>
+<text class="th" x="710" y="197" text-anchor="middle" dominant-baseline="central">Gemini on Vertex AI</text>
+<text class="ts" x="710" y="215" text-anchor="middle" dominant-baseline="central">+ Google Search grounding</text>
+</g>
+<g class="n-purple">
+<rect x="600" y="242" width="220" height="50" rx="8"/>
+<text class="th" x="710" y="259" text-anchor="middle" dominant-baseline="central">GCS bucket</text>
+<text class="ts" x="710" y="277" text-anchor="middle" dominant-baseline="central">the only handoff</text>
+</g>
+
+<path class="arr" d="M390 86 V148" marker-end="url(#a)"/>
+<path class="arr" d="M230 226 H268" marker-end="url(#a)"/>
+<path class="arr llm e-coral" d="M510 205 H598" marker-end="url(#al)"/>
+<path class="arr" d="M510 267 H598" marker-end="url(#a)"/>
+<text class="ts" x="560" y="340" dominant-baseline="central">read-only</text>
+
+<g class="ct-teal">
+<rect x="30" y="380" width="820" height="222" rx="16"/>
+<text class="th" x="52" y="406" dominant-baseline="central">GitHub</text>
+<text class="ts" x="52" y="425" dominant-baseline="central">CI, versioned data, hosting</text>
+</g>
+<g class="n-teal">
+<rect x="60" y="440" width="170" height="56" rx="8"/>
+<text class="tm" x="145" y="459" text-anchor="middle" dominant-baseline="central">ci</text>
+<text class="ts" x="145" y="478" text-anchor="middle" dominant-baseline="central">ruff · pytest · vitest</text>
+</g>
+<g class="n-teal">
+<rect x="290" y="440" width="200" height="56" rx="8"/>
+<text class="tm" x="390" y="459" text-anchor="middle" dominant-baseline="central">publish.yml</text>
+<text class="ts" x="390" y="478" text-anchor="middle" dominant-baseline="central">sync, build, open PRs</text>
+</g>
+<g class="n-teal">
+<rect x="600" y="440" width="220" height="56" rx="8"/>
+<text class="th" x="710" y="459" text-anchor="middle" dominant-baseline="central">Repository</text>
+<text class="ts" x="710" y="478" text-anchor="middle" dominant-baseline="central">catalog/ · data/ in git</text>
+</g>
+<g class="n-teal">
+<rect x="290" y="526" width="200" height="56" rx="8"/>
+<text class="th" x="390" y="545" text-anchor="middle" dominant-baseline="central">GitHub Pages</text>
+<text class="ts" x="390" y="564" text-anchor="middle" dominant-baseline="central">Astro + Preact, static</text>
+</g>
+<path class="arr" d="M710 292 V350 H390 V438" marker-end="url(#a)"/>
+<path class="arr" d="M230 468 H288" marker-end="url(#a)"/>
+<path class="arr" d="M490 468 H598" marker-end="url(#a)"/>
+<path class="arr" d="M390 496 V524" marker-end="url(#a)"/>
+
+<g class="s-gray">
+<rect x="280" y="634" width="220" height="56" rx="28"/>
+<text class="th" x="390" y="653" text-anchor="middle" dominant-baseline="central">Visitor</text>
+<text class="ts" x="390" y="672" text-anchor="middle" dominant-baseline="central">verdicts run in the browser</text>
+</g>
+<g class="s-gray">
+<rect x="600" y="634" width="220" height="56" rx="28"/>
+<text class="th" x="710" y="653" text-anchor="middle" dominant-baseline="central">Maintainer</text>
+<text class="ts" x="710" y="672" text-anchor="middle" dominant-baseline="central">reviews findings via PRs</text>
+</g>
+<path class="arr" d="M390 582 V632" marker-end="url(#a)"/>
+<path class="arr" d="M710 634 V498" marker-end="url(#a)"/>
+
+</svg>
