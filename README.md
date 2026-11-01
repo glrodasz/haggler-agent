@@ -1,6 +1,4 @@
-<div align="center">
-
-<img src="web/public/favicon.svg" width="72" alt="Haggler logo: a wooden bowl">
+<img src="web/public/favicon.svg" width="164" align="left" alt="Haggler logo: a wooden bowl">
 
 # Haggler
 
@@ -13,15 +11,11 @@ cheaper offers you can actually get, and at what risk.**
 ![Google ADK](https://img.shields.io/badge/built%20with-Google%20ADK-4285F4.svg)
 ![Gemini on Vertex AI](https://img.shields.io/badge/LLM-Gemini%20on%20Vertex%20AI-8E75B2.svg)
 
-[**Live site**](https://haggler.guillermorodas.com/) ·
-[How it works](#how-it-works) ·
-[Architecture](#architecture) ·
-[Quickstart](#quickstart) ·
-[Deploy](docs/SETUP.md)
+<br clear="left">
+
+[**Live site**](https://haggler.guillermorodas.com/) · [How it works](#how-it-works) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Deploy](docs/SETUP.md)
 
 <img src="docs/assets/comparator.png" alt="Haggler comparator: pick your subscriptions and see yearly savings per risk level" width="860">
-
-</div>
 
 ## Why
 
@@ -90,101 +84,22 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 
 ## Architecture
 
-Three pictures cover most of what a contributor needs: what runs where, how a price gets from a
-vendor page to the site, and how a research finding becomes a verdict in the visitor's browser.
-Dashed arrows are Gemini calls; everything else is plain code.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/context-dark.svg">
+  <img src="docs/diagrams/context-light.svg" alt="System context: visitors compare offers and see savings by risk, a maintainer accepts findings in PRs; Haggler fetches official prices from subscription vendors and the App Store, daily rates from FX sources, and asks Gemini with Google Search to propose quoted facts." width="880">
+</picture>
 
-### What runs where
+Two kinds of people use Haggler: **visitors**, who describe where they live and which countries
+they have ties with, and a **maintainer**, who curates the catalog and accepts research findings.
+Everything Haggler knows comes from three outside sources: official vendor pages (or each
+country's App Store), FX rates, and Gemini with Google Search.
 
-```mermaid
-flowchart TB
-  WEB[Public web<br/>vendor pages, App Store,<br/>FX rates, bundle pages]
-  subgraph GCP["Google Cloud"]
-    direction LR
-    SCH([Cloud Scheduler]) -- OIDC --> D & R
-    D[haggler-daily<br/>Cloud Run job, daily]
-    R[haggler-research<br/>Cloud Run job, Mondays]
-    D & R -.-> GEM[(Gemini on Vertex AI<br/>+ Google Search)]
-    D & R --> GCS[(GCS bucket<br/>runs/ + latest/<br/>run.json written last)]
-  end
-  subgraph GH["GitHub"]
-    direction LR
-    CI[ci<br/>ruff, pytest, vitest] -- green --> PUB[publish.yml]
-    PUB -- data-sync PR --> REPO[Repository<br/>catalog/, data/]
-    PUB --> PAGES[GitHub Pages<br/>Astro + Preact]
-  end
-  WEB -- HTTP fetch --> GCP
-  GCS -- read-only --> PUB
-  M((Maintainer)) -- PRs --> REPO
-  PAGES -- HTML + JSON --> V((Visitor<br/>verdicts run<br/>in the browser))
-```
+The dashed coral line is the only LLM dependency, and it can only **propose**: every fact Gemini
+returns must carry a literal quote that Haggler's own fetch finds on the page, and every verdict
+is computed by code.
 
-The bucket is the only handoff: the jobs never touch git and Actions never write to the bucket.
-Nothing runs server-side for a visitor; the site is static files and the comparator runs in the
-browser. A spent budget unlinks billing, which stops both jobs.
-
-### Daily: from vendor page to published price
-
-```mermaid
-flowchart TB
-  subgraph JOB["haggler-daily · 04:17 Europe/Stockholm"]
-    direction LR
-    A[plan_tasks<br/>service × country × source] --> B[fetch_and_parse<br/>parallel, parsers only]
-    B --> C[llm_extract<br/>only if a parser fails]
-    C --> E[fx_normalize<br/>monthly, VAT flag]
-    E --> F[validate<br/>ranges, plan order,<br/>&gt;30 % quarantined]
-    F --> G[adjudicate<br/>second opinion]
-    G --> H[persist<br/>runs/ + latest/]
-  end
-  H --> L[(GCS latest/)]
-  subgraph PUBLISH["publish.yml · 05:15 UTC and after green ci on main"]
-    direction LR
-    S[haggler sync<br/>verify sha256,<br/>append changes/] --> T[site-data<br/>offers, feasibility rules]
-    T --> U[astro build] --> W[Pages deploy]
-    S --> X[data-sync PR]
-  end
-  L --> S
-  C -.-> Q[(Gemini)]
-  G -.-> Q
-```
-
-Both jobs are [ADK](https://google.github.io/adk-docs/) workflows. Every node is a no-op when it
-receives no work, so a partial run degrades instead of failing, and a
-failed source carries its last known value forward. Gemini only returns quotes: the code checks the
-quoted price exists in the page text before keeping it. The site deploys from the synced files
-whether or not the data-sync PR is merged; merging it only versions them in `data/`.
-
-### Weekly research: from a hunch to a verdict
-
-```mermaid
-flowchart TB
-  subgraph JOB["haggler-research · Mondays, or Actions → research"]
-    direction LR
-    P[plan_research<br/>saves ≥ 1 €/mo and 15 %] --> WB[watch_bundles<br/>anchors on official pages,<br/>no LLM]
-    WB --> RA[research agents<br/>service, pair,<br/>instrument, bundle]
-    RA --> VE[verify_evidence<br/>our fetch must find<br/>the literal quote]
-    VE --> RL[(GCS research/latest/<br/>pending review)]
-  end
-  RA -.-> GEM[(Gemini +<br/>Google Search)]
-  RL --> SY[publish sync<br/>data/research/]
-  SY --> RV{{Maintainer review<br/>accept / reject}}
-  RV --> RR[data/curated/<br/>research_review.yaml]
-  SY & RR --> EV[evaluate<br/>pure, curated data wins]
-  EV --> PR[profile_rules.py<br/>decision tree per pair]
-  PR --> VT[verdicts.ts<br/>walks the tree with<br/>residence + ties]
-```
-
-The agents only discover. Fetched page text never goes back to the model, a fact without a verified
-quote is dropped, and any route that needs a false declaration is "not feasible" by rule. Findings
-become reviewed once a maintainer accepts them (`haggler research review` / `accept`, or by merging
-the `research-review` PR that `publish` opens with proposed decisions); until then the comparator
-still counts them, marked *pending review*.
-
-The front end is a static Astro + Preact site. Python stays the single source of truth for
-verdicts: [`profile_rules.py`](src/haggler/profile_rules.py) explores the evaluator with a
-symbolic profile and publishes per-pair decision trees, which
-[`web/src/logic/verdicts.ts`](web/src/logic/verdicts.ts) walks in the browser for any
-residence and ties the visitor describes.
+Containers, the daily price flow and the weekly research flow are drawn and explained in
+[**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 
 ### Tech stack
 
@@ -263,18 +178,14 @@ infra/                    GCP bootstrap and billing kill switch
 .github/workflows/        CI, probe, job deployment, publishing
 ```
 
-## Roadmap
+## Documentation
 
-- [x] **Phase 1:** daily per-country prices and the public site.
-- [x] **Phase 2:** weekly feasibility research agent (quote-verified facts, deterministic
-  per-profile evaluator, human review by evidence hash), comparator for any residence and ties.
-- [x] **Phase 3:** bundle monitoring: canonical YAML with anchors, LLM-free watcher of official
-  pages and PDFs, propose-only agent, derived status, per-profile verdicts. Watched: Apple One in
-  28 countries, Meli+ (Colombia, Mexico, Brazil, Chile), Telia streaming packages and Obegränsad
-  Plus, Google AI Pro (Colombia), Claro tv+ Streamings, MagentaTV SmartStream and Go3. Campaign
-  prices the watcher can't tie to a plan stay on manual review.
-- [ ] **Phase 4 (next):** in-browser combination optimizer (one region per Apple/Google account, limits
-  on foreign payment instruments, bundles as virtual SKUs).
+| Doc | What's in it |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Containers, the daily price flow and the weekly research flow |
+| [Methodology](https://haggler.guillermorodas.com/methodology/) | How prices, risk levels and verdicts are computed, for visitors |
+| [Setup and deployment](docs/SETUP.md) (Spanish) | GCP bootstrap, workflows, budgets and the billing kill switch |
+| [Website](web/README.md) (Spanish) | Pages, languages and how the static site consumes the data |
 
 ## Contributing
 
