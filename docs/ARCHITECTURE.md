@@ -6,7 +6,7 @@ becomes a verdict in the visitor's browser.
 
 **Reading the diagrams:** purple is Google Cloud, teal is GitHub, gray is people, the public web
 and storage handoffs. **Dashed coral arrows are Gemini calls**; everything else is deterministic
-code. Sources live in [`diagrams/src/`](diagrams/src) and are baked to light and dark SVGs.
+code.
 
 ## Containers: what runs where
 
