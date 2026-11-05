@@ -285,7 +285,13 @@ jobs:
           fi
           cp "$REVIEW_FILE" "$RUNNER_TEMP/research_review.yaml"
           git checkout -q -- "$REVIEW_FILE"
-          git fetch -q origin "${GITHUB_REF_NAME}"
+          # The checkout is shallow: without main's history every commit of an old, already merged
+          # research-review (people's merges included) looks new, and the branch is never rebuilt.
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch -q --unshallow origin "${GITHUB_REF_NAME}"
+          else
+            git fetch -q origin "${GITHUB_REF_NAME}"
+          fi
           base="$(git rev-parse FETCH_HEAD)"
           existing=""
           if git fetch -q origin "${REVIEW_BRANCH}" 2>/dev/null; then

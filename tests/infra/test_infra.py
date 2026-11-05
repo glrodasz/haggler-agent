@@ -958,3 +958,33 @@ def test_publish_review_step_leaves_a_review_in_progress_alone(tmp_path: Path) -
     ).stdout  # fmt: skip
     assert "- id: y" in shown and "- id: x" not in shown
     assert not gh_log.exists()
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_review_step_rebuilds_a_merged_branch_from_a_shallow_checkout(
+    tmp_path: Path,
+) -> None:
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    bot = "41898282+github-actions[bot]@users.noreply.github.com"
+    bot_env = {**env, "GIT_AUTHOR_EMAIL": bot, "GIT_COMMITTER_EMAIL": bot}
+    # Last week's proposal, merged by a person with a merge commit; the branch is left behind.
+    _git(work, "checkout", "-q", "-b", "research-review", env=env)
+    (work / "data" / "curated" / "research_review.yaml").write_text("decisions:\n  - id: old\n")
+    _git(work, "commit", "-q", "-am", "research: proposed review of findings", env=bot_env)
+    _git(work, "push", "-q", "origin", "research-review", env=env)
+    _git(work, "checkout", "-q", "main", env=env)
+    _git(work, "merge", "-q", "--no-ff", "-m", "Merge research-review", "research-review", env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    shallow = tmp_path / "shallow"
+    _git(tmp_path, "clone", "-q", "--depth", "1", f"file://{remote}", str(shallow), env=env)
+    result = _run_review_step(tmp_path, shallow, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "review in progress" not in result.stdout
+    assert "workflow run ci.yml --ref research-review" in gh_log.read_text()
+    shown = subprocess.run(
+        ["git", "show", "research-review:data/curated/research_review.yaml"],
+        cwd=remote, env=env, capture_output=True, text=True, check=True,
+    ).stdout  # fmt: skip
+    assert "- id: old" in shown and "- id: x" in shown
