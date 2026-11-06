@@ -396,9 +396,9 @@ def test_deploy_job_also_deploys_the_research_job() -> None:
     assert "HAGGLER_RESEARCH_MODEL" in run
 
 
-def test_bootstrap_schedules_the_research_job_weekly_and_expires_its_pages() -> None:
+def test_bootstrap_schedules_the_research_job_and_expires_its_pages() -> None:
     text = (ROOT / "infra" / "bootstrap.sh").read_text(encoding="utf-8")
-    assert 'RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-23 5 * * 1}"' in text
+    assert 'RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-$(schedule_get research trigger)}"' in text
     assert 'ensure_job_and_trigger "${RESEARCH_JOB}"' in text
     assert '"condition": {"age": 30, "matchesPrefix": ["raw/research/"]}' in text
     assert "gh variable set GCP_RESEARCH_JOB_NAME" in text
@@ -581,6 +581,8 @@ def test_deploy_job_passes_the_bundle_settings_only_when_set(tmp_path: Path) -> 
         "HAGGLER_STORE=gcs",
         "HAGGLER_GCS_BUCKET=p-haggler-data",
         "GOOGLE_GENAI_USE_ENTERPRISE=1",
+        # Scheduler slots follow schedule.yaml (haggler.schedule).
+        "HAGGLER_SCHEDULE_GATE=1",
         "GOOGLE_CLOUD_PROJECT=p",
         "GOOGLE_CLOUD_LOCATION=global",
     ]
@@ -588,7 +590,8 @@ def test_deploy_job_passes_the_bundle_settings_only_when_set(tmp_path: Path) -> 
     assert env_vars == base
     assert "::warning" not in stdout
     # The 0-query run of docs/SETUP.md §14, ready to copy.
-    assert "--args=research,run,--store,gcs,--watch-only --wait" in summary
+    watch_only = "--args=research,run,--store,gcs,--watch-only"
+    assert f"{watch_only} --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait" in summary
 
     env_vars, stdout, _ = _run_research_deploy(
         tmp_path, RESEARCH_MAX_BUNDLES="3", BUNDLE_WATCH_MAX_PAGES="25", RESEARCH_MODEL="m"
@@ -644,7 +647,7 @@ def test_setup_watch_only_run_is_the_deployed_research_job_plus_the_flag() -> No
     watch_only = f"--args={job_args.group(1)},--watch-only"
     setup = (ROOT / "docs" / "SETUP.md").read_text(encoding="utf-8")
     execute = "gcloud run jobs execute haggler-research --region europe-north2 \\\n"
-    assert f"{execute}  {watch_only} --wait" in setup
+    assert f"{execute}  {watch_only} --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait" in setup
     # "research run" is the CLI's; the rest goes to the job's own parser.
     argv = [*job_args.group(1).split(",")[2:], "--watch-only"]
     options = options_from_args(add_run_arguments(argparse.ArgumentParser()).parse_args(argv))

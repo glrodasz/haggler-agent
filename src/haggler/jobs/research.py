@@ -1,10 +1,13 @@
-"""Weekly research entry point (Cloud Run Job): `haggler research run [...]`.
+"""Research entry point (Cloud Run Job): `haggler research run [...]`.
 
 Runs the research Workflow once (in-memory session; everything durable goes to the Store) and
 prints one JSON summary line on stdout. Exit code 0 once research/latest/run.json was written
 (or a --dry-run reported), 1 when the run crashed, produced no report or found that another run
 replaced research/latest/ meanwhile (only its report is written then). The Cloud Run Job runs
 with --max-retries 0: a retry would spend the search budget again.
+
+A scheduled run (HAGGLER_SCHEDULE_GATE=1) whose last run is younger than research.every_days in
+schedule.yaml skips its slot: one JSON line with "skipped": true, exit code 0 (haggler.schedule).
 
 --watch-only runs the bundle watcher alone (no agent: 0 search queries); with --dry-run it
 writes nothing. The watcher also runs in every other run, --no-llm and --max-jobs 0 included.
@@ -29,6 +32,7 @@ from haggler.config import Settings
 from haggler.jobs._runner import quiet_handled_node_errors, run_workflow_once
 from haggler.models.research import ResearchReport
 from haggler.research.deps import ResearchDeps, build_default_research_deps
+from haggler.schedule import skip_summary
 
 log = logging.getLogger(__name__)
 
@@ -178,6 +182,10 @@ def main(argv: list[str] | None = None) -> int:
             level=logging.INFO, stream=sys.stderr, format="%(levelname)s %(name)s: %(message)s"
         )
     quiet_handled_node_errors()
+    if not options.dry_run and (skipped := skip_summary("research", store_name=options.store)):
+        log.info("not due yet (schedule.yaml): %s", skipped["reason"])
+        print(json.dumps(skipped), flush=True)
+        return 0
     try:
         report = asyncio.run(run_research(options))
     except Exception as exc:

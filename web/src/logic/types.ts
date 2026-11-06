@@ -56,6 +56,15 @@ export interface Meta {
   fx_fee_pct: number;
   display_currencies: string[];
   attributions: Attribution[];
+  /** Cadence from schedule.yaml (haggler.schedule.Schedule.site_json), in days. */
+  schedule: ScheduleInfo;
+}
+
+export interface ScheduleInfo {
+  prices_every_days: number;
+  research_every_days: number;
+  /** How long a value the bundle watcher found counts as verified. */
+  bundle_verify_days: number;
 }
 
 export interface PlanInfo {

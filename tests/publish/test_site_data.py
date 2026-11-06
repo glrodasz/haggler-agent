@@ -18,6 +18,7 @@ import pytest
 from haggler.catalog import load_bundles, load_catalog, load_feasibility
 from haggler.models.curated import BundleRequirements
 from haggler.publish import SITE_FILES, _services_json, build_site_data, site_data
+from haggler.schedule import load_schedule
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = FIXTURES / "golden"
@@ -38,6 +39,7 @@ META_KEYS = {
     "fx_fee_pct",
     "display_currencies",
     "attributions",
+    "schedule",
 }
 ATTRIBUTION_KEYS = {"name", "url", "license"}
 SERVICE_KEYS = {
@@ -567,9 +569,12 @@ def test_golden(written: dict[str, Any], name: str) -> None:
         golden_path.write_text(json.dumps(actual, indent=2, ensure_ascii=False) + "\n")
     expected = json.loads(golden_path.read_text(encoding="utf-8"))
     if name == "meta":
-        # Attribution wording belongs to the FX modules; checked separately below.
-        actual = {k: v for k, v in actual.items() if k != "attributions"}
-        expected = {k: v for k, v in expected.items() if k != "attributions"}
+        # Attribution wording belongs to the FX modules; checked separately below. The schedule
+        # follows the repository's schedule.yaml, which is meant to be edited.
+        skip = {"attributions", "schedule"}
+        assert actual["schedule"] == load_schedule().site_json()
+        actual = {k: v for k, v in actual.items() if k not in skip}
+        expected = {k: v for k, v in expected.items() if k not in skip}
     assert actual == expected
 
 

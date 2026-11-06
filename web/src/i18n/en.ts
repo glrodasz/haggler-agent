@@ -352,15 +352,15 @@ export const en = {
       unverified: "Unverified",
       expired: "Expired",
     } as Record<string, string>,
-    displayStatusTitles: {
+    displayStatusTitles: (verifyDays: number): Record<string, string> => ({
       verified:
-        "Price and components found 15 days ago or less on an official page in the bundle's country.",
+        `Price and components found ${verifyDays} days ago or less on an official page in the bundle's country.`,
       needs_review:
         "The official page no longer shows a recorded value, shows a different one or published a new document: it needs reviewing.",
       manual: "A person checked it by hand 45 days ago or less. It does not count as an official source.",
       unverified: "No value is confirmed on an official page.",
       expired: "The offer ended; shown for reference only.",
-    } as Record<string, string>,
+    }),
     verifiedOn: (date: string) => `checked on ${date}`,
     manualAgo: (days: number) =>
       days === 0 ? "today" : `${days} ${days === 1 ? "day" : "days"} ago`,
@@ -436,7 +436,7 @@ export const en = {
       off: "Not watched",
     } as Record<string, string>,
     watchModeTitles: {
-      auto: "Its official pages are in the weekly automatic watch; if they have not been read yet, the record says so.",
+      auto: "Its official pages are in the automatic watch; if they have not been read yet, the record says so.",
       manual: "Its pages are not read automatically: a person reviews them.",
       off: "Its values are not checked automatically.",
     } as Record<string, string>,
@@ -881,11 +881,20 @@ export const en = {
     heading: "No magic. Just method",
     lead: "What data we show, where it comes from and which risks are worth understanding before using it.",
     toc: "On this page",
+    /** How often a scheduled job runs (schedule.yaml), as a sentence opener. */
+    cadence: (days: number) =>
+      days === 1
+        ? "Every day"
+        : days === 7
+          ? "Every week"
+          : days % 7 === 0
+            ? `Every ${days / 7} weeks`
+            : `Every ${days} days`,
     collectTitle: "How the data is collected",
-    collect: [
+    collect: (prices: string) => [
       {
         title: "Official sources first",
-        text: "Every day an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog (Microsoft 365 and Xbox Game Pass) and the Amazon Prime page of each Amazon store (Prime Video, priced as Amazon Prime, which includes it). It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.",
+        text: `${prices} an agent visits each service's official pages for each country: Netflix's help center, Spotify's website, Apple's support page with iCloud+ prices, the Apple One, Apple Music and Apple TV pages and the Microsoft Store catalog (Microsoft 365 and Xbox Game Pass) and the Amazon Prime page of each Amazon store (Prime Video, priced as Amazon Prime, which includes it). It respects robots.txt, identifies itself with its own User-Agent, makes at most one request every 3 seconds per site and never signs in or solves CAPTCHAs.`,
       },
       {
         title: "App Store as a fallback",
@@ -924,10 +933,10 @@ export const en = {
     researchTitle: "Feasibility research",
     researchLead:
       "Besides the hand-written records, an agent researches what each service requires to subscribe to another country's offer.",
-    research: [
+    research: (research: string) => [
       {
         title: "The agent only discovers",
-        text: "Every week an agent uses Google Search to find official pages, press and forums about each service's rules: account country, payment method, address, checks. It only proposes findings; nothing it says counts on its own.",
+        text: `${research} an agent uses Google Search to find official pages, press and forums about each service's rules: account country, payment method, address, checks. It only proposes findings; nothing it says counts on its own.`,
       },
       {
         title: "Every fact needs a checked literal quote",
@@ -966,15 +975,15 @@ export const en = {
       "Not legal advice: it describes what we found in public sources, not what you should do.",
     bundlesTitle: "Bundles",
     bundlesLead:
-      "A bundle brings several subscriptions together for one price, often with a phone plan or a store subscription. Their prices, services and conditions change without notice, so they are published more cautiously than daily prices.",
-    bundles: (fee: string) => [
+      "A bundle brings several subscriptions together for one price, often with a phone plan or a store subscription. Their prices, services and conditions change without notice, so they are published more cautiously than service prices.",
+    bundles: (fee: string, verifyDays: number) => [
       {
         title: "One single source for values",
         text: "Each bundle's values (price, introductory price, base plan, minimum term, included services, dates and requirements) come only from a hand-curated file. No automated process changes it: automation can only bring evidence about those values or propose changes, and a person reviews them.",
       },
       {
         title: "What counts as confirmed",
-        text: "A value only shows as confirmed if our own download found its literal quote, the “anchor”, on the official page or official PDF in the bundle's country 15 days ago or less. If the source is a PDF price list with editions, only the current edition counts. A blocked, unreadable or other-country page confirms nothing. If something is missing, the value shows as “unconfirmed” and the bundle says why.",
+        text: `A value only shows as confirmed if our own download found its literal quote, the “anchor”, on the official page or official PDF in the bundle's country ${verifyDays} days ago or less. If the source is a PDF price list with editions, only the current edition counts. A blocked, unreadable or other-country page confirms nothing. If something is missing, the value shows as “unconfirmed” and the bundle says why.`,
       },
       {
         title: "Checked by hand",

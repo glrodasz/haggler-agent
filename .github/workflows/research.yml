@@ -1,6 +1,7 @@
-# Runs the feasibility research Cloud Run Job (haggler-research, normally Mondays from Cloud
-# Scheduler) on demand, waits for it and publishes the site so the new findings show up. The
-# per-run caps can be raised for this run only: each subject costs Gemini calls and search
+# Runs the feasibility research Cloud Run Job (haggler-research; Cloud Scheduler runs it on the
+# cadence in schedule.yaml) on demand, waits for it and publishes the site so the new findings
+# show up. A manual run always runs (HAGGLER_SCHEDULE_GATE=0 skips the cadence check) and counts
+# as the job's last run. The per-run caps can be raised for this run only: each subject costs Gemini calls and search
 # queries, and the job's monthly guard (HAGGLER_RESEARCH_MAX_MONTH_QUERIES) still applies.
 # Same repository variables and Workload Identity Federation as deploy-job (docs/SETUP.md §13);
 # haggler-github already holds roles/run.developer, which may execute jobs with overrides.
@@ -91,9 +92,7 @@ jobs:
           OVERRIDES: ${{ steps.cfg.outputs.overrides }}
         run: |
           args=(run jobs execute "${RESEARCH_JOB_NAME}" --region "${REGION}" --wait)
-          if [ -n "${OVERRIDES}" ]; then
-            args+=(--update-env-vars "${OVERRIDES}")
-          fi
+          args+=(--update-env-vars "HAGGLER_SCHEDULE_GATE=0${OVERRIDES:+,${OVERRIDES}}")
           gcloud "${args[@]}"
           {
             echo "### Investigación ejecutada"

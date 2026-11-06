@@ -11,7 +11,7 @@
 # 90 days, raw/research/ after 30), service accounts haggler-job / haggler-scheduler /
 # haggler-github, Workload Identity Federation for GitHub Actions, two placeholder Cloud Run Jobs
 # (deploy-job.yml deploys the real image) and their Cloud Scheduler triggers: haggler-daily
-# (prices, every day) and haggler-research (feasibility research, weekly). Then a monthly budget
+# (prices) and haggler-research (feasibility research), at the slots in schedule.yaml. Then a monthly budget
 # with email alerts and, unless BILLING_CAP=0, a kill switch that unlinks the project from its
 # billing account once actual spend reaches the budget (docs/SETUP.md §9). Finally prints the
 # GitHub repository variables.
@@ -32,14 +32,28 @@ BUCKET_LOCATION="${BUCKET_LOCATION:-${REGION}}"
 AR_REPO="${AR_REPO:-haggler}"
 JOB="${JOB:-haggler-daily}"
 SCHEDULER_JOB="${SCHEDULER_JOB:-${JOB}-trigger}"
-SCHEDULE="${SCHEDULE:-17 4 * * *}"
+# Trigger slots and time zone come from schedule.yaml at the repository root, the one place the
+# cadence is configured (each job then skips the slots its every_days says it is not due on).
+SCHEDULE_FILE="${SCHEDULE_FILE:-$(dirname "${BASH_SOURCE[0]}")/../schedule.yaml}"
+schedule_get() { # section key (section "" = top level); prints the value without quotes
+  awk -v s="$1" -v k="$2" '
+    /^[^ #]/ { insec = (s == "" || $0 ~ ("^" s ":")) }
+    insec && ((s == "" && $0 ~ ("^" k ":")) || (s != "" && $1 == k ":")) {
+      sub(/^[^:]*:[ \t]*/, ""); sub(/[ \t]+#.*$/, ""); gsub(/"/, ""); print; exit
+    }
+  ' "${SCHEDULE_FILE}"
+}
+[[ -r "${SCHEDULE_FILE}" ]] || { echo "error: ${SCHEDULE_FILE} not found" >&2; exit 1; }
+SCHEDULE="${SCHEDULE:-$(schedule_get prices trigger)}"
 # Not read from $TZ on purpose: shells often export TZ=UTC or TZ=:/etc/localtime, which would
 # silently move the schedule. Override with SCHEDULE_TZ.
-SCHEDULE_TZ="${SCHEDULE_TZ:-Europe/Stockholm}"
-# Weekly feasibility research, on Mondays after the daily run (same time zone).
+SCHEDULE_TZ="${SCHEDULE_TZ:-$(schedule_get "" timezone)}"
+# Feasibility research, in its slot after the prices run (same time zone).
 RESEARCH_JOB="${RESEARCH_JOB:-haggler-research}"
 RESEARCH_SCHEDULER_JOB="${RESEARCH_SCHEDULER_JOB:-${RESEARCH_JOB}-trigger}"
-RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-23 5 * * 1}"
+RESEARCH_SCHEDULE="${RESEARCH_SCHEDULE:-$(schedule_get research trigger)}"
+[[ -n "${SCHEDULE}" && -n "${SCHEDULE_TZ}" && -n "${RESEARCH_SCHEDULE}" ]] \
+  || { echo "error: ${SCHEDULE_FILE} lacks prices.trigger, research.trigger or timezone" >&2; exit 1; }
 WIF_POOL="${WIF_POOL:-github}"
 WIF_PROVIDER="${WIF_PROVIDER:-github}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-us-docker.pkg.dev/cloudrun/container/job:latest}"
@@ -383,9 +397,9 @@ ensure_job_and_trigger() { # job scheduler_job schedule description
 }
 
 ensure_job_and_trigger "${JOB}" "${SCHEDULER_JOB}" "${SCHEDULE}" \
-  "Runs Cloud Run Job ${JOB} (haggler daily prices)"
+  "Runs Cloud Run Job ${JOB} (haggler prices; cadence in schedule.yaml)"
 ensure_job_and_trigger "${RESEARCH_JOB}" "${RESEARCH_SCHEDULER_JOB}" "${RESEARCH_SCHEDULE}" \
-  "Runs Cloud Run Job ${RESEARCH_JOB} (haggler weekly feasibility research)"
+  "Runs Cloud Run Job ${RESEARCH_JOB} (haggler research; cadence in schedule.yaml)"
 
 # --- Budget and billing kill switch (docs/SETUP.md §9) ------------------------------------------
 # A budget alone only sends emails. With BILLING_CAP=1 its Pub/Sub notifications also run the

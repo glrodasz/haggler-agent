@@ -39,5 +39,10 @@
       "url": "https://www.exchangerate-api.com",
       "license": "Uso gratuito con atribución"
     }
-  ]
+  ],
+  "schedule": {
+    "prices_every_days": 2,
+    "research_every_days": 14,
+    "bundle_verify_days": 22
+  }
 }

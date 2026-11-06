@@ -374,6 +374,11 @@ export const SITE_DATA_SCHEMA = {
     fx_fee_pct: num,
     display_currencies: list(str),
     attributions: list(shape({ name: str, url: str, license: str })),
+    schedule: shape({
+      prices_every_days: num,
+      research_every_days: num,
+      bundle_verify_days: num,
+    }),
   }),
   services: list(
     shape({

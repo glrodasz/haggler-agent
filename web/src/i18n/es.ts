@@ -349,15 +349,15 @@ export const es = {
       unverified: "Sin verificar",
       expired: "Vencida",
     } as Record<string, string>,
-    displayStatusTitles: {
+    displayStatusTitles: (verifyDays: number): Record<string, string> => ({
       verified:
-        "Precio y componentes encontrados hace 15 días o menos en una página oficial del país del paquete.",
+        `Precio y componentes encontrados hace ${verifyDays} días o menos en una página oficial del país del paquete.`,
       needs_review:
         "La página oficial ya no muestra algún valor registrado, muestra uno distinto o publicó un documento nuevo: falta revisarlo.",
       manual: "Una persona lo comprobó a mano hace 45 días o menos. No cuenta como fuente oficial.",
       unverified: "Ningún valor está confirmado en una página oficial.",
       expired: "La oferta terminó; se muestra solo como referencia.",
-    } as Record<string, string>,
+    }),
     verifiedOn: (date: string) => `comprobado el ${date}`,
     manualAgo: (days: number) =>
       days === 0 ? "hoy" : `hace ${days} ${days === 1 ? "día" : "días"}`,
@@ -433,7 +433,7 @@ export const es = {
       off: "Sin vigilancia",
     } as Record<string, string>,
     watchModeTitles: {
-      auto: "Sus páginas oficiales están en la vigilancia automática semanal; si aún no se han leído, la ficha lo indica.",
+      auto: "Sus páginas oficiales están en la vigilancia automática; si aún no se han leído, la ficha lo indica.",
       manual: "Sus páginas no se leen de forma automática: una persona las revisa.",
       off: "Sus valores no se comprueban de forma automática.",
     } as Record<string, string>,
@@ -876,11 +876,19 @@ export const es = {
     heading: "Sin magia. Con método",
     lead: "Qué datos mostramos, de dónde salen y qué riesgos conviene entender antes de usarlos.",
     toc: "En esta página",
+    cadence: (days: number) =>
+      days === 1
+        ? "Cada día"
+        : days === 7
+          ? "Cada semana"
+          : days % 7 === 0
+            ? `Cada ${days / 7} semanas`
+            : `Cada ${days} días`,
     collectTitle: "Cómo se recogen los datos",
-    collect: [
+    collect: (prices: string) => [
       {
         title: "Fuentes oficiales primero",
-        text: "Cada día un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, la web de Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store (Microsoft 365 y Xbox Game Pass) y la página de Amazon Prime de cada tienda Amazon (Prime Video, con el precio de Amazon Prime, que lo incluye). Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.",
+        text: `${prices} un agente visita las páginas oficiales de cada servicio para cada país: la ayuda de Netflix, la web de Spotify, la página de soporte de Apple con los precios de iCloud+, las páginas de Apple One, Apple Music y Apple TV y el catálogo de Microsoft Store (Microsoft 365 y Xbox Game Pass) y la página de Amazon Prime de cada tienda Amazon (Prime Video, con el precio de Amazon Prime, que lo incluye). Respeta robots.txt, se identifica con un User-Agent propio, hace como máximo una petición cada 3 segundos por sitio y nunca inicia sesión ni resuelve CAPTCHAs.`,
       },
       {
         title: "App Store como respaldo",
@@ -919,10 +927,10 @@ export const es = {
     researchTitle: "Investigación de factibilidad",
     researchLead:
       "Además de las fichas escritas a mano, un agente investiga qué exige cada servicio para contratar la oferta de otro país.",
-    research: [
+    research: (research: string) => [
       {
         title: "El agente solo descubre",
-        text: "Cada semana un agente busca con Google Search páginas oficiales, prensa y foros sobre las reglas de cada servicio: país de la cuenta, medio de pago, dirección, controles. Solo propone hallazgos; nada de lo que dice cuenta por sí mismo.",
+        text: `${research} un agente busca con Google Search páginas oficiales, prensa y foros sobre las reglas de cada servicio: país de la cuenta, medio de pago, dirección, controles. Solo propone hallazgos; nada de lo que dice cuenta por sí mismo.`,
       },
       {
         title: "Cada dato necesita una cita literal comprobada",
@@ -961,15 +969,15 @@ export const es = {
       "No es asesoría legal: describe lo que encontramos en fuentes públicas, no lo que debas hacer.",
     bundlesTitle: "Paquetes",
     bundlesLead:
-      "Un paquete reúne varias suscripciones por un solo precio, a menudo con un plan de telefonía o una suscripción de tienda. Sus precios, servicios y condiciones cambian sin aviso, así que se publican con más cautela que los precios diarios.",
-    bundles: (fee: string) => [
+      "Un paquete reúne varias suscripciones por un solo precio, a menudo con un plan de telefonía o una suscripción de tienda. Sus precios, servicios y condiciones cambian sin aviso, así que se publican con más cautela que los precios de los servicios.",
+    bundles: (fee: string, verifyDays: number) => [
       {
         title: "Una sola fuente para los valores",
         text: "Los valores de cada paquete (precio, precio de introducción, plan base, permanencia, servicios incluidos, fechas y requisitos) salen solo de un archivo curado a mano. Ningún proceso automático lo modifica: lo automático solo puede aportar pruebas sobre esos valores o proponer cambios, y una persona los revisa.",
       },
       {
         title: "Qué cuenta como confirmado",
-        text: "Un valor solo figura como confirmado si nuestra propia descarga encontró su cita literal, el «ancla», en la página oficial o en el PDF oficial del país del paquete hace 15 días o menos. Si la fuente es una lista de precios en PDF con ediciones, solo cuenta la edición vigente. Una página bloqueada, ilegible o de otro país no confirma nada. Si falta algo, el valor se muestra «sin confirmar» y el paquete dice por qué.",
+        text: `Un valor solo figura como confirmado si nuestra propia descarga encontró su cita literal, el «ancla», en la página oficial o en el PDF oficial del país del paquete hace ${verifyDays} días o menos. Si la fuente es una lista de precios en PDF con ediciones, solo cuenta la edición vigente. Una página bloqueada, ilegible o de otro país no confirma nada. Si falta algo, el valor se muestra «sin confirmar» y el paquete dice por qué.`,
       },
       {
         title: "Verificación manual",

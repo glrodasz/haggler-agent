@@ -5,12 +5,12 @@ GitHub Pages. Todo lo que crea es reproducible: `infra/bootstrap.sh` es idempote
 workflows de `.github/workflows/` hacen el resto.
 
 ```
-Cloud Scheduler (europe-west1, 04:17 Europe/Stockholm)
+Cloud Scheduler (europe-west1, 04:17 Europe/Stockholm; cadencia en schedule.yaml)
    │  POST run.googleapis.com/v2/…/jobs/haggler-daily:run   (cuenta haggler-scheduler)
    ▼
 Cloud Run Job haggler-daily (europe-north2)  ──►  gs://PROYECTO-haggler-data/
    imagen de Artifact Registry                      raw/  runs/  latest/
-   cuenta haggler-job + Gemini en Vertex AI         research/  (semanal, §13 y §14)
+   cuenta haggler-job + Gemini en Vertex AI         research/  (§13 y §14)
                                                           │
 Cloud Run Job haggler-research (lunes 05:23) ─────────────┤
    misma imagen: haggler research run                     ▼
@@ -23,8 +23,32 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 | `ci.yml` | cada push y pull request | ruff, pytest, `validate-catalog`; sitio: `astro check`, vitest, build con datos de muestra; contrato: `haggler daily` sobre los fixtures de replay → `sync` → `site-data` → build del sitio, y otro build con un `data/` vacío (primer despliegue) |
 | `probe.yml` | push a `claude/**` que toque fuentes/fetch/fx/catálogo, o manual | descarga las páginas reales y reporta qué extrae cada adapter; `mode=research` hace una corrida real de investigación, `mode=bundles` mide la legibilidad de las páginas de los paquetes y `mode=watch` corre el vigilante de paquetes sin escribir nada (no usa GCP) |
 | `deploy-job.yml` | push a `main` que toque código/catálogo/Dockerfile, o manual desde `main` | build + push de la imagen y `gcloud run jobs deploy` de `haggler-daily` y `haggler-research` |
+| `research.yml` | manual desde `main` | ejecuta `haggler-research` y después lanza `publish.yml` (§13) |
 | `daily.yml` | manual desde `main` | ejecuta `haggler-daily` (los precios de hoy) con `gcloud run jobs execute --wait` y después lanza `publish.yml`; útil tras añadir servicios o países al catálogo |
-| `publish.yml` | todos los días 05:15 UTC; tras cada `ci` verde de un push a `main` que toque `web/`, `src/`, `catalog/`, `data/` o dependencias; o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages; el resumen del run cuenta lo que hay por revisar en los paquetes (§14) |
+| `publish.yml` | todos los días 05:15 UTC; tras cada `ci` verde de un push a `main` que toque `web/`, `src/`, `catalog/`, `data/`, `schedule.yaml` o dependencias; o manual | `haggler sync` desde GCS, commit de `data/`, build y despliegue en Pages; el resumen del run cuenta lo que hay por revisar en los paquetes (§14) |
+
+### Cadencia: `schedule.yaml`
+
+Cada cuánto corren los jobs se cambia en un solo sitio, [`schedule.yaml`](../schedule.yaml) en la
+raíz del repositorio (hoy: precios cada 2 días, investigación cada 2 semanas):
+
+| Clave | Qué controla |
+|---|---|
+| `prices.every_days` / `research.every_days` | días mínimos entre dos corridas completas de cada job |
+| `prices.trigger` / `research.trigger` / `timezone` | franja del Cloud Scheduler (cron); solo la lee `infra/bootstrap.sh` |
+| `publish.trigger_utc` | cron de `publish.yml` (GitHub solo lee el del workflow; un test comprueba que coinciden) |
+
+El Scheduler dispara cada job en su franja (precios a diario, investigación los lunes) y el job,
+con `HAGGLER_SCHEDULE_GATE=1` (lo pone `deploy-job.yml`), mira la fecha de su última corrida
+(`as_of` de `latest/run.json` o `research/latest/run.json`): si tiene menos de `every_days` días,
+termina en segundos sin descargar nada ni llamar a Gemini. Una corrida fallida no deja fecha, así
+que la franja siguiente lo vuelve a intentar. Cambiar `every_days` basta con mergear a `main`
+(`deploy-job.yml` vuelve a desplegar los jobs con el archivo nuevo); solo mover una franja exige
+volver a correr el bootstrap. Las corridas manuales (Actions → daily / research, o
+`gcloud run jobs execute … --update-env-vars HAGGLER_SCHEDULE_GATE=0`) corren siempre y cuentan
+como la última corrida. De la cadencia dependen además el aviso de datos viejos de `publish`
+(`prices.every_days + 1` días) y cuánto dura «verificado» un paquete
+(`research.every_days + 8` días), que el sitio muestra con esos mismos números.
 
 ## 1. Requisitos
 
@@ -64,8 +88,8 @@ Variables configurables (todas opcionales salvo `PROJECT_ID`):
 | `AR_REPO` | `haggler` | repositorio Docker de Artifact Registry |
 | `JOB` | `haggler-daily` | nombre del Cloud Run Job (si lo cambias, crea también la variable `GCP_JOB_NAME`, paso 3) |
 | `SCHEDULER_JOB` | `$JOB-trigger` | nombre del job de Cloud Scheduler |
-| `SCHEDULE` | `17 4 * * *` | cron del run diario |
-| `SCHEDULE_TZ` | `Europe/Stockholm` | zona horaria del cron (no se lee `$TZ` a propósito: muchas shells exportan `TZ=UTC`) |
+| `SCHEDULE` | `prices.trigger` de `schedule.yaml` | cron de la franja de precios |
+| `SCHEDULE_TZ` | `timezone` de `schedule.yaml` | zona horaria del cron (no se lee `$TZ` a propósito: muchas shells exportan `TZ=UTC`) |
 | `GITHUB_REPO` | `glrodasz/haggler-agent` | único repositorio autorizado por Workload Identity Federation |
 | `GITHUB_BRANCH` | `main` | única rama autorizada por Workload Identity Federation (la rama por defecto) |
 | `BUDGET_AMOUNT` | 5 si la cuenta de facturación usa USD, EUR, GBP o CHF | presupuesto mensual, en la moneda de la cuenta (solo el número: `7.50`, no `7.50USD`). Con otra moneda (SEK, COP…) es obligatoria: sin ella no se crea el presupuesto |
@@ -180,7 +204,8 @@ gcloud run jobs describe haggler-daily --region europe-north2 \
 ## 6. Primera ejecución manual
 
 ```bash
-gcloud run jobs execute haggler-daily --region europe-north2 --wait
+gcloud run jobs execute haggler-daily --region europe-north2 \
+  --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait
 ```
 
 Tarda unos minutos (la etiqueta es 1 petición cada 3 s por host). Para una prueba más corta se
@@ -189,6 +214,7 @@ defecto es `daily --store gcs`):
 
 ```bash
 gcloud run jobs execute haggler-daily --region europe-north2 --wait \
+  --update-env-vars HAGGLER_SCHEDULE_GATE=0 \
   --args='^;^daily;--store;gcs;--services;netflix,spotify;--countries;SE,CO'
 ```
 
@@ -216,7 +242,9 @@ por confirmados en la misma noche los cambios grandes que estaban en revisión y
 los runs de *carry-forward*. Por la misma razón, evita relanzar a mano un run completo el mismo
 día salvo que el anterior haya fallado.
 
-Probar también el camino del Scheduler (dispara el job como lo hará cada noche):
+Probar también el camino del Scheduler (dispara el job como lo hará cada noche; si la última
+corrida tiene menos de `prices.every_days` días, el job lo dice en una línea `"skipped": true` y
+termina):
 
 ```bash
 gcloud scheduler jobs run haggler-daily-trigger --location europe-west1
@@ -303,18 +331,20 @@ crudo de los proveedores nunca se republica. El probe no usa GCP ni credenciales
 
 ## 9. Costos estimados
 
-Uso esperado: un run diario de ~5–20 min con 1 vCPU / 1 GiB, unos MB por día en GCS y casi
-ninguna llamada LLM (solo cuando un parser falla). Precios de lista aproximados (USD, 2026),
+Uso esperado (con la cadencia de `schedule.yaml`: precios cada 2 días, investigación cada 2
+semanas): un run de precios de ~5–20 min con 1 vCPU / 1 GiB, unos MB por corrida en GCS y casi
+ninguna llamada LLM (solo cuando un parser falla). Las franjas en que el job no toca correr
+duran segundos. Precios de lista aproximados (USD, 2026),
 verificar en la calculadora de GCP:
 
 | Servicio | Uso | Costo mensual aprox. |
 |---|---|---|
-| Cloud Run Jobs | ≤ 20 min/día ≈ 36 000 vCPU-s + 36 000 GiB-s | ~0 dentro de la capa gratuita de Cloud Run; < 1 USD sin ella |
+| Cloud Run Jobs | ≤ 20 min cada 2 días ≈ 18 000 vCPU-s + 18 000 GiB-s | ~0 dentro de la capa gratuita de Cloud Run; < 1 USD sin ella |
 | Cloud Scheduler | 1 job | 0 (3 jobs gratis por cuenta de facturación) |
 | Cloud Storage | `raw/` 90 días + snapshots, ~1–3 GB | < 0,10 USD |
 | Artifact Registry | ≤ 5 imágenes (~1 GB) | ~0,05–0,10 USD (0,5 GB gratis) |
-| Vertex AI (Gemini flash-lite) | fallback ≤ 150 llamadas/día, típico ~0 | 0–3 USD (tope de diseño ≈ 0,10 USD/día) |
-| Vertex AI (Gemini flash + Google Search) | investigación semanal: ≤ 40 llamadas y ≤ 200 consultas de búsqueda por corrida, tope de 1 500 consultas/mes | tokens < 1 USD; las consultas de *grounding* tienen una cuota gratuita mensual (5 000 en Gemini 3) y luego se facturan (~14 USD por 1 000): con los topes por defecto, ~0 |
+| Vertex AI (Gemini flash-lite) | fallback ≤ 150 llamadas por corrida, típico ~0 | 0–1,5 USD (tope de diseño ≈ 0,10 USD por corrida) |
+| Vertex AI (Gemini flash + Google Search) | investigación cada 2 semanas: ≤ 40 llamadas y ≤ 200 consultas de búsqueda por corrida, tope de 1 500 consultas/mes | tokens < 1 USD; las consultas de *grounding* tienen una cuota gratuita mensual (5 000 en Gemini 3) y luego se facturan (~14 USD por 1 000): con los topes por defecto, ~0 |
 | Cloud Logging | pocos MB | 0 (50 GiB gratis) |
 | GitHub Actions / Pages | repo público | 0 |
 
@@ -496,7 +526,8 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 ## 13. Investigación de factibilidad (Fase 2)
 
 Un segundo Cloud Run Job, `haggler-research` (misma imagen, `haggler research run --store gcs`),
-corre los lunes a las 05:23 Europe/Stockholm, después del run diario. Investiga con Gemini +
+se dispara los lunes a las 05:23 Europe/Stockholm, después del run de precios, y corre cada
+`research.every_days` días (`schedule.yaml`: hoy cada 2 semanas). Investiga con Gemini +
 Google Search las reglas de país de los servicios, lo que exige contratar la oferta de un país
 (solo para los pares servicio × país que ahorran al menos 1 €/mes y 15 %) y los medios de pago, y
 **solo guarda lo que nuestro propio fetch verifica**: la cita literal tiene que aparecer en la URL
@@ -521,7 +552,8 @@ salvo que se marque la casilla correspondiente.
 **Primera vez** (después del bootstrap y del primer `deploy-job`):
 
 ```bash
-gcloud run jobs execute haggler-research --region europe-north2 --wait
+gcloud run jobs execute haggler-research --region europe-north2 \
+  --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait
 gcloud storage cat gs://mi-proyecto-haggler-data/research/latest/run.json
 ```
 
@@ -590,8 +622,7 @@ plan_research → watch_bundles (vigilante, sin LLM) → research → verify_evi
 
 ### El vigilante: qué hace y cuándo
 
-- **Cuándo**: en cada corrida de `haggler-research` (los lunes a las 05:23 Europe/Stockholm, o a
-  mano), siempre: también con el guardia mensual de consultas agotado, con `--no-llm`, con
+- **Cuándo**: en cada corrida de `haggler-research` (según `schedule.yaml`, o a mano), siempre: también con el guardia mensual de consultas agotado, con `--no-llm`, con
   `--max-jobs 0` y con `--watch-only`. No usa el modelo ni Google Search.
 - **Qué lee**: las páginas (`watch.pages`) de cada paquete con `watch.mode: auto`, de un
   proveedor con `automated_access: allowed` y no vencido. Cada URL una vez por corrida, como
@@ -822,7 +853,7 @@ Solo el vigilante, sin agente (0 llamadas al modelo y 0 consultas):
 
 ```bash
 gcloud run jobs execute haggler-research --region europe-north2 \
-  --args=research,run,--store,gcs,--watch-only --wait
+  --args=research,run,--store,gcs,--watch-only --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait
 ```
 
 Investigar paquetes concretos (es explícito: ignora la frescura y el tope, y vale también para un
@@ -830,6 +861,7 @@ paquete `manual`; el `^;^` es porque la lista lleva coma, §6):
 
 ```bash
 gcloud run jobs execute haggler-research --region europe-north2 --wait \
+  --update-env-vars HAGGLER_SCHEDULE_GATE=0 \
   --args='^;^research;run;--store;gcs;--bundles;meli_plus_co_total,telia_se_obegransad_streaming;--max-jobs;2'
 ```
 

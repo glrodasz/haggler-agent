@@ -24,9 +24,9 @@ COPY pyproject.toml uv.lock .python-version ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
-# Project code and the data the job reads at runtime (catalog + curated YAML). README/LICENSE are
+# Project code and the data the job reads at runtime (catalog + curated YAML + schedule.yaml). README/LICENSE are
 # needed by the build backend (package metadata).
-COPY README.md LICENSE ./
+COPY README.md LICENSE schedule.yaml ./
 COPY src/ src/
 COPY catalog/ catalog/
 COPY agents/ agents/

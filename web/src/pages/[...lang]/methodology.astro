@@ -22,6 +22,7 @@ const lookup = lookupFor(msg);
 const routes = routesFor(locale);
 const { formatDate, formatPercent } = site.fmt;
 const t = msg.methodology;
+const statusTitles = msg.bundle.displayStatusTitles(site.meta.schedule.bundle_verify_days);
 
 const labels = [...site.feasibility.labels].sort((a, b) => a.rank - b.rank);
 const axes = (["legality", "tos", "practical"] as const).map((key) => ({
@@ -93,7 +94,7 @@ const toc = [
       <section aria-labelledby="recogida">
         <h2 id="recogida">{t.collectTitle}</h2>
         {
-          t.collect.map((item) => (
+          t.collect(t.cadence(site.meta.schedule.prices_every_days)).map((item) => (
             <>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
@@ -171,7 +172,7 @@ const toc = [
         <h2 id="investigacion">{t.researchTitle}</h2>
         <p>{t.researchLead}</p>
         {
-          t.research.map((item) => (
+          t.research(t.cadence(site.meta.schedule.research_every_days)).map((item) => (
             <>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
@@ -205,7 +206,7 @@ const toc = [
         <h2 id="paquetes">{t.bundlesTitle}</h2>
         <p>{t.bundlesLead}</p>
         {
-          t.bundles(fee).map((item) => (
+          t.bundles(fee, site.meta.schedule.bundle_verify_days).map((item) => (
             <>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
@@ -266,7 +267,7 @@ const toc = [
                       <td>
                         <span
                           class={`badge status-${b.display_status}`}
-                          title={msg.bundle.displayStatusTitles[b.display_status]}
+                          title={statusTitles[b.display_status]}
                         >
                           {lookup(msg.bundle.displayStatus, b.display_status)}
                         </span>

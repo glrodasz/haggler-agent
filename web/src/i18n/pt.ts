@@ -350,16 +350,16 @@ export const pt = {
       unverified: "Não verificado",
       expired: "Expirada",
     } as Record<string, string>,
-    displayStatusTitles: {
+    displayStatusTitles: (verifyDays: number): Record<string, string> => ({
       verified:
-        "Preço e componentes encontrados há 15 dias ou menos em uma página oficial do país do pacote.",
+        `Preço e componentes encontrados há ${verifyDays} dias ou menos em uma página oficial do país do pacote.`,
       needs_review:
         "A página oficial já não mostra algum valor registrado, mostra um diferente ou publicou um documento novo: falta revisá-lo.",
       manual:
         "Uma pessoa conferiu à mão há 45 dias ou menos. Não conta como fonte oficial.",
       unverified: "Nenhum valor está confirmado em uma página oficial.",
       expired: "A oferta terminou; aparece só como referência.",
-    } as Record<string, string>,
+    }),
     verifiedOn: (date: string) => `conferido em ${date}`,
     manualAgo: (days: number) =>
       days === 0 ? "hoje" : `há ${days} ${days === 1 ? "dia" : "dias"}`,
@@ -435,7 +435,7 @@ export const pt = {
       off: "Sem monitoramento",
     } as Record<string, string>,
     watchModeTitles: {
-      auto: "As páginas oficiais estão no monitoramento automático semanal; se ainda não foram lidas, a ficha indica isso.",
+      auto: "As páginas oficiais estão no monitoramento automático; se ainda não foram lidas, a ficha indica isso.",
       manual: "As páginas não são lidas automaticamente: uma pessoa as revisa.",
       off: "Os valores não são conferidos automaticamente.",
     } as Record<string, string>,
@@ -884,11 +884,19 @@ export const pt = {
     heading: "Sem mágica. Com método",
     lead: "Que dados mostramos, de onde vêm e que riscos vale a pena entender antes de usá-los.",
     toc: "Nesta página",
+    cadence: (days: number) =>
+      days === 1
+        ? "Todos os dias"
+        : days === 7
+          ? "Toda semana"
+          : days % 7 === 0
+            ? `A cada ${days / 7} semanas`
+            : `A cada ${days} dias`,
     collectTitle: "Como os dados são coletados",
-    collect: [
+    collect: (prices: string) => [
       {
         title: "Fontes oficiais primeiro",
-        text: "Todos os dias um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store (Microsoft 365 e Xbox Game Pass) e a página do Amazon Prime de cada loja Amazon (Prime Video, com o preço do Amazon Prime, que o inclui). Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.",
+        text: `${prices} um agente visita as páginas oficiais de cada serviço para cada país: a central de ajuda da Netflix, o site do Spotify, a página de suporte da Apple com os preços do iCloud+, as páginas do Apple One, Apple Music e Apple TV e o catálogo da Microsoft Store (Microsoft 365 e Xbox Game Pass) e a página do Amazon Prime de cada loja Amazon (Prime Video, com o preço do Amazon Prime, que o inclui). Respeita o robots.txt, identifica-se com um User-Agent próprio, faz no máximo uma requisição a cada 3 segundos por site e nunca faz login nem resolve CAPTCHAs.`,
       },
       {
         title: "App Store como alternativa",
@@ -927,10 +935,10 @@ export const pt = {
     researchTitle: "Pesquisa de viabilidade",
     researchLead:
       "Além das fichas escritas à mão, um agente pesquisa o que cada serviço exige para assinar a oferta de outro país.",
-    research: [
+    research: (research: string) => [
       {
         title: "O agente só descobre",
-        text: "Toda semana um agente busca com o Google Search páginas oficiais, imprensa e fóruns sobre as regras de cada serviço: país da conta, meio de pagamento, endereço, controles. Ele só propõe achados; nada do que diz conta por si só.",
+        text: `${research} um agente busca com o Google Search páginas oficiais, imprensa e fóruns sobre as regras de cada serviço: país da conta, meio de pagamento, endereço, controles. Ele só propõe achados; nada do que diz conta por si só.`,
       },
       {
         title: "Cada dado precisa de uma citação literal conferida",
@@ -969,15 +977,15 @@ export const pt = {
       "Não é assessoria jurídica: descreve o que encontramos em fontes públicas, não o que você deve fazer.",
     bundlesTitle: "Pacotes",
     bundlesLead:
-      "Um pacote reúne várias assinaturas por um só preço, muitas vezes com um plano de telefonia ou uma assinatura de loja. Seus preços, serviços e condições mudam sem aviso, por isso são publicados com mais cautela que os preços diários.",
-    bundles: (fee: string) => [
+      "Um pacote reúne várias assinaturas por um só preço, muitas vezes com um plano de telefonia ou uma assinatura de loja. Seus preços, serviços e condições mudam sem aviso, por isso são publicados com mais cautela que os preços dos serviços.",
+    bundles: (fee: string, verifyDays: number) => [
       {
         title: "Uma única fonte para os valores",
         text: "Os valores de cada pacote (preço, preço promocional, plano base, fidelidade, serviços incluídos, datas e requisitos) saem só de um arquivo curado à mão. Nenhum processo automático o modifica: o automático só pode trazer provas sobre esses valores ou propor mudanças, e uma pessoa as revisa.",
       },
       {
         title: "O que conta como confirmado",
-        text: "Um valor só aparece como confirmado se o nosso próprio download encontrou a citação literal dele, a «âncora», na página oficial ou no PDF oficial do país do pacote há 15 dias ou menos. Se a fonte é uma tabela de preços em PDF com edições, só conta a edição vigente. Uma página bloqueada, ilegível ou de outro país não confirma nada. Se falta algo, o valor aparece como «não confirmado» e o pacote diz por quê.",
+        text: `Um valor só aparece como confirmado se o nosso próprio download encontrou a citação literal dele, a «âncora», na página oficial ou no PDF oficial do país do pacote há ${verifyDays} dias ou menos. Se a fonte é uma tabela de preços em PDF com edições, só conta a edição vigente. Uma página bloqueada, ilegível ou de outro país não confirma nada. Se falta algo, o valor aparece como «não confirmado» e o pacote diz por quê.`,
       },
       {
         title: "Verificação manual",
