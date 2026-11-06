@@ -26,11 +26,13 @@ offers could I legitimately sign up for, and what would I be risking?*
 
 Haggler answers it with a set of agents that run unattended on Google Cloud:
 
-- **Every day** it collects official prices for 14 services in 67 countries, normalizes them to a
-  monthly price in any currency and publishes every change as a reviewable git diff.
-- **Every week** a research agent investigates each service's country rules, payment methods and
-  bundle offers, and only keeps facts it can prove with a literal quote from a source it fetched
-  itself.
+- **Every two days** it collects official prices for 14 services in 67 countries, normalizes them
+  to a monthly price in any currency and publishes every change as a reviewable git diff.
+- **Every two weeks** a research agent investigates each service's country rules, payment methods
+  and bundle offers, and only keeps facts it can prove with a literal quote from a source it
+  fetched itself.
+- **One file sets the cadence:** [`schedule.yaml`](schedule.yaml) at the root; see
+  [docs/SETUP.md](docs/SETUP.md#cadencia-scheduleyaml).
 - **On the site** a visitor describes their residence and ties with any country, and the comparator
   ranks savings by risk level, with the reasoning behind each verdict.
 
@@ -63,7 +65,7 @@ Haggler is built around one idea: **an LLM can propose, but only deterministic c
 | Validation | Currency vs. country, plausible ranges, plan ordering, changes over 30 % quarantined until confirmed, last known value carried forward when a source fails. A quarantined change goes live when the next run sees the same value or an independent LLM read agrees with the parser. |
 | Publishing | Full snapshots in GCS, `data/latest/` and `data/changes/*.jsonl` in the repo, static site on GitHub Pages. |
 
-### Weekly feasibility research
+### Feasibility research
 
 | Step | How |
 |---|---|
@@ -98,7 +100,7 @@ The dashed coral line is the only LLM dependency, and it can only **propose**: e
 returns must carry a literal quote that Haggler's own fetch finds on the page, and every verdict
 is computed by code.
 
-Containers, the daily price flow and the weekly research flow are drawn and explained in
+Containers, the price flow and the research flow are drawn and explained in
 [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
 
 ### Tech stack
@@ -182,7 +184,7 @@ infra/                    GCP bootstrap and billing kill switch
 
 | Doc | What's in it |
 |---|---|
-| [Architecture](docs/ARCHITECTURE.md) | Containers, the daily price flow and the weekly research flow |
+| [Architecture](docs/ARCHITECTURE.md) | Containers, the price flow and the research flow |
 | [Methodology](https://haggler.guillermorodas.com/methodology/) | How prices, risk levels and verdicts are computed, for visitors |
 | [Setup and deployment](docs/SETUP.md) (Spanish) | GCP bootstrap, workflows, budgets and the billing kill switch |
 | [Website](web/README.md) (Spanish) | Pages, languages and how the static site consumes the data |

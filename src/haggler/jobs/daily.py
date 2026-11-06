@@ -3,6 +3,9 @@
 Runs the ADK Workflow once with an in-memory session (the job's disk is ephemeral; everything
 durable goes to the Store) and prints one JSON summary line on stdout.
 
+A scheduled run (HAGGLER_SCHEDULE_GATE=1) whose last run is younger than prices.every_days in
+schedule.yaml skips its slot: one JSON line with "skipped": true, exit code 0 (haggler.schedule).
+
 Exit code 0 once the run persisted latest/* and latest/run.json, even when fewer than half of the
 tasks succeeded (that is logged as a WARNING and flagged in the summary): the Cloud Run Job runs
 with --max-retries 1, and re-running a persisted crawl would only fetch every vendor page again
@@ -31,6 +34,7 @@ from haggler.jobs._runner import quiet_handled_node_errors, run_workflow_once
 from haggler.models.fx import FxTable
 from haggler.models.run import RunReport
 from haggler.pipeline.deps import Deps, build_default_deps
+from haggler.schedule import skip_summary
 
 log = logging.getLogger(__name__)
 
@@ -187,6 +191,10 @@ def main(argv: list[str] | None = None) -> int:
             level=logging.INFO, stream=sys.stderr, format="%(levelname)s %(name)s: %(message)s"
         )
     quiet_handled_node_errors()
+    if not options.dry_run and (skipped := skip_summary("prices", store_name=options.store)):
+        log.info("not due yet (schedule.yaml): %s", skipped["reason"])
+        print(json.dumps(skipped), flush=True)
+        return 0
     try:
         report = asyncio.run(run_daily(options))
     except Exception as exc:

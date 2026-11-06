@@ -11,6 +11,7 @@ import pytest
 from haggler.bundles.status import (
     EXPIRED_KEEP_DAYS,
     MANUAL_MAX_AGE_DAYS,
+    VERIFY_MAX_AGE_DAYS,
     anchor_confirmed,
     bundle_state,
     expired_on,
@@ -219,11 +220,13 @@ def test_every_decisive_anchor_verified_is_verified() -> None:
     assert s.confirmed_components == {"netflix"} and not s.intro_confirmed
 
 
-def test_verification_lasts_15_days_then_says_the_last_confirmed_value() -> None:
+def test_verification_lasts_its_window_then_says_the_last_confirmed_value() -> None:
     b = watched_bundle()
-    w = watch_state(b, verified_on=date(2026, 9, 25))
-    assert bundle_state(b, today=date(2026, 10, 10), watch=w).display_status == "verified"
-    s = bundle_state(b, today=date(2026, 10, 11), watch=w)
+    verified_on = date(2026, 9, 25)
+    last_day = verified_on + timedelta(days=VERIFY_MAX_AGE_DAYS)
+    w = watch_state(b, verified_on=verified_on)
+    assert bundle_state(b, today=last_day, watch=w).display_status == "verified"
+    s = bundle_state(b, today=last_day + timedelta(days=1), watch=w)
     assert s.display_status == "unverified" and s.checked_at == TODAY
     assert (
         "Último valor confirmado 27.000 COP el 25 de septiembre de 2026; ya no se confirma."
@@ -243,8 +246,9 @@ def test_a_missing_decisive_anchor_needs_review() -> None:
 
 @pytest.mark.parametrize("kind", ["missing", "embedded_only", "outdated_document"])
 def test_an_unconfirmed_anchor_confirms_nothing_until_a_read_verifies_it(kind: str) -> None:
-    """An unreadable page within the 15 days keeps an earlier verification, unless a read since
-    then undid it (AnchorCheck.unconfirmed, carried across the runs that cannot read it)."""
+    """An unreadable page within the verification window keeps an earlier verification, unless a
+    read since then undid it (AnchorCheck.unconfirmed, carried across the runs that cannot read
+    it)."""
     b = watched_bundle()
     w = watch_state(b, statuses={"price": "unreadable"}, verified_on=TODAY - timedelta(days=7))
     assert bundle_state(b, today=TODAY, watch=w).display_status == "verified"
@@ -305,7 +309,9 @@ def test_an_observed_price_stands_in_for_the_price_anchor() -> None:
     missing = bundle_state(b, today=TODAY, watch=w, price_missing=True)
     assert missing.display_status == "unverified"
     assert "Aún no hay un precio publicado de este plan en los datos diarios." in missing.reasons_es
-    old = bundle_state(b, today=TODAY, watch=w, price_observed_on=TODAY - timedelta(days=20))
+    old = bundle_state(
+        b, today=TODAY, watch=w, price_observed_on=TODAY - timedelta(days=VERIFY_MAX_AGE_DAYS + 5)
+    )
     assert "El precio observado no es de los datos diarios recientes." in old.reasons_es
 
 

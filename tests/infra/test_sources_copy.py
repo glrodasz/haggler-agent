@@ -24,9 +24,12 @@ APPSTORE = "appstore_iap"
 def _collect_text(file: str, title: str) -> str:
     """The `text` of the methodology "collect" item with this title (web/src/i18n/<file>)."""
     source = (I18N / file).read_text(encoding="utf-8")
-    m = re.search(r'title: "' + re.escape(title) + r'",\s*text: "((?:[^"\\]|\\.)*)"', source)
+    # A plain string, or a template literal (the cadence from schedule.yaml is interpolated).
+    m = re.search(
+        r'title: "' + re.escape(title) + r'",\s*text: (?:"((?:[^"\\]|\\.)*)"|`([^`]*)`)', source
+    )
     assert m, title
-    return m.group(1)
+    return m.group(1) if m.group(1) is not None else m.group(2)
 
 
 def _services(only_appstore: bool) -> list[str]:

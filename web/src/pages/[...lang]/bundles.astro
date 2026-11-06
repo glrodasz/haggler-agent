@@ -70,7 +70,14 @@ const rows: BundleRow[] = groups.flatMap((g) =>
   <h1>{t.heading}</h1>
   <p class="lead">{t.lead}</p>
   <ProfileNote />
-  <BundleGroups client:load locale={locale} bundles={rows} labels={labels} fee={fee} />
+  <BundleGroups
+    client:load
+    locale={locale}
+    bundles={rows}
+    labels={labels}
+    fee={fee}
+    statusTitles={msg.bundle.displayStatusTitles(site.meta.schedule.bundle_verify_days)}
+  />
 
   {
     groups.length > 0 && (

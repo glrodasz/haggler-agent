@@ -160,7 +160,7 @@ const evidenceMeta = (e: BundleEvidence): string[] =>
   <h3>{b.name}</h3>
   <p class="small muted">
     <CountryLabel cc={b.country} /> ·{" "}
-    <span class={`badge status-${status}`} title={t.displayStatusTitles[status]}>
+    <span class={`badge status-${status}`} title={t.displayStatusTitles(site.meta.schedule.bundle_verify_days)[status]}>
       {lookup(t.displayStatus, status)}
     </span>
     {statusDate && <> · {statusDate}</>}

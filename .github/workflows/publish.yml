@@ -20,7 +20,9 @@ name: publish
 
 on:
   schedule:
-    - cron: "15 5 * * *" # UTC; the Cloud Run Job runs at 04:17 Europe/Stockholm
+    # = publish.trigger_utc in schedule.yaml (GitHub only reads it here; tests/infra checks both
+    # match). Daily: on the days the prices job skips, there is simply nothing new to sync.
+    - cron: "15 5 * * *" # UTC; after the prices slot (prices.trigger, Europe/Stockholm)
   workflow_dispatch:
   workflow_run:
     workflows: [ci]
@@ -70,7 +72,7 @@ jobs:
             exit 0
           fi
           # First parent: the previous main, for a merge commit and a squash merge alike.
-          changed="$(git diff --name-only HEAD^1 HEAD -- web src catalog data pyproject.toml uv.lock \
+          changed="$(git diff --name-only HEAD^1 HEAD -- web src catalog data schedule.yaml pyproject.toml uv.lock \
             .github/workflows/publish.yml || echo "?")"
           if [ -z "$changed" ]; then
             echo "The commit touches neither the site nor its data; not publishing." | tee -a "$GITHUB_STEP_SUMMARY"

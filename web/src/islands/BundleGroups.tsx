@@ -46,6 +46,8 @@ export interface BundleGroupsProps {
   labels: Record<string, { name: string; description: string; rank: number }>;
   /** e.g. "2 %". */
   fee: string;
+  /** bundle.displayStatusTitles, worded for the site's schedule. */
+  statusTitles: Record<string, string>;
 }
 
 function riskClass(rank: number): string {
@@ -148,7 +150,7 @@ export default function BundleGroups(props: BundleGroupsProps) {
                         <td>
                           <span
                             class={`badge status-${x.display_status}`}
-                            title={b.displayStatusTitles[x.display_status]}
+                            title={props.statusTitles[x.display_status]}
                           >
                             {lookup(b.displayStatus, x.display_status)}
                           </span>

@@ -1,0 +1,32 @@
+# When haggler checks prices and researches, in one place. Edit this file and merge to main:
+# deploy-job.yml ships it inside the job image and the next scheduled run follows it. Nothing has
+# to change on Google Cloud unless you move a trigger slot (see "trigger" below).
+#
+# How it works: Cloud Scheduler fires each job at its trigger slot (cron, in `timezone`). The job
+# then looks at the date of its own last completed run and starts only when that run is at least
+# `every_days` old; otherwise it exits within seconds and spends no fetches, Gemini calls or
+# search queries. A failed run leaves no new date behind, so the next slot tries again. Manual
+# runs (Actions → daily / research) always run, and count as the last run.
+
+timezone: Europe/Stockholm
+
+# Cloud Run Job haggler-daily: official pages, App Store and the Gemini fallback for prices.
+prices:
+  every_days: 2
+  # Daily slot: with every_days 2 the job works every other day.
+  trigger: "17 4 * * *"
+
+# Cloud Run Job haggler-research: Gemini + Google Search feasibility research and the bundle
+# watcher. The monthly query guard (HAGGLER_RESEARCH_MAX_MONTH_QUERIES) still applies on top.
+research:
+  every_days: 14
+  # Monday slot, after the prices run: with every_days 14 the job works every other Monday.
+  # every_days should be a multiple of 7 while the slot is weekly.
+  trigger: "23 5 * * 1"
+
+# GitHub Actions publish.yml (free; no GCP cost): syncs the latest runs into data/ and rebuilds
+# the site. It stays daily so a run is published the morning it finishes; on the other days it
+# finds nothing new. GitHub only reads the cron written in publish.yml, so a test checks that it
+# matches this value.
+publish:
+  trigger_utc: "15 5 * * *"

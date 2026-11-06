@@ -70,6 +70,7 @@ from haggler.models.run import CoverageRow
 from haggler.profile_rules import explore
 from haggler.research.evaluate import UNKNOWN_RANK, Assessment, EvalContext, assess
 from haggler.research.fields import FIELD_SPECS
+from haggler.schedule import load_schedule
 from haggler.store import Store, dumps_lines
 
 log = logging.getLogger(__name__)
@@ -82,7 +83,9 @@ OPTIONAL_FILES = ("review_queue.json",)
 CHANGE_KINDS = ("added", "changed", "removed")
 CHANGE_WINDOW_DAYS = 90
 # A run older than this (vs `today`) is still synced, with a warning: the job may be failing.
-STALE_RUN_DAYS = 2
+# prices.every_days + 1 in schedule.yaml (haggler.schedule).
+SCHEDULE = load_schedule()
+STALE_RUN_DAYS = SCHEDULE.stale_run_days
 SITE_FILES = (
     "meta",
     "services",
@@ -1505,6 +1508,7 @@ def build_site_data(
             "fx_fee_pct": float(fee),
             "display_currencies": display,
             "attributions": _attributions(catalog),
+            "schedule": SCHEDULE.site_json(),
         },
         "services": _services_json(catalog, bundles),
         "countries": _countries_json(catalog),

@@ -13,7 +13,7 @@ import pytest
 import yaml
 
 from conftest import FixtureFetcher
-from haggler.bundles.status import bundle_state
+from haggler.bundles.status import VERIFY_MAX_AGE_DAYS, bundle_state
 from haggler.bundles.watch import (
     PAUSE_DAYS,
     edition_key,
@@ -332,10 +332,10 @@ async def test_an_unreadable_page_never_counts_as_a_change(response: Any) -> Non
         assert a.status == "unreadable" and a.misses == 0 and a.last_verified_at == TODAY
     (page,) = state.pages
     assert page.unreadable_runs == 1 and page.last_ok_at == TODAY and page.paused_until is None
-    # Verified a week ago: still within the 15-day window, so the bundle stays verified.
+    # Verified a week ago: still within the verification window, so the bundle stays verified.
     assert bundle_state(bf.bundles[0], today=later, watch=state).display_status == "verified"
     # Past the window it is unverified, with what the watcher found, never needs_review.
-    late = later + timedelta(days=9)
+    late = TODAY + timedelta(days=VERIFY_MAX_AGE_DAYS + 1)
     st = bundle_state(bf.bundles[0], today=late, watch=state)
     assert st.display_status == "unverified"
     assert any("acme.com" in r for r in st.reasons_es)
@@ -684,8 +684,8 @@ async def test_a_newer_edition_found_earlier_is_not_undone_by_the_index(index: A
 
 
 async def test_without_this_runs_index_the_confidence_is_at_most_medium() -> None:
-    """Verified through the index, then the index cannot be read: within the 15 days the bundle
-    stays verified, but at most medium and saying why (never high without evidence)."""
+    """Verified through the index, then the index cannot be read: within the verification window
+    the bundle stays verified, but at most medium and saying why (never high without evidence)."""
     blocked = BlockedError("bot wall", status=403, url=INDEX)
     lines = ["Telco Prislista 18", TELCO_PRICE, VALIDITY]
     for validity, pdf_ok, reason in [
@@ -711,7 +711,7 @@ async def test_without_this_runs_index_the_confidence_is_at_most_medium() -> Non
         assert st.reasons_es == (reason,)
         # Past the window, unverified with the same reason.
         if not validity:
-            late = TODAY + timedelta(days=16)
+            late = TODAY + timedelta(days=VERIFY_MAX_AGE_DAYS + 1)
             st = bundle_state(b, today=late, watch=out.bundles[0])
             assert st.display_status == "unverified" and reason in st.reasons_es
 

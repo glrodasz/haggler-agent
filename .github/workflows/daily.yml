@@ -1,6 +1,8 @@
-# Runs the daily prices Cloud Run Job (haggler-daily, normally 04:17 Europe/Stockholm from Cloud
-# Scheduler) on demand, waits for it and publishes the site. Useful right after a catalog change
-# (new services or countries) so its prices show up without waiting for the next morning.
+# Runs the prices Cloud Run Job (haggler-daily; Cloud Scheduler runs it on the cadence in
+# schedule.yaml) on demand, waits for it and publishes the site. A manual run always runs
+# (HAGGLER_SCHEDULE_GATE=0 skips the cadence check) and counts as the job's last run. Useful right
+# after a catalog change (new services or countries) so its prices show up without waiting for the
+# next scheduled run.
 # Same repository variables and Workload Identity Federation as deploy-job and research
 # (docs/SETUP.md); haggler-github already holds roles/run.developer, which may execute jobs.
 name: daily
@@ -64,7 +66,8 @@ jobs:
 
       - name: Execute the daily prices job
         run: |
-          gcloud run jobs execute "${JOB_NAME}" --region "${REGION}" --wait
+          gcloud run jobs execute "${JOB_NAME}" --region "${REGION}" \
+            --update-env-vars HAGGLER_SCHEDULE_GATE=0 --wait
           {
             echo "### Precios diarios ejecutados"
             echo ""

@@ -54,13 +54,15 @@ from urllib.parse import urlsplit
 from haggler.i18n import Text, concat, fill, join_list, long_date, money, tr
 from haggler.models.bundles import AnchorCheck, BundleWatchState, PageCheck, anchor_hash
 from haggler.models.curated import Anchor, Bundle
+from haggler.schedule import load_schedule
 
 if TYPE_CHECKING:
     from haggler.bundles.proposals import Proposal
 
 EXPIRED_KEEP_DAYS = 90
 MANUAL_MAX_AGE_DAYS = 45
-VERIFY_MAX_AGE_DAYS = 15
+# research.every_days + 8 in schedule.yaml: the watcher runs inside the research job.
+VERIFY_MAX_AGE_DAYS = load_schedule().bundle_verify_days
 DISPLAY_STATUSES = ("verified", "needs_review", "manual", "unverified", "expired")
 DECISIVE_FACTS = ("price", "base_price", "component")
 # Anchor states that undo an earlier verification (unreadable / not_checked do not).

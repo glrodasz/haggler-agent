@@ -84,7 +84,7 @@ describe("bundle copy never suggests misrepresenting anything", () => {
     const copy = [
       m.bundlesTitle,
       m.bundlesLead,
-      ...m.bundles("2 %").flatMap((item) => [item.title, item.text]),
+      ...m.bundles("2 %", 15).flatMap((item) => [item.title, item.text]),
       m.bundlesNotLegal,
       m.watchedTitle,
       m.watchedLead,
@@ -129,7 +129,7 @@ describe("bundle copy never suggests misrepresenting anything", () => {
 describe("methodology of bundles", () => {
   it("states the rules a bundle's state, saving and verdict rest on", () => {
     const text = es.methodology
-      .bundles("2 %")
+      .bundles("2 %", 15)
       .map((item) => item.text)
       .join(" ");
     for (const rule of [
@@ -161,7 +161,7 @@ describe("methodology of bundles", () => {
   it("claims nothing the pipeline does not do yet", () => {
     const m = es.methodology;
     const text = [
-      ...m.bundles("2 %").map((item) => item.text),
+      ...m.bundles("2 %", 15).map((item) => item.text),
       m.watchedLead,
       ...Object.values(es.bundle.watchModeTitles),
     ].join(" ");
