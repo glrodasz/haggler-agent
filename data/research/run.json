@@ -1,33 +1,33 @@
 {
-  "as_of": "2026-10-26",
+  "as_of": "2026-11-02",
   "files": {
-    "bundle_watch.json": "d458a41ea58a8cfd7aaf2ff61db80b89e601ec224b41daaf3520c0c39a4fb113",
-    "bundles.json": "bbcf0fd09ebba675361f048f894bfd0d0c6363d3f3b503a18f5d4614e49acf1d",
+    "bundle_watch.json": "ef8feba298a6f9e8581da2227ab8da3f8a4bfde8e33a9eed6da313a7117e41c8",
+    "bundles.json": "167d84834cb7fc2d17981711eead6aeadf4c8a9b4581c3ff7a3a4036995f206f",
     "instruments.json": "fbae4e1c4d951bab0d7eef82671d073d6f1d18ab628c57d6f6f64539d5758bc0",
-    "pairs.json": "51989809cff032854eb742ec5ef11dfb8624c00936e061362f5525f7c492be8f",
-    "services.json": "0a4c8db5a0b0a9ea84cbbc4fa9911b33a4a7ab4dd299f4a7c1ff5b8eeb5eaf54"
+    "pairs.json": "6075899ae7228e0a0b65917d3c046e3f7827f5aade9db6b17a37763e35c65a9c",
+    "services.json": "842b40c79579c4358a4eec87d7e61c313f0d4ea9c4bf650aac560902dd5d1f69"
   },
-  "finished_at": "2026-10-26T04:25:34.559267+00:00",
+  "finished_at": "2026-11-02T04:26:47.542703+00:00",
   "report": {
     "bundle_watch": {
-      "anchors_verified": 30,
-      "bundles": 11,
+      "anchors_verified": 260,
+      "bundles": 74,
       "hints": 0,
       "outcomes": {
-        "manual": 2,
-        "ok": 9
+        "changed": 2,
+        "manual": 5,
+        "ok": 67
       },
       "pages_over_budget": 0
     },
     "by_status": {
-      "nothing_found": 6,
-      "researched": 5
+      "nothing_found": 11
     },
-    "claims_verified": 8,
+    "claims_verified": 0,
     "errors": 0,
     "planned": 11,
-    "queries": 67
+    "queries": 93
   },
-  "run_id": "2026-10-26-r466836",
+  "run_id": "2026-11-02-r64c6c6",
   "schema_version": 1
 }
