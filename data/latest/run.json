@@ -1,48 +1,48 @@
 {
-  "as_of": "2026-11-12",
+  "as_of": "2026-11-14",
   "files": {
-    "coverage.json": "155024abe884b0acf15b653fc9c9908aabe3a3b9641edaa72b0503d36ccdad3b",
-    "fx.json": "d804ae32fd2bdb9cdf1641c722aa77f3d8f1368ae2c4c41dc6a8811c4d477fc9",
-    "prices.json": "38f33e8ed87ff375f0d197d660a91a1483f13137ef89ee8e2bbd0a903f36c31c",
-    "review_queue.json": "01efcd92f60ab81a46cb9665cbf0dfd64e1fbe0e21f36abd330360cb13dde8a1"
+    "coverage.json": "8e8846608a005de190b696d810705f26e3e76676abdfcf32f1b97ead9aa39b00",
+    "fx.json": "06eadb0cbcce4fcf59b513a5d5736a7cf82fa076d480b80940c7957ff0529d45",
+    "prices.json": "d67116ad099dcd380b287f64bcc90f99b72fe2d79dee45fb45eb70cadcd3c3cf",
+    "review_queue.json": "4eeafdd2b1dae5bd5b71ef08993cc9bc29b753251511bd53ba72ac63a73706f9"
   },
-  "finished_at": "2026-11-12T03:49:54.364687+00:00",
+  "finished_at": "2026-11-14T03:50:40.856497+00:00",
   "report": {
-    "anomalies": 88,
+    "anomalies": 91,
     "dry_run": false,
     "errors": [
       "fx: frankfurter[BANREP] EUR failed: HTTPStatusError Client error '422 Unprocessable Entity' for url 'https://api.frankfurter.dev/v2/rates?base=EUR&quotes=COP&providers=BANREP'"
     ],
-    "finished_at": "2026-11-12T03:49:54.364687Z",
+    "finished_at": "2026-11-14T03:50:40.856497Z",
     "llm": {
-      "accepted_items": 4,
+      "accepted_items": 11,
       "calls": 62,
       "errors": 0,
-      "jobs": 112,
-      "rejected_items": 108,
-      "reused": 19,
-      "skipped_budget": 50
+      "jobs": 116,
+      "rejected_items": 98,
+      "reused": 17,
+      "skipped_budget": 54
     },
     "obs_by_status": {
-      "accepted": 3707,
-      "carried_forward": 87,
-      "quarantined": 1,
-      "rejected": 74
+      "accepted": 3698,
+      "carried_forward": 90,
+      "quarantined": 4,
+      "rejected": 72
     },
-    "run_date": "2026-11-12",
-    "run_id": "2026-11-12-bbfbdb",
-    "started_at": "2026-11-12T03:17:14.602639Z",
-    "success_ratio": 0.9686,
+    "run_date": "2026-11-14",
+    "run_id": "2026-11-14-b05902",
+    "started_at": "2026-11-14T03:17:23.944691Z",
+    "success_ratio": 0.9599,
     "tasks_by_status": {
-      "failed": 19,
+      "failed": 30,
       "not_available": 98,
       "not_configured": 78,
-      "ok": 1078,
-      "partial": 56,
+      "ok": 1071,
+      "partial": 52,
       "wrong_country": 21
     },
     "tasks_total": 1350
   },
-  "run_id": "2026-11-12-bbfbdb",
+  "run_id": "2026-11-14-b05902",
   "schema_version": 1
 }
