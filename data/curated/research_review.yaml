@@ -340,3 +340,51 @@ decisions:
     decided_on: '2026-10-19'
     by: propuesta automática
     note: fuente oficial
+  - id: pair:claude:CH:available:true
+    hash: 0bb984c0e34c
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: pair:claude:EG:signup_location:checked
+    hash: d727523235b7
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:apple_tv:account_country_basis:signup_location
+    hash: 9e7082a4dd55
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:apple_tv:residence_clause:account_country_must_match_residence
+    hash: 80639d90a306
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:claude:enforcement_event:location_verification:2025-09-04
+    hash: 8ca3dab418ef
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:claude:travel_use:not_allowed
+    hash: 1091920b31d8
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:microsoft_365:region_change_cooldown_days:90
+    hash: 328feb9f3012
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
+  - id: service:microsoft_365:travel_use:allowed
+    hash: 614d2a412a38
+    decision: accept
+    decided_on: '2026-11-14'
+    by: automatic proposal
+    note: official source
