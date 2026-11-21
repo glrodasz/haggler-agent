@@ -1,13 +1,13 @@
 {
-  "as_of": "2026-11-02",
+  "as_of": "2026-11-16",
   "files": {
-    "bundle_watch.json": "ef8feba298a6f9e8581da2227ab8da3f8a4bfde8e33a9eed6da313a7117e41c8",
-    "bundles.json": "167d84834cb7fc2d17981711eead6aeadf4c8a9b4581c3ff7a3a4036995f206f",
+    "bundle_watch.json": "51566ce59a5d0c7df39e36ad39175ae9cd560fc3871c8119a9d2f300a43fa284",
+    "bundles.json": "ab3cda8567bc296f05d9d76ce0a06c632de8f6ec5bfb7d07e27ee638c5d96db4",
     "instruments.json": "fbae4e1c4d951bab0d7eef82671d073d6f1d18ab628c57d6f6f64539d5758bc0",
-    "pairs.json": "6075899ae7228e0a0b65917d3c046e3f7827f5aade9db6b17a37763e35c65a9c",
-    "services.json": "842b40c79579c4358a4eec87d7e61c313f0d4ea9c4bf650aac560902dd5d1f69"
+    "pairs.json": "9325068c708db724c6e31de7c5a0f70e72f352d6de6d1685f5912b109ba67149",
+    "services.json": "4c0b82a286b7c5d0b1e15891ad06df1415cd42e0ef2e771bd35503ad9a35f889"
   },
-  "finished_at": "2026-11-02T04:26:47.542703+00:00",
+  "finished_at": "2026-11-16T04:27:01.077723+00:00",
   "report": {
     "bundle_watch": {
       "anchors_verified": 260,
@@ -26,8 +26,8 @@
     "claims_verified": 0,
     "errors": 0,
     "planned": 11,
-    "queries": 93
+    "queries": 102
   },
-  "run_id": "2026-11-02-r64c6c6",
+  "run_id": "2026-11-16-r38f68e",
   "schema_version": 1
 }
