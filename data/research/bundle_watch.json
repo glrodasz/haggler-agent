@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
- "run_id": "2026-11-02-r64c6c6",
- "generated_at": "2026-11-02T04:23:16.601236Z",
+ "run_id": "2026-11-16-r38f68e",
+ "generated_at": "2026-11-16T04:23:14.892257Z",
  "bundles": [
   {
    "bundle_id": "meli_plus_co_total",
@@ -16,15 +16,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "2316b52ee7f0689d",
+     "page_hash": "8429626fe0ca242e",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -39,8 +39,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -54,8 +54,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -69,8 +69,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -84,8 +84,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -99,15 +99,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "meli_plus_co_esencial",
@@ -122,15 +122,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "2316b52ee7f0689d",
+     "page_hash": "8429626fe0ca242e",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -145,15 +145,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "meli_plus_mx_mega",
@@ -168,15 +168,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "0338fff810f7261f",
+     "page_hash": "60b623919384cc2e",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -191,8 +191,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -206,8 +206,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -221,8 +221,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -236,8 +236,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -251,19 +251,19 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "meli_plus_br_mega",
-   "outcome": "changed",
+   "outcome": "ok",
    "detail": "",
    "pages": [
     {
@@ -274,15 +274,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "d87b77cf86aee8f6",
+     "page_hash": "b26baf3f5a96a558",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -293,19 +293,19 @@
      "fact": "price",
      "service_id": null,
      "url": "https://www.mercadolivre.com.br/assinaturas/melimaisv2/planos",
-     "status": "missing",
-     "via": null,
-     "detail": "not on the page",
+     "status": "verified",
+     "via": "lines",
+     "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-10-26",
-     "misses": 1,
-     "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
+     "misses": 0,
+     "unconfirmed": null,
+     "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "telia_se_obegransad_streaming",
@@ -419,7 +419,7 @@
   },
   {
    "bundle_id": "telia_se_streaming_maxad",
-   "outcome": "ok",
+   "outcome": "changed",
    "detail": "",
    "pages": [
     {
@@ -430,15 +430,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "802b908416dc199b",
+     "page_hash": "98bdaad6cf15c102",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -449,15 +449,15 @@
      "fact": "price",
      "service_id": null,
      "url": "https://www.telia.se/tv/streaming/streaming-maxad",
-     "status": "verified",
-     "via": "lines",
-     "detail": "",
+     "status": "missing",
+     "via": null,
+     "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": "2026-11-02",
-     "misses": 0,
-     "unconfirmed": null,
-     "unconfirmed_on": null
+     "misses": 1,
+     "unconfirmed": "missing",
+     "unconfirmed_on": "2026-11-16"
     },
     {
      "anchor_hash": "8482feb5173e",
@@ -468,8 +468,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -483,8 +483,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -498,15 +498,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "telia_se_streaming_mest",
@@ -576,15 +576,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "a59cbdabc5867f5b",
+     "page_hash": "ae18b10538e529a7",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -599,8 +599,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -614,15 +614,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "meli_plus_cl_esencial",
@@ -637,15 +637,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "a59cbdabc5867f5b",
+     "page_hash": "ae18b10538e529a7",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -660,15 +660,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "go3_lt_filmai_netflix",
@@ -692,15 +692,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "7c71e2c006a35c49",
+     "page_hash": "6e3d680b6e214611",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -715,8 +715,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -730,8 +730,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -745,8 +745,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -760,15 +760,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_se",
@@ -783,15 +783,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "7c71e2c006a35c49",
+     "page_hash": "6e3d680b6e214611",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -806,8 +806,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -821,8 +821,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -836,8 +836,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -851,15 +851,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_co",
@@ -874,15 +874,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "2525d3b78f60e4be",
+     "page_hash": "ba2454fb75ddbe0c",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -897,8 +897,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -912,8 +912,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -927,8 +927,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -942,15 +942,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_co",
@@ -965,15 +965,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "2525d3b78f60e4be",
+     "page_hash": "ba2454fb75ddbe0c",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -988,8 +988,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1003,8 +1003,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1018,8 +1018,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1033,15 +1033,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_at",
@@ -1056,15 +1056,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "5c0b240cd1b5ecac",
+     "page_hash": "7e6414f8cb469ddb",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1079,8 +1079,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1094,8 +1094,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1109,8 +1109,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1124,15 +1124,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_at",
@@ -1147,15 +1147,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "5c0b240cd1b5ecac",
+     "page_hash": "7e6414f8cb469ddb",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1170,8 +1170,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1185,8 +1185,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1200,8 +1200,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1215,15 +1215,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_be",
@@ -1238,15 +1238,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "9c6a2d2d6b8ac64b",
+     "page_hash": "f17f8d567fc45841",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1261,8 +1261,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1276,8 +1276,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1291,8 +1291,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1306,15 +1306,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_be",
@@ -1329,15 +1329,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "9c6a2d2d6b8ac64b",
+     "page_hash": "f17f8d567fc45841",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1352,8 +1352,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1367,8 +1367,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1382,8 +1382,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1397,15 +1397,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_br",
@@ -1420,15 +1420,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "125104b113db9587",
+     "page_hash": "345f86ba89083c0a",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1443,8 +1443,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1458,8 +1458,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1473,8 +1473,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1488,15 +1488,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_br",
@@ -1511,15 +1511,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "125104b113db9587",
+     "page_hash": "345f86ba89083c0a",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1534,8 +1534,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1549,8 +1549,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1564,8 +1564,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1579,15 +1579,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_ca",
@@ -1602,15 +1602,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "7c7898ba233c4ac4",
+     "page_hash": "25ed1c12861e3315",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1625,8 +1625,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1640,8 +1640,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1655,8 +1655,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1670,15 +1670,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_ca",
@@ -1693,15 +1693,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "7c7898ba233c4ac4",
+     "page_hash": "25ed1c12861e3315",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1716,8 +1716,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1731,8 +1731,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1746,8 +1746,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1761,15 +1761,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_premier_ca",
@@ -1784,15 +1784,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "7c7898ba233c4ac4",
+     "page_hash": "25ed1c12861e3315",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1807,8 +1807,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1822,8 +1822,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1837,8 +1837,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1852,15 +1852,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_ch",
@@ -1875,15 +1875,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "3a57ab691039028a",
+     "page_hash": "412e3a8e3f8857c1",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1898,8 +1898,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1913,8 +1913,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1928,8 +1928,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -1943,15 +1943,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_ch",
@@ -1966,15 +1966,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "3a57ab691039028a",
+     "page_hash": "412e3a8e3f8857c1",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -1989,8 +1989,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2004,8 +2004,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2019,8 +2019,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2034,15 +2034,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_cl",
@@ -2057,15 +2057,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "fd94b27a2f3129cb",
+     "page_hash": "e10e39259e8aedaf",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2080,8 +2080,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2095,8 +2095,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2110,8 +2110,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2125,15 +2125,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_cl",
@@ -2148,15 +2148,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "fd94b27a2f3129cb",
+     "page_hash": "e10e39259e8aedaf",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2171,8 +2171,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2186,8 +2186,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2201,8 +2201,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2216,15 +2216,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_cz",
@@ -2239,15 +2239,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "a8be6282208ad336",
+     "page_hash": "9002daeb60952508",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2262,8 +2262,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2277,8 +2277,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2292,8 +2292,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2307,15 +2307,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_cz",
@@ -2330,15 +2330,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "a8be6282208ad336",
+     "page_hash": "9002daeb60952508",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2353,8 +2353,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2368,8 +2368,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2383,8 +2383,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2398,15 +2398,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_de",
@@ -2421,15 +2421,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "b09056872ff3b00d",
+     "page_hash": "56fcdd56806f9961",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2444,8 +2444,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2459,8 +2459,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2474,8 +2474,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2489,15 +2489,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_de",
@@ -2512,15 +2512,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "b09056872ff3b00d",
+     "page_hash": "56fcdd56806f9961",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2535,8 +2535,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2550,8 +2550,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2565,8 +2565,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2580,15 +2580,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_dk",
@@ -2603,15 +2603,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "47f0d9d93304f740",
+     "page_hash": "953a495300770fa6",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2626,8 +2626,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2641,8 +2641,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2656,8 +2656,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2671,15 +2671,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_dk",
@@ -2694,15 +2694,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "47f0d9d93304f740",
+     "page_hash": "953a495300770fa6",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2717,8 +2717,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2732,8 +2732,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2747,8 +2747,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2762,15 +2762,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_es",
@@ -2785,15 +2785,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "ebbe49577dbbac8b",
+     "page_hash": "ef554d31c088f700",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2808,8 +2808,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2823,8 +2823,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2838,8 +2838,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2853,15 +2853,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_es",
@@ -2876,15 +2876,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "ebbe49577dbbac8b",
+     "page_hash": "ef554d31c088f700",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2899,8 +2899,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2914,8 +2914,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2929,8 +2929,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -2944,15 +2944,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_fi",
@@ -2967,15 +2967,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "9f11e766cfca6227",
+     "page_hash": "492e173abd5d4647",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -2990,8 +2990,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3005,8 +3005,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3020,8 +3020,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3035,15 +3035,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_fi",
@@ -3058,15 +3058,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "9f11e766cfca6227",
+     "page_hash": "492e173abd5d4647",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3081,8 +3081,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3096,8 +3096,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3111,8 +3111,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3126,15 +3126,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_fr",
@@ -3149,15 +3149,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "38a3f697df94c000",
+     "page_hash": "ee6215321bf99654",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3172,8 +3172,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3187,8 +3187,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3202,8 +3202,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3217,15 +3217,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_fr",
@@ -3240,15 +3240,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "38a3f697df94c000",
+     "page_hash": "ee6215321bf99654",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3263,8 +3263,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3278,8 +3278,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3293,8 +3293,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3308,15 +3308,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_gb",
@@ -3331,15 +3331,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "cd9de882a6377fa5",
+     "page_hash": "fe5209a35e608ca1",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3354,8 +3354,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3369,8 +3369,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3384,8 +3384,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3399,15 +3399,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_gb",
@@ -3422,15 +3422,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "cd9de882a6377fa5",
+     "page_hash": "fe5209a35e608ca1",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3445,8 +3445,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3460,8 +3460,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3475,8 +3475,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3490,15 +3490,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_premier_gb",
@@ -3513,15 +3513,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "cd9de882a6377fa5",
+     "page_hash": "fe5209a35e608ca1",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3536,8 +3536,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3551,8 +3551,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3566,8 +3566,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3581,15 +3581,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_hu",
@@ -3604,15 +3604,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "63b1b5207e5c9172",
+     "page_hash": "d337036fa8877df0",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3627,8 +3627,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3642,8 +3642,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3657,8 +3657,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3672,15 +3672,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_hu",
@@ -3695,15 +3695,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "63b1b5207e5c9172",
+     "page_hash": "d337036fa8877df0",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3718,8 +3718,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3733,8 +3733,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3748,8 +3748,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3763,15 +3763,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_id",
@@ -3786,15 +3786,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "980d73140248b2f0",
+     "page_hash": "cce6e3c5d3495220",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3809,8 +3809,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3824,8 +3824,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3839,8 +3839,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3854,15 +3854,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_id",
@@ -3877,15 +3877,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "980d73140248b2f0",
+     "page_hash": "cce6e3c5d3495220",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3900,8 +3900,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3915,8 +3915,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3930,8 +3930,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -3945,15 +3945,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_ie",
@@ -3968,15 +3968,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "70e091331bffb9ad",
+     "page_hash": "e0d71bd22c4bbf35",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -3991,8 +3991,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4006,8 +4006,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4021,8 +4021,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4036,15 +4036,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_ie",
@@ -4059,15 +4059,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "70e091331bffb9ad",
+     "page_hash": "e0d71bd22c4bbf35",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4082,8 +4082,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4097,8 +4097,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4112,8 +4112,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4127,15 +4127,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_premier_ie",
@@ -4150,15 +4150,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "70e091331bffb9ad",
+     "page_hash": "e0d71bd22c4bbf35",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4173,8 +4173,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4188,8 +4188,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4203,8 +4203,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4218,15 +4218,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_it",
@@ -4241,15 +4241,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "bcb4ff0c4ee07ff7",
+     "page_hash": "28c2e4dea3e3f8cd",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4264,8 +4264,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4279,8 +4279,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4294,8 +4294,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4309,15 +4309,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_it",
@@ -4332,15 +4332,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "bcb4ff0c4ee07ff7",
+     "page_hash": "28c2e4dea3e3f8cd",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4355,8 +4355,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4370,8 +4370,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4385,8 +4385,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4400,15 +4400,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_lu",
@@ -4423,15 +4423,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c6e9a9dc357c8c9c",
+     "page_hash": "a4ce38685801d41b",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4446,8 +4446,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4461,8 +4461,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4476,8 +4476,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4491,15 +4491,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_lu",
@@ -4514,15 +4514,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c6e9a9dc357c8c9c",
+     "page_hash": "a4ce38685801d41b",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4537,8 +4537,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4552,8 +4552,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4567,8 +4567,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4582,15 +4582,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_mx",
@@ -4605,15 +4605,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "5469062438a3a818",
+     "page_hash": "cf54d237d89d9dde",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4628,8 +4628,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4643,8 +4643,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4658,8 +4658,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4673,15 +4673,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_mx",
@@ -4696,15 +4696,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "5469062438a3a818",
+     "page_hash": "cf54d237d89d9dde",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4719,8 +4719,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4734,8 +4734,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4749,8 +4749,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4764,15 +4764,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_nl",
@@ -4787,15 +4787,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "1770f65a36a89c7f",
+     "page_hash": "1f8c0de84bbb7252",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4810,8 +4810,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4825,8 +4825,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4840,8 +4840,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4855,15 +4855,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_nl",
@@ -4878,15 +4878,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "1770f65a36a89c7f",
+     "page_hash": "1f8c0de84bbb7252",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4901,8 +4901,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4916,8 +4916,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4931,8 +4931,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -4946,15 +4946,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_no",
@@ -4969,15 +4969,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "e57048e505fd9197",
+     "page_hash": "48a3cf1830164e6b",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -4992,8 +4992,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5007,8 +5007,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5022,8 +5022,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5037,15 +5037,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_no",
@@ -5060,15 +5060,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "e57048e505fd9197",
+     "page_hash": "48a3cf1830164e6b",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5083,8 +5083,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5098,8 +5098,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5113,8 +5113,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5128,15 +5128,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_ph",
@@ -5151,15 +5151,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "341a927f9c7d44c1",
+     "page_hash": "b547927ed3b03614",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5174,8 +5174,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5189,8 +5189,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5204,8 +5204,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5219,15 +5219,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_ph",
@@ -5242,15 +5242,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "341a927f9c7d44c1",
+     "page_hash": "b547927ed3b03614",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5265,8 +5265,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5280,8 +5280,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5295,8 +5295,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5310,15 +5310,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_pl",
@@ -5333,15 +5333,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "3e727fbc14803a13",
+     "page_hash": "65966803c367425a",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5356,8 +5356,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5371,8 +5371,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5386,8 +5386,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5401,15 +5401,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_pt",
@@ -5424,15 +5424,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "f6c8bc9365f5737d",
+     "page_hash": "c760da60fd0d3e80",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5447,8 +5447,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5462,8 +5462,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5477,8 +5477,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5492,15 +5492,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_pt",
@@ -5515,15 +5515,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "f6c8bc9365f5737d",
+     "page_hash": "c760da60fd0d3e80",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5538,8 +5538,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5553,8 +5553,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5568,8 +5568,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5583,15 +5583,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_premier_pt",
@@ -5606,15 +5606,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "f6c8bc9365f5737d",
+     "page_hash": "c760da60fd0d3e80",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5629,8 +5629,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5644,8 +5644,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5659,8 +5659,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5674,15 +5674,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_us",
@@ -5697,15 +5697,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c37d038628bced90",
+     "page_hash": "11c7eaf4b9534b0c",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5720,8 +5720,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5735,8 +5735,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5750,8 +5750,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5765,15 +5765,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_us",
@@ -5788,15 +5788,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c37d038628bced90",
+     "page_hash": "11c7eaf4b9534b0c",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5811,8 +5811,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5826,8 +5826,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5841,8 +5841,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5856,15 +5856,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_premier_us",
@@ -5879,15 +5879,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "c37d038628bced90",
+     "page_hash": "11c7eaf4b9534b0c",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5902,8 +5902,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5917,8 +5917,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5932,8 +5932,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -5947,15 +5947,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_individual_vn",
@@ -5970,15 +5970,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "43bc7f3e03182137",
+     "page_hash": "e425e01281b3a0ba",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -5993,8 +5993,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6008,8 +6008,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6023,8 +6023,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6038,15 +6038,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "apple_one_family_vn",
@@ -6061,15 +6061,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "43bc7f3e03182137",
+     "page_hash": "e425e01281b3a0ba",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -6084,8 +6084,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6099,8 +6099,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6114,8 +6114,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6129,15 +6129,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "magenta_tv_smartstream_de",
@@ -6192,15 +6192,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "f70f450b77796543",
+     "page_hash": "9c1667cb51475205",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -6215,11 +6215,11 @@
      "via": null,
      "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": null,
-     "misses": 1,
+     "misses": 2,
      "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "unconfirmed_on": "2026-11-16"
     },
     {
      "anchor_hash": "2a315f29721e",
@@ -6230,11 +6230,11 @@
      "via": null,
      "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": null,
-     "misses": 1,
+     "misses": 2,
      "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "unconfirmed_on": "2026-11-16"
     },
     {
      "anchor_hash": "0f8fbba61fef",
@@ -6245,11 +6245,11 @@
      "via": null,
      "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": null,
-     "misses": 1,
+     "misses": 2,
      "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "unconfirmed_on": "2026-11-16"
     },
     {
      "anchor_hash": "5ef33a187e0e",
@@ -6260,11 +6260,11 @@
      "via": null,
      "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": null,
-     "misses": 1,
+     "misses": 2,
      "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "unconfirmed_on": "2026-11-16"
     },
     {
      "anchor_hash": "18f72a571785",
@@ -6275,15 +6275,15 @@
      "via": null,
      "detail": "not on the page",
      "edition": null,
-     "checked_at": "2026-11-02",
+     "checked_at": "2026-11-16",
      "last_verified_at": null,
-     "misses": 1,
+     "misses": 2,
      "unconfirmed": "missing",
-     "unconfirmed_on": "2026-11-02"
+     "unconfirmed_on": "2026-11-16"
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   },
   {
    "bundle_id": "google_ai_pro_co",
@@ -6298,15 +6298,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "433a599d3fb05fcc",
+     "page_hash": "1e29841862e3a8da",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     },
@@ -6318,15 +6318,15 @@
      "http": 200,
      "content_type": "text/html",
      "detail": "",
-     "page_hash": "d5c712a62f940be8",
+     "page_hash": "d30e3dd47b778a05",
      "edition": null,
      "newest_edition": null,
      "newest_url": null,
      "newest_status": null,
      "newest_anchors": [],
      "edition_check": null,
-     "checked_at": "2026-11-02",
-     "last_ok_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_ok_at": "2026-11-16",
      "unreadable_runs": 0,
      "paused_until": null
     }
@@ -6341,8 +6341,8 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
@@ -6356,15 +6356,15 @@
      "via": "lines",
      "detail": "",
      "edition": null,
-     "checked_at": "2026-11-02",
-     "last_verified_at": "2026-11-02",
+     "checked_at": "2026-11-16",
+     "last_verified_at": "2026-11-16",
      "misses": 0,
      "unconfirmed": null,
      "unconfirmed_on": null
     }
    ],
    "hints": [],
-   "checked_at": "2026-11-02"
+   "checked_at": "2026-11-16"
   }
  ]
 }

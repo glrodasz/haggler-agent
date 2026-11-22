@@ -2197,7 +2197,7 @@
     "country": "BO",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2245,7 +2245,7 @@
     "country": "CR",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2341,7 +2341,7 @@
     "country": "GB",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2517,7 +2517,7 @@
     "country": "NO",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2573,7 +2573,7 @@
     "country": "PY",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2581,7 +2581,7 @@
     "country": "RO",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2589,7 +2589,7 @@
     "country": "RS",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -3035,9 +3035,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "NI",
-    "failing_since": "2026-11-12",
+    "failing_since": null,
     "service_id": "chatgpt",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4387,9 +4387,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "CR",
-    "failing_since": "2026-11-10",
+    "failing_since": null,
     "service_id": "deezer",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4571,9 +4571,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "LT",
-    "failing_since": null,
+    "failing_since": "2026-11-22",
     "service_id": "deezer",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4715,9 +4715,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "PY",
-    "failing_since": "2026-11-12",
+    "failing_since": null,
     "service_id": "deezer",
-    "status": "failed"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4755,9 +4755,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SK",
-    "failing_since": "2026-11-12",
+    "failing_since": null,
     "service_id": "deezer",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4925,7 +4925,7 @@
     "country": "CR",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5085,7 +5085,7 @@
     "country": "IT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5141,7 +5141,7 @@
     "country": "MT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5173,7 +5173,7 @@
     "country": "NO",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5205,7 +5205,7 @@
     "country": "PL",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5397,7 +5397,7 @@
     "country": "CH",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5501,7 +5501,7 @@
     "country": "FI",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5525,7 +5525,7 @@
     "country": "GR",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5541,7 +5541,7 @@
     "country": "HN",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5621,7 +5621,7 @@
     "country": "LV",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -6707,9 +6707,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "MT",
-    "failing_since": "2026-11-12",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -6827,9 +6827,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SE",
-    "failing_since": null,
+    "failing_since": "2026-11-22",
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -9059,9 +9059,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "BE",
-    "failing_since": null,
+    "failing_since": "2026-11-22",
     "service_id": "prime_video",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9107,9 +9107,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "GB",
-    "failing_since": "2026-11-12",
+    "failing_since": null,
     "service_id": "prime_video",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9139,9 +9139,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "NL",
-    "failing_since": null,
+    "failing_since": "2026-11-22",
     "service_id": "prime_video",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9155,7 +9155,7 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "SE",
-    "failing_since": "2026-11-06",
+    "failing_since": "2026-11-22",
     "service_id": "prime_video",
     "status": "failed"
   },
@@ -9163,9 +9163,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "TR",
-    "failing_since": null,
+    "failing_since": "2026-11-22",
     "service_id": "prime_video",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "amazon_prime",
@@ -10797,7 +10797,7 @@
     "country": "AR",
     "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -11227,9 +11227,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "RS",
-    "failing_since": "2026-10-27",
+    "failing_since": null,
     "service_id": "youtube_premium",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
