@@ -30,7 +30,7 @@ GitHub Actions publish.yml (05:15 UTC, WIF, cuenta haggler-github)
 ### Cadencia: `schedule.yaml`
 
 Cada cuánto corren los jobs se cambia en un solo sitio, [`schedule.yaml`](../schedule.yaml) en la
-raíz del repositorio (hoy: precios cada 2 días, investigación cada 2 semanas):
+raíz del repositorio (hoy: precios cada semana, investigación cada 4 semanas):
 
 | Clave | Qué controla |
 |---|---|
@@ -331,7 +331,7 @@ crudo de los proveedores nunca se republica. El probe no usa GCP ni credenciales
 
 ## 9. Costos estimados
 
-Uso esperado (con la cadencia de `schedule.yaml`: precios cada 2 días, investigación cada 2
+Uso esperado (con la cadencia de `schedule.yaml`: precios cada semana, investigación cada 4
 semanas): un run de precios de ~5–20 min con 1 vCPU / 1 GiB, unos MB por corrida en GCS y casi
 ninguna llamada LLM (solo cuando un parser falla). Las franjas en que el job no toca correr
 duran segundos. Precios de lista aproximados (USD, 2026),
@@ -339,12 +339,12 @@ verificar en la calculadora de GCP:
 
 | Servicio | Uso | Costo mensual aprox. |
 |---|---|---|
-| Cloud Run Jobs | ≤ 20 min cada 2 días ≈ 18 000 vCPU-s + 18 000 GiB-s | ~0 dentro de la capa gratuita de Cloud Run; < 1 USD sin ella |
+| Cloud Run Jobs | ≤ 20 min cada semana ≈ 5 000 vCPU-s + 5 000 GiB-s | ~0 dentro de la capa gratuita de Cloud Run; < 1 USD sin ella |
 | Cloud Scheduler | 1 job | 0 (3 jobs gratis por cuenta de facturación) |
 | Cloud Storage | `raw/` 90 días + snapshots, ~1–3 GB | < 0,10 USD |
 | Artifact Registry | ≤ 5 imágenes (~1 GB) | ~0,05–0,10 USD (0,5 GB gratis) |
 | Vertex AI (Gemini flash-lite) | fallback ≤ 150 llamadas por corrida, típico ~0 | 0–1,5 USD (tope de diseño ≈ 0,10 USD por corrida) |
-| Vertex AI (Gemini flash + Google Search) | investigación cada 2 semanas: ≤ 40 llamadas y ≤ 200 consultas de búsqueda por corrida, tope de 1 500 consultas/mes | tokens < 1 USD; las consultas de *grounding* tienen una cuota gratuita mensual (5 000 en Gemini 3) y luego se facturan (~14 USD por 1 000): con los topes por defecto, ~0 |
+| Vertex AI (Gemini flash + Google Search) | investigación cada 4 semanas: ≤ 40 llamadas y ≤ 200 consultas de búsqueda por corrida, tope de 1 500 consultas/mes | tokens < 1 USD; las consultas de *grounding* tienen una cuota gratuita mensual (5 000 en Gemini 3) y luego se facturan (~14 USD por 1 000): con los topes por defecto, ~0 |
 | Cloud Logging | pocos MB | 0 (50 GiB gratis) |
 | GitHub Actions / Pages | repo público | 0 |
 
@@ -490,7 +490,7 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 | `publish`: *warning* "sync falló" por `run_id` o SHA-256 distintos entre archivos | el job estaba escribiendo `latest/` en ese momento; el sitio se publica con el `data/` anterior; relanzar `publish` más tarde |
 | `publish`: "Aún no hay data/latest/prices.json" | no hay datos versionados en `data/` y no hubo sync: faltan variables (paso 3), se lanzó desde otra rama, o el sync falló (ver el *warning* del job de sync) |
 | `publish`: *warning* "push de data/ falló: No se pudo hacer push de data/" | `main` está protegida (*pull request* obligatorio, *status checks* requeridos…) y la identidad que hace el push no tiene *bypass* (ver §12). El sitio se publica igual con los datos sincronizados (artefacto del job de sync); solo `data/` del repositorio, y con él el historial de `data/changes/`, queda desactualizado hasta que el push vuelva a funcionar |
-| `publish`: *notice* "data/ en PR" | `main` está protegida: publish deja `data/` en la rama `data-sync` (reescrita en cada corrida) y mantiene un PR abierto hacia `main`. Fusiónalo cuando quieras versionar los datos (p. ej. antes de `haggler research review`); el sitio ya se publicó con ellos. Si el aviso es "PR de data/ falló", activa *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*. Los PR y pushes hechos con `GITHUB_TOKEN` no lanzan `ci` por sí solos (su corrida `pull_request` queda en *Approve and run*), así que publish lanza `ci` con `workflow_dispatch` en `data-sync` y `research-review`: sus checks aparecen en el PR sin aprobar nada. Si faltan, el run de publish muestra el *warning* "ci not dispatched" |
+| `publish`: *notice* "data/ en PR" | `main` está protegida: publish deja `data/` en la rama `data-sync` y mantiene un PR abierto hacia `main`: mientras ese PR siga abierto, cada corrida con datos nuevos le añade un commit (`data: prices <fecha>`) y deja un comentario con lo que cambió; la rama solo se rehace desde `main` cuando no hay PR abierto. Fusiónalo cuando quieras versionar los datos (p. ej. antes de `haggler research review`); el sitio ya se publicó con ellos. Si el aviso es "PR de data/ falló", activa *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*. Los PR y pushes hechos con `GITHUB_TOKEN` no lanzan `ci` por sí solos (su corrida `pull_request` queda en *Approve and run*), así que publish lanza `ci` con `workflow_dispatch` en `data-sync` y `research-review`: sus checks aparecen en el PR sin aprobar nada. Si faltan, el run de publish muestra el *warning* "ci not dispatched" |
 | `publish`: *warning* "actions/configure-pages falló" | Pages no está habilitado (paso 4); el sitio se construye con los valores por defecto de `web/astro.config.mjs` (dominio propio en la raíz) |
 | `publish`: el deploy a Pages falla | Pages no está habilitado con *Source: GitHub Actions* (paso 4), o se lanzó desde una rama que no es `main` |
 | Los workflows programados dejaron de correr | GitHub desactiva los `schedule` de repos públicos tras 60 días sin actividad; reactivarlos en *Actions* |
@@ -527,7 +527,7 @@ las cuentas borradas desaparecen solas (quedan como `deleted:serviceAccount:…`
 
 Un segundo Cloud Run Job, `haggler-research` (misma imagen, `haggler research run --store gcs`),
 se dispara los lunes a las 05:23 Europe/Stockholm, después del run de precios, y corre cada
-`research.every_days` días (`schedule.yaml`: hoy cada 2 semanas). Investiga con Gemini +
+`research.every_days` días (`schedule.yaml`: hoy cada 4 semanas). Investiga con Gemini +
 Google Search las reglas de país de los servicios, lo que exige contratar la oferta de un país
 (solo para los pares servicio × país que ahorran al menos 1 €/mes y 15 %) y los medios de pago, y
 **solo guarda lo que nuestro propio fetch verifica**: la cita literal tiene que aparecer en la URL
@@ -580,7 +580,9 @@ git add data/curated/research_review.yaml && git commit -m "Revisión de hallazg
 **O revisar en un PR** (automático): cada vez que publish sincroniza hallazgos pendientes,
 `haggler research propose` añade una decisión propuesta por hallazgo (`accept` si la fuente es
 oficial, `reject` si es prensa o foro) y publish abre o actualiza el PR de la rama
-`research-review`. Su descripción lista cada hallazgo con su cita y su fuente. Cambia en el diff
+`research-review`. Si el PR de la corrida anterior sigue abierto, la propuesta nueva entra como
+un commit más en ese mismo PR, con un comentario que dice cuántas decisiones añadió, y la
+descripción se reescribe con la lista completa. Su descripción lista cada hallazgo con su cita y su fuente. Cambia en el diff
 el `decision:` de los que la cita no respalde y fusiona: fusionar es la revisión. publish no
 reescribe la rama mientras tenga commits de otra persona. Requiere «Allow GitHub Actions to
 create and approve pull requests» (Settings → Actions → General), igual que el PR de `data/`.
@@ -757,7 +759,7 @@ verificar**.
 4. **Merge a `main`**: `deploy-job.yml` se dispara con los cambios en `data/curated/**` y
    redespliega la imagen con el YAML nuevo.
 
-5. **La siguiente corrida semanal verifica el ancla en línea**, y el `publish.yml` siguiente
+5. **La siguiente corrida de investigación verifica el ancla en línea**, y el `publish.yml` siguiente
    publica el estado. La propuesta se resuelve sola en cuanto el YAML tiene el valor: no hay nada
    que aceptar. Para no esperar al lunes: una corrida `--watch-only` (abajo) y después
    `gh workflow run publish.yml --ref main`.

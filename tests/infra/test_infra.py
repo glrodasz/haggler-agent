@@ -327,6 +327,104 @@ def test_publish_protected_main_gets_data_on_a_branch_and_a_pr(tmp_path: Path) -
     assert "--body **CI: not required to merge.**" in calls
 
 
+# A gh that logs its calls and answers `pr list` with an open pull request, number 7.
+OPEN_PR_GH = '#!/bin/sh\necho "$@" >> {log}\n[ "$1 $2" = "pr list" ] && echo 7\nexit 0\n'
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_adds_a_commit_to_the_open_data_pr(tmp_path: Path) -> None:
+    """Two runs before the PR is merged: the second one is a commit on top, not a rewrite."""
+    script = step(load("publish.yml"), "sync", "Commit and push data/")["run"]
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    gh_log = tmp_path / "gh.log"
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(f'#!/bin/sh\necho "$@" >> {gh_log}\nexit 0\n')
+    fake_gh.chmod(0o755)
+    env = {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "HOME": str(tmp_path),
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remote), env=env)
+    _git(tmp_path, "init", "-q", "-b", "main", str(work), env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "init", env=env)
+    _git(work, "remote", "add", "origin", str(remote), env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    hook = remote / "hooks" / "pre-receive"
+    hook.write_text(
+        "#!/bin/sh\nwhile read old new ref; do\n"
+        '  [ "$ref" = refs/heads/main ] && { echo GH006 >&2; exit 1; }\n'
+        "done\nexit 0\n"
+    )
+    hook.chmod(0o755)
+
+    def run(as_of: str) -> subprocess.CompletedProcess[str]:
+        _git(work, "checkout", "-q", "-f", "main", env=env)
+        _git(work, "reset", "-q", "--hard", "origin/main", env=env)
+        (work / "data" / "latest").mkdir(parents=True, exist_ok=True)
+        (work / "data" / "latest" / "run.json").write_text(f'{{"as_of": "{as_of}"}}\n')
+        return subprocess.run(
+            ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+            cwd=work,
+            env={
+                **env,
+                "IS_DEFAULT_BRANCH": "true",
+                "GITHUB_REF_NAME": "main",
+                "GITHUB_STEP_SUMMARY": str(tmp_path / "summary.md"),
+                "DATA_BRANCH": "data-sync",
+            },
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+
+    def log(*args: str) -> str:
+        return subprocess.run(
+            ["git", "log", *args, "data-sync"],
+            cwd=remote, env=env, capture_output=True, text=True, check=True,
+        ).stdout  # fmt: skip
+
+    first = run("2026-11-22")
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert "pr create --head data-sync" in gh_log.read_text()
+    first_head = log("-1", "--format=%H").strip()
+
+    # The PR is still open a week later.
+    fake_gh.write_text(OPEN_PR_GH.format(log=gh_log))
+    gh_log.unlink()
+    second = run("2026-11-29")
+    assert second.returncode == 0, second.stdout + second.stderr
+    subjects = log("--format=%s").splitlines()
+    assert subjects[:2] == ["data: prices 2026-11-29", "data: prices 2026-11-22"]
+    assert log("-1", "--format=%P").strip() == first_head
+    calls = gh_log.read_text()
+    assert "pr create" not in calls
+    assert "pr edit 7 --title data: prices and research" in calls
+    assert "pr comment 7 --body publish added `data: prices 2026-11-29`" in calls
+    assert "1 file changed" in calls
+    assert "workflow run ci.yml --ref data-sync" in calls
+
+    # The same data again: no new commit, no comment, no ci run.
+    gh_log.unlink()
+    third = run("2026-11-29")
+    assert third.returncode == 0, third.stdout + third.stderr
+    assert log("-1", "--format=%P").strip() == first_head
+    calls = gh_log.read_text()
+    assert "pr comment" not in calls and "workflow run" not in calls
+
+
 def test_publish_can_dispatch_ci_on_its_bot_branches() -> None:
     assert "workflow_dispatch" in load("ci.yml")[True]
     assert load("publish.yml")["jobs"]["sync"]["permissions"]["actions"] == "write"
@@ -991,3 +1089,53 @@ def test_publish_review_step_rebuilds_a_merged_branch_from_a_shallow_checkout(
         cwd=remote, env=env, capture_output=True, text=True, check=True,
     ).stdout  # fmt: skip
     assert "- id: old" in shown and "- id: x" in shown
+
+
+@pytest.mark.skipif(
+    shutil.which("bash") is None or shutil.which("git") is None, reason="bash/git not installed"
+)
+def test_publish_review_step_adds_a_commit_to_the_open_review_pr(tmp_path: Path) -> None:
+    """A second research run before the PR is merged: one more commit on the same PR."""
+    work, remote, env, gh_log = _review_repo(tmp_path)
+    bot = "41898282+github-actions[bot]@users.noreply.github.com"
+    bot_env = {**env, "GIT_AUTHOR_EMAIL": bot, "GIT_COMMITTER_EMAIL": bot}
+    assert _run_review_step(tmp_path, work, bot_env).returncode == 0
+
+    def branch(*args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=remote, env=env, capture_output=True, text=True, check=True
+        ).stdout
+
+    first_head = branch("rev-parse", "research-review").strip()
+    # The PR stays open; main moves on and the next run proposes two decisions more.
+    (tmp_path / "bin" / "gh").write_text(OPEN_PR_GH.format(log=gh_log))
+    uv = tmp_path / "bin" / "uv"
+    uv.write_text(
+        uv.read_text()
+        + 'echo "  - id: y" >> data/curated/research_review.yaml\n'
+        + 'echo "  - id: z" >> data/curated/research_review.yaml\n'
+    )
+    gh_log.unlink()
+    _git(work, "checkout", "-q", "main", env=env)
+    (work / "README").write_text("x\n")
+    _git(work, "add", "README", env=env)
+    _git(work, "commit", "-q", "-m", "newer main", env=env)
+    _git(work, "push", "-q", "origin", "main", env=env)
+    result = _run_review_step(tmp_path, work, bot_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    main_head = branch("rev-parse", "main").strip()
+    assert branch("log", "-1", "--format=%P", "research-review").split() == [first_head, main_head]
+    shown = branch("show", "research-review:data/curated/research_review.yaml")
+    assert "- id: x" in shown and "- id: y" in shown and "- id: z" in shown
+    assert branch("show", "research-review:README") == "x\n"
+    calls = gh_log.read_text()
+    assert "pr create" not in calls
+    assert "pr edit 7 --title research: review findings" in calls
+    assert "with 2 new proposed decision(s); this PR now proposes 3" in calls
+    assert "workflow run ci.yml --ref research-review" in calls
+    # The same proposal on the same main: the PR is left as it is.
+    gh_log.unlink()
+    _git(work, "checkout", "-q", "main", env=env)
+    assert _run_review_step(tmp_path, work, bot_env).returncode == 0
+    assert branch("log", "-1", "--format=%P", "research-review").split() == [first_head, main_head]
+    assert "pr comment" not in gh_log.read_text()
