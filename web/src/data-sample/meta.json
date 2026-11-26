@@ -41,8 +41,8 @@
     }
   ],
   "schedule": {
-    "prices_every_days": 2,
-    "research_every_days": 14,
-    "bundle_verify_days": 22
+    "prices_every_days": 7,
+    "research_every_days": 28,
+    "bundle_verify_days": 36
   }
 }

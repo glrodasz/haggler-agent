@@ -26,9 +26,9 @@ offers could I legitimately sign up for, and what would I be risking?*
 
 Haggler answers it with a set of agents that run unattended on Google Cloud:
 
-- **Every two days** it collects official prices for 14 services in 67 countries, normalizes them
+- **Every week** it collects official prices for 14 services in 67 countries, normalizes them
   to a monthly price in any currency and publishes every change as a reviewable git diff.
-- **Every two weeks** a research agent investigates each service's country rules, payment methods
+- **Every four weeks** a research agent investigates each service's country rules, payment methods
   and bundle offers, and only keeps facts it can prove with a literal quote from a source it
   fetched itself.
 - **One file sets the cadence:** [`schedule.yaml`](schedule.yaml) at the root; see

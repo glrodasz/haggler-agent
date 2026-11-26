@@ -484,9 +484,10 @@ def test_older_run_is_refused_unless_allowed(
 
 
 def test_stale_run_warns(tmp_path: Path, day1: LocalStore) -> None:
-    result = sync(day1, tmp_path / "data", today=date(2026, 10, 12))
+    # Older than one missed prices run (schedule.yaml: prices.every_days + 1 days).
+    result = sync(day1, tmp_path / "data", today=date(2026, 10, 20))
     assert len(result.warnings) == 1
-    assert "hace 5 días" in result.warnings[0]
+    assert "hace 13 días" in result.warnings[0]
 
 
 def test_invalid_local_prices_aborts(tmp_path: Path, day1: LocalStore) -> None:

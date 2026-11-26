@@ -5,8 +5,8 @@
 # default branch, so there is no sync, and nothing is pushed or deployed.
 # A failed sync (the job has not completed a run yet, or was writing latest/ at that moment)
 # leaves a warning and the site is rebuilt from the committed data/. When main rejects the push
-# (branch protection), data/ goes to the data-sync branch with one open PR; if even that fails,
-# a warning. Either way the site is still built from the synced data.
+# (branch protection), data/ goes to the data-sync branch with one open PR (runs that pile up
+# before it is merged each add a commit to it); if even that fails, a warning. Either way the site is still built from the synced data.
 # Pull requests opened by GITHUB_TOKEN start no workflows of their own (their pull_request run of
 # ci waits for a maintainer's "Approve and run"), so publish dispatches ci on the bot branches
 # itself: ci's checks then land on the PR's head commit without anyone running them.
@@ -208,22 +208,50 @@ jobs:
             echo "push rejected (attempt ${attempt}); rebasing and retrying"
             git pull --rebase origin "${GITHUB_REF_NAME}" || break
           done
-          # A protected main only takes pull requests: carry the commit on DATA_BRANCH (rewritten
-          # every run from main, only this bot writes it) and keep one open PR for it. The title and
-          # body are rewritten on an open PR too, so a change to them reaches it on the next run.
-          if git push -f origin "HEAD:refs/heads/${DATA_BRANCH}"; then
+          # A protected main only takes pull requests: carry the commit on DATA_BRANCH (only this
+          # bot writes it) and keep one open PR for it. While that PR is open, a run with new data
+          # adds a commit on top of the branch (with main merged in when main has moved, so ci
+          # runs with main's workflows) and says what it added in a comment; without an open PR
+          # the branch is rebuilt from main. The title and body are rewritten on an open PR too,
+          # so a change to them reaches it on the next run.
+          pr="$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+          head="$(git rev-parse HEAD)"
+          main_tip="$(git rev-parse HEAD^)"
+          force="-f"
+          comment=""
+          unchanged=""
+          if [ -n "$pr" ]; then
+            # The checkout is shallow: the branch's history is needed to build on it.
+            if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+              git fetch -q --unshallow origin "${GITHUB_REF_NAME}" || true
+            fi
+            if git fetch -q origin "${DATA_BRANCH}" 2>/dev/null; then
+              existing="$(git rev-parse FETCH_HEAD)"
+              if [ "$(git rev-parse "${existing}^{tree}")" = "$(git rev-parse "HEAD^{tree}")" ]; then
+                unchanged="true"
+              else
+                parents=(-p "$existing")
+                git merge-base --is-ancestor "$main_tip" "$existing" || parents+=(-p "$main_tip")
+                head="$(git commit-tree "HEAD^{tree}" "${parents[@]}" -m "data: prices ${as_of}")"
+                force=""
+                stat="$(git diff --shortstat "$existing" "$head" -- data/ | sed 's/^ *//')"
+                comment="publish added \`data: prices ${as_of}\` (${head:0:7}) to this PR: ${stat:-no data changes; it brings in the latest ${GITHUB_REF_NAME}}."
+              fi
+            fi
+          fi
+          if [ -n "$unchanged" ] || git push $force origin "${head}:refs/heads/${DATA_BRANCH}"; then
             # A push made with GITHUB_TOKEN starts no workflow; a dispatch does, and its checks
             # land on the PR's head commit.
-            gh workflow run ci.yml --ref "${DATA_BRANCH}" \
+            [ -n "$unchanged" ] || gh workflow run ci.yml --ref "${DATA_BRANCH}" \
               || echo "::warning title=ci not dispatched::Could not start ci on ${DATA_BRANCH}; run it from the Actions tab before merging."
             title="data: prices and research"
             body="$(printf '%s\n\n%s' \
               "**CI: not required to merge.** publish already built and deployed the site from this data, so a broken file would have failed that run; ci is dispatched anyway in case main requires its checks." \
-              "Data synced from GCS by publish (main is protected). Merging this PR only commits it to data/. Updated on every run.")"
-            pr="$(gh pr list --head "${DATA_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+              "Data synced from GCS by publish (main is protected). Merging this PR only commits it to data/. While it stays open, every run with new data adds a commit here (latest: prices ${as_of}) instead of opening another PR; each commit is one run.")"
             if { [ -n "$pr" ] && gh pr edit "$pr" --title "$title" --body "$body"; } \
               || { [ -z "$pr" ] && gh pr create --head "${DATA_BRANCH}" --base "${GITHUB_REF_NAME}" \
                 --title "$title" --body "$body"; }; then
+              [ -z "$comment" ] || gh pr comment "$pr" --body "$comment" || true
               echo "::notice title=data/ in a PR::main is protected: data/ goes on the ${DATA_BRANCH} branch and its open PR. See docs/SETUP.md §11."
               echo "data/ goes on the \`${DATA_BRANCH}\` branch and its PR (main is protected)." >> "$GITHUB_STEP_SUMMARY"
               exit 0
@@ -263,8 +291,9 @@ jobs:
 
       # Pending research findings become one pull request (docs/SETUP.md §13): `research
       # propose` appends a proposed decision per finding to research_review.yaml and writes the
-      # PR body with every quote, so reviewing and merging the PR is the review. The branch is
-      # rebuilt from main on each run, unless someone else has committed to it (a review in
+      # PR body with every quote, so reviewing and merging the PR is the review. An open PR
+      # gets each new proposal as one more commit; the branch is rebuilt from main only when no
+      # PR is open, and never touched when someone else has committed to it (a review in
       # progress). Last step of the job: it checks out another branch, and nothing it does
       # blocks the site.
       - name: Research review PR
@@ -313,20 +342,42 @@ jobs:
           title="research: review findings"
           pr="$(gh pr list --head "${REVIEW_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
           # Same proposal on a branch already built on the current main: the branch stays, the
-          # title and body are refreshed. A branch on an older main is rebuilt, so ci runs with
-          # main's workflows (an old ci.yml may not take a dispatch).
+          # title and body are refreshed. A branch on an older main gets main (below), so ci runs
+          # with main's workflows (an old ci.yml may not take a dispatch).
           if [ -n "$existing" ] && git merge-base --is-ancestor "$base" "$existing" \
             && git diff --quiet "$existing" HEAD -- "$REVIEW_FILE"; then
             [ -z "$pr" ] || gh pr edit "$pr" --title "$title" --body-file "$body" || true
             echo "The review proposal did not change." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          git push -q -f origin "HEAD:refs/heads/${REVIEW_BRANCH}"
+          # An open PR keeps its commits: the new proposal goes on top of the branch as one more
+          # commit (with main merged in when main has moved), and a comment says what it added.
+          # Without an open PR the branch is rebuilt from main.
+          head="$(git rev-parse HEAD)"
+          force="-f"
+          comment=""
+          if [ -n "$pr" ] && [ -n "$existing" ]; then
+            parents=(-p "$existing")
+            git merge-base --is-ancestor "$base" "$existing" || parents+=(-p "$base")
+            head="$(git commit-tree "HEAD^{tree}" "${parents[@]}" -m "research: proposed review of findings")"
+            force=""
+            count() { git show "$1:${REVIEW_FILE}" 2>/dev/null | grep -c '^  - id:' || true; }
+            on_main="$(count "$base")"
+            added="$(( $(count "$head") - $(count "$existing") ))"
+            total="$(( $(count "$head") - on_main ))"
+            if [ "$added" -gt 0 ]; then
+              comment="publish added a commit (${head:0:7}) with ${added} new proposed decision(s); this PR now proposes ${total}. The description lists every finding with its quote."
+            else
+              comment="publish added a commit (${head:0:7}) that refreshes the proposal on the latest ${GITHUB_REF_NAME}; this PR proposes ${total} decision(s)."
+            fi
+          fi
+          git push -q $force origin "${head}:refs/heads/${REVIEW_BRANCH}"
           # See the data/ step: a GITHUB_TOKEN push starts no workflow, a dispatch does.
           gh workflow run ci.yml --ref "${REVIEW_BRANCH}" \
             || echo "::warning title=ci not dispatched::Could not start ci on ${REVIEW_BRANCH}; run it from the Actions tab before merging."
           if [ -n "$pr" ]; then
             gh pr edit "$pr" --title "$title" --body-file "$body"
+            [ -z "$comment" ] || gh pr comment "$pr" --body "$comment" || true
           elif ! gh pr create --head "${REVIEW_BRANCH}" --base "${GITHUB_REF_NAME}" \
               --title "$title" --body-file "$body"; then
             echo "::warning title=review PR failed::${REVIEW_BRANCH} has the proposal, but the PR could not be opened (Settings → Actions → General → \"Allow GitHub Actions to create and approve pull requests\"?)."

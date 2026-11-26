@@ -10,6 +10,7 @@ describe("methodology cadence", () => {
     [2, "Every 2 days", "Cada 2 días", "A cada 2 dias"],
     [7, "Every week", "Cada semana", "Toda semana"],
     [14, "Every 2 weeks", "Cada 2 semanas", "A cada 2 semanas"],
+    [28, "Every 4 weeks", "Cada 4 semanas", "A cada 4 semanas"],
   ])("%i days", (days, enText, esText, ptText) => {
     expect(en.methodology.cadence(days)).toBe(enText);
     expect(es.methodology.cadence(days)).toBe(esText);
