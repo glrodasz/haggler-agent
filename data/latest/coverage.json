@@ -2197,7 +2197,7 @@
     "country": "BO",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2213,7 +2213,7 @@
     "country": "CA",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2341,7 +2341,7 @@
     "country": "GB",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2405,7 +2405,7 @@
     "country": "IN",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2589,7 +2589,7 @@
     "country": "RS",
     "failing_since": null,
     "service_id": "canva",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -2613,7 +2613,7 @@
     "country": "SK",
     "failing_since": null,
     "service_id": "canva",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4363,221 +4363,221 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "CH",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "CL",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "CO",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "CR",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "CY",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "CZ",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "DE",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "DK",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "DO",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "EC",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "EE",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "partial"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "EG",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "ES",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "FI",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "FR",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "GB",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "GR",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "GT",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "HN",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "HR",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "partial"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "HU",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "partial"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "ID",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "IE",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "IN",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "not_available"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "IS",
-    "failing_since": "2026-10-22",
-    "service_id": "deezer",
-    "status": "wrong_country"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "IT",
-    "failing_since": null,
-    "service_id": "deezer",
-    "status": "ok"
-  },
-  {
-    "adapter_id": "appstore_iap",
-    "channel": "ios_iap",
-    "country": "LT",
-    "failing_since": "2026-11-22",
+    "failing_since": "2026-11-26",
     "service_id": "deezer",
     "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
+    "country": "CL",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CY",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "CZ",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DK",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "DO",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EC",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "EG",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ES",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FI",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "FR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GB",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "GT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HN",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HR",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "HU",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "partial"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "ID",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IE",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IN",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "not_available"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IS",
+    "failing_since": "2026-10-22",
+    "service_id": "deezer",
+    "status": "wrong_country"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "IT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
+    "country": "LT",
+    "failing_since": null,
+    "service_id": "deezer",
+    "status": "ok"
+  },
+  {
+    "adapter_id": "appstore_iap",
+    "channel": "ios_iap",
     "country": "LU",
     "failing_since": null,
     "service_id": "deezer",
@@ -4747,9 +4747,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SI",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "deezer",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4805,7 +4805,7 @@
     "country": "VE",
     "failing_since": null,
     "service_id": "deezer",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -4925,7 +4925,7 @@
     "country": "CR",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5085,7 +5085,7 @@
     "country": "IT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5141,7 +5141,7 @@
     "country": "MT",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5157,7 +5157,7 @@
     "country": "NI",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5173,7 +5173,7 @@
     "country": "NO",
     "failing_since": null,
     "service_id": "disney_plus",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5397,7 +5397,7 @@
     "country": "CH",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5501,7 +5501,7 @@
     "country": "FI",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -5621,7 +5621,7 @@
     "country": "LV",
     "failing_since": null,
     "service_id": "duolingo",
-    "status": "partial"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -6651,9 +6651,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "IT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "hbo_max",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
@@ -6827,9 +6827,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "SE",
-    "failing_since": "2026-11-22",
+    "failing_since": null,
     "service_id": "hbo_max",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "appstore_iap",
@@ -6915,537 +6915,537 @@
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "AL",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "AR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "AT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "BA",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "BE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "BG",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "not_available"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "BO",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "BR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CA",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CH",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CL",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CO",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CY",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "CZ",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "DE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "DK",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "DO",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "EC",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "EE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "EG",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "ES",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "FI",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "FR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "GB",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "GR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "GT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "HN",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "HR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "HU",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "ID",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "IE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "IN",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "IS",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "IT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "LT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "LU",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "LV",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "MD",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "ME",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "MK",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "MT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "MX",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "NG",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "NI",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "NL",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "NO",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PA",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PH",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PK",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PL",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PT",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "PY",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "RO",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "RS",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "SE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "SI",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "SK",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "SV",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "TR",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "UA",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "US",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "UY",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "VE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "VN",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "icloud_support",
     "channel": "web",
     "country": "ZA",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "icloud_plus",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "ms_displaycatalog",
@@ -9059,9 +9059,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "BE",
-    "failing_since": "2026-11-22",
+    "failing_since": null,
     "service_id": "prime_video",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9083,9 +9083,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "DE",
-    "failing_since": null,
+    "failing_since": "2026-11-26",
     "service_id": "prime_video",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9139,9 +9139,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "NL",
-    "failing_since": "2026-11-22",
+    "failing_since": null,
     "service_id": "prime_video",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9155,9 +9155,9 @@
     "adapter_id": "amazon_prime",
     "channel": "web",
     "country": "SE",
-    "failing_since": "2026-11-22",
+    "failing_since": null,
     "service_id": "prime_video",
-    "status": "failed"
+    "status": "ok"
   },
   {
     "adapter_id": "amazon_prime",
@@ -9437,7 +9437,7 @@
     "country": "IN",
     "failing_since": null,
     "service_id": "spotify",
-    "status": "ok"
+    "status": "partial"
   },
   {
     "adapter_id": "spotify_premium",
@@ -11227,9 +11227,9 @@
     "adapter_id": "appstore_iap",
     "channel": "ios_iap",
     "country": "RS",
-    "failing_since": null,
+    "failing_since": "2026-11-24",
     "service_id": "youtube_premium",
-    "status": "ok"
+    "status": "failed"
   },
   {
     "adapter_id": "appstore_iap",
